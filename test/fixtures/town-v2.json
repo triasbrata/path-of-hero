@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "schedule": {"chanceStart": 0.20, "chanceStep": 0.05, "chanceCap": 1.00, "minGap": 5, "firstTownAfter": 2, "autoLeave": 5.0},
+  "drops": {
+    "normal":    {"part": "common", "chance": 0.15, "count": 1},
+    "elite":     {"part": "common", "chance": 0.30, "count": 1},
+    "highElite": {"part": "rare",   "chance": 0.35, "count": 1},
+    "miniBoss":  {"part": "rare",   "chance": 1.00, "count": 2, "plus": {"evilEye": 1}},
+    "boss":      {"part": "rare",   "chance": 1.00, "count": 3, "plus": {"soulOrb": 1}},
+    "necromancerSlot": {"plus": {"lichOrb": 1}},
+    "forge": {
+      "normal":    [{"part": "common", "chance": 0.60, "count": 1}],
+      "elite":     [{"part": "common", "chance": 1.00, "count": 1}],
+      "highElite": [{"part": "common", "chance": 1.00, "count": 1}, {"part": "rare", "chance": 0.50, "count": 1}],
+      "miniBoss":  [{"part": "common", "chance": 1.00, "count": 3}, {"part": "rare", "chance": 1.00, "count": 3, "plus": {"evilEye": 1}}],
+      "boss":      [{"part": "common", "chance": 1.00, "count": 4}, {"part": "rare", "chance": 1.00, "count": 4, "plus": {"soulOrb": 1}}]
+    }
+  },
+  "parts": {
+    "slime": ["slimeGel", "slimeCore"], "bat": ["batWing", "batFang"], "skeleton": ["boneShard", "skull"],
+    "orc": ["orcTooth", "orcTusk"], "skeleton_archer": ["boneArrow", "boneBow"], "werewolf": ["wolfClaw", "wolfFang"],
+    "armored_skeleton": ["rustyPlate", "crackedSkull"], "orc_rider": ["leatherStrap", "wargFang"],
+    "elite_orc": ["orcEar", "orcHeart"], "armored_orc": ["ironScrap", "ironTusk"],
+    "greatsword_skeleton": ["bigBone", "graveSteel"], "werebear": ["bearFur", "bearClaw"],
+    "necro_healer": ["tealCloth", "tealGem"], "necromancer": [null, "darkGem"]
+  },
+  "materials": {
+    "slimeGel": {"grade": "common", "sell": 10}, "batWing": {"grade": "common", "sell": 10},
+    "boneShard": {"grade": "common", "sell": 15}, "orcTooth": {"grade": "common", "sell": 15},
+    "boneArrow": {"grade": "common", "sell": 20}, "wolfClaw": {"grade": "common", "sell": 25},
+    "rustyPlate": {"grade": "common", "sell": 25}, "leatherStrap": {"grade": "common", "sell": 30},
+    "orcEar": {"grade": "common", "sell": 35}, "ironScrap": {"grade": "common", "sell": 40},
+    "bigBone": {"grade": "common", "sell": 40}, "bearFur": {"grade": "common", "sell": 50},
+    "tealCloth": {"grade": "common", "sell": 30},
+    "slimeCore": {"grade": "rare", "sell": 40}, "batFang": {"grade": "rare", "sell": 40},
+    "skull": {"grade": "rare", "sell": 60}, "orcTusk": {"grade": "rare", "sell": 60},
+    "boneBow": {"grade": "rare", "sell": 80}, "wolfFang": {"grade": "rare", "sell": 100},
+    "crackedSkull": {"grade": "rare", "sell": 100}, "wargFang": {"grade": "rare", "sell": 120},
+    "orcHeart": {"grade": "rare", "sell": 140}, "ironTusk": {"grade": "rare", "sell": 160},
+    "graveSteel": {"grade": "rare", "sell": 160}, "bearClaw": {"grade": "rare", "sell": 200},
+    "tealGem": {"grade": "rare", "sell": 120}, "darkGem": {"grade": "rare", "sell": 200},
+    "evilEye": {"grade": "trophy", "sell": 300}, "soulOrb": {"grade": "trophy", "sell": 600},
+    "lichOrb": {"grade": "trophy", "sell": 800}
+  },
+  "recipes": {
+    "fang":        {"tier": "basic",  "materials": {"batWing": 2, "slimeGel": 2}, "items": {}, "gold": 300},
+    "thorns":      {"tier": "basic",  "materials": {"slimeGel": 3, "boneShard": 2}, "items": {}, "gold": 300},
+    "fury":        {"tier": "basic",  "materials": {"batWing": 2, "boneShard": 2, "skull": 1}, "items": {}, "gold": 400},
+    "guard":       {"tier": "basic",  "materials": {"orcTooth": 3, "slimeGel": 2}, "items": {}, "gold": 400},
+    "cleave":      {"tier": "strong", "materials": {"wolfClaw": 4, "leatherStrap": 3, "orcTusk": 2, "wolfFang": 1}, "items": {"sword": 1}, "gold": 1000},
+    "venom":       {"tier": "strong", "materials": {"boneArrow": 4, "slimeCore": 2, "batFang": 1, "boneBow": 1}, "items": {"bow": 1}, "gold": 1000},
+    "manaSiphon":  {"tier": "strong", "materials": {"tealCloth": 4, "batFang": 2, "slimeCore": 1, "tealGem": 1}, "items": {"staff": 1}, "gold": 1000},
+    "spiritWard":  {"tier": "strong", "materials": {"rustyPlate": 4, "skull": 2, "crackedSkull": 1, "wargFang": 1}, "items": {"shield": 1}, "gold": 1000},
+    "lastStand":   {"tier": "mighty", "materials": {"bearFur": 3, "orcHeart": 1, "bearClaw": 1, "evilEye": 1}, "items": {"boots": 1}, "gold": 3000},
+    "giantSlayer": {"tier": "mighty", "materials": {"ironScrap": 4, "orcEar": 3, "ironTusk": 1, "soulOrb": 1}, "items": {"gloves": 1}, "gold": 3500},
+    "blessing":    {"tier": "mighty", "materials": {"bigBone": 4, "graveSteel": 1, "darkGem": 2, "lichOrb": 1}, "items": {"potion": 1}, "gold": 3000}
+  },
+  "tiers": {
+    "basic":  {"sellShare": 0.5, "shop": 12000, "shopRise": 0.2},
+    "strong": {"sellShare": 0.5, "shop": 20000, "shopRise": 0.2},
+    "mighty": {"sellShare": 0.5, "shop": 32000, "shopRise": 0.2}
+  },
+  "relics": {
+    "fang": {"share": 0.30}, "thorns": {"share": 0.30}, "fury": {"every": 3, "hit": 2.0}, "guard": {"cut": 0.25},
+    "cleave": {"share": 0.30, "reach": 1.5}, "venom": {"share": 0.20, "secs": 3.0}, "manaSiphon": {"mp": 2},
+    "spiritWard": {"share": 0.15}, "lastStand": {"below": 0.25, "heal": 0.40},
+    "giantSlayer": {"k": 1.5}, "blessing": {"k": 1.4}
+  },
+  "shop": {"from": 15, "itemPrice": 2000, "itemRise": 200, "itemSellShare": 0.5, "matMarkup": 2.5, "matRise": 0.0}
+}

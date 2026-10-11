@@ -1,0 +1,55 @@
+{
+  "about": "The Town's house, rebuilt cell by cell from House Tiles.png (docs/assets.md, town_house.png): the design's house_cells(n, storeys) and house_props(n, storeys) for the three houses the scene draws (n 0 one storey, n 0 two storeys, n 1 two storeys). A cell is [name, column, row] on a 16-px grid from the ridge (row 0), its name a cell of lib/town_art.dart's townHouseCells; the porch row's cells are 16x8. A prop is [name, x, bottom y] in house px, its name a cell of townPropCells. size is the grid's [width, height] in px. The scene's houseCells(n, storeys) must give exactly these.",
+  "houses": [
+    {"n": 0, "storeys": 1, "size": [224, 168],
+     "cells": [
+       ["apexL", 6, 0], ["apexR", 7, 0],
+       ["slopeL1o", 5, 1], ["slopeL1i", 6, 1], ["slopeR1i", 7, 1], ["slopeR1o", 8, 1],
+       ["slopeL2o", 4, 2], ["slopeL2i", 5, 2], ["slopeR2i", 8, 2], ["slopeR2o", 9, 2], ["gable", 6, 2], ["gable", 7, 2],
+       ["slopeL3o", 3, 3], ["slopeL3i", 4, 3], ["slopeR3i", 9, 3], ["slopeR3o", 10, 3], ["gable", 5, 3], ["gable", 6, 3], ["gable", 7, 3], ["gable", 8, 3],
+       ["eaveL1o", 2, 4], ["postL", 3, 4], ["postR", 10, 4], ["eaveR1o", 11, 4], ["gable", 4, 4], ["gable", 5, 4], ["gable", 6, 4], ["gable", 7, 4], ["gable", 8, 4], ["gable", 9, 4],
+       ["eaveL0", 1, 5], ["wallL5a", 2, 5], ["wallR5b", 11, 5], ["eaveR0", 12, 5], ["wallL5b", 3, 5], ["gable", 4, 5], ["gable", 5, 5], ["gable", 6, 5], ["gable", 7, 5], ["gable", 8, 5], ["gable", 9, 5], ["wallR5a", 10, 5],
+       ["wallL8a", 2, 6], ["wallL8b", 3, 6], ["brickLow", 4, 6], ["brickLow", 5, 6], ["winTL", 6, 6], ["winTR", 7, 6], ["brickLow", 8, 6], ["brickLow", 9, 6], ["pipeTL", 10, 6], ["pipeTR", 11, 6],
+       ["wallL9", 2, 7], ["doorTop", 3, 7], ["brickLow", 4, 7], ["brickLow", 5, 7], ["winBL", 6, 7], ["winBR", 7, 7], ["brickLow", 8, 7], ["brickLow", 9, 7], ["pipeBL", 10, 7], ["pipeBR", 11, 7],
+       ["wallL10", 2, 8], ["doorMid", 3, 8], ["brickLow", 4, 8], ["brickLow", 5, 8], ["sillL", 6, 8], ["sillR", 7, 8], ["brickLow", 8, 8], ["brickLow", 9, 8], ["blockTL", 10, 8], ["blockTR", 11, 8],
+       ["wallL11", 2, 9], ["doorLow", 3, 9], ["brickLow", 4, 9], ["brickLow", 5, 9], ["brickLow", 6, 9], ["brickLow", 7, 9], ["brickLow", 8, 9], ["brickLow", 9, 9], ["blockBL", 10, 9], ["blockBR", 11, 9],
+       ["baseL", 2, 10], ["porchL", 3, 10], ["porch", 4, 10], ["porch", 5, 10], ["porch", 6, 10], ["porch", 7, 10], ["porch", 8, 10], ["porch", 9, 10], ["baseRa", 10, 10], ["baseRb", 11, 10]
+     ],
+     "props": [["cauldron", 167, 129]]},
+    {"n": 0, "storeys": 2, "size": [224, 200],
+     "cells": [
+       ["apexL", 6, 0], ["apexR", 7, 0],
+       ["slopeL1o", 5, 1], ["slopeL1i", 6, 1], ["slopeR1i", 7, 1], ["slopeR1o", 8, 1],
+       ["slopeL2o", 4, 2], ["slopeL2i", 5, 2], ["slopeR2i", 8, 2], ["slopeR2o", 9, 2], ["gable", 6, 2], ["gable", 7, 2],
+       ["slopeL3o", 3, 3], ["slopeL3i", 4, 3], ["slopeR3i", 9, 3], ["slopeR3o", 10, 3], ["gable", 5, 3], ["gable", 6, 3], ["gable", 7, 3], ["gable", 8, 3],
+       ["eaveL1o", 2, 4], ["postL", 3, 4], ["postR", 10, 4], ["eaveR1o", 11, 4], ["gable", 4, 4], ["gable", 5, 4], ["gable", 6, 4], ["gable", 7, 4], ["gable", 8, 4], ["gable", 9, 4],
+       ["eaveL0", 1, 5], ["wallL5a", 2, 5], ["wallR5b", 11, 5], ["eaveR0", 12, 5], ["wallL5b", 3, 5], ["gable", 4, 5], ["gable", 5, 5], ["gable", 6, 5], ["gable", 7, 5], ["gable", 8, 5], ["gable", 9, 5], ["wallR5a", 10, 5],
+       ["creamL6", 2, 6], ["beamL", 3, 6], ["beam", 4, 6], ["beam", 5, 6], ["beamJoint", 6, 6], ["beam", 7, 6], ["beam", 8, 6], ["beam", 9, 6], ["beamR", 10, 6], ["beamREnd", 11, 6],
+       ["creamL7a", 2, 7], ["creamL7b", 3, 7], ["brick", 4, 7], ["brick", 5, 7], ["brick", 6, 7], ["brick", 7, 7], ["brick", 8, 7], ["brick", 9, 7], ["creamR7a", 10, 7], ["creamR7b", 11, 7],
+       ["wallL8a", 2, 8], ["wallL8b", 3, 8], ["brickLow", 4, 8], ["brickLow", 5, 8], ["winTL", 6, 8], ["winTR", 7, 8], ["brickLow", 8, 8], ["brickLow", 9, 8], ["pipeTL", 10, 8], ["pipeTR", 11, 8],
+       ["wallL9", 2, 9], ["doorTop", 3, 9], ["brickLow", 4, 9], ["brickLow", 5, 9], ["winBL", 6, 9], ["winBR", 7, 9], ["brickLow", 8, 9], ["brickLow", 9, 9], ["pipeBL", 10, 9], ["pipeBR", 11, 9],
+       ["wallL10", 2, 10], ["doorMid", 3, 10], ["brickLow", 4, 10], ["brickLow", 5, 10], ["sillL", 6, 10], ["sillR", 7, 10], ["brickLow", 8, 10], ["brickLow", 9, 10], ["blockTL", 10, 10], ["blockTR", 11, 10],
+       ["wallL11", 2, 11], ["doorLow", 3, 11], ["brickLow", 4, 11], ["brickLow", 5, 11], ["brickLow", 6, 11], ["brickLow", 7, 11], ["brickLow", 8, 11], ["brickLow", 9, 11], ["blockBL", 10, 11], ["blockBR", 11, 11],
+       ["baseL", 2, 12], ["porchL", 3, 12], ["porch", 4, 12], ["porch", 5, 12], ["porch", 6, 12], ["porch", 7, 12], ["porch", 8, 12], ["porch", 9, 12], ["baseRa", 10, 12], ["baseRb", 11, 12]
+     ],
+     "props": [["table", 68, 97], ["crate", 114, 97], ["barrels", 142, 97], ["crates2", 132, 97], ["cauldron", 167, 161]]},
+    {"n": 1, "storeys": 2, "size": [256, 216],
+     "cells": [
+       ["apexL", 7, 0], ["apexR", 8, 0],
+       ["slopeL2o", 6, 1], ["slopeL2i", 7, 1], ["slopeR2i", 8, 1], ["slopeR2o", 9, 1],
+       ["slopeL1o", 5, 2], ["slopeL1i", 6, 2], ["slopeR1i", 9, 2], ["slopeR1o", 10, 2], ["gable", 7, 2], ["gable", 8, 2],
+       ["slopeL2o", 4, 3], ["slopeL2i", 5, 3], ["slopeR2i", 10, 3], ["slopeR2o", 11, 3], ["gable", 6, 3], ["gable", 7, 3], ["gable", 8, 3], ["gable", 9, 3],
+       ["slopeL3o", 3, 4], ["slopeL3i", 4, 4], ["slopeR3i", 11, 4], ["slopeR3o", 12, 4], ["gable", 5, 4], ["gable", 6, 4], ["gable", 7, 4], ["gable", 8, 4], ["gable", 9, 4], ["gable", 10, 4],
+       ["eaveL1o", 2, 5], ["postL", 3, 5], ["postR", 12, 5], ["eaveR1o", 13, 5], ["gable", 4, 5], ["gable", 5, 5], ["gable", 6, 5], ["gable", 7, 5], ["gable", 8, 5], ["gable", 9, 5], ["gable", 10, 5], ["gable", 11, 5],
+       ["eaveL0", 1, 6], ["wallL5a", 2, 6], ["wallR5b", 13, 6], ["eaveR0", 14, 6], ["wallL5b", 3, 6], ["gable", 4, 6], ["gable", 5, 6], ["gable", 6, 6], ["gable", 7, 6], ["gable", 8, 6], ["gable", 9, 6], ["gable", 10, 6], ["gable", 11, 6], ["wallR5a", 12, 6],
+       ["creamL6", 2, 7], ["beamL", 3, 7], ["beam", 4, 7], ["beam", 5, 7], ["beam", 6, 7], ["beamJoint", 7, 7], ["beam", 8, 7], ["beam", 9, 7], ["beam", 10, 7], ["beam", 11, 7], ["beamR", 12, 7], ["beamREnd", 13, 7],
+       ["creamL7a", 2, 8], ["creamL7b", 3, 8], ["brick", 4, 8], ["brick", 5, 8], ["brick", 6, 8], ["brick", 7, 8], ["brick", 8, 8], ["brick", 9, 8], ["brick", 10, 8], ["brick", 11, 8], ["creamR7a", 12, 8], ["creamR7b", 13, 8],
+       ["wallL8a", 2, 9], ["wallL8b", 3, 9], ["brickLow", 4, 9], ["brickLow", 5, 9], ["brickLow", 6, 9], ["winTL", 7, 9], ["winTR", 8, 9], ["brickLow", 9, 9], ["brickLow", 10, 9], ["brickLow", 11, 9], ["pipeTL", 12, 9], ["pipeTR", 13, 9],
+       ["wallL9", 2, 10], ["doorTop", 3, 10], ["brickLow", 4, 10], ["brickLow", 5, 10], ["brickLow", 6, 10], ["winBL", 7, 10], ["winBR", 8, 10], ["brickLow", 9, 10], ["brickLow", 10, 10], ["brickLow", 11, 10], ["pipeBL", 12, 10], ["pipeBR", 13, 10],
+       ["wallL10", 2, 11], ["doorMid", 3, 11], ["brickLow", 4, 11], ["brickLow", 5, 11], ["brickLow", 6, 11], ["sillL", 7, 11], ["sillR", 8, 11], ["brickLow", 9, 11], ["brickLow", 10, 11], ["brickLow", 11, 11], ["blockTL", 12, 11], ["blockTR", 13, 11],
+       ["wallL11", 2, 12], ["doorLow", 3, 12], ["brickLow", 4, 12], ["brickLow", 5, 12], ["brickLow", 6, 12], ["brickLow", 7, 12], ["brickLow", 8, 12], ["brickLow", 9, 12], ["brickLow", 10, 12], ["brickLow", 11, 12], ["blockBL", 12, 12], ["blockBR", 13, 12],
+       ["baseL", 2, 13], ["porchL", 3, 13], ["porch", 4, 13], ["porch", 5, 13], ["porch", 6, 13], ["porch", 7, 13], ["porch", 8, 13], ["porch", 9, 13], ["porch", 10, 13], ["porch", 11, 13], ["baseRa", 12, 13], ["baseRb", 13, 13]
+     ],
+     "props": [["table", 68, 113], ["crate", 114, 113], ["barrels", 142, 113], ["crates2", 164, 113], ["cauldron", 199, 177]]}
+  ]
+}

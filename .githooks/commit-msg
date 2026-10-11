@@ -1,0 +1,4 @@
+#!/bin/sh
+# A commit message is as public as the files: the same privacy check (tool/privacy_check.py) runs on it.
+# docs/testing.md "The privacy check"; installed by python3 tool/asset_vault.py install-hooks.
+exec python3 tool/privacy_check.py --message "$1"

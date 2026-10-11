@@ -1,0 +1,105 @@
+# Path of Hero's checks on every pull request and every push to main (docs/testing.md "CI").
+#
+# - Only in the public repository (github.repository): a fork's copy, or the private archive's, runs nothing.
+# - The licensed art is git-ignored; its encrypted vault is opened with the secret POH_VAULT_KEY (docs/assets.md "The
+#   asset vault"). A pull request from a fork gets no secrets: it runs on tool/gen_placeholders.py's placeholders and
+#   skips the tests tagged `art` (dart_test.yaml), as any clone without the key does. The secret only ever sits in the
+#   vault step's env; openssl reads it from there, nothing prints it, and GitHub masks it in the log.
+# - check: the privacy check (shapes only: the private terms aren't in this repository), the tools' own tests, flutter
+#   analyze and a fast set of test files. full (a push to main, or by hand): the whole flutter test suite.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.event_name == 'push' && github.sha || 'pr' }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.47.5 # the version the official builds use (docs/dev-workflow.md "What you need")
+
+jobs:
+  check:
+    if: github.repository == 'triasbrata/path-of-hero'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Nothing private is tracked
+        run: python3 tool/privacy_check.py
+
+      - name: The art (the vault with the key, else placeholders)
+        id: art
+        env:
+          POH_VAULT_KEY: ${{ secrets.POH_VAULT_KEY }}
+        run: |
+          if [ -n "${POH_VAULT_KEY:-}" ]; then
+            python3 tool/asset_vault.py unpack --only game
+            python3 tool/asset_vault.py check
+            echo "skip=" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::no POH_VAULT_KEY (a fork's pull request): placeholders, and the art-tagged tests skipped"
+            python3 tool/gen_placeholders.py
+            echo "skip=-x art" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: The tools' tests
+        run: |
+          python3 tool/test_privacy_check.py
+          python3 tool/test_asset_vault.py
+          python3 tool/test_asset_vault_hooks.py
+          python3 tool/test_telemetry_summary.py
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - run: flutter pub get
+      - run: flutter analyze --no-fatal-infos lib test
+      - name: A fast set of tests
+        run: >-
+          flutter test ${{ steps.art.outputs.skip }}
+          test/asset_manifest_test.dart test/licence_page_test.dart test/english_text_test.dart test/save_test.dart
+          test/app_identity_test.dart test/game_test.dart
+
+  full:
+    if: github.repository == 'triasbrata/path-of-hero' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: The art (the vault with the key, else placeholders)
+        id: art
+        env:
+          POH_VAULT_KEY: ${{ secrets.POH_VAULT_KEY }}
+        run: |
+          if [ -n "${POH_VAULT_KEY:-}" ]; then
+            python3 tool/asset_vault.py unpack --only game
+            echo "skip=" >> "$GITHUB_OUTPUT"
+          else
+            python3 tool/gen_placeholders.py
+            echo "skip=-x art" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - run: flutter pub get
+      - name: The whole suite
+        run: flutter test ${{ steps.art.outputs.skip }}

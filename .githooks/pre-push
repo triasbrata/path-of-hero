@@ -1,0 +1,3 @@
+#!/bin/sh
+# Only the public history reaches the public repository, and only its main and v* tags (tool/asset_vault.py).
+exec python3 tool/asset_vault.py hook pre-push "$1" "$2"

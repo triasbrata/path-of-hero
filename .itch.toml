@@ -1,0 +1,20 @@
+# The itch app's launch manifest (https://itch.io/docs/itch/integrating/manifest.html; docs/itch-page.md "Build
+# checklist", decisions-log 148). scripts/release-build.sh (mac) and .github/workflows/release.yml (windows, linux)
+# put this file at the root of every desktop build they stage, so each path is relative to that root. The app shows
+# only the action for the player's own platform. Android's build is the APK alone: the itch app doesn't run APKs.
+# scripts/test-release-build.sh checks each path against what the script and the workflow stage.
+
+[[actions]]
+name = "play"
+path = "Path of Hero.app"
+platform = "osx"
+
+[[actions]]
+name = "play"
+path = "tower_defense.exe"
+platform = "windows"
+
+[[actions]]
+name = "play"
+path = "tower_defense"
+platform = "linux"

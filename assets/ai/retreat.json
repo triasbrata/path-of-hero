@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "retreatAt": 0.5,
+  "returnAt": 0.8,
+  "retreatNear": 0.5,
+  "threatWindow": 2,
+  "doomTime": 0,
+  "doomMaxShare": 0.8,
+  "earlyReturnAt": 0.6,
+  "lineMin": 0,
+  "baseThreat": 0,
+  "healWait": 3,
+  "holdFire": false,
+  "carryHealQueue": false
+}

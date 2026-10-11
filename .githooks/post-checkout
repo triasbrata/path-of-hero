@@ -1,0 +1,4 @@
+#!/bin/sh
+# A branch checkout (or git worktree add) brought other vaults? Unpack the unedited ones (tool/asset_vault.py sync).
+[ "${3:-0}" = 1 ] || exit 0
+exec python3 tool/asset_vault.py hook post-update

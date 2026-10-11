@@ -1,0 +1,217 @@
+# Path of Hero's Windows and Linux release builds (docs/itch-page.md "Pushing builds", decisions-log 145).
+#
+# - Only in the game's own repositories (the public path-of-hero, and tower-defense, the private archive it came from):
+#   every job is guarded on github.repository, so a fork's copy builds nothing.
+# - Each job checks assets/ and the pins (scripts/release-build.sh check), builds with the pinned Flutter, stages the
+#   build with THIRD_PARTY_NOTICES.txt, CREDITS.txt and .itch.toml (the itch app's launch actions) at its root,
+#   checks what it bundled and which Xiph prebuilds flutter_soloud's hook linked (pubspec.yaml's prebuild_tag,
+#   decisions-log 148), and uploads the staged build as a workflow artifact, kept 1 day.
+# - The asset vault (docs/assets.md "The asset vault", decisions-log 232): with the secret POH_VAULT_KEY, each job opens
+#   the game's vaults over assets/ and the app icons, then checks them; without it, it builds from the checkout's
+#   files as they are and says so in the log. openssl reads the key from the env itself; nothing prints it, and
+#   GitHub masks a secret's value in the log.
+# - It pushes nothing to itch.io and uses no other secret: the owner downloads the artifacts and runs butler.
+# - macOS and Android are built on the Mac with scripts/release-build.sh.
+name: release
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: 3.47.5 # the Mac's Flutter (dev-workflow.md), scripts/release-build.sh's FLUTTER_VERSION
+
+jobs:
+  linux:
+    if: github.repository == 'triasbrata/path-of-hero' || github.repository == 'triasbrata/tower-defense'
+    runs-on: ubuntu-22.04 # an older glibc, so the build runs on more distros
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The public repository's checkout has no art (git-ignored): the vault puts it there. Where the art is tracked
+      # (the archive) the vault opens over identical copies (other bytes fail: the vault is older than the checkout).
+      # No key and no art fails the check: no release is ever built on placeholders.
+      - name: The asset vault
+        env:
+          POH_VAULT_KEY: ${{ secrets.POH_VAULT_KEY }}
+        run: |
+          case $(uname -s) in MINGW* | MSYS* | CYGWIN*) py=python ;; *) py=python3 ;; esac
+          if [ -n "${POH_VAULT_KEY:-}" ]; then
+            echo "POH_VAULT_KEY is set: the game's vaults are opened over the checkout"
+            "$py" tool/asset_vault.py unpack --only game
+          else
+            echo "::warning::POH_VAULT_KEY isn't set: this build takes assets/ and the app icons from the checkout as they are, not from the asset vault"
+          fi
+          "$py" tool/asset_vault.py check
+
+      - name: Check assets/, the version and the pins
+        run: bash scripts/release-build.sh check
+
+      - name: Version
+        id: version
+        run: |
+          v=$(sed -n 's/^version:[[:space:]]*\([^[:space:]#]*\).*$/\1/p' pubspec.yaml | head -n 1)
+          echo "full=$v" >> "$GITHUB_OUTPUT"
+          echo "name=${v%%+*}" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "v${v%%+*}" ]; then
+            echo "::error::the tag $GITHUB_REF_NAME doesn't match pubspec.yaml's version $v (v${v%%+*})"
+            exit 1
+          fi
+
+      - name: Linux build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      # No TELEMETRY_SERVER or SCORE_SERVER: the release is offline (docs/itch-page.md "The page text").
+      - name: Build
+        env:
+          APP_VERSION: ${{ steps.version.outputs.full }}
+        run: flutter build linux --release "--dart-define=APP_VERSION=$APP_VERSION"
+
+      - name: Stage
+        env:
+          NAME: ${{ steps.version.outputs.name }}
+        run: |
+          stage=dist/PathOfHero-linux-$NAME
+          mkdir -p "$stage"
+          cp -a build/linux/x64/release/bundle/. "$stage/"
+          cp THIRD_PARTY_NOTICES.txt "$stage/THIRD_PARTY_NOTICES.txt"
+          cp CREDITS.md "$stage/CREDITS.txt"
+          cp .itch.toml "$stage/.itch.toml"
+          test -x "$stage/tower_defense"
+          bash scripts/release-build.sh check "$stage/data/flutter_assets" --xiph linux
+          # A tar keeps the executable bits, which an artifact's zip drops.
+          tar -C dist -czf "dist/PathOfHero-linux-$NAME.tar.gz" "PathOfHero-linux-$NAME"
+
+      # Information only: objdump -T on every ELF file in the bundle, the Xiph libraries too (the hook bundles them by
+      # their SONAME, lib/libFLAC.so.14 and so on, which a lib/*.so misses). The floor is the oldest glibc (and
+      # libstdc++) the build runs on.
+      - name: The newest glibc it needs (information only)
+        run: |
+          bundle=build/linux/x64/release/bundle
+          glibc= glibcxx=
+          while IFS= read -r f; do
+            syms=$(objdump -T "$f" 2>/dev/null || true)
+            c=$(printf '%s\n' "$syms" | grep -o 'GLIBC_[0-9][0-9.]*' | sort -u -V | tail -n 1 || true)
+            cxx=$(printf '%s\n' "$syms" | grep -o 'GLIBCXX_[0-9][0-9.]*' | sort -u -V | tail -n 1 || true)
+            echo "${f#"$bundle"/}: ${c:-no GLIBC_ symbols}${cxx:+, $cxx}"
+            glibc="$glibc $c" glibcxx="$glibcxx $cxx"
+          done < <(find "$bundle" -type f \( -name tower_defense -o -name '*.so' -o -name '*.so.*' \) | sort)
+          echo "glibc floor: $(printf '%s\n' $glibc | sort -u -V | tail -n 1)"
+          echo "libstdc++ floor: $(printf '%s\n' $glibcxx | sort -u -V | tail -n 1)"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          path: dist/PathOfHero-linux-${{ steps.version.outputs.name }}.tar.gz
+          archive: false # one file, its name the artifact's
+          retention-days: 1
+          if-no-files-found: error
+
+  windows:
+    if: github.repository == 'triasbrata/path-of-hero' || github.repository == 'triasbrata/tower-defense'
+    runs-on: windows-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The public repository's checkout has no art (git-ignored): the vault puts it there. Where the art is tracked
+      # (the archive) the vault opens over identical copies (other bytes fail: the vault is older than the checkout).
+      # No key and no art fails the check: no release is ever built on placeholders.
+      - name: The asset vault
+        env:
+          POH_VAULT_KEY: ${{ secrets.POH_VAULT_KEY }}
+        run: |
+          case $(uname -s) in MINGW* | MSYS* | CYGWIN*) py=python ;; *) py=python3 ;; esac
+          if [ -n "${POH_VAULT_KEY:-}" ]; then
+            echo "POH_VAULT_KEY is set: the game's vaults are opened over the checkout"
+            "$py" tool/asset_vault.py unpack --only game
+          else
+            echo "::warning::POH_VAULT_KEY isn't set: this build takes assets/ and the app icons from the checkout as they are, not from the asset vault"
+          fi
+          "$py" tool/asset_vault.py check
+
+      - name: Check assets/, the version and the pins
+        run: bash scripts/release-build.sh check
+
+      - name: Version
+        id: version
+        run: |
+          v=$(sed -n 's/^version:[[:space:]]*\([^[:space:]#]*\).*$/\1/p' pubspec.yaml | head -n 1)
+          echo "full=$v" >> "$GITHUB_OUTPUT"
+          echo "name=${v%%+*}" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "v${v%%+*}" ]; then
+            echo "::error::the tag $GITHUB_REF_NAME doesn't match pubspec.yaml's version $v (v${v%%+*})"
+            exit 1
+          fi
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      # No TELEMETRY_SERVER or SCORE_SERVER: the release is offline (docs/itch-page.md "The page text").
+      - name: Build
+        env:
+          APP_VERSION: ${{ steps.version.outputs.full }}
+        run: flutter build windows --release "--dart-define=APP_VERSION=$APP_VERSION"
+
+      - name: Stage
+        env:
+          NAME: ${{ steps.version.outputs.name }}
+        run: |
+          stage=dist/PathOfHero-windows-$NAME
+          mkdir -p "$stage"
+          cp -r build/windows/x64/runner/Release/. "$stage/"
+          cp THIRD_PARTY_NOTICES.txt "$stage/THIRD_PARTY_NOTICES.txt"
+          cp CREDITS.md "$stage/CREDITS.txt"
+          cp .itch.toml "$stage/.itch.toml"
+          test -f "$stage/tower_defense.exe"
+          bash scripts/release-build.sh check "$stage/data/flutter_assets" --xiph windows
+          echo "STAGE=$stage" >> "$GITHUB_ENV"
+
+      # A PC without Microsoft's VC++ runtime says "VCRUNTIME140_1.dll was not found". So the three DLLs go next to
+      # the exe: Microsoft's app-local deployment, copied from Visual Studio's own redist folder (its distributable
+      # code).
+      - name: The VC++ runtime, next to the exe
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
+          $crt = Get-ChildItem "$vs\VC\Redist\MSVC\*\x64\Microsoft.VC14*.CRT" -Directory | Sort-Object FullName | Select-Object -Last 1
+          if (-not $crt) { throw "no VC++ redist folder under $vs\VC\Redist\MSVC" }
+          foreach ($dll in 'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll') {
+            Copy-Item -LiteralPath (Join-Path $crt.FullName $dll) -Destination $env:STAGE -Force
+          }
+          Get-ChildItem $env:STAGE -Filter *.dll | Format-Table Name, Length
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: PathOfHero-windows-${{ steps.version.outputs.name }}
+          path: ${{ env.STAGE }}/
+          include-hidden-files: true # .itch.toml; upload-artifact leaves out dotfiles by default
+          retention-days: 1
+          if-no-files-found: error

@@ -1,0 +1,424 @@
+// The Smithy's Craft (decisions-log 233; lib/town.dart `extension Craft`; docs/loot-items-relics.md "Town and Smithy:
+// Craft"), dark behind `Game.towns`: each refusal in the design's order, no limit a visit, the materials, items and
+// gold taken (the forge's gold, decisions-log 245: what every game with the Towns charges), the recipe's rows, every
+// recipe craftable from exactly its own; the Town Shop's prices with the Towns on (the small relics at their tier's
+// price, sold back at half their own recipe's gold; the items town.json's) and today's with them off (tests only);
+// Asah's cheapest-first take; the event, its log lines and the telemetry.
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:tower_defense/game.dart';
+import 'package:tower_defense/main.dart' show logLine;
+import 'package:tower_defense/telemetry.dart';
+
+/// A game with the Towns on, [gold], in the Town before wave [wave] + 1 (the Smithy is open). Its relic recipes are the
+/// forge's ([TownRules.forgeRecipe]: their own with the forge's gold; the forge's nine and the item recipes are
+/// forge_data_test.dart's and forge_awaken_test.dart's).
+Game inTown({int gold = 0, int wave = 0}) {
+  final g = Game(Random(1), Random(101))
+    ..towns = true
+    ..wave = wave
+    ..gold = gold;
+  g.townAt = wave + 1;
+  expect(g.enterTown(), isTrue);
+  return g;
+}
+
+/// Puts exactly [relic]'s recipe in [g]'s bag: its materials, its items and its gold.
+void giveRecipe(Game g, Relic relic, [int times = 1]) {
+  final r = g.craftRecipe(relic)!;
+  for (final MapEntry(key: m, value: n) in r.materials.entries) {
+    g.materials[m] = (g.materials[m] ?? 0) + n * times;
+  }
+  for (final MapEntry(key: i, value: n) in r.items.entries) {
+    g.inventory[i] = (g.inventory[i] ?? 0) + n * times;
+  }
+  g.gold += r.gold * times;
+}
+
+/// What a craft may change in [g], written out: the materials, items, gold and the relic bag.
+String bags(Game g) => '${g.materials} ${g.inventory} ${g.gold} ${g.relicBag}';
+
+/// Wins [g]'s next wave outright (one slime dealt with).
+void winWave(Game g) {
+  g.startWave();
+  g.queue
+    ..clear()
+    ..add(('slime', Tier.normal));
+  g.tick(0.05);
+  g.enemies.single.gone = true;
+  g.tick(0.05);
+  expect(g.waveActive, isFalse);
+}
+
+/// A sink that keeps what it gets, through JSON as a file would.
+class _Kept implements TelemetrySink {
+  final records = <Map<String, dynamic>>[];
+
+  @override
+  void add(Map<String, Object?> record) => records.add(jsonDecode(jsonEncode(record)) as Map<String, dynamic>);
+
+  @override
+  Future<void> flush() async {}
+
+  List<Map<String, dynamic>> of(String rec) => [for (final r in records) if (r['rec'] == rec) r];
+}
+
+void main() {
+  test("each refusal in the design's order: over, town, no recipe, the first short material, the first short item, "
+      'the gold; refused, nothing changes and the error sounds', () {
+    void refused(Game g, Relic relic, CraftWhy why, String text) {
+      final before = bags(g);
+      final no = g.whyNotCraft(relic);
+      expect((no?.why, no?.text, g.canCraft(relic)), (why, text, false), reason: text);
+      g.sfx.clear();
+      expect(g.craft(relic), isFalse);
+      expect(bags(g), before, reason: text);
+      expect(g.sfx, [Sfx.error], reason: text);
+    }
+
+    // With the Towns off there is never a Town: whatever the bag holds.
+    final off = Game()..gold = 100000;
+    giveRecipe(off, Relic.fang);
+    refused(off, Relic.fang, CraftWhy.town, 'Only in a Town');
+    // With them on, only in one.
+    final field = Game()
+      ..towns = true
+      ..gold = 100000;
+    giveRecipe(field, Relic.fang);
+    refused(field, Relic.fang, CraftWhy.town, Words.onlyInTown);
+    field.lives = 0;
+    refused(field, Relic.fang, CraftWhy.over, Words.gameOver);
+
+    final g = inTown();
+    refused(g, Relic.grail, CraftWhy.recipe, 'No recipe');
+    expect(g.craftRows(Relic.grail), isEmpty);
+    // Sweep (save key cleave): Wolf Claw 4, Leather Strap 3, Orc Tusk 2, Wolf Fang 1, a Sword, 700 gold.
+    refused(g, Relic.cleave, CraftWhy.material, 'Need 4 Wolf Claw');
+    g.materials[Mat.wolfClaw] = 2;
+    refused(g, Relic.cleave, CraftWhy.material, 'Need 2 more Wolf Claw');
+    expect(g.whyNotCraft(Relic.cleave)?.short, Mat.wolfClaw);
+    g.materials.addAll({Mat.wolfClaw: 4, Mat.leatherStrap: 3, Mat.orcTusk: 1});
+    refused(g, Relic.cleave, CraftWhy.material, 'Need 1 more Orc Tusk');
+    g.materials[Mat.orcTusk] = 2;
+    refused(g, Relic.cleave, CraftWhy.material, 'Need 1 Wolf Fang');
+    g.materials[Mat.wolfFang] = 1;
+    refused(g, Relic.cleave, CraftWhy.item, 'Need 1 Sword');
+    expect(g.whyNotCraft(Relic.cleave)?.short, Item.sword);
+    g.inventory[Item.sword] = 1;
+    g.gold = 699;
+    refused(g, Relic.cleave, CraftWhy.gold, Words.notEnoughGold);
+    g.gold = 700;
+    expect((g.whyNotCraft(Relic.cleave), g.canCraft(Relic.cleave)), (null, true));
+    // The design's own examples: Venom short of its Bow.
+    final v = inTown();
+    giveRecipe(v, Relic.venom);
+    v.inventory[Item.bow] = 0;
+    refused(v, Relic.venom, CraftWhy.item, 'Need 1 Bow');
+    // A material short comes before an item or the gold short; the game over before everything.
+    final all = inTown();
+    expect(all.whyNotCraft(Relic.giantSlayer)?.text, 'Need 4 Iron Scrap');
+    all.lives = 0;
+    expect(all.whyNotCraft(Relic.giantSlayer)?.why, CraftWhy.over);
+  });
+
+  test("craftRows: each material, then each item, as the recipe lists them, then the gold, with what's held", () {
+    final g = inTown(gold: 640)
+      ..materials.addAll({Mat.wolfClaw: 2, Mat.wolfFang: 3})
+      ..inventory[Item.sword] = 1;
+    expect(g.craftRows(Relic.cleave), <CraftRow>[
+      (kind: Mat.wolfClaw, have: 2, need: 4),
+      (kind: Mat.leatherStrap, have: 0, need: 3),
+      (kind: Mat.orcTusk, have: 0, need: 2),
+      (kind: Mat.wolfFang, have: 3, need: 1),
+      (kind: Item.sword, have: 1, need: 1),
+      (kind: null, have: 640, need: 700),
+    ]);
+    expect(g.craftRows(Relic.fang), <CraftRow>[
+      (kind: Mat.batWing, have: 0, need: 2),
+      (kind: Mat.slimeGel, have: 0, need: 2),
+      (kind: null, have: 640, need: 200),
+    ]);
+  });
+
+  test('craft takes the materials, the item and the gold, and puts the relic in the Bag (the last of a material '
+      'leaves no entry); the clear sound', () {
+    final g = inTown(gold: 5000)
+      ..materials.addAll({Mat.wolfClaw: 6, Mat.leatherStrap: 3, Mat.orcTusk: 2, Mat.wolfFang: 1, Mat.slimeGel: 9})
+      ..inventory.addAll({Item.sword: 2, Item.bow: 1})
+      ..relicBag[Relic.cleave] = 1;
+    g.sfx.clear();
+    expect(g.craft(Relic.cleave), isTrue);
+    expect(g.materials, {Mat.wolfClaw: 2, Mat.slimeGel: 9});
+    expect((g.inventory[Item.sword], g.inventory[Item.bow], g.gold, g.relicBag[Relic.cleave]), (1, 1, 4300, 2));
+    expect(g.sfx, [Sfx.clear]);
+    expect(craftedLine(Relic.cleave), 'Sweep crafted!');
+    expect(craftedLine(Relic.blessing), 'Holy Charm crafted!');
+  });
+
+  test('no limit a visit: crafted again while the bag can pay', () {
+    final g = inTown();
+    giveRecipe(g, Relic.fang, 5);
+    for (var i = 1; i <= 5; i++) {
+      expect(g.craft(Relic.fang), isTrue, reason: 'craft $i');
+    }
+    expect((g.relicBag[Relic.fang], g.gold), (5, 0));
+    expect(g.materials, isEmpty);
+    expect(g.whyNotCraft(Relic.fang)?.text, 'Need 2 Bat Wing');
+    expect(g.craft(Relic.fang), isFalse);
+  });
+
+  test('each of the 11 crafts from exactly its recipe, and the 30 materials are all in some recipe', () {
+    for (final relic in smallRelics) {
+      final g = inTown();
+      giveRecipe(g, relic);
+      expect(g.craft(relic), isTrue, reason: relicNames[relic]);
+      expect((g.materials.isEmpty, g.inventory.values.every((n) => n == 0), g.gold), (true, true, 0), reason: relicNames[relic]);
+      expect(g.relicBag, {relic: 1}, reason: relicNames[relic]);
+    }
+    expect(smallRelics, hasLength(11));
+    final g = Game();
+    expect({for (final r in smallRelics) ...g.craftRecipe(r)!.materials.keys}, droppedMats.toSet());
+  });
+
+  test("a patched recipe is the Smithy's: town.json's numbers", () {
+    // A patch merges into the shipped recipe and its forge change: Fang's two materials at 1 each, a Potion added, and
+    // 50 gold (the forge's gold, the one charged).
+    final g = inTown(gold: 50)
+      ..townRules = TownRules.patch({
+        'recipes': {
+          'fang': {'materials': {'batWing': 1, 'slimeGel': 1}, 'items': {'potion': 1}},
+        },
+        'relics': {
+          'fang': {'forge': {'gold': 50}},
+        },
+      })
+      ..materials.addAll({Mat.batWing: 1, Mat.slimeGel: 1});
+    expect(g.whyNotCraft(Relic.fang)?.text, 'Need 1 Potion');
+    g.inventory[Item.potion] = 1;
+    expect(g.craft(Relic.fang), isTrue);
+    expect((g.materials.isEmpty, g.inventory[Item.potion], g.gold, g.relicBag[Relic.fang]), (true, 0, 0, 1));
+  });
+
+  test('the Crafted event: its fields, the battle log ("Crafted Sweep (700 gold)", "Left town: 2 crafted"), and '
+      "TownLeft's crafts and gold", () {
+    final g = inTown();
+    giveRecipe(g, Relic.cleave);
+    giveRecipe(g, Relic.fang);
+    expect(g.craft(Relic.cleave) && g.craft(Relic.fang), isTrue);
+    final made = g.log.entries.whereType<Crafted>().toList();
+    expect(made.first.toJson(), {
+      'v': eventVersion,
+      'kind': 'crafted',
+      'wave': 0,
+      't': made.first.t,
+      'relic': 'cleave',
+      'materials': {'wolfClaw': 4, 'leatherStrap': 3, 'orcTusk': 2, 'wolfFang': 1},
+      'items': {'sword': 1},
+      'gold': 700,
+    });
+    expect(made.map(logLine), ['Crafted Sweep (700 gold)', 'Crafted Fang (200 gold)']);
+    expect(g.leaveTown(), isTrue);
+    final left = g.log.entries.whereType<TownLeft>().single;
+    expect(left.data['crafts'], {'cleave': 1, 'fang': 1});
+    expect((left.data['craftSpent'], logLine(left)), (900, 'Left town: 2 crafted'));
+    // The next Town starts its own count.
+    g.townAt = 1;
+    expect(g.enterTown() && g.leaveTown(), isTrue);
+    final next = g.log.entries.whereType<TownLeft>().last;
+    expect(next.data['crafts'], isEmpty);
+    expect((next.data['craftSpent'], logLine(next)), (0, 'Left town'));
+  });
+
+  test("telemetry: the crafted event goes out; the next wave's record has crafted, materialsUsed and gold.craftSpent "
+      '(Towns on only)', () {
+    expect(passedOn, contains(EventKind.crafted));
+    final sink = _Kept();
+    final g = inTown();
+    TelemetryAdapter([sink], installId: 'i', session: 's', platform: 'test', now: () => DateTime.utc(2026, 10, 4)).attach(g);
+    giveRecipe(g, Relic.fang, 2);
+    giveRecipe(g, Relic.thorns);
+    expect(g.craft(Relic.fang) && g.craft(Relic.fang) && g.craft(Relic.thorns), isTrue);
+    expect(g.leaveTown(), isTrue);
+    winWave(g);
+    final events = [for (final r in sink.of('event')) r['event'] as Map<String, dynamic>];
+    expect([for (final e in events) if (e['kind'] == 'crafted') (e['relic'], e['gold'])], [('fang', 200), ('fang', 200), ('thorns', 200)]);
+    final left = events.singleWhere((e) => e['kind'] == 'townLeft');
+    expect(left['crafts'], {'fang': 2, 'thorns': 1});
+    expect(left['craftSpent'], 600);
+    final w = sink.of('wave').single;
+    expect((w['wave'], (w['gold'] as Map)['craftSpent']), (1, 600));
+    expect(w['crafted'], {'fang': 2, 'thorns': 1});
+    expect(w['materialsUsed'], {'batWing': 4, 'slimeGel': 7, 'boneShard': 2});
+
+    final quiet = _Kept();
+    final h = Game(Random(1), Random(101));
+    TelemetryAdapter([quiet], installId: 'i', session: 's', platform: 'test', now: () => DateTime.utc(2026, 10, 4)).attach(h);
+    winWave(h);
+    final r = quiet.of('wave').single;
+    expect((r.containsKey('crafted'), r.containsKey('materialsUsed'), (r['gold'] as Map).containsKey('craftSpent')), (false, false, false));
+  });
+
+  group('prices', () {
+    /// A game at wave 15 (the Shop open), the Towns [on], in a Town when they are, with plenty of gold.
+    Game shop({bool on = true}) => on
+        ? inTown(gold: 1000000, wave: storeFrom)
+        : (Game()
+          ..wave = storeFrom
+          ..gold = 1000000);
+
+    test("Towns on: a small relic at its tier price, +20% of it a buy (the forge's Shop sells none, so only a count an "
+        "old save brought moves it); sold back at half its own recipe's gold", () {
+      final g = shop();
+      const tiers = {
+        Relic.fang: (12000, 14400, 150),
+        Relic.thorns: (12000, 14400, 150),
+        Relic.fury: (12000, 14400, 200),
+        Relic.guard: (12000, 14400, 200),
+        Relic.cleave: (20000, 24000, 500),
+        Relic.venom: (20000, 24000, 500),
+        Relic.manaSiphon: (20000, 24000, 500),
+        Relic.spiritWard: (20000, 24000, 500),
+        Relic.lastStand: (32000, 38400, 1500),
+        Relic.giantSlayer: (32000, 38400, 1750),
+        Relic.blessing: (32000, 38400, 1500),
+      };
+      expect(tiers.keys, smallRelics);
+      for (final MapEntry(key: r, value: (base, next, sell)) in tiers.entries) {
+        expect((g.basePrice(r), g.buyPrice(r), g.buyPrice(r, 1), g.sellPrice(r)), (base, base, next, sell), reason: relicNames[r]);
+      }
+      // The forge's Shop has none on its shelf (forge_shop_test.dart); a count bought before it (an old save's) still
+      // raises that kind's price, per kind, and the save keeps it.
+      expect((g.whyNotBuy(Relic.cleave), g.buy(Relic.cleave), g.gold), (StoreRefusal.notSold, false, 1000000));
+      g.storeBought[Relic.cleave] = 2;
+      expect((g.buyPrice(Relic.cleave), g.buyPrice(Relic.venom), g.sellPrice(Relic.cleave)), (28000, 20000, 500));
+      final back = Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>)..towns = true;
+      expect((back.storeBought[Relic.cleave], back.buyPrice(Relic.cleave)), (2, 28000));
+      g.relicBag[Relic.cleave] = 2;
+      expect(g.sell(Relic.cleave, 2), 2);
+      expect(g.gold, 1000000 + 1000);
+      // The items: town.json's shop block, today's numbers; the Artifacts as today.
+      expect((g.buyPrice(Item.sword), g.buyPrice(Item.sword, 1), g.sellPrice(Item.sword)), (2000, 2200, 1000));
+      expect((g.buyPrice(Relic.grail), g.sellPrice(Relic.grail), g.sellPrice(Relic.ironBanner)), (24000, 12000, 8000));
+    });
+
+    test("Towns on: town.json's numbers (a patched tier, recipe and shop)", () {
+      final g = shop()
+        ..townRules = TownRules.patch({
+          'tiers': {'basic': {'shop': 10000, 'shopRise': 0.5, 'sellShare': 0.25}},
+          'recipes': {'fang': {'gold': 800}},
+          'shop': {'itemPrice': 3000, 'itemRise': 300, 'itemSellShare': 0.4},
+        });
+      expect((g.buyPrice(Relic.fang), g.buyPrice(Relic.fang, 2), g.sellPrice(Relic.fang), g.sellPrice(Relic.fury)), (10000, 20000, 200, 100));
+      expect((g.buyPrice(Item.potion), g.buyPrice(Item.potion, 1), g.sellPrice(Item.potion)), (3000, 3300, 1200));
+    });
+
+    test("Towns off: today's prices, the Smithy's seven (never sold then) at the small relics' too", () {
+      final g = shop(on: false);
+      for (final r in smallRelics) {
+        expect((g.basePrice(r), g.buyPrice(r), g.buyPrice(r, 1), g.sellPrice(r)), (8000, 8000, 9600, 4000), reason: relicNames[r]);
+      }
+      expect((g.buyPrice(Item.sword), g.buyPrice(Item.sword, 1), g.sellPrice(Item.sword)), (2000, 2200, 1000));
+      // A patched town.json moves nothing with the Towns off.
+      g.townRules = TownRules.patch({'tiers': {'basic': {'shop': 1}}, 'shop': {'itemPrice': 1}});
+      expect((g.buyPrice(Relic.fang), g.sellPrice(Relic.fang), g.buyPrice(Item.sword)), (8000, 4000, 2000));
+    });
+  });
+
+  group("Asah's take", () {
+    test('Towns on: the cheapest first by craft gold, the most held first among one price; a dearer one only once the '
+        'cheaper are gone', () {
+      final g = Game()..towns = true;
+      g.relicBag.addAll({Relic.fang: 3, Relic.thorns: 5, Relic.fury: 4, Relic.cleave: 5, Relic.lastStand: 2, Relic.giantSlayer: 1});
+      expect(g.asahRelicsInBag, 20);
+      expect(g.asahTake, {Relic.thorns: 5, Relic.fang: 3, Relic.fury: 2});
+      expect(g.asahTake.keys, [Relic.thorns, Relic.fang, Relic.fury], reason: 'the order taken');
+      g.relicBag
+        ..clear()
+        ..addAll({Relic.giantSlayer: 20, Relic.guard: 1, Relic.venom: 2});
+      expect(g.asahTake, {Relic.guard: 1, Relic.venom: 2, Relic.giantSlayer: 7});
+      g.relicBag
+        ..clear()
+        ..addAll({Relic.cleave: 1, Relic.venom: 1, Relic.lastStand: 5, Relic.blessing: 5, Relic.giantSlayer: 5});
+      expect(g.asahTake, {Relic.cleave: 1, Relic.venom: 1, Relic.lastStand: 4, Relic.blessing: 4},
+          reason: 'Iron Will and Holy Charm (3,000) before Giant Slayer (3,500), evenly');
+      g.relicBag
+        ..clear()
+        ..addAll({Relic.spiritWard: 3, Relic.manaSiphon: 2});
+      expect(g.asahRelicsInBag, 5);
+      expect(g.asahTake, {Relic.spiritWard: 3, Relic.manaSiphon: 2});
+    });
+
+    test("Towns on: a Sharpen takes them from the Bag; the Smithy's seven count toward its 10", () {
+      final g = Game()
+        ..towns = true
+        ..gold = 60000;
+      g.pusaka[Relic.grail] = OwnedPusaka();
+      g.relicBag.addAll({Relic.cleave: 4, Relic.blessing: 6, Relic.fang: 1});
+      expect((g.asahRelicsInBag, g.whyNotAsah(Relic.grail)), (11, null));
+      expect(g.asah(Relic.grail), isTrue);
+      expect((g.relicBag[Relic.fang], g.relicBag[Relic.cleave], g.relicBag[Relic.blessing], g.pusaka[Relic.grail]!.stars), (0, 0, 1, 2));
+      expect(g.log.entries.whereType<PusakaAsah>().single.relics, {Relic.fang: 1, Relic.cleave: 4, Relic.blessing: 5});
+    });
+
+    test("Towns off: today's rule over the four (the most held first); the seven, never there then, aren't counted", () {
+      final g = Game();
+      g.relicBag.addAll({Relic.fang: 17, Relic.thorns: 29, Relic.fury: 23, Relic.guard: 21, Relic.cleave: 50});
+      expect(g.asahRelicsInBag, 90);
+      expect(g.asahTake, {Relic.thorns: 8, Relic.fury: 2});
+      g.relicBag
+        ..clear()
+        ..addAll({Relic.guard: 1, Relic.cleave: 50});
+      expect(g.asahRelicsInBag, 1);
+      expect(g.asahTake, {Relic.guard: 1});
+    });
+  });
+
+  group("the Smithy page's words (decisions-log 235)", () {
+    test('who each material comes from: its monster, the Necromancer for the Lich Orb, a Trophy\'s rank', () {
+      final g = inTown();
+      expect([g.matFrom(Mat.slimeGel), g.matFrom(Mat.wolfClaw), g.matFrom(Mat.wargFang), g.matFrom(Mat.tealCloth), g.matFrom(Mat.darkGem)],
+          ['Slime', 'Werewolf', 'Orc Rider', 'Necro Healer', 'Necromancer']);
+      expect([g.matFrom(Mat.evilEye), g.matFrom(Mat.soulOrb), g.matFrom(Mat.lichOrb)], ['Mini Boss', 'Boss', 'Necromancer']);
+      for (final m in droppedMats) {
+        expect(g.matFrom(m), isNotEmpty, reason: '$m');
+      }
+    });
+
+    test('an item a fielded type still needs for its next Awaken: which type, how many more, which Awaken', () {
+      // The rule from before the forge (its recipe once more a level), kept with the Towns off (tests only; with them
+      // on by grade: forge_awaken_test.dart).
+      final g = Game(Random(1), Random(101))
+        ..armyMax = null
+        ..gold = 10000;
+      expect(g.craftItemNeed(Item.sword), isNull, reason: 'no troop');
+      expect(g.autoPlace('knight'), isTrue);
+      for (final u in g.troops) {
+        if (u.type != 'knight') u.gone = true; // the knights alone
+      }
+      expect(g.craftItemNeed(Item.sword), (type: 'knight', need: 3, level: 1));
+      expect(g.craftItemNeed(Item.staff), isNull, reason: "not in the knight's recipe");
+      // Awakened once (its recipe once over) and two swords more: one short of Awaken 2.
+      g.upgrades['knight'] = [
+        for (final MapEntry(key: i, value: n) in g.recipeOf('knight').entries) ...List.filled(n, i),
+        Item.sword,
+        Item.sword,
+      ];
+      expect(g.craftItemNeed(Item.sword), (type: 'knight', need: 1, level: 2));
+      g.upgrades['knight'] = [...g.upgrades['knight']!, Item.sword];
+      expect(g.craftItemNeed(Item.sword), isNull, reason: 'enough for Awaken 2');
+      // At the items' top Awaken it needs none; a type with none alive needs none.
+      g.upgrades['knight'] = [
+        for (final MapEntry(key: i, value: n) in g.recipeOf('knight').entries) ...List.filled(n * maxAwaken, i),
+      ];
+      expect(g.craftItemNeed(Item.shield), isNull);
+      g.upgrades.remove('knight');
+      for (final u in g.troops) {
+        u.gone = true;
+      }
+      expect(g.troops.any((u) => u.alive), isFalse);
+      expect(g.craftItemNeed(Item.sword), isNull);
+    });
+  });
+}

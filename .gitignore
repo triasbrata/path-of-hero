@@ -1,0 +1,108 @@
+# Asset packs as downloaded (licensed, big) and what tool/export_aseprite.py generates from them.
+/raw_assets/
+/sprites/
+# The owner's art packs, unpacked as they came (docs/assets.md "Asset packs"): no file of a pack is tracked, images and
+# source art (png, gif, aseprite, psd, zip...) included; only this folder's README.md is. Their metadata is
+# tool/asset_packs/.
+/raw_sprites/*
+!/raw_sprites/README.md
+# The asset vault (docs/assets.md "The asset vault"): plain pack files are never tracked (above); their encrypted
+# vaults in assets-vault/ are, and only tool/asset_vault.py's half-written parts are not.
+/assets-vault/*.tmp
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Widget Preview related
+.widget_preview/
+
+# The itch page GIF's frames: intermediate output of test/probe_itch_shots.dart (docs/itch-page.md)
+/marketing/itch/gif/
+
+# scripts/release-build.sh's staged builds, for butler (docs/itch-page.md "Pushing builds")
+/dist/
+
+# The licensed art (docs/assets.md "The asset vault"): only its encrypted vaults are tracked;
+# tool/asset_vault.py unpacks them (the key), or tool/gen_placeholders.py draws placeholders.
+/assets/images/tiny_arrow_*.png
+/assets/images/tiny_fx_*.png
+/assets/images/tiny_*_shadow.png
+/assets/images/tiny_*.png
+/assets/images/fx_*.png
+/assets/images/ui_*.png
+/assets/images/battle_floor.png
+/assets/images/battle_props.png
+/assets/images/battle_clouds.png
+/assets/images/battle_step.png
+/assets/images/item_*.png
+/assets/images/relic_*.png
+/assets/images/artifact_icons.png
+/assets/images/town_mark.png
+/assets/images/town_mug.png
+/assets/images/mat_*.png
+/assets/images/town_bg_*.png
+/assets/images/town_castle.png
+/assets/images/town_ground.png
+/assets/images/town_house.png
+/assets/images/town_smithy.png
+/assets/images/town_campfire.png
+/assets/images/town_tent.png
+/assets/images/town_ore.png
+/assets/images/town_pine.png
+/assets/images/town_props.png
+/assets/images/town_smith.png
+/assets/.placeholders
+# The platform app icons: a pack derivative, in the vault too.
+/android/app/src/main/res/mipmap-*/ic_launcher*.png
+/linux/runner/resources/app_icon.png
+/macos/Runner/Assets.xcassets/AppIcon.appiconset/*.png
+/web/favicon.png
+/web/icons/*.png
+/windows/runner/resources/app_icon.ico
+# The maintainers' private notes, checked out here (docs/process.md), and the agents' local settings.
+/private/
+/.claude/
+.envrc

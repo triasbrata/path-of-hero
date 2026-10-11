@@ -1,0 +1,31 @@
+# What tool/gen_placeholders.py writes: the licensed files, one line per "licensed" pattern of
+# tool/asset_manifest.json (test/asset_manifest_test.dart checks they agree). Written by tool/asset_manifest.py from its
+# LICENSED. The public export appends these lines to the PUBLIC repo's .gitignore, never to this private repo's, whose
+# assets/ are the real art (docs/assets.md "Placeholder art").
+/assets/images/tiny_arrow_*.png
+/assets/images/tiny_fx_*.png
+/assets/images/tiny_*_shadow.png
+/assets/images/tiny_*.png
+/assets/images/fx_*.png
+/assets/images/ui_*.png
+/assets/images/battle_floor.png
+/assets/images/battle_props.png
+/assets/images/battle_clouds.png
+/assets/images/battle_step.png
+/assets/images/item_*.png
+/assets/images/relic_*.png
+/assets/images/artifact_icons.png
+/assets/images/town_mark.png
+/assets/images/town_mug.png
+/assets/images/mat_*.png
+/assets/images/town_bg_*.png
+/assets/images/town_castle.png
+/assets/images/town_ground.png
+/assets/images/town_house.png
+/assets/images/town_smithy.png
+/assets/images/town_campfire.png
+/assets/images/town_tent.png
+/assets/images/town_ore.png
+/assets/images/town_pine.png
+/assets/images/town_props.png
+/assets/images/town_smith.png

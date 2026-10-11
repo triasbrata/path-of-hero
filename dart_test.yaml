@@ -1,0 +1,5 @@
+# Test tags (docs/testing.md "Placeholder art").
+tags:
+  # Needs the real art under assets/ (the bought packs): a clone of the public repo, which has placeholders in its
+  # place (tool/gen_placeholders.py), runs `flutter test -x art`.
+  art:

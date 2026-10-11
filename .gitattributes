@@ -1,0 +1,9 @@
+# decisions-log.md merges entry by entry (scripts/merge-decisions.py; docs/sdlc.md "The decisions log"). A clone
+# without `git config merge.decisions.driver` falls back to the normal text merge.
+docs/decisions-log.md merge=decisions
+
+# Shell scripts keep LF everywhere, so bash can run them from a Windows checkout too (the release workflow's Windows
+# job runs scripts/release-build.sh check in Git Bash).
+*.sh text eol=lf
+# The asset vault's parts are ciphertext (docs/assets.md "The asset vault"): never a line-ending conversion or a diff.
+assets-vault/** binary

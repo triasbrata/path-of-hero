@@ -1,0 +1,18 @@
+// Application-level settings for the Runner target.
+//
+// This may be replaced with something auto-generated from metadata (e.g., pubspec.yaml) in the
+// future. If not, the values below would default to using the project name when this becomes a
+// 'flutter create' template.
+
+// The application's name. By default this is also the title of the Flutter window. It stays tower_defense
+// (decisions-log 133): the executable and the process keep that name, which the agents' liveness check
+// (`pgrep -x tower_defense`) relies on. The player sees CFBundleName/CFBundleDisplayName (Info.plist), and the
+// release's folder is renamed to "Path of Hero.app" when it is packed (docs/itch-page.md).
+PRODUCT_NAME = tower_defense
+
+// The application's bundle identifier (decisions-log 133). The App Sandbox keeps the app's files in
+// ~/Library/Containers/<this id>, so changing it moves the save (dev-workflow.md).
+PRODUCT_BUNDLE_IDENTIFIER = cloud.brata.poh
+
+// The copyright displayed in application information
+PRODUCT_COPYRIGHT = Copyright © 2026 brata.cloud. All rights reserved.
