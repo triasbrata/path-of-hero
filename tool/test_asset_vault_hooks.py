@@ -12,7 +12,8 @@ vaults tracked. Throwaway keys and a HOME of its own: it never reads the owner's
 - a file that left its vault is deleted in a linked worktree but only listed in the main checkout, until prune;
 - pre-push: only main and v* tags of the public history reach the public remote; that history goes nowhere else
   unless POH_PUSH_PUBLIC_HISTORY=1; the privacy check runs on what goes public, files and commit messages;
-- a tree without tool/asset_vault.py (the private notes, an old history): every hook does nothing there, quietly.
+- a tree without tool/asset_vault.py (the private notes, an old history): every hook does nothing there, quietly,
+  but pre-push, which refuses the push (its guard can't run there).
 Stdlib, git and openssl:  python3 tool/test_asset_vault_hooks.py
 """
 import hashlib
@@ -309,10 +310,11 @@ class Hooks(unittest.TestCase):
         s.git(a, "commit", "-q", "--amend", "-m", "the tablet's address stays in the private notes")
         s.git(a, "push", "-q", "public", "main")
 
-    def test_a_tree_without_the_tool_skips_the_hooks(self):
+    def test_a_tree_without_the_tool_skips_the_hooks_but_refuses_a_push(self):
         """A branch with no tool/asset_vault.py (the private notes, an old history) checked out from a clone with the
         hooks on: `git worktree add` runs the clone's post-checkout in the new tree, and git returns its exit status.
-        The branch carries the hooks, so its commit, checkout, merge and push run them in that tree too."""
+        The branch carries the hooks, so its commit, checkout, merge and push run them in that tree too: all but
+        pre-push skip quietly; pre-push refuses, since the public-history guard can't run there."""
         s = self.s
         seed = s.tmp / "notes-seed"
         seed.mkdir()
@@ -337,9 +339,16 @@ class Hooks(unittest.TestCase):
         self.assertEqual(s.git(wt, "commit", "-qm", "side"), "")
         self.assertEqual(s.git(wt, "checkout", "-q", "notes"), "")
         self.assertEqual(s.git(wt, "merge", "-q", "side"), "")
-        self.assertEqual(s.git(wt, "push", "-q", "origin", "notes"), "")
         self.assertFalse(synced.exists(), "still no state file")
         self.assertEqual(s.art_of(a), s.art, "the clone's own art is untouched")
+        # pre-push alone fails closed: without the tool the public-history guard can't run there.
+        pushed = s.git(self.bare, "rev-parse", "notes")
+        out = s.git(wt, "push", "-q", "origin", "notes", ok=False)
+        self.assertEqual(out.splitlines()[0],
+                         "pre-push: no tool/asset_vault.py in this tree; the public-history guard can't run")
+        self.assertEqual(s.git(self.bare, "rev-parse", "notes"), pushed, "nothing pushed")
+        s.git(a, "push", "-q", "origin", "notes")  # from a checkout that has it
+        self.assertEqual(s.git(wt, "rev-parse", "notes"), s.git(self.bare, "rev-parse", "notes"))
 
 
 if __name__ == "__main__":

@@ -551,8 +551,8 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
       it (2026-09-28, about 02:00): the reports, the signal files and the queue's history.
     - Now `<agents>/` holds `reports/`, `testq/` (its `PROTOCOL.md` owned by the test-runner)
       and `logs/` (`dev-macos.log`, which the run command wrote to its own `$CLAUDE_JOB_DIR/tmp` before).
-      A `README.md` there lists them. The old `an old session's job folder/{reports,testq}` are symlinks to it, for
-      compatibility only.
+      A `README.md` there lists them. An old session's job folder keeps `reports/` and `testq/` as symlinks to it,
+      for compatibility only.
     - The rule: anything another session or a later run needs goes under `~/.cache/`. A job dir is only
       for a session's own scratch files.
 72. **Monsters grow twice as fast from wave 16** (issue #36, the owner's pick of the probe's
@@ -2089,7 +2089,9 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      - The password stays in the owner's file and is copied nowhere: keytool got it with `-storepass:file` /
        `-keypass:file`, `key.properties` names the file (`storePasswordFile`), and Gradle reads its first line at
        build time. No agent has seen the value.
-     - Gradle finds `key.properties` through `ANDROID_KEY_PROPERTIES` (default the signing `key.properties` (`git config poh.androidKeyProperties`)).
+     - Gradle finds `key.properties` through `ANDROID_KEY_PROPERTIES` (by default the owner's signing
+       `key.properties`; since 315 `android/key.properties`, and release-build.sh sets the variable from
+       `git config poh.androidKeyProperties`).
        Without one (CI, other machines) the release build falls back to the debug key with a warning, so nobody's
        build breaks. With one that doesn't work, release packaging fails instead of quietly signing with the debug key,
        because an APK published with the wrong key can't be updated by the right one.
@@ -2929,7 +2931,8 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        sentence stays and is the only allowed hit; (2) code comments keep their `#NN` and decisions-log references and
        the owner's quotes, and only the docs are sanitised, while the personal-data and secret scans cover code too;
        (3) nothing from `scripts/` goes public; (4) `test/probe_*.dart` stays out. android/app/build.gradle.kts's
-       default the signing `key.properties` (`git config poh.androidKeyProperties`) path is allowed.
+       default path to the signing `key.properties` is allowed (since 315 a clone names it with
+       `git config poh.androidKeyProperties`).
      - **Found by check 9:** draft_hud_test.dart's card-frame test reads the real art's colours, so it now has the
        `art` tag (testing.md "Placeholder art").
 161. **The army cap's warning: while the army is full at 32 and the tide is on, the game says so every 5 waves**
@@ -6824,10 +6827,10 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        PixelRPGCursors Lite from raw_assets/ too ("semua asset dari komputer").
      - Sizes on throwaway keys: game ~4.4 MB, packs ~13 MB (Kenmi's 20,974 files 27.6 MB of tar → 9.5 MB), ~17 MB of
        ciphertext; the JSON ~4.7 MB.
-     - **The key**: the owner's the vault key's file (`git config poh.vaultKeyFile`) (`openssl rand -base64 32`, mode 600), told only to
-       members; CI's secret `POH_VAULT_KEY`, the same value. openssl reads it (`-pass file:` / `-pass env:`); the tool
-       never reads, prints or puts it on a command line, refuses a key file open to group or others ("run chmod 600"),
-       an empty one or one in the repo. dev-workflow.md "The asset vault's key" (backup, a new key).
+     - **The key**: the owner's key file (`openssl rand -base64 32`, mode 600; since 315 a clone names its path with
+       `git config poh.vaultKeyFile`), told only to members; CI's secret `POH_VAULT_KEY`, the same value. openssl
+       reads it (`-pass file:` / `-pass env:`); the tool never reads, prints or puts it on a command line, refuses a
+       key file open to group or others ("run chmod 600"), an empty one or one in the repo. dev-workflow.md "The asset vault's key" (backup, a new key).
      - **Checks**: `scripts/release-build.sh check` runs `asset_vault.py check` (every needed file at its path with its
        sha256, every licensed file and every file under a game vault's patterns in its vault, every part whole), so
        the release checks fail while the vault is older than the art: a job that adds or changes a licensed file runs
@@ -6859,8 +6862,8 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        failures that 3 runs after it didn't repeat), EXPORT OK off and on; a throwaway pack of the game group at the
        merged head: 281 files (247 licensed + 34 icons), check names `battle_floor.png` once deleted, unpack restores it.
        The orchestrator keeps the no-placeholder CI default.
-     - **Packed** (2026-10-04, by vault-pack, main f17b543; the owner's key file the vault key's file (`git config poh.vaultKeyFile`) handed to
-       the tool by its path only, its mode 600 checked with `[ -f ]` and `stat`, never read):
+     - **Packed** (2026-10-04, by vault-pack, main f17b543; the owner's key file handed to the tool by its path
+       only, its mode 600 checked with `[ -f ]` and `stat`, never read):
        `python3 tool/asset_vault.py pack`, all 11 vaults (12 when the tool was built; `game-backdrops` went with the
        Valley art, 234), 21,729 files, 15,005,904 bytes of ciphertext in 11 single parts (the game group 1,455,424
        bytes for 277 files; the Kenmi pack 10,010,000), `tool/asset_vault.json` 4,888 → 4,690,506 bytes; about 16.1 MB
@@ -11125,26 +11128,37 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        wizard_fx_test's attack 2 glow read the packs' own bytes.
      - **Not done here** (the owner's and the orchestrator's, at a time the owner picks: reports/public-repo.md "The
        switch-over"): no push, no GitHub change, no history rewritten, no key read, nothing untracked in the main
-       checkout. Merging this branch needs `git config poh.vaultKeyFile the vault key's file (`git config poh.vaultKeyFile`) and `git config
-       poh.androidKeyProperties the signing `key.properties` (`git config poh.androidKeyProperties`) in the clone first (the tools' defaults no longer name
-       them).
-316. **The git hooks do nothing in a tree without `tool/asset_vault.py`** (found after 315, checking out the private
-     notes: `git worktree add private private` printed "can't open file …/private/tool/asset_vault.py" and exited 1).
-     By hooks-fix.
+       checkout. Merging this branch needs `git config poh.vaultKeyFile <the vault key's file>` and
+       `git config poh.androidKeyProperties <the signing key.properties>` in the clone first (the tools' defaults no
+       longer name them).
+316. **The git hooks do nothing in a tree without `tool/asset_vault.py`, but pre-push refuses the push there** (found
+     after 315, checking out the private notes: `git worktree add private private` printed "can't open file
+     …/private/tool/asset_vault.py" and exited 1). By hooks-fix.
      - **Why it failed:** `core.hooksPath` is `.githooks`, relative, so `git worktree add` finds the post-checkout
        hook in the clone it is started from but runs it in the new tree, which for the private notes or a branch of
        the old history has no tool. `git worktree add` exits with that hook's status, so a script under `set -e`
        stopped there.
-     - **Now** every hook in `.githooks/` starts with `[ -f tool/asset_vault.py ] || exit 0`: such a tree has no art
-       and no vaults to keep in step. Nothing changes in a tree that has the tool. The skip loosens no check that ran
-       before: a command run inside a tree without `.githooks/` (the private notes) finds no hook at all, and no
-       branch carries `.githooks/` without the tool (the hooks came after it), so in practice only the clone's
-       post-checkout that `git worktree add` runs in the new tree is affected.
+     - **Now** pre-commit, commit-msg, post-checkout and post-merge start with `[ -f tool/asset_vault.py ] || exit 0`:
+       such a tree has no art and no vaults to keep in step. Nothing changes in a tree that has the tool. A command
+       run inside a tree without `.githooks/` (the private notes) finds no hook at all, and no branch carries
+       `.githooks/` without the tool (the hooks came after it), so in practice only the clone's post-checkout that
+       `git worktree add` runs in the new tree is affected.
+     - **pre-push fails closed** (on review: a skip there would let a push from such a tree past the public-history
+       guard, where before the change it failed): without the tool it prints "pre-push: no tool/asset_vault.py in
+       this tree; the public-history guard can't run" and exits 1. Push from a checkout that has the tool; the refs
+       are the same.
      - **Tested** in tool/test_asset_vault_hooks.py (testing.md "The asset vault's git side"): a branch without the
        tool, carrying the hooks, is checked out with `git worktree add` from a clone with the hooks on, then committed,
-       switched, merged and pushed: each exits 0 and prints nothing, no state file, no art. Without the change the
-       `git worktree add` fails with the same "can't open file" error.
+       switched and merged: each exits 0 and prints nothing, no state file, no art. Its push is refused with that
+       line and moves nothing; the clone pushes the same branch. Without the change the `git worktree add` fails
+       with the same "can't open file" error.
      - **The release allowlist has two copies** (from 315): `ALLOWED_ASSETS` in scripts/release-build.sh and the
        private notes' itch-page.md "What a build ships", compared by scripts/test-release-build.sh where `private/`
        is checked out. assets.md "Adding an image" now says a shipped file needs its line in both. The two agreed on
        2026-10-11 (31 lines each).
+     - **The switch's scrub broke a few code spans** (315's `SCRUB` puts words in place of a path, taking a backtick
+       with it when the path ends a code span, and two of its words carry backticks of their own): six passages,
+       now plain sentences: 71 (the old job folder's symlinks), 132 and 160 (the signing `key.properties`), 232
+       twice (the vault key's file) and 315's last bullet (the two `git config` lines). Found by pairing every
+       list item's and paragraph's backticks in order, in every tracked `.md` file and Dart comment, and looking
+       for a scrub word inside a code span; the owner's quotes keep the scrub's words.

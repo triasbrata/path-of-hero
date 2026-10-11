@@ -172,8 +172,10 @@ repository. Without the key, `tool/gen_placeholders.py` draws placeholders ([Pla
     of its files and of the messages of the commits the remote doesn't have yet; that history goes to no other remote
     unless `POH_PUSH_PUBLIC_HISTORY=1`.
   - **A tree without `tool/asset_vault.py`** (the private notes checked out as `private/`, a branch of the old
-    history): every hook exits 0 at once, quietly. `git worktree add` runs the clone's post-checkout in the new tree
-    and exits with its status, so before this a checkout of such a branch failed.
+    history): every hook exits 0 at once, quietly, but pre-push. `git worktree add` runs the clone's post-checkout in
+    the new tree and exits with its status, so before this a checkout of such a branch failed. **pre-push** fails
+    closed there instead ("pre-push: no tool/asset_vault.py in this tree; the public-history guard can't run"): push
+    from a checkout that has the tool. (A tree without `.githooks/`, like the private notes, runs no hook at all.)
 - **A copy without git** (`git archive <commit> | tar -x -C <dir>`): no hooks and no art; `python3
   tool/asset_vault.py unpack --only game --key-file <key file>` in it puts that commit's art there, every file checked
   against that commit's JSON.

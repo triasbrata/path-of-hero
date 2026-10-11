@@ -1,5 +1,6 @@
 #!/bin/sh
 # Only the public history reaches the public repository, and only its main and v* tags (tool/asset_vault.py).
-# A checkout without the tool (the private notes, checked out as private/) has nothing for these hooks.
-[ -f tool/asset_vault.py ] || exit 0
-exec python3 tool/asset_vault.py hook pre-push "$1" "$2"
+# A checkout without the tool can't run that guard, so its push is refused: push from a checkout that has it.
+[ -f tool/asset_vault.py ] && exec python3 tool/asset_vault.py hook pre-push "$1" "$2"
+echo "pre-push: no tool/asset_vault.py in this tree; the public-history guard can't run" >&2
+exit 1

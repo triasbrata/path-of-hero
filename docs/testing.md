@@ -252,8 +252,9 @@ vaults tracked, the `.githooks`, throwaway keys named by `git config poh.vaultKe
   planted IP address, in a file and in a commit message (the commit-msg hook; and a commit made past it, with
   `--no-verify`, is refused on the way out until it is reworded);
 - a branch without `tool/asset_vault.py` (like the private notes; decisions-log 316), here carrying the hooks so each
-  one runs in it: its `git worktree add` from the clone, a commit, a checkout, a merge and a push all exit 0 and print
-  nothing, and no state file or art appears there.
+  one runs in it: its `git worktree add` from the clone, a commit, a checkout and a merge all exit 0 and print
+  nothing, and no state file or art appears there; its push is refused with pre-push's one line and moves nothing,
+  and the same branch pushed from the clone goes.
 
 ## The privacy check: `python3 tool/test_privacy_check.py` (decisions-log 315)
 
