@@ -11,7 +11,8 @@ vaults tracked. Throwaway keys and a HOME of its own: it never reads the owner's
 - placeholders are never packed; a licensed file forced past .gitignore is refused;
 - a file that left its vault is deleted in a linked worktree but only listed in the main checkout, until prune;
 - pre-push: only main and v* tags of the public history reach the public remote; that history goes nowhere else
-  unless POH_PUSH_PUBLIC_HISTORY=1; the privacy check runs on what goes public, files and commit messages.
+  unless POH_PUSH_PUBLIC_HISTORY=1; the privacy check runs on what goes public, files and commit messages;
+- a tree without tool/asset_vault.py (the private notes, an old history): every hook does nothing there, quietly.
 Stdlib, git and openssl:  python3 tool/test_asset_vault_hooks.py
 """
 import hashlib
@@ -307,6 +308,38 @@ class Hooks(unittest.TestCase):
         self.assertEqual(s.git(a, "log", "--format=%s", "-1", "public/main").strip(), "more")
         s.git(a, "commit", "-q", "--amend", "-m", "the tablet's address stays in the private notes")
         s.git(a, "push", "-q", "public", "main")
+
+    def test_a_tree_without_the_tool_skips_the_hooks(self):
+        """A branch with no tool/asset_vault.py (the private notes, an old history) checked out from a clone with the
+        hooks on: `git worktree add` runs the clone's post-checkout in the new tree, and git returns its exit status.
+        The branch carries the hooks, so its commit, checkout, merge and push run them in that tree too."""
+        s = self.s
+        seed = s.tmp / "notes-seed"
+        seed.mkdir()
+        shutil.copytree(HERE.parent / ".githooks", seed / ".githooks")
+        (seed / "notes.md").write_text("notes\n")
+        s.git(seed, "init", "-q")
+        s.git(seed, "add", "-A")
+        s.git(seed, "commit", "-qm", "notes")
+        s.git(seed, "push", "-q", str(self.bare), "main:notes")
+        a = s.clone(self.bare, "a")
+        wt = s.tmp / "notes"
+        s.git(a, "fetch", "-q", "origin", "notes:notes")
+        self.assertEqual(s.git(a, "worktree", "add", "-q", str(wt), "notes"), "")
+        synced = wt / s.git(wt, "rev-parse", "--git-path", "asset_vault.synced").strip()
+        self.assertFalse(synced.exists(), "no state file")
+        self.assertFalse((wt / "assets").exists(), "no art")
+        (wt / "notes.md").write_text("more notes\n")
+        self.assertEqual(s.git(wt, "commit", "-qam", "more notes"), "")
+        self.assertEqual(s.git(wt, "checkout", "-q", "-b", "side"), "")
+        (wt / "side.md").write_text("side\n")
+        s.git(wt, "add", "side.md")
+        self.assertEqual(s.git(wt, "commit", "-qm", "side"), "")
+        self.assertEqual(s.git(wt, "checkout", "-q", "notes"), "")
+        self.assertEqual(s.git(wt, "merge", "-q", "side"), "")
+        self.assertEqual(s.git(wt, "push", "-q", "origin", "notes"), "")
+        self.assertFalse(synced.exists(), "still no state file")
+        self.assertEqual(s.art_of(a), s.art, "the clone's own art is untouched")
 
 
 if __name__ == "__main__":

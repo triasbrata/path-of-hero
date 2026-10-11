@@ -232,7 +232,7 @@ file without the Towns prints no Town line (telemetry.md "Reading it").
 
 ## The asset vault's git side: `python3 tool/test_asset_vault_hooks.py` (decisions-log 315)
 
-Stdlib, git and openssl, ~75 s, no flutter. Scratch clones of a tiny public-layout repo (the art git-ignored, two game
+Stdlib, git and openssl, ~2 min, no flutter. Scratch clones of a tiny public-layout repo (the art git-ignored, two game
 vaults tracked, the `.githooks`, throwaway keys named by `git config poh.vaultKeyFile`, a HOME of its own):
 - a clone with the key gets the art from the vaults (`sync`), byte for byte; so do a second checkout of the clone
   (post-checkout) and a `git archive` copy (`unpack --only game --key-file`); without the key,
@@ -250,7 +250,10 @@ vaults tracked, the `.githooks`, throwaway keys named by `git config poh.vaultKe
 - pre-push: only `main` and `v*` tags of the public history reach the remote `public`, another history is refused
   there, the public history goes to `origin` only with `POH_PUSH_PUBLIC_HISTORY=1`, and the privacy check refuses a
   planted IP address, in a file and in a commit message (the commit-msg hook; and a commit made past it, with
-  `--no-verify`, is refused on the way out until it is reworded).
+  `--no-verify`, is refused on the way out until it is reworded);
+- a branch without `tool/asset_vault.py` (like the private notes; decisions-log 316), here carrying the hooks so each
+  one runs in it: its `git worktree add` from the clone, a commit, a checkout, a merge and a push all exit 0 and print
+  nothing, and no state file or art appears there.
 
 ## The privacy check: `python3 tool/test_privacy_check.py` (decisions-log 315)
 

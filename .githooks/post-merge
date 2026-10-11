@@ -1,3 +1,5 @@
 #!/bin/sh
 # A merge or pull brought other vaults? Unpack the unedited ones (tool/asset_vault.py sync).
+# A checkout without the tool (the private notes, checked out as private/) has nothing for these hooks.
+[ -f tool/asset_vault.py ] || exit 0
 exec python3 tool/asset_vault.py hook post-update

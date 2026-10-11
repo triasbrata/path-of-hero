@@ -11128,3 +11128,23 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        checkout. Merging this branch needs `git config poh.vaultKeyFile the vault key's file (`git config poh.vaultKeyFile`) and `git config
        poh.androidKeyProperties the signing `key.properties` (`git config poh.androidKeyProperties`) in the clone first (the tools' defaults no longer name
        them).
+316. **The git hooks do nothing in a tree without `tool/asset_vault.py`** (found after 315, checking out the private
+     notes: `git worktree add private private` printed "can't open file …/private/tool/asset_vault.py" and exited 1).
+     By hooks-fix.
+     - **Why it failed:** `core.hooksPath` is `.githooks`, relative, so `git worktree add` finds the post-checkout
+       hook in the clone it is started from but runs it in the new tree, which for the private notes or a branch of
+       the old history has no tool. `git worktree add` exits with that hook's status, so a script under `set -e`
+       stopped there.
+     - **Now** every hook in `.githooks/` starts with `[ -f tool/asset_vault.py ] || exit 0`: such a tree has no art
+       and no vaults to keep in step. Nothing changes in a tree that has the tool. The skip loosens no check that ran
+       before: a command run inside a tree without `.githooks/` (the private notes) finds no hook at all, and no
+       branch carries `.githooks/` without the tool (the hooks came after it), so in practice only the clone's
+       post-checkout that `git worktree add` runs in the new tree is affected.
+     - **Tested** in tool/test_asset_vault_hooks.py (testing.md "The asset vault's git side"): a branch without the
+       tool, carrying the hooks, is checked out with `git worktree add` from a clone with the hooks on, then committed,
+       switched, merged and pushed: each exits 0 and prints nothing, no state file, no art. Without the change the
+       `git worktree add` fails with the same "can't open file" error.
+     - **The release allowlist has two copies** (from 315): `ALLOWED_ASSETS` in scripts/release-build.sh and the
+       private notes' itch-page.md "What a build ships", compared by scripts/test-release-build.sh where `private/`
+       is checked out. assets.md "Adding an image" now says a shipped file needs its line in both. The two agreed on
+       2026-10-11 (31 lines each).

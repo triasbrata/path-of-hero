@@ -126,6 +126,10 @@ The background is our own drawing.
 2. Add it to the list in `TdGame.onLoad`.
 3. `touch lib/game.dart` to force a hot restart (dev-workflow.md). Never delete asset files while the
    session runs.
+4. A file a build ships needs its line on the release allowlist in both places: `ALLOWED_ASSETS` in
+   `scripts/release-build.sh` (`scripts/release-build.sh check` refuses a file under `assets/` that no line takes) and
+   the private notes' itch-page.md "What a build ships". `scripts/test-release-build.sh` compares the two where the
+   private notes are checked out as `private/`, and skips that check where they aren't.
 
 ## The asset vault
 
@@ -167,6 +171,9 @@ repository. Without the key, `tool/gen_placeholders.py` draws placeholders ([Pla
     `public`, or `git config poh.publicUrl`) takes only `main` and `v*` tags of that history, after the privacy check
     of its files and of the messages of the commits the remote doesn't have yet; that history goes to no other remote
     unless `POH_PUSH_PUBLIC_HISTORY=1`.
+  - **A tree without `tool/asset_vault.py`** (the private notes checked out as `private/`, a branch of the old
+    history): every hook exits 0 at once, quietly. `git worktree add` runs the clone's post-checkout in the new tree
+    and exits with its status, so before this a checkout of such a branch failed.
 - **A copy without git** (`git archive <commit> | tar -x -C <dir>`): no hooks and no art; `python3
   tool/asset_vault.py unpack --only game --key-file <key file>` in it puts that commit's art there, every file checked
   against that commit's JSON.
