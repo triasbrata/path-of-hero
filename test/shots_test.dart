@@ -10,13 +10,16 @@ import 'package:tower_defense/game.dart';
 
 import 'hero_skill_helpers.dart';
 
-/// A wave on with nothing to spawn and a troop of [type] at cell (2, 3) that never strikes on its own; no skills.
+/// A wave on with nothing to spawn and a troop of [type] at cell (2, 3) that never walks or strikes on its own (a
+/// walking troop sets those in its way stepping aside); no skills.
 (Game, Unit) shooter(String type) {
   final g = bareGame(Random(1))
     ..heroSkills = false
     ..monsterSkills = false
     ..skills = false;
-  final u = placeNow(g, type, 2, 3)..cd = hold;
+  final u = placeNow(g, type, 2, 3)
+    ..cd = hold
+    ..busyUntil = hold;
   g
     ..startWave()
     ..queue.clear();
