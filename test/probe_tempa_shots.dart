@@ -72,7 +72,7 @@ void main() {
           ..writeAsBytesSync(png!.buffer.asUint8List());
       });
       // ignore: avoid_print
-      print('wrote $out/$name.png ${img.width}x${img.height}; marks ${b.tempaMarks}, dot ${b.storeAt('tokoDot')}, message ${b.message}');
+      print('wrote $out/$name.png ${img.width}x${img.height}; marks ${b.tempaMarks}, dot ${b.storeAt('armyDot')}, message ${b.message}');
     }
 
     Future<void> tap(Offset p) async {

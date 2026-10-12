@@ -764,7 +764,7 @@ class Board extends PositionComponent
   Rect _storeTabAt = Rect.zero; // the shut Shop tab this frame (a Town's)
   final _tabAt = <_Page, Rect>{}; // every page tab this frame, shut or open (for tests)
   final _tabTapAt = <_Page, Rect>{}; // where each shut tab takes a press this frame ([bookTabTap]; for tests)
-  final _storeAt = <Object, Rect>{}; // the Tas and Army tabs' dots ('bagDot', 'tokoDot') and a Town's Tavern tab's ('tavernDot') this frame
+  final _storeAt = <Object, Rect>{}; // the Tas and Army tabs' dots ('bagDot', 'armyDot') and a Town's Tavern tab's ('tavernDot') this frame
   Rect _sendAt = Rect.zero, _menuAt = Rect.zero; // "Kirim data permainan" and "Menu Utama" this frame (the Pengaturan page)
   final _volumeAt = <Rect>[]; // its volume rows this frame, Musik and Efek (- the bar +)
   Rect _sendNoteAt = Rect.zero, _heroCutAt = Rect.zero; // the line under the former, and "Sorotan Hero" (the same page)
@@ -1045,7 +1045,7 @@ class Board extends PositionComponent
   Rect tavernAt(String key) => _tavernPage.at[key] ?? Rect.zero;
   String? tavernText(String key) => _tavernPage.texts[key];
 
-  /// Where a tab's dot is this frame: the Tas tab's 'bagDot', the Army tab's 'tokoDot' (ascend_page.dart) and a Town's
+  /// Where a tab's dot is this frame: the Tas tab's 'bagDot', the Army tab's 'armyDot' (ascend_page.dart) and a Town's
   /// Tavern tab's 'tavernDot' (tavern_page.dart) (Rect.zero: not shown). For tests.
   Rect storeAt(Object what) => _storeAt[what] ?? Rect.zero;
 
@@ -1197,10 +1197,9 @@ class Board extends PositionComponent
   Rect get asahButton => _assign.asah;
   Relic? get asahArmed => _assign.asahArmed;
 
-  /// Carve on a Pusaka's facing page this frame (bag.dart, decisions-log 196): its button (Rect.zero: none shows) and the
-  /// Pusaka whose Carve was tapped once (null: none). Its strip, bar and words: [bagDetail] / [bagDetailText] ('carve',
-  /// 'carveBtn', 'carveBar', 'next'); its Give rows are [assignRows], each by its Pusaka. For tests.
-  Rect get carveButton => _assign.carve;
+  /// The Pusaka whose Carve was tapped once on its facing page this frame (bag.dart, decisions-log 196; null: none). Its
+  /// button, strip, bar and words: [bagDetail] / [bagDetailText] ('carveBtn', 'carve', 'carveBar', 'next'); its Give
+  /// rows are [assignRows], each by its Pusaka. For tests.
   Relic? get carveArmed => _assign.carveArmed;
 
   /// How the Carve bar says refusal [why], longest first (bag.dart's `_carveWhy`). For tests.
@@ -1746,7 +1745,7 @@ class Board extends PositionComponent
     _coachTick(g); // the guide's pointers: done, or dropped (coach.dart)
     if (g.newMarch) {
       g.newMarch = false;
-      showMessage('Monsters broke through!'); // the wave stalled: its monsters march on the base ([Game.marching])
+      showMessage(marchNote); // the wave stalled: its monsters charge the troops ([Game.marching], wipe.dart)
     }
     if (g.tideCaughtUp) {
       g.tideCaughtUp = false;
@@ -2950,7 +2949,7 @@ class Board extends PositionComponent
       if (page == _Page.bag) _bagTabDot(c, g, Rect.fromLTWH(x + 2 * ps, top + (open ? 2 : 1) * ps, 16 * ps, 16 * ps), ps); // ascend_page.dart
       // The Army's dot (gold piles up for an Awaken or a Forge, ascend_page.dart): its detail buys them (decisions-log
       // 230).
-      if (page == _Page.troops) _tokoTabDot(c, g, Rect.fromLTWH(x + 2 * ps, top + (open ? 2 : 1) * ps, 16 * ps, 16 * ps), ps);
+      if (page == _Page.troops) _armyTabDot(c, g, Rect.fromLTWH(x + 2 * ps, top + (open ? 2 : 1) * ps, 16 * ps, 16 * ps), ps);
       if (!open) _hits.add((tap, locked ? () => showMessage(g.storeWhy(StoreRefusal.locked)) : () => _open(page)));
       if (!open && page == _Page.store) _storeTabAt = hit;
     }

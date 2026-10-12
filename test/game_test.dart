@@ -1297,10 +1297,11 @@ void main() {
     g.queue
       ..clear()
       ..add(('bat', Tier.normal)); // entering on its own; the view then glides left past it
-    for (var i = 0; i < 2400 && g.waveActive; i++) {
+    for (var i = 0; i < 4000 && g.waveActive; i++) {
       g.tick(0.05);
     }
-    expect((g.newMarch, g.waveActive, g.over, g.lives), (true, false, false, Game.startLives - 1));
+    // The march not won in marchMax s: the wave lost (it leaked over the back line until decisions-log 329).
+    expect((g.newMarch, g.waveActive, g.over, g.lives, g.wipeCause), (true, false, false, Game.startLives - wipeLives, WipeCause.slow));
   });
 
   test('freshly spawned monsters off screen are not clamped until they enter', () {
@@ -1414,15 +1415,15 @@ void main() {
     expect(won.wave, 1);
   });
 
-  test('monsters come from the right; an undefended wave costs lives', () {
-    final g = bare(Random(1))
-      ..lives = 20 // more than wave 1's six monsters: the game goes on
-      ..startWave();
+  test('monsters come from the right; a wave begun with no troop is lost emptyGrace s after they come on (decisions-log '
+      '329)', () {
+    final g = bare(Random(1))..startWave();
     var spawnedRight = false;
     run(g, each: (g) => spawnedRight |= g.enemies.any((e) => e.pos.x > g.baseX + g.viewW));
     expect(spawnedRight, isTrue);
-    expect(g.lives, 20 - 6);
-    expect(g.sfx, contains(Sfx.leak));
+    expect((g.lives, g.wipedOut, g.wipeCause, g.wave, g.lostWave), (Game.startLives - wipeLives, true, WipeCause.empty, 0, 1));
+    expect(g.sfx, contains(Sfx.lose));
+    expect(g.sfx, isNot(contains(Sfx.leak)));
   });
 
   test('the necromancer fights in melee and raises skeletons', () {
@@ -2911,9 +2912,15 @@ void main() {
   test('a necromancer\'s raised skeletons are not in the wave meter', () {
     final g = bare(Random(1))
       ..slots = _Dice(0, 0) // the boss slot's necromancer roll: it
-      ..lives = 1000
       ..wave = necroBossWave - 1;
     g.startWave();
+    // A knight that never falls nor strikes, so the wave goes on: with no troop standing, a monster at the back line
+    // would lose it (decisions-log 329; the lives soaked the leaks until then).
+    expect(placeNow(g, 'knight', 2, 3), isTrue);
+    g.troops.single
+      ..busyUntil = hold
+      ..maxHp = 1000000000
+      ..hp = 1e9;
     final total = g.waveTotal;
     for (var i = 0; i < 4000 && !g.enemies.any((e) => e.type == minion && e.raisedBy != null); i++) {
       g.tick(0.05);
@@ -3094,22 +3101,14 @@ void main() {
     expect(g.score, 500 + 600);
   });
 
-  test('every life left scores once as the game ends, which leaves none: a wipe ends it only at the last heart (wipe.dart), '
-      'and a game lost on lives gets nothing for them', () {
+  test('the game\'s end adds nothing to the score: a lost wave ends it only at the last heart (wipe.dart)', () {
     final (g, s) = doomedSoldier();
     g.lives = wipeLives;
     g.tick(0.05);
     expect((s.alive, g.over, g.lives), (false, true, 0));
-    expect(g.score, 0 * lifeScore);
+    expect(g.score, 0);
     g.tick(0.05);
     expect(g.score, 0);
-
-    final h = bare()..lives = 1;
-    placeNow(h, 'knight', 2, 3); // a troop still stands: it ends on lives
-    h.units.add(Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(h.baseX - 1, 60)));
-    h.tick(0.05);
-    expect((h.lives, h.over, h.wipedOut), (0, true, false));
-    expect((h.score, h.kills), (0, 0));
   });
 
   test('the save keeps the score and the kills; an older save without them starts at 0', () {
@@ -4136,9 +4135,13 @@ void main() {
     expect(knight.healedUntil, double.negativeInfinity);
   });
 
-  test('a healing necromancer left alone walks on toward the back line, and swings at a troop in its way', () {
+  test('a healing necromancer left alone walks on toward the troops, and swings at a troop in its way', () {
     final g = bare();
     final u = mender(g, const Point(250, 60));
+    final at = u.pos;
+    g.tick(0.05);
+    expect((u.pos, u.moving), (at, false), reason: 'no troop standing: it waits (decisions-log 329)');
+    standing(g, 'knight', const Point(40, 60));
     for (var i = 0; i < 5; i++) {
       final x = u.pos.x;
       g.tick(0.05);
@@ -5432,13 +5435,18 @@ void main() {
     expect(g.heroMade.length, 1);
 
     final z = heroGame(_Dice(0, 0));
-    winAt(z, 0); // before the first wave (a monster leaking in a test): wave 0 is no heroEvery-th wave
+    winAt(z, 0); // before the first wave (a test's): wave 0 is no heroEvery-th wave
     expect((z.troops.any((u) => u.hero), z.heroMade.isEmpty), (false, true));
 
     final l = heroGame(_Dice(0, 0))..lives = 1;
     startAt(l, heroEvery);
-    l.units.add(Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(l.baseX - 1, 60))); // past the base: the last life
-    l.tick(0.05);
+    for (final u in l.troops.toList()) {
+      u.hp = 1; // a werebear by each: the army falls, and that costs the last life
+      l.units.add(Unit(Side.enemy, 'werebear', enemyTypes['werebear']!, u.pos + const Point(10, 0))..entered = true);
+    }
+    for (var i = 0; i < 100 && !l.over; i++) {
+      l.tick(0.05);
+    }
     expect((l.over, l.troops.where((u) => u.hero).isEmpty, l.heroMade.isEmpty), (true, true, true));
   });
 
@@ -5650,23 +5658,20 @@ void main() {
     expect(capped, greaterThan(0));
   });
 
-  test('the lives the hearts show: startLives in a new game, one fewer for each monster that leaks, never below 0', () {
+  test('the lives the hearts show: startLives in a new game; a monster over the back line costs none (decisions-log 329)', () {
     expect(Game().lives, Game.startLives);
     final g = bare();
-    expect(placeNow(g, 'knight', 2, 3), isTrue); // a troop stands, so the game ends on lives
-    g.troops.single.busyUntil = hold; // and stays put: walking up to the line it would cut a leaker down first
-    Unit leaker() => Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(g.baseX - 1, fieldH / 2));
-    for (var left = Game.startLives; left > 1; left--) {
-      g.units.add(leaker());
-      g.tick(0.05);
-      expect((g.lives, g.over), (left - 1, false));
-    }
-    g.units.addAll([leaker(), leaker(), leaker()]); // more at once than lives left
+    expect(placeNow(g, 'knight', 2, 3), isTrue);
+    g.troops.single.busyUntil = hold; // stays put
+    final at = [for (var i = 0; i < 4; i++) Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(g.baseX - 1, fieldH / 2 + 8 * i))];
+    g.units.addAll(at); // over the line, as one was that leaked
     g.tick(0.05);
-    expect((g.lives, g.over, g.wipedOut), (0, true, false));
+    expect((g.lives, g.over), (Game.startLives, false));
+    expect(at.every((u) => u.alive && !u.gone), isTrue, reason: 'still on the field, after the knight');
   });
 
-  test('a wave nobody can finish stalls after stallTime: its monsters march on the base and the wave ends', () {
+  test('a wave nobody can finish stalls after stallTime: its monsters charge the troops, and marchMax s on the wave is '
+      'lost', () {
     final g = Game(Random(1)); // the free priest alone: it can't hurt a bat and outheals its bites
     g.startWave();
     g.queue
@@ -5685,9 +5690,9 @@ void main() {
     }
     expect(marchedAt, isNotNull);
     expect(marchedAt! - start, greaterThan(stallTime));
-    expect(g.t - marchedAt, lessThan(60));
+    expect(g.t - marchedAt, inInclusiveRange(marchMax, marchMax + 0.05));
     expect(g.troops.single.alive, isTrue);
-    expect((g.waveActive, g.over, g.lives, g.marching), (false, false, Game.startLives - 1, false)); // it leaked; reset
+    expect((g.waveActive, g.over, g.lives, g.marching, g.wipeCause, g.wave), (false, false, Game.startLives - wipeLives, false, WipeCause.slow, 0));
   });
 
   test('a wave the army wins never marches, a boss wave neither', () {
@@ -5741,7 +5746,14 @@ void main() {
   });
 
   test('a spawn is progress: while the queue still spawns the wave never marches', () {
-    final g = bare()..startWave();
+    final g = bare(Random(1))..gold = 1000;
+    expect(placeNow(g, 'knight', 0, 0), isTrue); // stands by: a wave with no troop standing is lost (decisions-log 329)
+    g.troops.single.busyUntil = hold;
+    // Every monster stands still from the moment it comes on: not a step toward the knight, so no shove moves them.
+    g.listeners.add((e) {
+      if (e is MonsterSpawned) g.units.last.busyUntil = hold;
+    });
+    g.startWave();
     g.queue
       ..clear()
       ..addAll(List.filled((1.5 * stallTime / Game.spawnGap).ceil(), ('slime', Tier.normal)));
@@ -5765,21 +5777,20 @@ void main() {
     expect(g.t - last, greaterThan(stallTime));
   });
 
-  test('marching monsters walk through the troops, and neither strike, raise nor heal', () {
+  test('charging monsters go at the troops and strike them, and neither raise nor heal (decisions-log 329)', () {
     final g = bare()..gold = 1000;
     placeNow(g, 'knight', 2, 3);
-    final knight = g.troops.single..busyUntil = hold; // doesn't hit back either
-    final bear = g.monster('werebear', Tier.normal, knight.pos + const Point(2, 0)); // on top of it
+    final knight = g.troops.single..busyUntil = hold; // doesn't hit back
+    final bear = g.monster('werebear', Tier.normal, knight.pos + const Point(80, 0));
     g.units.add(bear);
     g.marching = true;
-    var x = bear.pos.x;
-    for (var i = 0; i < 30; i++) {
+    final x = bear.pos.x;
+    for (var i = 0; i < 400 && knight.hp == knight.maxHp; i++) {
       g.tick(0.05);
-      expect(bear.pos.x, lessThan(x), reason: '$i');
-      x = bear.pos.x;
     }
-    expect(bear.pos.x, lessThan(knight.pos.x)); // walked through
-    expect(knight.hp, knight.maxHp);
+    expect(bear.pos.x, lessThan(x), reason: 'it came at the knight');
+    expect(bear.pos.x, greaterThan(knight.pos.x), reason: 'and stopped at it: no walking through any more');
+    expect(knight.hp, lessThan(knight.maxHp), reason: 'it strikes');
 
     final n = bare()..wave = 5;
     final necro = n.monster(boss, Tier.boss, const Point(250, 60))

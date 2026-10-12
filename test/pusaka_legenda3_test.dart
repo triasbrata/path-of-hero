@@ -145,7 +145,7 @@ class _Dice implements Random {
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("three Legenda appended after batch G-2's eight (save keys), chest-only (sold back at the Legenda price), ★1 only, "

@@ -162,7 +162,7 @@ double strikeAt(Game g, Unit u, Unit k) {
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("the ten sit in the Epik pool alone, in the pool's order among E-1B's ten; the Langka and Legenda pools as they "

@@ -89,14 +89,14 @@ void main() {
     expect((victim.alive, g.gold, g.kills), (false, gold + victim.stats.cost, kills + 1));
   });
 
-  test('Arcane Blast whose target leaked flies on and bursts with its ring and splash at the spot', () {
+  test('Arcane Blast whose target left the field flies on and bursts with its ring and splash at the spot', () {
     final (g, w) = shooter('wizard');
     final target = still(g, 'orc', w.pos + const Point(56.0, 0.0)), at = target.pos;
     final near = still(g, 'orc', at + const Point(20.0, 0.0));
     final shot = Shot(w, target, w.pos + const Point(0, -6), Hit.skill, w.stats.dmg * blast.hit, blast.splash, true, RingLook.arcane);
     g.shots.add(shot);
     g.tick(0.05);
-    target.gone = true; // off the field, as a leak goes
+    target.gone = true; // off the field (as a monster over the back line went until decisions-log 329)
     land(g);
     expect(shot.to, at);
     expect(g.impacts, contains((at, 'shards')));

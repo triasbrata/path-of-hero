@@ -124,7 +124,7 @@ double smite({List<OmenKind> omens = const [], double factor = 1, String type = 
 Matcher closeToBlow(double v) => closeTo(v, 1e-9);
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("the seven sit in the Legenda pool alone, among G-1B's and G-2B's after Barrier and Escort (today's seven until "
@@ -450,7 +450,14 @@ void main() {
       // and a mini boss wave (51) with its escort and two Guards. Only the queue's last 12 are spawned (the rest dropped
       // from its front, the spawn count moved on): the tail holds the slot's group.
       for (final wave in [22, 50, 51]) {
+        // A troop far off that neither fights nor falls: a wave with none standing is lost 5 s on (decisions-log 329).
+        void standBy(Game g) => g.units.add(Unit(Side.troop, 'soldier', troopTypes['soldier']!, const Point(8, 8))
+          ..entered = true
+          ..busyUntil = hold
+          ..maxHp = 1 << 30
+          ..hp = 1e9);
         final g = plain(omens: [...top(dusk), ...levels(OmenKind.guard, 3)], factor: 2)..wave = wave - 1;
+        standBy(g);
         final spawns = <(Unit, double)>[];
         g.listeners.add((e) {
           if (e is MonsterSpawned && !e.raised) spawns.add((g.units.last, e.t));
@@ -489,6 +496,7 @@ void main() {
         if (wave == 50) expect(spawns.last.$1.type, necroHealer, reason: 'the healer behind the boss is the last crowd monster');
         // The spawns as without it: the same gaps from the same queue.
         final h = plain(omens: levels(OmenKind.guard, 3), factor: 2)..wave = wave - 1;
+        standBy(h);
         final times = <double>[];
         h.listeners.add((e) {
           if (e is MonsterSpawned && !e.raised) times.add(e.t);
@@ -529,6 +537,8 @@ void main() {
   });
 
   group('off', () {
+    setUp(() => omensOn = false); // its own switch: it ran on an earlier test's reset (decisions-log 329)
+
     test('with omens off and every level held none of the seven acts', () {
       final all = [for (final k in batch) ...top(k)];
       expect(skillShot(omens: all, factor: 2), closeToBlow(skillShot()), reason: 'Spell Ward');

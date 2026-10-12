@@ -35,7 +35,7 @@ void main() {
         n++;
       }
       out.writeln('  crafted $n, gold -${thousands(gold - g.gold)}, now ${g.whyNotCraft(relic)?.text}; '
-          'Shop buy ${thousands(g.buyPrice(relic))} then ${thousands(g.buyPrice(relic, 1))}, sell ${thousands(g.sellPrice(relic))}');
+          'sell ${thousands(g.sellPrice(relic))}');
     }
     out.writeln('Bag: ${{for (final r in smallRelics) if ((g.relicBag[r] ?? 0) > 0) relicNames[r]: g.relicBag[r]}}');
     out.writeln('Asah takes: ${asahTakeLine(g.asahTake)}');

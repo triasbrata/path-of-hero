@@ -352,20 +352,18 @@ void main() {
   });
 
   group('the one-time notes', () {
-    test('the w86 save is told once that it keeps its 48 troops (and pays in tide for them, Beban) and its types over '
-        'their caps; the notes are saved', () {
+    test('the w86 save is told once that it keeps its 48 troops and its types over their caps; the notes are saved', () {
       final g = Game.fromJson(w86())..boardRules();
       final notes = g.limitNotes();
       expect(notes, [
         'The army cap is now 36. You keep your troops;\nbuy more when under 36.',
-        overNote(36), // decisions-log 162
         'Each troop type has a cap now. You keep yours;\nover it: Priest 17/5, Wizard 9/8, Templar 13/10.\n'
             'Buy more of a type when under its cap.', // decisions-log 201
       ]);
       expect(capsNote(['A 1/0', 'B 1/0', 'C 1/0', 'D 1/0']), contains('over it: A 1/0, B 1/0, C 1/0,\nD 1/0.\n'), reason: 'three a line');
       expect(g.limitNotes(), isEmpty, reason: 'once');
       final again = Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>)..boardRules();
-      expect(again.notes, {'army', 'over', 'caps'});
+      expect(again.notes, {'army', 'caps'}); // Beban's "over" went in decisions-log 329
       expect(again.limitNotes(), isEmpty);
       expect(Game.fromJson(w86()).limitNotes(), isEmpty, reason: 'the limits off');
       expect(Game().boardRules().limitNotes(), isEmpty, reason: 'a game within them');

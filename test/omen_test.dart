@@ -111,6 +111,8 @@ const armor = OmenKind.armor, haste = OmenKind.haste, mend = OmenKind.mend, woun
 const thorns = OmenKind.thorns, shield = OmenKind.shield, guard = OmenKind.guard;
 
 void main() {
+  tearDown(() => omensOn = omensDefault); // the off group and the tests that switch it put the default back
+
   test('on by default (no OMENS define): the owner switched them on (decisions-log 319)', () {
     expect(omensOn, isTrue);
   });
@@ -162,7 +164,7 @@ void main() {
 
   group('on', () {
     setUp(() => omensOn = true);
-    tearDown(() => omensOn = false);
+    tearDown(() => omensOn = omensDefault);
 
     test("the seven kinds: in enum order in their pools (since the Langka cut-over Armor, Mend, Barrier and Escort out of "
         "Langka's, since the Epik one Haste, Spikes, Wound, Barrier and Escort out of Epik's, since the Legenda one Armor, "

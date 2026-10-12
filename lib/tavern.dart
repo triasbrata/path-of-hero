@@ -17,12 +17,14 @@ part of 'game.dart';
 // ([Tavern._boostWaveEnd]; a wave lost to a wipe and played again isn't counted), or until the next Town is entered
 // ([Tavern._boostTownEnd]); its price grows with the length ([Tavern.boostPrice]). It works as one step at the
 // end of [Game.statsOf] ([Tavern._boostStats]), on top of the items, awakening, Tempa, the heavies' buff, the Pusaka and
-// the oath; two kinds hook the kill gold ([Tavern._boostGold]) and the leak line ([Tavern._boostLeak]) instead. Every
+// the oath; one kind hooks the kill gold ([Tavern._boostGold]) instead. Watchman's Brew, an Epic that forgave the wave's
+// first monster over the back line, went with the line's cost (decisions-log 329): a save's offer or boost of it is
+// dropped on load, as any unknown kind's. Every
 // number is town.json's `tavern` block ([TavernRules]). Every Town has its Tavern (decisions-log 296: the Tavern-off
 // build is gone).
 
 /// A Tavern boost's kind; its name is its save key and its town.json key (`tavern.boosts.<name>`).
-enum Boost { feast, ale, stew, broth, tea, rations, toast, mage, plate, watch, banquet }
+enum Boost { feast, ale, stew, broth, tea, rations, toast, mage, plate, banquet }
 
 /// The boosts' names as the player reads them.
 const boostNames = {
@@ -35,7 +37,6 @@ const boostNames = {
   Boost.toast: 'Lucky Toast',
   Boost.mage: "Mage's Brew",
   Boost.plate: "Champion's Plate", // one troop type, much stronger
-  Boost.watch: "Watchman's Brew",
   Boost.banquet: "King's Banquet",
 };
 
@@ -44,20 +45,18 @@ const rarityKeys = {Rarity.biasa: 'common', Rarity.langka: 'rare', Rarity.epik: 
 
 /// One boost kind's rule (town.json `tavern.boosts.<kind>`): its [rarity], and what it multiplies while it runs: a
 /// troop's damage (a healer's heal), the damage it takes, its max HP, its attack speed (the pause between attacks ÷
-/// [rate]), its MP regen, the kill gold; [leaks]: the monsters a wave that cross the back line without costing a life.
-/// [oneType]: it works on one troop type, rolled with the offer (town.json `"who": "type"`), else on every troop. [k]:
+/// [rate]), its MP regen, the kill gold. [oneType]: it works on one troop type, rolled with the offer (town.json `"who": "type"`), else on every troop. [k]:
 /// its own price in purses, over its rarity's.
 class BoostRule {
   const BoostRule(this.rarity,
-      {this.dmg = 1, this.taken = 1, this.maxHp = 1, this.rate = 1, this.mpRegen = 1, this.gold = 1, this.leaks = 0, this.oneType = false, this.k});
+      {this.dmg = 1, this.taken = 1, this.maxHp = 1, this.rate = 1, this.mpRegen = 1, this.gold = 1, this.oneType = false, this.k});
 
   final Rarity rarity;
   final double dmg, taken, maxHp, rate, mpRegen, gold;
-  final int leaks;
   final bool oneType;
   final double? k;
 
-  /// What it changes, by the file's names, only what isn't 1 (or 0 leaks): the file's, the event's and the texts' shape.
+  /// What it changes, by the file's names, only what isn't 1: the file's, the event's and the texts' shape.
   Map<String, num> get effects => {
         if (dmg != 1) 'dmg': dmg,
         if (taken != 1) 'taken': taken,
@@ -65,11 +64,9 @@ class BoostRule {
         if (rate != 1) 'rate': rate,
         if (mpRegen != 1) 'mpRegen': mpRegen,
         if (gold != 1) 'gold': gold,
-        if (leaks > 0) 'leaks': leaks,
       };
 
-  /// [j]'s rule, each field only when it is of the right kind and in range (a multiplier above 0, [leaks] not negative),
-  /// else [d]'s; a rarity or a `who` it doesn't know is noted in [skipped].
+  /// [j]'s rule, each field only when it is of the right kind and in range (a multiplier above 0), else [d]'s; a rarity or a `who` it doesn't know is noted in [skipped].
   factory BoostRule.fromJson(Map<String, dynamic> j, BoostRule d, List<String> skipped, String where) {
     double x(String key, double def) => switch (j[key]) { final num v when v > 0 && v.isFinite => v.toDouble(), _ => def };
     final rarity = switch (j['rarity']) {
@@ -89,7 +86,6 @@ class BoostRule {
         rate: x('rate', d.rate),
         mpRegen: x('mpRegen', d.mpRegen),
         gold: x('gold', d.gold),
-        leaks: switch (j['leaks']) { final int n when n >= 0 => n, _ => d.leaks },
         oneType: who,
         k: switch (j['k']) { final num v when v > 0 && v.isFinite => v.toDouble(), _ => d.k });
   }
@@ -275,7 +271,6 @@ const _tavernBoosts = {
   Boost.toast: BoostRule(Rarity.biasa, gold: 1.30),
   Boost.mage: BoostRule(Rarity.langka, mpRegen: 1.60),
   Boost.plate: BoostRule(Rarity.epik, dmg: 1.40, rate: 1.15, oneType: true),
-  Boost.watch: BoostRule(Rarity.epik, leaks: 1),
   Boost.banquet: BoostRule(Rarity.legenda, dmg: 1.30, taken: 0.75, maxHp: 1.25, rate: 1.10),
 };
 
@@ -283,7 +278,6 @@ const _tavernBoosts = {
 List<String> boostEffectLines(Map<String, num> effects) => [
       for (final MapEntry(:key, :value) in effects.entries)
         switch (key) {
-          'leaks' => value == 1 ? 'a leak a wave costs no life' : '$value leaks a wave cost no life',
           'taken' => value <= 1 ? '${_percent(1 - value)}% less damage taken' : '${_percent(value - 1)}% more damage taken',
           _ => '${value >= 1 ? '+' : '-'}${_percent((value - 1).abs())}% ${_boostStatWords[key] ?? key}',
         },
@@ -345,14 +339,14 @@ class BoostOffer {
 
 /// A boost running: its [kind], the waves [left] (counted down at each wave's end; none for one [untilTown], which ends as
 /// the next Town is entered), the waves it was counted ([fought]: 0 for one bought in the Town just left), the [type] it
-/// works on (a one-type kind's), and the leaks it forgave this wave ([saved]; not saved: a save is between waves).
+/// works on (a one-type kind's).
 class RunningBoost {
   RunningBoost(this.kind, this.left, {this.type, this.untilTown = false, this.fought = 0});
 
   final Boost kind;
   final String? type;
   final bool untilTown;
-  int left, fought, saved = 0;
+  int left, fought;
 
   Map<String, Object> toJson() =>
       {'kind': kind.name, if (untilTown) 'town': true else 'left': left, 'type': ?type, if (fought > 0) 'fought': fought};
@@ -392,7 +386,7 @@ const boostRefusals = {
 const _boostTroopKeys = {'dmg', 'taken', 'hp', 'rate', 'mpRegen'};
 
 /// Who a boost of [kind] works on, in the player's words: "All troops", a one-type kind's [type] ("Knights"), or null for
-/// one that doesn't act on troops (kill gold, a leak).
+/// one that doesn't act on troops (kill gold).
 String? boostWho(Game g, Boost kind, String? type) => !g.boostRule(kind).effects.keys.any(_boostTroopKeys.contains)
     ? null
     : type == null
@@ -661,28 +655,12 @@ extension Tavern on Game {
     return k == 1 ? gold : (gold * k).round();
   }
 
-  /// A monster crossed the back line: true when a boost running forgives it ([BoostRule.leaks] a wave: Watchman's Brew),
-  /// so no life is lost ([BoostSaved]).
-  bool _boostLeak() {
-    for (final b in boosts) {
-      if (b.saved < boostRule(b.kind).leaks) {
-        b.saved++;
-        _emit(BoostSaved(wave, t, boost: b.kind));
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /// A wave ended (won, or the game lost): each boost running has one wave fewer (none for one until the next Town), its
-  /// forgiven leaks back to none, and those at 0 end ([_boostsEnd]). A wave lost to a wipe ([replay], wipe.dart) is
-  /// played again, so it counts nothing (decisions-log 331: the replay is the same wave, as the wave meter reads it); only
-  /// the leaks forgiven start again.
+  /// A wave ended (won, or the game lost): each boost running has one wave fewer (none for one until the next Town), and
+  /// those at 0 end ([_boostsEnd]). A wave lost to a wipe ([replay], wipe.dart) is played again, so it counts nothing
+  /// (decisions-log 331: the replay is the same wave, as the wave meter reads it).
   void _boostWaveEnd({bool replay = false}) {
-    if (boosts.isEmpty) return;
+    if (boosts.isEmpty || replay) return;
     for (final b in boosts) {
-      b.saved = 0;
-      if (replay) continue;
       b.fought += 1;
       if (!b.untilTown) b.left -= 1;
     }

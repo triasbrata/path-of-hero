@@ -21,7 +21,7 @@ import 'settings.dart';
 /// `pusaka` (its start's and what each did), `gold.pusakaSpent` (decisions-log 138). 3: the boss chest's events and
 /// `gold.chestSpent` / `gold.chestEarned` (decisions-log 152). 4: Asah's event and `gold.asahSpent` (decisions-log 154).
 /// 5: a wave start's `tide.over`, the waves earlier its tide counts from for an army over the cap (Beban, decisions-log
-/// 162).
+/// 162; gone in 16).
 /// 6: Tempa's event and `gold.tempaSpent` (decisions-log 163).
 /// 7: Lebur's event and `gold.leburSpent` (decisions-log 164).
 /// 8: the Bayangan's events (`omenGained`, `omenEased`), a chest's faces and a take's levels, and a wave start's
@@ -49,6 +49,10 @@ import 'settings.dart';
 /// `margin` and `pressure`, a `townEntered` its `n` and `identity`; an item's and a small relic's `gain` is the market's.
 /// 15: a Tavern boost's length is rolled with its offer (decisions-log 331): a `boostBought`'s `waves` 2 to 4, or 0 with
 /// `untilTown`, and a wave start's `boosts` 0 for one until the next Town.
+/// 16: the back line costs nothing (decisions-log 329): no monster heads for it, so a wave's `livesLost` is 0 or a lost
+/// wave's heart; a `wipe` has its `cause` (`fell`, `empty`: no troop standing 5 s after the monsters came on, `slow`: its
+/// charge not won within 60 s, with `marched` set), each a wave record's `end` `wiped`; Watchman's Brew and the wave's
+/// `boostSaved` are gone, and so is a wave start's `tide.over` (Beban went).
 /// 17: the Town checkpoint (decisions-log 333): a `wipe`'s `checkpoint` (the Town's slot, null before the first Town) and
 /// `debuff` (the monsters' weakening after it), a `townEntered`'s `again` (the checkpoint's Town after a wipe), a wave
 /// start's `weakened` and `again` (a wave won before, played again), and the event `wipeChoice` (`tryAgain`, `lives`).
@@ -429,8 +433,6 @@ class TelemetryAdapter {
         w.craftSpent += gold;
       case BoostBought(:final price) || TavernRerolled(:final price):
         w.tavernSpent += price; // in a Town, between waves only, like Asah
-      case BoostSaved():
-        w.boostSaved++;
       case PocketUsed(:final pocket):
         _count(w.pocket, pocket.name);
       case PocketCrafted(:final pocket, :final materials, :final gold):
@@ -529,7 +531,6 @@ class TelemetryAdapter {
         // Ukir (pusaka.dart), only when some was fed since the last wave ended: the items fed by kind, their points, and
         // each Pusaka's steps taken.
         if (w.ukirPoints > 0) ...{'ukirItems': w.ukirItems, 'ukirPoints': w.ukirPoints, 'ukirSteps': w.ukirSteps},
-        if (w.boostSaved > 0) 'boostSaved': w.boostSaved, // the leaks a Tavern boost forgave (Watchman's Brew)
         if (w.pocket.isNotEmpty) 'pocket': w.pocket, // each pocket kind's uses since the last wave ended (pocket.dart)
         // No item or relic drops on the field (decisions-log 246, 321): always empty, kept so the record's shape stays.
         'dropped': const <String, int>{},
@@ -574,7 +575,7 @@ class _WaveSum {
   int kills = 0, heroesFallen = 0, spent = 0, spentOn = 0, storeSpent = 0, storeSpentOn = 0, storeEarned = 0, storeEarnedOn = 0;
   int ascendSpent = 0, ascendSpentOn = 0, recallSpent = 0, recallSpentOn = 0;
   int chestSpent = 0, chestEarned = 0;
-  int pusakaSpent = 0, asahSpent = 0, tempaSpent = 0, leburSpent = 0, craftSpent = 0, tavernSpent = 0, boostSaved = 0;
+  int pusakaSpent = 0, asahSpent = 0, tempaSpent = 0, leburSpent = 0, craftSpent = 0, tavernSpent = 0;
   double? marchedAt;
   final spawns = <String, Map<String, int>>{}, raised = <String, Map<String, int>>{}, killers = <String, Map<String, int>>{};
   final monsterCasts = <String, Map<String, int>>{};

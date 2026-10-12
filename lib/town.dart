@@ -39,7 +39,6 @@ class TownRules {
     this.parts = _townParts,
     this.materials = _townMaterials,
     this.recipes = _townRecipes,
-    this.tiers = _townTiers,
     this.relics = _townRelicNumbers,
     this.shop = const TownShop(),
     this.items = _townItems,
@@ -74,9 +73,6 @@ class TownRules {
   /// The Smithy's recipes by the relic's save key ([townRelics], then the forge's nine, [forgeRelics]): its tier,
   /// materials, items and gold. [forgeRecipe] reads them with its changes.
   final Map<String, Recipe> recipes;
-
-  /// Each relic tier's prices: the share of its craft gold a sale pays, the Shop's price and its rise a buy.
-  final Map<RelicTier, TierPrices> tiers;
 
   /// Each crafted relic's numbers by its save key (`fang`'s `share`, `fury`'s `every` and `hit`, …).
   final Map<String, Map<String, num>> relics;
@@ -132,7 +128,7 @@ class TownRules {
     final skipped = <String>[];
     Map<String, dynamic> block(Map<String, dynamic> m, String k) => switch (m[k]) { final Map<String, dynamic> b => b, _ => const {} };
     final drops = block(j, 'drops'), parts = block(j, 'parts'), mats = block(j, 'materials'), recipes = block(j, 'recipes');
-    final tiers = block(j, 'tiers'), relics = block(j, 'relics'), items = block(j, 'items');
+    final relics = block(j, 'relics'), items = block(j, 'items');
     void unknown(Map<String, dynamic> m, Iterable<String> known, String where) =>
         skipped.addAll([for (final k in m.keys) if (!known.contains(k)) '$where: no $k']);
     unknown(drops, ['necromancerSlot', 'forge'], 'drops');
@@ -140,7 +136,6 @@ class TownRules {
     unknown(parts, [...enemyTypes.keys, boss, necroHealer], 'parts');
     unknown(mats, [for (final m in Mat.values) m.name], 'materials');
     unknown(recipes, d.recipes.keys, 'recipes');
-    unknown(tiers, [for (final t in RelicTier.values) t.name], 'tiers');
     unknown(relics, d.relics.keys, 'relics');
     unknown(items, [for (final i in Item.values) i.name], 'items');
     // In the file's order, so [skipped] notes come as they stand.
@@ -187,10 +182,6 @@ class TownRules {
           m: switch (mats[m.name]) { final Map<String, dynamic> v => MatInfo.fromJson(v, def), _ => def },
       },
       recipes: relicRecipes,
-      tiers: {
-        for (final MapEntry(key: tier, value: def) in d.tiers.entries)
-          tier: switch (tiers[tier.name]) { final Map<String, dynamic> v => TierPrices.fromJson(v, def), _ => def },
-      },
       relics: {
         for (final MapEntry(key: relic, value: nums) in d.relics.entries)
           relic: {for (final MapEntry(:key, :value) in nums.entries) key: _number(block(relics, relic)[key], value)},
@@ -288,7 +279,6 @@ class TownRules {
         },
         'parts': {for (final MapEntry(key: type, value: (c, r)) in parts.entries) type: [c?.name, r?.name]},
         'materials': {for (final MapEntry(:key, :value) in materials.entries) key.name: value.toJson()},
-        'tiers': {for (final MapEntry(:key, :value) in tiers.entries) key.name: value.toJson()},
         'relics': {
           for (final MapEntry(key: r, value: nums) in relics.entries)
             r: {
@@ -558,7 +548,8 @@ class MatInfo {
   Map<String, dynamic> toJson() => {'grade': grade.name, 'sell': sell};
 }
 
-/// A crafted relic's tier: what its recipe takes and its prices ([TierPrices]).
+/// A crafted relic's tier: what its recipe takes. (Its Shop prices, town.json `tiers`, went in decisions-log 329: the
+/// Shop never sold a small relic since the forge, decisions-log 248.)
 enum RelicTier { basic, strong, mighty }
 
 /// The small relics a Smithy crafts but the forge's, by their save keys: today's four and the Smithy's seven
@@ -707,44 +698,21 @@ class Secret {
       };
 }
 
-/// A relic tier's prices (town.json `tiers`): the Town's Shop sells one at [shop] gold, [shopRise] of it more after each
-/// bought. A sale paid [sellShare] of its recipe's gold until decisions-log 326 (the market's price since, market.dart):
-/// kept, read by nothing.
-class TierPrices {
-  const TierPrices(this.shop, {this.sellShare = 0.5, this.shopRise = 0.2});
-
-  final double sellShare, shopRise;
-  final int shop;
-
-  /// What the Shop asks for one after [n] of the kind were bought: [shop], and [shopRise] of it more for each.
-  int priceAfter(int n) => shop + (shop * shopRise).round() * n;
-
-  factory TierPrices.fromJson(Map<String, dynamic> j, TierPrices d) => TierPrices(
-        _number(j['shop'], d.shop).toInt(),
-        sellShare: _townShare(j['sellShare'], d.sellShare),
-        shopRise: _number(j['shopRise'], d.shopRise).toDouble(),
-      );
-
-  Map<String, dynamic> toJson() => {'sellShare': sellShare, 'shop': shop, 'shopRise': shopRise};
-}
-
 /// The Town's Shop (town.json `shop`): open from wave [from]'s win (1, the owner's 2026-10-07 "shop juga harusnya di buka
-/// ketika masuk kota": open in every Town, decisions-log 253; it was 15) — OWNER-MAY-CHANGE KNOB; an item costs
-/// [itemPrice], [itemRise] more after each bought (it sold back for [itemSellShare] of its price until decisions-log 326,
-/// the market's price since: kept, read by nothing). It sells (decisions-log 246) the materials
-/// that have dropped ([Game.matsSeen]) at [matMarkup] times their sell price, and [matRise] of that more a buy ([matPrice]).
+/// ketika masuk kota": open in every Town, decisions-log 253; it was 15) — OWNER-MAY-CHANGE KNOB. It sells (decisions-log
+/// 246) the materials that have dropped ([Game.matsSeen]) at [matMarkup] times their sell price, and [matRise] of that
+/// more a buy ([matPrice]). Its item prices (`itemPrice`, `itemRise`, `itemSellShare`) went in decisions-log 329: it
+/// never sold an item since the forge (decisions-log 248), and the market prices a sale (decisions-log 326); an older
+/// file's keys are read as nothing.
 class TownShop {
   const TownShop({
     this.from = 1,
-    this.itemPrice = 2000,
-    this.itemRise = 200,
-    this.itemSellShare = 0.5,
     this.matMarkup = 2.5,
     this.matRise = 0.0,
   });
 
-  final int from, itemPrice, itemRise;
-  final double itemSellShare, matMarkup, matRise;
+  final int from;
+  final double matMarkup, matRise;
 
   /// What the Shop asks for a material that sells for [sell], after [n] of it were bought: [sell] × [matMarkup] rounded
   /// up to 5 (Slime Gel 10: 25, Wolf Claw 25: 65), then [matRise] of that more a buy, each step rounded up to 5 too.
@@ -758,9 +726,6 @@ class TownShop {
     const d = TownShop();
     return TownShop(
       from: max(1, _number(j['from'], d.from).toInt()),
-      itemPrice: _number(j['itemPrice'], d.itemPrice).toInt(),
-      itemRise: _number(j['itemRise'], d.itemRise).toInt(),
-      itemSellShare: _townShare(j['itemSellShare'], d.itemSellShare),
       matMarkup: _number(j['matMarkup'], d.matMarkup).toDouble(),
       matRise: _number(j['matRise'], d.matRise).toDouble(),
     );
@@ -768,9 +733,6 @@ class TownShop {
 
   Map<String, dynamic> toJson() => {
         'from': from,
-        'itemPrice': itemPrice,
-        'itemRise': itemRise,
-        'itemSellShare': itemSellShare,
         'matMarkup': matMarkup,
         'matRise': matRise,
       };
@@ -926,8 +888,6 @@ const _townForgeChanges = {
   'blessing':
       Recipe(RelicTier.mighty, {Mat.bigBone: 4, Mat.graveSteel: 1, Mat.darkGem: 2, Mat.lichOrb: 1}, 2100, items: {Item.bigPotion: 1}),
 };
-
-const _townTiers = {RelicTier.basic: TierPrices(12000), RelicTier.strong: TierPrices(20000), RelicTier.mighty: TierPrices(32000)};
 
 const _townRelicNumbers = <String, Map<String, num>>{
   'fang': {'share': 0.30},

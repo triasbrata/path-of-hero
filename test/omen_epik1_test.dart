@@ -185,7 +185,7 @@ List<Healed> hear(Game g) {
 Matcher closeToBlow(double v) => closeTo(v, 1e-9);
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("the ten sit in the Epik pool alone, in the pool's order (after Armor and Mend since the Epik cut-over); the "

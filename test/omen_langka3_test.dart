@@ -156,7 +156,7 @@ List<Unit> army(Game g, List<String> types) => [for (final (i, t) in types.index
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("the six sit in the Langka pool alone, in the pool's order among L-1B's and L-2B's after today's three that stay; "

@@ -83,7 +83,7 @@ double foeBlow({List<OmenKind> omens = const [], double factor = 1, Tier tier = 
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("the ten sit in the Langka pool alone, after today's three that stay in the pool's order (batch L-2B's among them, "

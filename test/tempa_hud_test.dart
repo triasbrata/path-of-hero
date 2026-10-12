@@ -75,7 +75,7 @@ void main() {
       }
 
       // The Army tab's dot: 2M is over 3 purses (528k) and the knight can buy Tempa +4 (its detail sells it).
-      final dot = b.storeAt('tokoDot'), army = b.bookTabs.firstWhere((t) => t.$1 == 'troops').$2;
+      final dot = b.storeAt('armyDot'), army = b.bookTabs.firstWhere((t) => t.$1 == 'troops').$2;
       expect(dot, isNot(Rect.zero), reason: '$screen');
       expect(army.inflate(8).contains(dot.center), isTrue, reason: '$screen: on the Army tab');
       expect(b.bookTabs.map((t) => t.$1), isNot(contains('store')), reason: '$screen: no Toko on the field');
@@ -96,7 +96,7 @@ void main() {
       // Short of 3 purses: no dot.
       g.gold = nudgePurses * purse(88) - 1;
       await frames(tester);
-      expect(b.storeAt('tokoDot'), Rect.zero);
+      expect(b.storeAt('armyDot'), Rect.zero);
 
       // The Tas page's rows show it too, once the sword is picked and its Give to troops open.
       await tester.tapAt(b.bookTabs.firstWhere((t) => t.$1 == 'bag').$2.center);

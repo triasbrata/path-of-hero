@@ -278,24 +278,21 @@ void main() {
       await frames(tester, 40);
       final kinds = [for (final o in g.tavernOffers) o.kind];
       expect(kinds.first, Boost.banquet);
-      expect(kinds.skip(1).toSet(), {Boost.plate, Boost.watch});
+      expect(kinds[1], Boost.plate, reason: 'the one Epic (Watchman\'s Brew went in decisions-log 329)');
+      expect(g.boostRule(kinds[2]).rarity, Rarity.langka, reason: 'then a step down again');
       expect((b.tavernText('name'), b.tavernText('rarity')), ("King's Banquet", 'Legendary'));
       expect([for (final e in b.tavernEffects) e.what], ['Damage', 'Damage taken', 'Max HP', 'Attack speed', 'Troops', 'Lasts']);
       await fits(tester, b, '$tag banquet');
       final buy = await seen(tester, b, () => b.tavernAt('buy'));
       expect(buy != Rect.zero && buy.bottom <= b.bookPages.$2.bottom + 0.5, isTrue, reason: '$tag: Buy $buy');
 
-      // The Plate's page: its type's plural as its troops; the Watchman's Brew's: no Troops row.
+      // The Plate's page: its type's plural as its troops.
       final plate = kinds.indexOf(Boost.plate), type = g.tavernOffers[plate].type!;
       await tapOn(tester, await seen(tester, b, () => b.tavernRows[plate].at, left: true), 'the Plate');
       expect(b.tavernText('does')!.replaceAll('\n', ' '), '${troopTypePlurals[type]}: +40% damage, +15% attack speed.');
       expect([for (final e in b.tavernEffects) (e.what, e.value)],
           [('Damage', '+40%'), ('Attack speed', '+15%'), ('Troops', troopTypePlurals[type]!), ('Lasts', '2 waves')]);
       await fits(tester, b, '$tag plate');
-      await tapOn(tester, await seen(tester, b, () => b.tavernRows[kinds.indexOf(Boost.watch)].at, left: true), 'the Watch');
-      expect(b.tavernText('does')!.replaceAll('\n', ' '), 'A leak a wave costs no life.');
-      expect([for (final e in b.tavernEffects) (e.what, e.value)], [('Leaks forgiven', '1 a wave'), ('Lasts', '2 waves')]);
-      await fits(tester, b, '$tag watch');
     });
 
     testWidgets('the Tavern at $tag: offers until the next Town (decisions-log 331): the length, the price, Buy, "Town" '

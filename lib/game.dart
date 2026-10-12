@@ -82,7 +82,8 @@ enum Side { troop, enemy }
 
 enum Face { side, up, down }
 
-/// Sound cues queued by the logic and played by the UI; names match assets/sfx/*.wav (tool/gen_sfx.py).
+/// Sound cues queued by the logic and played by the UI; names match assets/sfx/*.wav (tool/gen_sfx.py). [leak] was a
+/// monster over the back line; since decisions-log 329 it is the alarm of a stalled wave's monsters charging.
 enum Sfx { place, sword, dagger, magic, hit, kill, fall, leak, wave, clear, error, lose, click }
 
 /// [cost] is the base price for troops (what one costs now: [Game.priceOf]) and the gold reward for
@@ -1181,18 +1182,18 @@ const bossBarLayer = 1000;
 }
 
 /// A wave whose own monsters make no progress for this long (none gets nearer the base or falls to a new
-/// low of HP, none dies or leaks, none spawns) has stalled: its monsters give up the fight and march on the
-/// base through the troops ([Game.marching]), so every wave ends. A necromancer's endless skeletons in
+/// low of HP, none dies, none spawns) has stalled: its monsters drop their tactics and charge the troops
+/// ([Game.marching]), and the wave must be won within [marchMax] s. A necromancer's endless skeletons in
 /// front of 1–2 kiting archers stalled wave 5 for good (#39).
 const stallTime = 30.0;
 
 /// The wave's own monsters nearest the base standing this much further from it than they have since the last
-/// spawn, death or leak are drifting off: while they do, their falling HP is no progress ([Game._watchStall]). A
+/// spawn or death are drifting off: while they do, their falling HP is no progress ([Game._watchStall]). A
 /// lone wizard led a mini boss 2,000+ px off, its HP falling ~10% every 2 min, and that read as progress for good
 /// (qa-3). Twice Death Leap's reach (a monster turning on a troop that leapt behind it), ten knockbacks.
 const stallDrift = 10 * tile;
 
-/// This long after the wave's last spawn, the last life lost or the last [stallProgress], its monsters march whatever
+/// This long after the wave's last spawn or the last [stallProgress], its monsters march whatever
 /// else ([Game._watchStall]). None of the owner's 149 waves of telemetry (w1–86, none marched) went on much over 110 s
 /// after its last spawn, by its spawn count (the longest, w78, 230 s in all); only a near-wiped army fights on longer.
 const stallOvertime = 180.0;
@@ -1200,14 +1201,22 @@ const stallOvertime = 180.0;
 /// The wave's slot monsters (its mini boss and boss, alive) losing this share of their summed max HP since the
 /// overtime clock last started starts it afresh ([stallOvertime]): a slow slot fight the army is still winning goes
 /// on. qa-4: at 14437d0's strength the overtime marched late slot fights that 6–10 troops were winning (one won at
-/// 515 s without it), and the mini boss leaked a life each time. A plain monster falling is no such progress.
+/// 515 s without it), and the mini boss leaked a life each time (the back line went in decisions-log 329). A plain
+/// monster falling is no such progress.
 const stallProgress = 0.05;
 
-/// This long after the wave's last spawn or the last life lost, its monsters march whatever the slots'
+/// This long after the wave's last spawn, its monsters march whatever the slots'
 /// [stallProgress] ([Game._watchStall]): a slot monster ground down a little at a time, or healed back between
 /// blows, can't hold the wave for good. qa-4's one stalled wave (w90, 1 troop left whittling a boss) still ran at
 /// 600 s on the slots' progress alone; the slowest win of the late replays it ended came 278 s after the last spawn.
 const stallOvertimeMax = 300.0;
+
+/// A wave still on this long after its monsters began to charge ([Game.marching]) is lost as a wiped one is: a heart,
+/// and the wave again ([WipeCause.slow], wipe.dart). Until decisions-log 329 the march walked through the troops to the
+/// back line, each monster over it half a heart, and the wave then counted as won: a w60 boss wave lost 5 lives that
+/// way, 87 s into its march. Of the other 6 marches in that audit's 397 waves, the troops killed every marcher within
+/// seconds.
+const marchMax = 60.0;
 
 /// The other necromancer ("Nekromanser Penyembuh", drawn as the boss recoloured teal): a support that
 /// stays at the very back ([Game._mend]) and heals the most hurt monster it can safely reach that no other
@@ -1387,10 +1396,10 @@ const killGoldGrowth = 0.045;
 int killGold(int base, Tier tier, int wave, [double r = killGoldGrowth]) => (base * tier.reward * pow(1 + r, max(0, wave - 1))).floor();
 
 /// The score ([Game.score], docs/scoreboard.md): points for every kill by the monster's rank (the boss's
-/// raised skeletons pay no gold and score nothing), [waveScore] × n for winning wave n, and when the game
-/// is over [lifeScore] for every life left.
+/// raised skeletons pay no gold and score nothing) and [waveScore] × n for winning wave n. The lives left paid 50 each
+/// at the game's end until decisions-log 329: since 322 a game ends only at 0 lives, so they paid nothing.
 const killScore = {Tier.normal: 10, Tier.elite: 25, Tier.highElite: 50, Tier.miniBoss: 150, Tier.boss: 500};
-const waveScore = 100, lifeScore = 50;
+const waveScore = 100;
 
 /// A wave's monster dropped a relic at this chance by its rank in a game without the Towns (decisions-log 321): none from
 /// normal and elite ones, the boss at most, never for sure; a necromancer's raised minions none. The [Game.loot] dice
@@ -1469,13 +1478,11 @@ bool tided(Tier tier, {bool raised = false}) => raised || (tier != Tier.boss && 
 /// The tide's HP in [wave] (from [from]) as the wave meter's badge shows it: whole percent more.
 int tidePercent(int wave, [int from = tideFrom]) => ((tide(wave, tideHp, from) - 1) * 100).round();
 
-/// The wave meter's tooltip on the tide in [wave] (from [from]; its pace from [paceFrom], [from] unless given: an army
-/// over the cap's HP and damage count from earlier, its pace doesn't, [overPace]): its name, then what it does to the
-/// crowd.
-(String, List<String>) tideInfo(int wave, [int from = tideFrom, int? paceFrom]) => (Words.tide, [
+/// The wave meter's tooltip on the tide in [wave] (from [from]): its name, then what it does to the crowd.
+(String, List<String>) tideInfo(int wave, [int from = tideFrom]) => (Words.tide, [
       'Monster HP +${tidePercent(wave, from)}%',
       'Monster attack +${((tide(wave, tideDmg, from) - 1) * 100).round()}%',
-      'A monster every ${spawnGapOf(wave, paceFrom ?? from).toStringAsFixed(2)} s',
+      'A monster every ${spawnGapOf(wave, from).toStringAsFixed(2)} s',
       'Not the boss or mini boss',
     ]);
 
@@ -1497,32 +1504,6 @@ String capWarningText(int cap, int tidePct) =>
 /// The wave meter tooltip's last line while the army is full at the cap of [cap].
 String capTip(int cap) => '${Words.army} full ($cap): make types stronger';
 
-/// "Beban", the over-cap tide (decisions-log 162, amending 141's 3a: an army over the cap kept every troop for free).
-/// An army alive over the cap (a save from before it: the owner's 48 over 32) meets the tide of a later wave: its tide
-/// counts from [overTide] waves earlier for each troop over, at most [overTideMax] waves, ramped in over [overRamp]
-/// waves from the first wave it started over the cap ([Game.overFrom]) ([overTideWaves]). Counted at each
-/// [Game.startWave] while [Game.armyMax] is on and frozen for the wave ([Game.waveTideFrom]); each troop that falls over
-/// the cap gives [overTide] waves back. An army at the cap or under it, so every new run, meets the tide as before.
-/// [overTide] 2 is the one probed arm (the owner's w86 save, 12 seeds) with no game over from 0 falls the wave before;
-/// 3 and 4 had one in 6 (decisions-log 162). It is soft: 0.65 falls a wave over w87-96 against the design's 1-3.
-const overTide = 2, overTideMax = 60, overRamp = 5;
-
-/// Whether Beban's earlier tide also moves the pace ([spawnGapOf]): on (decisions-log 162), as [overTide] 2 was
-/// measured. Off, it moves HP and damage only and the gap between two monsters keeps counting from [Game.tideStart]:
-/// the switch for a later tune. With overTide 3-4 the pace on piled the crowd up (1 to 61 monsters on the field in
-/// 120 s with nobody falling, 1.43× the base's crowd HP a second at a tide from 42) until the line broke in one wave;
-/// off saved those two runs but not a third.
-const overPace = true;
-
-/// How many waves earlier the tide counts from in [wave] for an army [over] the cap (Beban) whose first wave over it
-/// was [from]: [overTide] a troop, at most [overTideMax], a [overRamp]th of it on [from], all of it from [overRamp]
-/// waves on; rounded to whole waves.
-int overTideWaves(int over, int wave, int from) =>
-    over <= 0 ? 0 : (min(overTideMax, overTide * over) * ((wave - from + 1) / overRamp).clamp(0.0, 1.0)).round();
-
-/// The wave meter tooltip's line while the army is [over] the cap, its tide counting [waves] waves earlier (Beban).
-String overTip(int over, int waves) => '$over over the cap: ${Words.tide} +${_count(waves, 'wave')}';
-
 /// The one-time note ([Game.limitNotes], key "caps") for a game with types alive over their cap ([Game.overCaps]: "Priest
 /// 17/5"), three to a line: they stay, and their buys wait (decisions-log 201).
 String capsNote(List<String> over) => [
@@ -1530,9 +1511,6 @@ String capsNote(List<String> over) => [
       for (var i = 0; i < over.length; i += 3) '${i == 0 ? 'over it: ' : ''}${over.skip(i).take(3).join(', ')}${i + 3 < over.length ? ',' : '.'}',
       'Buy more of a type when under its cap.',
     ].join('\n');
-
-/// The one-time note ([Game.limitNotes], key "over") for a game whose army is over the cap of [cap] (Beban).
-String overNote(int cap) => '${Words.army} cap $cap. Each troop over it:\n${Words.tide} +${_count(overTide, 'wave')}';
 
 /// No unit attacks (or heals) faster than once every [minAttackInterval] s, whatever speeds it up (gloves,
 /// awakening, a Hero, War Cry, Rampage, the wave's growth); the wave's boss may go down to
@@ -1953,12 +1931,6 @@ class Game {
   /// A troop that has entered stays at least this far past the back line.
   static const clearOfLine = 4.0;
 
-  /// #61's option A: with the back line not following the view (since #79 it stays put all wave), the
-  /// supports keep up with the view themselves ([_rearEdge]) and anyone at or past its left edge walks up at
-  /// the catch-up pace ([speedTo]). False is #61's rule alone (option B), which in its A/B left the rear out of
-  /// sight and 40% more troops fell.
-  static const keepUpWithView = true;
-
   /// How far ahead of the foremost heavy-armored melee walking in the light melee may get ([paceLimit]).
   static const paceLead = 2.5 * tile;
 
@@ -2010,50 +1982,20 @@ class Game {
   /// The wave just won is the last before the tide's first ([tideStart]): the "VICTORY!" popup says so ([tideNews]).
   bool get tideRising => wave == tideStart - 1;
 
-  /// Beban (decisions-log 162): the first wave started with the army over the cap ([overBy]), the over-cap tide's ramp
-  /// counting from it ([overTideWaves]). Set then when missing, never cleared; null in a new game. Saved (only when set).
-  int? overFrom;
-
-  /// The troops over the cap when this wave started, and the waves earlier its tide counts from for them
-  /// ([overTideWaves]): frozen for the wave. Not saved (a save holds no wave in progress).
-  ({int by, int waves}) waveOver = (by: 0, waves: 0);
-
-  /// Troops alive over the cap ([armyCap]) with [armyMax] on, else 0: Beban's count.
-  int get overBy => armyMax == null ? 0 : max(0, armySize - armyCap);
-
-  /// The wave the tide counts from in the wave being fought: [tideStart], [waveOver]'s waves earlier for an army over
-  /// the cap (Beban). Every monster made in a wave reads it.
-  int get waveTideFrom => tideStart - waveOver.waves;
-
-  /// The wave the tide's pace counts from in the wave being fought (the spawn gap, [spawnGapOf]): [tideStart], or with
-  /// [overPace] on [waveTideFrom].
-  int get wavePaceFrom => overPace ? waveTideFrom : tideStart;
-
-  /// Beban on the wave the HUD shows: in a wave this one's, frozen ([waveOver]); between waves the coming one's as the
-  /// army stands now, so a rebuy or a Lepas jenis shows at once.
-  ({int by, int waves}) get shownOver {
-    if (waveActive) return waveOver;
-    final by = overBy;
-    return (by: by, waves: overTideWaves(by, wave + 1, overFrom ?? wave + 1));
-  }
-
-  /// The wave the tide counts from in the wave the HUD shows ([shownOver]).
-  int get shownTideFrom => tideStart - shownOver.waves;
-
-  /// The wave meter's tooltip ([tideInfo]) on the wave it shows (this one in a wave, else the next), with Beban's line
-  /// while the army is over the cap ([overTip]), ending with [capTip] while the army is full at the cap ([capPressed],
-  /// decisions-log 161).
+  /// The wave meter's tooltip ([tideInfo]) on the wave it shows (this one in a wave, else the next), ending with [capTip]
+  /// while the army is full at the cap ([capPressed], decisions-log 161). Beban's line for an army over the cap (its tide
+  /// counted from earlier waves, decisions-log 162) went with Beban in decisions-log 329.
   (String, List<String>) get tideTip {
-    final over = shownOver, from = tideStart - over.waves;
-    final (title, lines) = tideInfo(waveActive ? wave : wave + 1, from, overPace ? from : tideStart);
-    return (title, [...lines, if (over.waves > 0) overTip(over.by, over.waves), if (capPressed) capTip(armyMax!)]);
+    final (title, lines) = tideInfo(waveActive ? wave : wave + 1, tideStart);
+    return (title, [...lines, if (capPressed) capTip(armyMax!)]);
   }
 
-  /// Points so far ([killScore], [waveScore], and [lifeScore] once the game is over) and monsters killed
+  /// Points so far ([killScore], [waveScore]) and monsters killed
   /// (the boss's raised skeletons too): what goes on the scoreboard.
   int score = 0, kills = 0;
 
-  /// The back line: the deploy zone starts here and a monster crossing it costs a life. It stays put all
+  /// The back line: the deploy zone starts here, and no monster goes past it (it cost a life until decisions-log 329:
+  /// the monsters there wait for the troops, and nothing is lost). It stays put all
   /// wave, however far the fight goes (#79, the owner: "garis belakang di majukan setiap selesai wave
   /// saja"), and when a wave is won it moves up to wherever the rearmost troop stands, never back.
   double baseX = 0;
@@ -3289,7 +3231,6 @@ class Game {
         if (weakened > 0) 'weakened': weakened, // the monsters weakened after a wipe until the next new Town (wipe.dart)
         if (wipeAsk) 'wipeAsk': true, // Try again or Give up, still to be chosen (wipe.dart)
         if (ukir.fed) 'ukir': ukir.toJson(), // the run's Ukir, once fed (pusaka.dart)
-        'overFrom': ?overFrom, // Beban's first wave over the cap
         if (legendsFound.isNotEmpty) 'legendsFound': [for (final r in legendsFound) r.name], // never offered again (pusaka.dart)
         if (toReplace.isNotEmpty) 'toReplace': [for (final f in toReplace) {'type': f.type, 'x': f.post.x, 'y': f.post.y}],
         if (autoReplace) 'autoReplace': true, // Auto, the spawn bar's (decisions-log 283)
@@ -3432,7 +3373,7 @@ class Game {
         ..pts = u['pts'] as int? ?? 0
         ..milli = u['milli'] as int? ?? 0;
     }
-    overFrom = j['overFrom'] as int?; // none in saves from before Beban: set by the first wave started over the cap
+    // An older save's `overFrom` (Beban's first wave over the cap, decisions-log 162) is read as nothing since 329.
     autoReplace = j['autoReplace'] == true; // Auto (decisions-log 283): off in saves from before it
     // "Ganti yang gugur"'s fallen troops still to buy back (#92); none in saves from before it.
     for (final f in (j['toReplace'] as List?) ?? const []) {
@@ -3549,7 +3490,7 @@ class Game {
 
   /// Whether fewer monsters live on the field than the [spawnFloor] while the [queue] holds more: the next comes on now.
   bool get belowSpawnFloor => queue.isNotEmpty && enemies.where((u) => u.alive).length < spawnFloor;
-  /// The game is over: no life is left (a leak's, or the last heart an army wiped cost, wipe.dart).
+  /// The game is over: no life is left (the last heart a lost wave cost, wipe.dart).
   bool get over => lives <= 0;
 
   /// The wave just fought ended with the army wiped ([Wipe._wipe], wipe.dart): set as it falls, until the next wave
@@ -3559,6 +3500,9 @@ class Game {
   /// When the army was last wiped ([t]), for the UI to say so and save once; [double.negativeInfinity] in a game where
   /// it wasn't.
   double wipedAt = double.negativeInfinity;
+
+  /// Why the wave was last lost ([wipedAt]), for the UI's note (wipe.dart).
+  WipeCause wipeCause = WipeCause.fell;
 
   /// The furthest wave the army was wiped in, to be played again (wipe.dart): past [wave] between waves (the next one
   /// with no Town gone into yet, further after a trip back to the checkpoint's Town), [wave] or past it while the waves
@@ -3592,9 +3536,16 @@ class Game {
   /// Phoenix Plume rises due ([HeroSkills.later]): while one is, the army isn't wiped. A wave's end drops them.
   int _risesDue = 0;
 
-  /// The wave stalled ([stallTime]): its monsters walk straight to the base, through the troops, and
-  /// don't fight, summon or heal any more. Cleared when the wave ends.
+  /// The wave stalled ([stallTime]): its monsters charge the troops ([_charge]) and don't heal, summon or back off any
+  /// more. Within [marchMax] s of its start the wave is won, or lost (wipe.dart). Cleared when the wave ends.
   bool marching = false;
+
+  /// When the monsters began to charge ([marching]).
+  double _marchAt = 0;
+
+  /// Since when no troop has stood in this wave whose monsters came on and none of which fell ([emptyGrace], wipe.dart);
+  /// null while one stands.
+  double? _emptyFrom;
 
   /// The monsters just started marching ([marching]), for the UI to say so; the UI clears it.
   bool newMarch = false;
@@ -3605,7 +3556,7 @@ class Game {
   bool stalled = false;
   double _stallLow = double.infinity, _progressAt = 0, _frontLow = double.infinity, _quietFrom = 0; // [_watchStall]
   double _overtimeFrom = 0, _slotHp = 0, _slotMaxHp = 0; // the overtime clock's start, the slots' HP and max HP then
-  int _stallCount = 0, _stallLives = 0; // [_watchStall]
+  int _stallCount = 0; // [_watchStall]
 
   /// The game is paused (the UI's pause button, Esc / P, or the book opened mid-wave): [tick] does nothing, so
   /// nothing moves, fights, spawns, heals or counts down. Not saved: a loaded game starts unpaused.
@@ -3705,11 +3656,7 @@ class Game {
     if (!canStartWave) return;
     if (draftPolicy != null && chests.isNotEmpty) _pickChests(); // a probe's chests still waiting (draft.dart)
     wave++;
-    // Beban (decisions-log 162): an army over the cap meets a later wave's tide, counted now and frozen for the wave.
-    final over = overBy;
-    if (over > 0) overFrom ??= wave;
-    waveOver = (by: over, waves: overTideWaves(over, wave, overFrom ?? wave));
-    _omenWave(); // the Bayangan's factor frozen beside it, Lewati's skip buff, the catch-up landing (omen.dart)
+    _omenWave(); // the Bayangan's factor frozen, Lewati's skip buff, the catch-up landing (omen.dart)
     waveSpawned = 0;
     fallen.clear();
     wipedOut = false; // a new fight (a wave lost to a wipe is played again: wipe.dart)
@@ -3722,11 +3669,11 @@ class Game {
     // the after-wave heals while it starts ([RetreatBrain.carryHealQueue]).
     if (!retreatPolicy.brain.carryHealQueue) healQueue.clear();
     marching = stalled = false;
+    _emptyFrom = null;
     _stallLow = _frontLow = double.infinity;
     _progressAt = _quietFrom = _overtimeFrom = t;
     _slotHp = _slotMaxHp = 0;
     _stallCount = 0;
-    _stallLives = lives;
     for (final u in troops) {
       u.heroSkillAt = double.negativeInfinity; // every Hero's own skill is ready again
       u.fxOnce = false; // and every once-a-wave Pusaka Fx (the Grail's save, [grailK])
@@ -3805,7 +3752,7 @@ class Game {
         lives: lives,
         bag: {for (final MapEntry(:key, :value) in inventory.entries) if (value > 0) key.name: value},
         relics: {for (final MapEntry(:key, :value) in relicBag.entries) if (value > 0) key.name: value},
-        tide: (hp: tide(wave, tideHp, waveTideFrom), dmg: tide(wave, tideDmg, waveTideFrom), gap: spawnGapOf(wave, wavePaceFrom), over: waveOver.waves),
+        tide: (hp: tide(wave, tideHp, tideStart), dmg: tide(wave, tideDmg, tideStart), gap: spawnGapOf(wave, tideStart)),
         pusaka: pusakaState,
         omens: _omenState,
         materials: {for (final MapEntry(:key, :value) in materials.entries) key.name: value},
@@ -3972,7 +3919,7 @@ class Game {
   bool get capPressed {
     final cap = armyMax;
     if (cap == null || armyCap < cap || armySize + fallen.length < cap) return false;
-    return (waveActive ? wave : wave + 1) > shownTideFrom && troops.any((u) => u.alive && awakenLevel(u.type) < awakenTop);
+    return (waveActive ? wave : wave + 1) > tideStart && troops.any((u) => u.alive && awakenLevel(u.type) < awakenTop);
   }
 
   /// The cap's warning ([capWarningText]) when it is due between waves, marked shown; else null. Due while
@@ -3980,17 +3927,16 @@ class Game {
   String? capWarning() {
     if (!canStartWave || !capPressed || (capWarnedAt != null && wave - capWarnedAt! < capWarnEvery)) return null;
     capWarnedAt = wave;
-    return capWarningText(armyMax!, tidePercent(wave + 1, shownTideFrom));
+    return capWarningText(armyMax!, tidePercent(wave + 1, tideStart));
   }
 
-  /// The limits' one-time notes due for this game (decisions-log 141, 201; their keys in [notes]: "army", "over",
-  /// "caps"), in the UI's words, each marked shown: an army or capacity over [armyMax] keeps its troops, an army alive
-  /// over the cap pays for it in tide ([overNote], Beban, decisions-log 162), and a type alive over its cap keeps its
-  /// troops ([capsNote]). Empty with the limits off or within them.
+  /// The limits' one-time notes due for this game (decisions-log 141, 201; their keys in [notes]: "army", "caps"), in the
+  /// UI's words, each marked shown: an army or capacity over [armyMax] keeps its troops, and a type alive over its cap
+  /// keeps its troops ([capsNote]). Empty with the limits off or within them. (The "over" note, Beban's tide for an army
+  /// alive over the cap, went with Beban in decisions-log 329; an older save's "over" key stays, unread.)
   List<String> limitNotes() => [
         if (armyMax case final cap? when max(capacity, armySize) > cap && notes.add('army'))
           'The army cap is now $cap. You keep your troops;\nbuy more when under $cap.',
-        if (overBy > 0 && notes.add('over')) overNote(armyCap),
         if (overCaps case final over when over.isNotEmpty && notes.add('caps')) capsNote(over),
       ];
 
@@ -4501,7 +4447,7 @@ class Game {
     final melee = troops.where((o) => o.alive && o.entered && o.line == 2).toList();
     if (melee.isEmpty) return own;
     final fastest = min(min(catchUpMost * own, walkCap(u.type)), max(own, melee.map((o) => o.walkSpeed).reduce(max)));
-    if (!u.entered || (keepUpWithView && u.pos.x < cam + keepUpShift - offViewBy)) return fastest; // bought mid-wave, or at the view's edge
+    if (!u.entered || u.pos.x < cam + keepUpShift - offViewBy) return fastest; // bought mid-wave, or at the view's edge
     final fighting = melee.where((o) => t - o.attackedAt < _engagedFor);
     final rear = (fighting.isEmpty ? melee : fighting).map((o) => o.pos.x).reduce(min);
     return rear - u.pos.x <= (2 - u.line) * tile + _catchUp ? own : fastest;
@@ -4544,7 +4490,11 @@ class Game {
   /// The back line or the view's left edge ([keepUpShift] inside it once the wave has shown a fight), whichever
   /// is further on: mid-wave the supports don't settle behind it (a healer's rest, a kiting archer), so they keep
   /// up with the view without being dragged (#61: the back line no longer follows the view; #85: the inset).
-  double get _rearEdge => keepUpWithView ? max(baseX, cam + keepUpShift) : baseX;
+  /// #61's option A: with the back line not following the view (since #79 it stays put all wave), the supports keep up
+  /// with the view themselves, and anyone at or past its left edge walks up at the catch-up pace ([speedTo]). #61's
+  /// rule alone (option B, the back line only) left the rear out of sight in its A/B, and 40% more troops fell; its
+  /// switch, always on, went in decisions-log 329.
+  double get _rearEdge => max(baseX, cam + keepUpShift);
 
   /// [u] struck or was struck in the last [_engagedFor] s.
   bool _inFight(Unit u) => t - u.attackedAt < _engagedFor || t - u.hurtAt < _engagedFor;
@@ -5176,7 +5126,7 @@ class Game {
 
     // Out of sight left of the view (decisions-log 312), it walks up into it before it heals or smites, so no heal of its
     // comes from off the screen (a Hero priest's ×3 reach healed the whole field from the back line, never seen).
-    final away = keepSupports && keepUpWithView && fighters.isNotEmpty && u.pos.x < cam + keepUpShift - offViewBy;
+    final away = keepSupports && fighters.isNotEmpty && u.pos.x < cam + keepUpShift - offViewBy;
     // More than a tile behind its rest (decisions-log 324) it walks up first: it stops only to heal one falling back or
     // at [retreatAt] of its HP or less, and not to smite. A heal holds it [healCast] s, so stopping for every one left the
     // healers 6 to 9 tiles behind a melee that walks on as the view centres the fight.
@@ -5374,10 +5324,15 @@ class Game {
       return;
     }
     final others = enemies.where((o) => o.alive && !o.stats.heals).toList();
-    // Alone, it walks on toward the back line like a monster with nobody to fight, so a wave never stalls.
+    // Alone, it walks on toward the troops (into their reach), so a wave never stalls; with none standing it waits.
     if (others.isEmpty) {
       act(Mend.alone);
-      return _moveToward(u, Point(baseX - tile, u.pos.y), dt);
+      final to = _nearestFoe(u);
+      if (to == null) {
+        u.moving = false;
+        return;
+      }
+      return _moveToward(u, to.pos, dt);
     }
     if (back != null) {
       act(Mend.backOff);
@@ -5487,32 +5442,46 @@ class Game {
     return waits[best]! > 0 ? choice(saving: best, scores: scores) : choice(cast: best, scores: scores);
   }
 
+  /// A charging monster ([marching], decisions-log 329: the owner, "monster juga nga perlu ke garis belakang karna kan
+  /// targetnya para troops"): straight at the troop it goes for ([_monsterFoe]), to the edge of its reach, and it strikes
+  /// there; no heal, summon, skill or backing off. With no troop standing it waits where it is. Until 329 the march walked
+  /// through the troops to the back line, and each monster over it cost half a heart.
+  void _charge(Unit u, double dt) {
+    u.cd -= dt;
+    final foe = _monsterFoe(u);
+    if (foe == null) {
+      u.moving = false;
+      return;
+    }
+    if (!reaches(u, foe)) return _moveToward(u, _reachPoint(u, foe), dt);
+    u.moving = false;
+    _face(u, foe.pos.x - u.pos.x, 0);
+    if (u.cd <= 0) _strike(u, foe);
+  }
+
   /// How much of the wave is left to do: its own monsters' HP plus their way to the base (raised minions
   /// don't count). A new low of it, or a spawn, is progress; none for [stallTime] and the wave has
   /// stalled: the monsters march ([marching]). Two more stalls, for fights whose falling HP alone read as progress
   /// (qa-3): while the monsters nearest the base stand more than [stallDrift] further from it than they have since
-  /// the last spawn, death or leak, a new low doesn't count; and [stallOvertime] after the last spawn, life lost or
-  /// [stallProgress] of the slot monsters, or [stallOvertimeMax] after the last spawn or life lost, they march
-  /// whatever else.
+  /// the last spawn or death, a new low doesn't count; and [stallOvertime] after the last spawn or [stallProgress] of
+  /// the slot monsters, or [stallOvertimeMax] after the last spawn, they march whatever else.
   void _watchStall(bool spawned) {
     if (!waveActive || marching) return;
     final own = enemies.where((u) => u.alive && u.raisedBy == null).toList();
     double way(Unit u) => max(0.0, u.pos.x - baseX);
     final left = own.fold(0.0, (s, u) => s + u.hp + way(u)), front = own.isEmpty ? 0.0 : own.map(way).reduce(min);
-    _frontLow = spawned || own.length != _stallCount ? front : min(_frontLow, front); // a spawn, death or leak: afresh
+    _frontLow = spawned || own.length != _stallCount ? front : min(_frontLow, front); // a spawn or death: afresh
     // Only a spawn brings a slot monster, so between two starts of the overtime clock the same ones are counted, a
     // dead one at 0 HP. HP healed back has to be lost again before it counts.
     final slotted = own.where((u) => u.tier == Tier.boss || u.tier == Tier.miniBoss);
     final slotHp = slotted.fold(0.0, (s, u) => s + u.hp);
-    final fresh = spawned || lives < _stallLives;
-    if (fresh) _quietFrom = t;
-    if (fresh || (_slotMaxHp > 0 && _slotHp - slotHp >= stallProgress * _slotMaxHp)) {
+    if (spawned) _quietFrom = t;
+    if (spawned || (_slotMaxHp > 0 && _slotHp - slotHp >= stallProgress * _slotMaxHp)) {
       _overtimeFrom = t;
       _slotHp = slotHp;
       _slotMaxHp = slotted.fold(0.0, (s, u) => s + u.maxHp);
     }
     _stallCount = own.length;
-    _stallLives = lives;
     final drifting = front - _frontLow > stallDrift;
     if (spawned || (left < _stallLow && !drifting)) {
       _stallLow = left;
@@ -5521,6 +5490,8 @@ class Game {
     final stalled = t - _progressAt > stallTime, longest = t - _quietFrom > stallOvertimeMax;
     if (stalled || longest || t - _overtimeFrom > stallOvertime) {
       marching = newMarch = this.stalled = true; // the field (the guide's card), not the local above
+      _marchAt = t;
+      sfx.add(Sfx.leak); // the charge's alarm (a monster over the back line until decisions-log 329)
       _emit(Marched(wave, t,
           why: stalled
               ? (drifting ? MarchCause.drifting : MarchCause.stalled)
@@ -5572,7 +5543,7 @@ class Game {
       _emit(MonsterSpawned(wave, t, type: type, tier: tier));
       if (strongTiers.contains(tier)) _emit(StrongFoe(wave, t, type: type, tier: tier));
       waveSpawned++;
-      _spawnTimer = spawnGapOf(wave, wavePaceFrom); // the tide shortens it from [wavePaceFrom]
+      _spawnTimer = spawnGapOf(wave, tideStart); // the tide shortens it from [tideStart]
     }
     _omenDuskTick(); // Dusk: the crowd all in, and 30 s after it the monsters hit harder (omen.dart)
 
@@ -5597,7 +5568,7 @@ class Game {
         continue;
       }
       if (marching && u.side == Side.enemy) {
-        _moveToward(u, Point(baseX - tile, u.pos.y), dt); // the wave stalled: straight for the base
+        _charge(u, dt); // the wave stalled: straight at the troops
         continue;
       }
       // The summoner thinks about raising minions every so often ([decideSummon]); after deciding to wait
@@ -5704,7 +5675,7 @@ class Game {
           }
         }
       } else if (u.side == Side.enemy) {
-        _moveToward(u, Point(baseX - tile, u.pos.y), dt);
+        u.moving = false; // no troop standing (a Phoenix rise due, a wave begun with none): it waits (decisions-log 329)
       } else {
         _rest(u, dt);
       }
@@ -5725,7 +5696,7 @@ class Game {
     for (var i = 0; i < live.length; i++) {
       for (var j = i + 1; j < live.length; j++) {
         final a = live[i], b = live[j], d = b.pos - a.pos, len = d.magnitude;
-        if (len >= _personalSpace || (marching && a.side != b.side)) continue; // marching, they walk through
+        if (len >= _personalSpace) continue; // (a march walked through the troops until decisions-log 329: it charges them now)
         if (_passesThrough(a) || _passesThrough(b)) continue; // hopping over, or charging through
         final push = len > 0.01 ? d * ((_personalSpace - len) / 2 / len) : Point(0.0, (_personalSpace / 2) * (i.isEven ? 1 : -1));
         if (a.side == Side.troop && b.side == Side.troop) {
@@ -5779,11 +5750,9 @@ class Game {
         // but its own steps left stand: a monster the view glided past still comes on (#42).
         if (u.entered && u.pos.x > rightLimit) u.pos = Point(max(rightLimit, min(u.pos.x, start[u]?.x ?? u.pos.x)), u.pos.y);
       }
-      if (u.side == Side.enemy && u.pos.x < baseX) {
-        u.gone = true;
-        if (!_boostLeak()) lives = max(0, lives - 1); // unless a Tavern boost forgives it (tavern.dart)
-        sfx.add(over ? Sfx.lose : Sfx.leak);
-      }
+      // No monster heads for the back line any more: its goal is always a troop, and with none standing it waits
+      // (decisions-log 329). One past the line, meeting a troop that walks in from behind it, costs nothing; until 329 it
+      // was gone and cost a life, half a heart.
     }
 
     // A shot whose target fell or left flies on to where it was, and lands there as on it (decisions-log 327).
@@ -5826,7 +5795,10 @@ class Game {
     if (pusaka.isNotEmpty) _oathWatch(); // a type died out or came back: Alliance's multiplier moves (pusaka.dart)
     units.removeWhere((u) => u.gone || u.dying >= deathTime);
     _watchStall(spawned);
-    if (wasActive && !wipedOut && !over && _armyDown) _wipe(); // a heart lost, the wave swept and played again (wipe.dart)
+    // The army down, or a march not won in time: a heart lost, the wave swept and played again (wipe.dart).
+    if (wasActive && !wipedOut && !over) {
+      if (_waveLost() case final why?) _wipe(why);
+    }
 
     if (wasActive && !waveActive && !over && !wipedOut) {
       marching = false;
@@ -5893,9 +5865,8 @@ class Game {
       _rollTown(); // then the Town two waves ahead, rolled now so the auto-save keeps it (town.dart)
     }
     _autoReplaceTick(); // Auto buys back the fallen the gold now covers (auto_replace.dart)
-    // The game ended this tick (the next one returns at once): every life left scores, and the wave is lost.
+    // The game ended this tick (the next one returns at once): the wave is lost.
     if (over) {
-      score += lives * lifeScore;
       _watchGrail(end: true);
       _emit(WaveEnded(wave, t, won: false));
       _boostWaveEnd();

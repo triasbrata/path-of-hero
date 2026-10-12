@@ -42,7 +42,7 @@ enum _LogChip {
     EventKind.wipe, // decisions-log 322
     EventKind.townMarked, EventKind.townEntered, EventKind.townLeft, EventKind.crafted, EventKind.itemCrafted, //
     EventKind.stoneCrafted, EventKind.itemEnhanced, //
-    EventKind.boostBought, EventKind.boostEnded, EventKind.boostSaved]); // decisions-log 216, 233, 249, 255, 268
+    EventKind.boostBought, EventKind.boostEnded]); // decisions-log 216, 233, 249, 255, 268
 
   const _LogChip(this.label, this.kinds);
   final String label;
@@ -76,11 +76,8 @@ String logLine(GameEvent e) => switch (e) {
       PusakaLebur(:final fodder, :final relic, :final stars, :final type, :final cost) =>
         '${Words.melt}: ${relicNames[fodder]} into ${relicNames[relic]} ★$stars ${_whereAt(type)} (${shortPrice(cost)} gold)',
       WaveEnded(:final wave, :final won) => won ? 'Wave $wave won' : 'Lost at wave $wave',
-      Wiped(:final wave, :final over, :final checkpoint, :final town) => over
-          ? 'Army fell: no hearts left'
-          : checkpoint != null && town != null
-              ? 'Army fell: -1 heart, back to $town from wave $checkpoint' // the Town checkpoint (wipe.dart)
-              : 'Army fell: -1 heart, wave $wave again', // wipe.dart
+      Wiped(:final wave, :final over, :final cause, :final checkpoint, :final town) => // wipe.dart
+        '${cause == WipeCause.fell ? 'Army fell' : wipeWhy(cause)}: ${over ? 'no hearts left' : checkpoint != null && town != null ? '-1 heart, back to $town from wave $checkpoint' : '-1 heart, wave $wave again'}',
       GrailSaved(:final name, :final type, :final hero) =>
         '${pusakaShortName(Relic.grail)} saves ${hero ? 'Hero ' : ''}$name (${troopTypeNames[type] ?? type})',
       PusakaReport() => pusakaReportLines(e).firstOrNull ?? '',
@@ -102,7 +99,6 @@ String logLine(GameEvent e) => switch (e) {
         '${boostNames[boost]}${type == null ? '' : ' (${troopTypePlurals[type] ?? type})'}: ${boostEffectLines(effects).join(', ')} '
             '(${boostLengthWords(waves, untilTown: untilTown, inLine: true)})',
       BoostEnded(:final boost) => '${boostNames[boost]} ended',
-      BoostSaved(:final boost) => '${boostNames[boost]}: no life lost',
       PocketUsed() => pocketUsedLine(e), // pocket.dart
       PocketCrafted(:final pocket, :final gold) => 'Crafted ${pocketNames[pocket]} (${thousands(gold)} gold)',
       TraceEvent() => '', // the telemetry's only: never in the log
@@ -331,7 +327,6 @@ extension on Board {
         StoneCrafted(:final stone) => _icon(c, stone, to), // the stone the Smithy made (decisions-log 255)
         ItemEnhanced(:final item) => _icon(c, item, to), // the item enhanced (decisions-log 255)
         BoostBought(:final boost, :final type) || BoostEnded(:final boost, :final type) => _boostIcon(c, boost, type, to), // its own (tavern_page.dart)
-        BoostSaved(:final boost) => _boostIcon(c, boost, null, to),
         PocketUsed(:final pocket) || PocketCrafted(:final pocket) => _icon(c, pocket, to), // its own (pocket.dart)
         TraceEvent() => null, // never in the log
       };

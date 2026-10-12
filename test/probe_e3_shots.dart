@@ -150,7 +150,7 @@ void main() {
     final tag = '${size.width.round()}x${size.height.round()}';
     testWidgets('E-3 Bat Venom shots $tag', (tester) async {
       omensOn = true;
-      addTearDown(() => omensOn = false);
+      addTearDown(() => omensOn = omensDefault);
       final key = GlobalKey();
       final b = await boot(tester, size, key);
 

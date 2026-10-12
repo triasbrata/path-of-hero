@@ -74,7 +74,7 @@ extension _WaveMeter on Board {
     // As wide as the widest wave number and count, so it doesn't twitch as it counts up or the wave starts.
     final wave = '$shown', waveW = math.max(_textWidth(wave, ts), _textWidth('88', ts));
     // From the tide's first wave its HP after the number ("+35%" on wave 65, #92), with room for "+999%".
-    final from = g.shownTideFrom; // Beban's waves earlier for an army over the cap (decisions-log 162)
+    final from = g.tideStart;
     _tideLabel = shown >= from ? '+${tidePercent(shown, from)}%' : '';
     final tideW = _tideLabel.isEmpty ? 0.0 : math.max(_textWidth(_tideLabel, ts), _textWidth('+999%', ts)) + pad;
     // The count keeps room for the coming wave's size between waves too (4 + 2 a wave, and its bosses, healers and escorts:

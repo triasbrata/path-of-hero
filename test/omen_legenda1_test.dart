@@ -116,7 +116,7 @@ void crowd(Game g, int n) {
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("the ten sit in the Legenda pool alone, after Barrier and Escort (today's seven until the Legenda cut-over), in "
@@ -455,18 +455,18 @@ void main() {
         final g = plain(omens: levels(hardy, n), factor: factor);
         for (final tier in Tier.values) {
           for (final raised in [false, true]) {
-            final want = enemyStats('orc', tier, g.wave, raised: raised, tideStart: g.waveTideFrom), got = g.spawnStats('orc', tier, raised: raised);
+            final want = enemyStats('orc', tier, g.wave, raised: raised, tideStart: g.tideStart), got = g.spawnStats('orc', tier, raised: raised);
             final silver = tier == Tier.elite || tier == Tier.highElite;
             expect(got.hp, silver ? (want.hp * (1 + share)).round() : want.hp, reason: 'L$n ×$factor ${tier.name} $raised');
             expect(rest(got), rest(want), reason: tier.name);
           }
         }
-        final skip = g.spawnStats('orc', Tier.elite, skipBuff: true), want = enemyStats('orc', Tier.elite, g.wave, tideStart: g.waveTideFrom);
+        final skip = g.spawnStats('orc', Tier.elite, skipBuff: true), want = enemyStats('orc', Tier.elite, g.wave, tideStart: g.tideStart);
         expect(skip.hp, (want.hp * (1 + skipBuffK) * (1 + share)).round(), reason: 'with the skip buff');
         expect(g.monster('orc', Tier.highElite, const Point(250, 60)).maxHp, g.spawnStats('orc', Tier.highElite).hp);
       }
       final bones = plain(omens: [...top(hardy), ...top(OmenKind.oldBones)], factor: 2);
-      final want = enemyStats('skeleton', Tier.elite, bones.wave, tideStart: bones.waveTideFrom).hp;
+      final want = enemyStats('skeleton', Tier.elite, bones.wave, tideStart: bones.tideStart).hp;
       expect(bones.spawnStats('skeleton', Tier.elite).hp, (want * 1.4 * 1.3).round(), reason: 'with Old Bones');
     });
 
@@ -723,7 +723,7 @@ void main() {
       final hp = plain(omens: all, factor: 2).spawnStats('orc', Tier.elite).hp;
       omensOn = false;
       final g = plain(omens: all, factor: 2);
-      expect(g.spawnStats('orc', Tier.elite).hp, enemyStats('orc', Tier.elite, g.wave, tideStart: g.waveTideFrom).hp);
+      expect(g.spawnStats('orc', Tier.elite).hp, enemyStats('orc', Tier.elite, g.wave, tideStart: g.tideStart).hp);
       expect(hp, isNot(g.spawnStats('orc', Tier.elite).hp), reason: 'Hardy on');
       expect(foeAt(g, 'orc', const Point(300, 60)).shrugs, 0);
       expect(g.omenUnbowed, 0);

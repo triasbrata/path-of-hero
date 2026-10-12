@@ -95,7 +95,7 @@ void main() {
 
       // A Town marked and three boosts running: the chips under the Town chip; the Feast's tooltip.
       b.state = fieldGame()
-        ..boosts.addAll([RunningBoost(Boost.feast, 2), RunningBoost(Boost.plate, 1, type: 'knight'), RunningBoost(Boost.watch, 2)]);
+        ..boosts.addAll([RunningBoost(Boost.feast, 2), RunningBoost(Boost.plate, 1, type: 'knight'), RunningBoost(Boost.toast, 2)]);
       await shot('chips', 30);
       final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await mouse.addPointer(location: Offset.zero);

@@ -661,10 +661,12 @@ each plain and with each card lifted, at 1266×713 and 412×860.
 
 `test/omen_test.dart` (plain tests, `bareGame` / `placeNow`, every skill off; dice that give set draws and count them,
 `_Seq`; the owner's wave-86 and wave-89 saves of test/fixtures, read-only). `omensOn` is on by default since
-decisions-log 319 (the first test pins it); the `off` group switches it off in `setUp`, and off: a
+decisions-log 319 (the first test pins it), and every test file that switches it puts `omensDefault` back in its
+`tearDown` (decisions-log 329: their resets to off, from before 319, left the rest of each file without the Shadows);
+the `off` group switches it off in `setUp`, and off: a
 chest, a reroll, a take, a Lewati and a wave start draw no Bayangan die, write no key (the game's nor a chest's) and send
 no Bayangan event or field; the owner's saves load with none and no catch-up, and a save written while on loads with its
-Bayangan ignored. The `on` group switches it on in `setUp` (off again in `tearDown`): the seven kinds' pools, numbers,
+Bayangan ignored. The `on` group switches it on in `setUp`: the seven kinds' pools, numbers,
 icons (a sheet in `assets/images/`) and counters (`answers`, Dawn Star's Wound on a priest); a face's tilt (under 2/9 the
 card's counter, the rest of the pool evenly: 1/3 and 1/9 over 90 000 draws); one die draw a card, always 3 a roll (a
 Serpihan, a chest before wave 20), the cards the same on or off; the take's 1/2/3 levels by rarity of the taken face only;
@@ -1085,7 +1087,8 @@ count, one fallen and it buys again, nine types fill the army each refused by na
 13 templars and 9 wizards and buys a priest again at 4, the save writes no roster and ignores an old one, `place` and
 `autoPlace` share the gate, Resurrection raises a soldier at 9 and not at 10; "Replace fallen" stops at the army's cap
 and then the type's; Lepas jenis' refund, relics, event and refusals (none alive, a Hero, mid-wave, over); `autoHeld`
-at 75%; the one-time notes (the army, Beban's, the caps' three a line) show once and are saved.
+at 75%; the one-time notes (the army, the caps' three a line; Beban's went in decisions-log 329) show once and are
+saved.
 The save is `test/fixtures/save-20261001-2005-pre-awaken.json`, a copy of the owner's w86 snapshot (5,506 bytes; the
 artefact redesign's parts all load it). `test/army_cap_ui_test.dart` (one `TdGame` per widget test): the board's first
 game and a "New Game" game have the limits; the save's counter "48/36", its list's counts against the caps ("17/5")
@@ -1246,11 +1249,11 @@ refit with the HP gained, the burst, the sounds, the `Tempered` event and its lo
 HP and damage ×1.05 a level on six types (the heavy ones' +20% after), the other stats, the price and the awakening
 skill unchanged; levels waiting below Bangkit 5; a Hero's ×3 on top; Lepas jenis keeping the levels with no refund of
 them; the save (round trip, the troops' HP at load, an old save, odd entries); finite stats for a Bangkit 5 Hero at
-Tempa +30 with Dawn Star ★3 and Oath of One, fighting a boss; the Army tab's dot (`tokoNudge`); the cards (`tempaInfo`,
+Tempa +30 with Dawn Star ★3 and Oath of One, fighting a boss; the Army tab's dot (`armyNudge`); the cards (`tempaInfo`,
 `awakenInfo`); the telemetry (`tempa`, `gold.tempaSpent`); every line in the HUD's font. `test/tempa_hud_test.dart`
 boots its own `TdGame` at 1266×713 and 1164×777: the Army tab's dot (the Toko's until decisions-log 296), "+3"
 after the stars in the knight's Army detail header (never on its cell, decisions-log 218), the dot gone under 3
-purses, and the Tas rows' "+4" (`Board.tempaMarks`, `storeAt('tokoDot')`). The shots come from
+purses, and the Tas rows' "+4" (`Board.tempaMarks`, `storeAt('armyDot')`). The shots come from
 `test/probe_tempa_shots.dart` (a probe; queue `["test", "test/probe_tempa_shots.dart"]`; `OUT` sets the folder, default
 `<agents>/shots/tempa/`): the owner's w86 fixture with its three Bangkit 3 types at Bangkit 5 and Tempa +6, +2,
 +14, on the Pasukan, Toko (before and after a buy) and Tas pages at 1266×713 and 412×860, and a Tempa row's card
@@ -2112,7 +2115,8 @@ compares every number of two stats.
 The rules of the Tavern (loot-items-relics.md "Towns: the Tavern"). `tavern()` is a seeded game with the Towns (and
 so the Tavern) on (its dice seed + 800) and gold to spare, `inTown(g, wave)` puts it in the Town after
 that wave, `only(rarity)` patches the odds so every roll is of one rarity (no first Feast, no pity unless given),
-`fight(g, foes)` plays the next wave out (through a due Town; by default one slime that leaks at once).
+`fight(g, foes)` plays the next wave out (through a due Town; by default one slime gone at once, so the wave is won;
+it leaked over the back line until decisions-log 329).
 
 - town.json's `tavern` block is the defaults, read whole (11 kinds, their rarities, the Feast's numbers, `most`); a number
   out of range keeps its default and an unknown name is noted in `skipped`; a version-2 file reads the defaults.
@@ -2128,10 +2132,10 @@ that wave, `only(rarity)` patches the odds so every roll is of one rarity (no fi
   1.8, the taken floor 0.6), the Plate only on its type, attack speed dividing the pause, Mage's Brew's MP regen; a
   werebear's blow on a soldier ×0.85.
 - The countdown (two waves, then gone, the troops refit and HP capped, `BoostEnded` and its log line), Lucky Toast's
-  kill gold ×1.3, Watchman's Brew's one leak a wave (`BoostSaved`).
+  kill gold ×1.3; Watchman's Brew gone (no `watch` kind, a saved one dropped; decisions-log 329).
 - The save in a Town and out of it, and a load dropping an unknown kind, a typeless Plate and a spent boost; the
-  telemetry (`boostBought`, `tavernRerolled`, `townLeft.tavern`, the wave's `gold.tavernSpent`, `boostSaved`,
-  `start.boosts`); the log lines and the effect words; the probe policies 'top' and 'all'.
+  telemetry (`boostBought`, `tavernRerolled`, `townLeft.tavern`, the wave's `gold.tavernSpent`, no `boostSaved`,
+  `start.boosts`; bought: the Champion's Plate, the one Epic); the log lines and the effect words; the probe policies 'top' and 'all'.
 
 ## test/tavern_ui_test.dart: the Tavern's pages (decisions-log 267)
 
@@ -2149,7 +2153,7 @@ decisions-log 283; `scrolledTo`, test/page_scroll.dart); `seen` scrolls a part i
 - Another row picked; the gold short: the prices red, "Not enough gold" on Buy and on Reroll by a tap; a Reroll with gold
   (the Feast stays, the rows follow the offers, the next price higher, no dot); leaving the Town shuts the page.
 - After wave 30 with every roll a Legendary: the King's Banquet's six rows fit with Buy (scrolled to where it must); the Champion's Plate's page
-  ("Knights: +40% damage, +15% attack speed." with its type's plural) and the Watchman's Brew's (no Troops row).
+  ("Knights: +40% damage, +15% attack speed." with its type's plural); the one Epic, then a Rare.
 - At 1266x713 the Tavern's sign opens its page after the bare scene shut the book (the wheel bringing the Tavern into
   view, decisions-log 271).
 
@@ -2364,8 +2368,8 @@ turned on per game (dark on the board).
   915×412; the Army detail's Recall at the three sizes (newest first, two and "+1 more"), a recall and its splash, a
   refusal said on a tap, a full army's swap with its refund; the gold's dot on the Army tab (the w89 save).
 - test/shop_tabs_ui_test.dart (decisions-log 269; booted `TdGame`s in a Town, the forge on): at the three sizes the
-  strip, Buy's Materials alone (the shelf at its prices; Items and Relics, none on the forge's shelf, not drawn:
-  decisions-log 280), every heading's words
+  strip, Buy's Materials alone (the shelf at its prices; Items and Relics no section of Buy's since decisions-log
+  329, never drawn since 280), every heading's words
   at the board's leftmost slot (`shopSections` against `bagSlots`), a material bought; Sell's grid equal to
   `shopSellLoot` (each enhanced stack its own cell; a bound Artifact, an oath and a worn relic absent); the Sell Basket:
   a tap adds a cell at 1 and selects its line ("1/2", "1 x 1500 = 1500"), +, All and - (never past what is held; at 1
@@ -2808,7 +2812,8 @@ happens, never in the log); the Settings toggle is in hud_test.dart.
 Pure Dart. A save from before the skills and before attack rate left the Heroes' pool (#69; three Heroes with attack rate and no skill) loaded twice
 with the same dice passed to `fromJson` gives the same picks. Then two runs from the same seeds, compared
 wave by wave as one `digest` (the numbers, every unit's rank, HP, MP, place and picks, the bag, who fell):
-a new game through its first Hero (`heroEvery` + 1 waves), and that old save from wave 11 through the mini
+a new game through its first Hero (`heroEvery` + 1 waves; room for 24, since with 16 it loses the first boss wave's
+charge, decisions-log 329), and that old save from wave 11 through the mini
 boss and boss of wave 15. A player that only buys and gives items (`play`) drives both, with a fixed dt.
 
 The camera's invariant sweep (#85) plays the same fixture on seeds 1–3 for 10 waves and checks after every tick:
@@ -2899,7 +2904,7 @@ still (they neither walk nor fight) and lives to spare; `kill` lays a monster do
 - `belowSpawnFloor`: a raised minion counts as a monster on the field, a dying one doesn't, and an empty queue is never
   below it.
 - With 0/1/8/9/16/33 troops a wave's first monsters come one a tick up to the floor (at least the one the timer brings
-  at once), then the next exactly one gap after the last (`spawnGapOf(wave, wavePaceFrom)`, ±0.004 s).
+  at once), then the next exactly one gap after the last (`spawnGapOf(wave, tideStart)`, ±0.004 s).
 - A field emptied 0.35 s after its first monster: with 8 troops the next comes on the next tick, then the full gap
   again; with none, after the gap as before.
 - Above the floor the tide's gap holds: wave 65 with 8 troops, 0.7744 s.
@@ -2993,7 +2998,7 @@ The shots come from `test/probe_foe_splash_shots.dart` (a probe, not in the suit
 high elite's Curse of Frailty and an armored orc boss's Earthshaker (a moment) wind up among the monsters, each with a
 2× crop of the panel, at 1266×713 and 412×860.
 
-## test/wipe_test.dart: an army wiped costs a heart and the wave is played again (decisions-log 322)
+## test/wipe_test.dart: a lost wave costs a heart and the wave is played again (decisions-log 322, 329)
 
 Pure Dart (lib/wipe.dart). A soldier at 1 HP beside a werebear makes the wipe (`wipe`); `winNow` wins the wave on.
 - The wipe: 2 lives gone, not over, the wave back one with `lostWave` the lost one, no monster, queue, shot or zone
@@ -3002,9 +3007,13 @@ Pure Dart (lib/wipe.dart). A soldier at 1 HP beside a werebear makes the wipe (`
   the same wave with as many monsters.
 - What the lost wave paid stays (gold, score, kills) and no bonus or wave score comes; its lying materials are lost; the
   replay's win pays its bonus and score once and clears `lostWave`.
-- The last heart (2 lives, and 1): game over, the monsters stay, no lives score, the clock stands still; leaks taking
-  the last life in the tick the last troop falls are a game lost on lives (no `Wiped`); a wave begun with no troop only
-  leaks.
+- The last heart (2 lives, and 1): game over, the monsters stay, no lives score, the clock stands still.
+- The back line (decisions-log 329): no monster heads for it; a slime that goes past it to meet a troop walking in is
+  alive, no life lost, no `Sfx.leak`. A wave begun with no troop: its monsters wait, and `emptyGrace` s after they came
+  on it is lost (`WipeCause.empty`, "No troops! -1 heart."); a troop bought within the grace keeps it on, and monsters a
+  test put on the field with no spawn are no wave. A stalled wave's monsters charge the troops (`Sfx.leak`) and strike
+  them; not won `marchMax` s on, the wave is lost (`WipeCause.slow`, "Too slow! -1 heart.", `marchNote`); a march won in
+  time is a won wave.
 - A boss wave (wave 10, a Hero's too) lost: no chest nor Hero; won on the replay: one of each.
 - Towns: before the first Town one marked for after the lost wave is due only once the replay is won (no checkpoint);
   once one was gone into, a wipe goes back to it, a later mark dropped (town_checkpoint_test.dart has the rest).

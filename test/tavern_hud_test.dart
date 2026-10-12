@@ -116,7 +116,7 @@ void main() {
         'tip names the Town once marked (decisions-log 331)', (tester) async {
       final b = await boot(tester, size);
       final g = b.state = fieldGame()
-        ..boosts.addAll([RunningBoost(Boost.feast, 2), RunningBoost(Boost.watch, 0, untilTown: true)]);
+        ..boosts.addAll([RunningBoost(Boost.feast, 2), RunningBoost(Boost.toast, 0, untilTown: true)]);
       await frames(tester, 30);
       final chips = b.boostChips, screen = Offset.zero & size;
       expect(chips, hasLength(2));
@@ -127,20 +127,20 @@ void main() {
       addTearDown(mouse.removePointer);
       await mouse.moveTo(chips.last.center);
       await frames(tester, 30);
-      expect(b.tooltipShown?.$1, "Watchman's Brew: until next Town");
-      expect(b.tooltipShown?.$2, ['${Words.townAfter} 22', 'a leak a wave costs no life']);
+      expect(b.tooltipShown?.$1, "Lucky Toast: until next Town");
+      expect(b.tooltipShown?.$2, ['${Words.townAfter} 22', '+30% kill gold']);
       g.townAt = null;
       await mouse.moveTo(Offset.zero);
       await frames(tester, 3);
       await mouse.moveTo(b.boostChips.last.center);
       await frames(tester, 30);
-      expect(b.tooltipShown?.$2, ['a leak a wave costs no life'], reason: 'no Town marked yet');
+      expect(b.tooltipShown?.$2, ['+30% kill gold'], reason: 'no Town marked yet');
     });
 
     testWidgets("the boosts' chips at $tag: under the meter without a Town marked; none without a boost; six in rows",
         (tester) async {
       final b = await boot(tester, size);
-      final g = b.state = fieldGame(marked: false)..boosts.add(RunningBoost(Boost.watch, 2));
+      final g = b.state = fieldGame(marked: false)..boosts.add(RunningBoost(Boost.toast, 2));
       await frames(tester, 30);
       expect(b.townChip, Rect.zero);
       expect(b.boostChips, hasLength(1));

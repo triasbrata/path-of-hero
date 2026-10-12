@@ -11770,6 +11770,106 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        as nothing), guide_text_test and town_switch_test (the new lines), auto_names_test and hud_sweep_test (a Town
        with Auto on, no overlap). No balance probe: the waves and fights are as before (the probes go through Towns by
        `townPolicy`, which never used the countdown).
+329. **An audit of what no longer matters, and its cleanups** (the owner, 2026-10-12: "sama coba cek feature feature
+     yang deprecated ada apa saja ya, seperti monster yang bisa ke garis belakang pertahanan, karna pasti para enemy
+     sudah bantai troops player dan sudah selesai duluan gamenya", check which features are deprecated, such as monsters
+     that can reach the back line: surely the monsters will have slaughtered the troops and the game is over first). By
+     obsolete-audit, in two phases; the report with every item is `<agents>/reports/obsolete-audit.md`.
+     - **Measured first** (nothing changed; main 7deb8354, one batch of 397 waves: the owner's wave-71 and wave-58 saves
+       played forward, new games, and one-wave replays of the balance pass's saved waves, by its careful and owner-style
+       players with Auto Buy on). No monster crossed the back line while 2 or more troops stood outside a stall march,
+       and none at all in waves 1-40. 8 waves leaked: 3 in an army's last seconds, while Auto Buy's one fresh troop kept
+       it from counting as wiped (322's wipe needs none alive), so that wave cost up to 2.5 hearts instead of 1; 4 that
+       began with no troop because the gold could rebuy nothing (how 4 of the 5 runs ended); and 1 stall-marched boss
+       wave whose 5 crossers cost 2.5 hearts and still counted as won. The owner's own waves 1-74 lost no life.
+     - **The owner's picks**, among the options he was given (2026-10-13): the back line, "Hapus garis belakang" (delete
+       it: only a lost army costs a heart; over "keep it", "a crossing loses the wave" and "it costs only on boss
+       waves"); the fall-back brain's switched-off parts, "Simpan, bisa dinyalakan" (keep them, patchable: no change);
+       Beban, "Hapus (Recommended)"; the Shop's empty item and relic shelves, "Hapus setelah pasar Town masuk
+       (Recommended)" (delete them once the Town market is in: 326 is).
+     - **The guide's first page** said "No hearts or troops: game over.", wrong since 322 (an army wiped costs a heart
+       and the wave is played again). Now (guide_text.dart, 4 lines of at most 6 words) as the back line's bullet below
+       says; first "... / Past the line: half a heart. / Army down: a heart, wave again. / ...", before the owner's
+       pick.
+     - **The lives term in the score goes** (`lifeScore`, 50 a life left, added in the tick the game ended): since 322 a
+       game ends only at 0 lives, so it always added 0. The guide's Goal topic said "Score: kills, waves won, hearts
+       left."; now "Score: kills and waves won." (scoreboard.md). Scores, saves and telemetry don't change.
+     - **The tests put the Shadows back on after switching them** (`omensDefault`, omen.dart: what `omensOn` starts at,
+       on unless `--dart-define=OMENS=false`). 40 test files reset `omensOn = false` in a `tearDown` (or a `finally`),
+       written while off was the default; since 319 every test after the first such reset in its file played without
+       the Shadows, against 321's rule that the tests play the real rules. They now put the default back; the groups and
+       tests that check the off path switch it off themselves (testing.md "The Bayangan"). Two such groups
+       (omen_legenda2_test, omen_legenda3_test) had played off only on the reset an earlier test left: they now say so.
+     - **`Game.keepUpWithView` goes**, a `static const` always true (#61's option A): its off arms in `speedTo`,
+       `_rearEdge` and a healer's walk-in could never run. The rule itself is unchanged (camera-and-field.md "Back line").
+       Whether the keep-up floor still binds once 324's front cap is in is measured after that merge (the audit's item 8).
+     - **The back line costs nothing** (game.dart, lib/wipe.dart; game-overview.md "Lose", units-and-combat.md), and
+       then, the owner (2026-10-13), "monster juga nga perlu ke garis belakang karna kan targetnya para troops"
+       (monsters don't need to go to the back line either, since their target is the troops): no monster heads for
+       `baseX` any more; its goal is always a troop. Deleting the line's cost needed three rules the audit named, so
+       every lost wave costs one heart:
+       - **Monsters at the left end**: none walks there. A monster with no foe stands where it is (a lone mending
+         necromancer walks to the nearest troop); one that goes past the line to meet a troop bought mid-wave, walking
+         in from behind it, costs nothing. The crossings in an army's last seconds (Auto Buy's one fresh troop alive)
+         are gone with it: such a collapse now ends at the wipe, one heart, not up to 2.5. The first build clamped the
+         monsters at `baseX` (as the troops have theirs); with nothing aiming there the clamp went: it held nothing a
+         rule needed, and its only catch (a monster shoved over) loses nothing now.
+       - **No troop standing** (a wave begun with none, or left with none): the wave is lost `emptyGrace` 5 s after
+         its monsters came on (`WipeCause.empty`, "No troops! -1 heart."); a troop bought meanwhile, by hand or by
+         Auto Buy, keeps it on. The first build lost it when a monster reached the line, then (the monsters no longer
+         walking there) at its first spawn, which ended the waves the tests begin empty and buy into at once; the grace
+         is the owner's "about 5 s". Until now such a wave was never a wipe and its monsters walked over, half a heart
+         each.
+       - **The collapse and the stall: `marchMax` 60 s.** The stall watchdog keeps its triggers; its march is a charge
+         at the troops (`_charge`): every monster goes straight at the troop it goes for and strikes it, with no skill,
+         summon, heal or backing off; a wave still on 60 s after its charge began is lost
+         (`WipeCause.slow`, "Too slow! -1 heart."; the charge says "Monsters charge! Win in 60 s or lose a heart." with
+         the old leak sound). The first build charged the line through the troops and held it (`_holdLine`), gone with
+         the owner's words. Until now the march walked to the line, half a heart a monster over it, and the wave then
+         counted as won (the w60 boss wave: 5 lives, 87 s into its march). The other 6 marches of the audit were won
+         within seconds and still would be. The suggestion "no troop struck or was struck for N s while monsters
+         advance" wasn't taken: between two monster groups the army often fights nobody for 5-10 s, and in a collapse
+         each fresh troop strikes before it falls, so it would fire in ordinary waves and miss the grinder; the stall
+         watchdog already measures "no progress".
+       - **Watchman's Brew goes** (an Epic Tavern boost that forgave a wave's first crossing): the Plate is the one Epic;
+         a save's `watch` offer or boost is dropped as an unknown kind's; the event `boostSaved` and the wave's
+         `boostSaved` go. **Texts:** the guide's first page "Monsters come from the right. / Lose your army: lose a
+         heart, / and play the wave again. / No hearts left: game over."; K16 "The wave took too long: / the monsters
+         charge your troops. / Kill them in 60 s / or lose a heart." and its picture one heart lost (it drew a heart and a
+         half); the wipe's note and battle-log line by cause ("Army fell", "No troops", "Too slow").
+       - **Telemetry:** `eventVersion` and `telemetryVersion` 16 (331 took 15): a `wipe`'s `cause` (`fell`, `empty`,
+         `slow`); `boostSaved` gone.
+       - What the owner's game loses: nothing he has seen (no crossing in his waves 1-74). A collapse costs one heart
+         instead of up to 2.5; a march that can't be won costs a heart instead of half a heart a monster (harsher for
+         one crosser, gentler for many), and is never a win.
+     - **Beban goes** (decisions-log 162, the over-cap tide; the owner's pick "Hapus (Recommended)"): an army alive over
+       the cap met a later wave's tide, 2 waves a troop over (at most 60, ramped in over 5 waves from `overFrom`, the
+       pace too). No real game goes over the cap since 141 and 260 (only a Phoenix Plume or Resurrection rise after Auto
+       Buy already rebought, +1 for a wave or two), and the saves from before the cap are deleted at launch, so it acted
+       only in the w89 test fixture (48 troops). Gone: `overTide`, `overTideMax`, `overRamp`, `overPace`,
+       `overTideWaves`, `overTip`, `overNote`, `Game.overFrom` / `waveOver` / `overBy` / `waveTideFrom` / `wavePaceFrom`
+       / `shownOver` / `shownTideFrom`; every monster, the spawn gap, the wave meter and the cap's warning count from
+       `tideStart`. A save's `overFrom` is read as nothing; an old `over` note key stays in `notes`, unread; a wave
+       start's `tide.over` goes (telemetry 16). The Bayangan's own over-cap count (the Beban factor, `omenFactor`) is
+       another rule and stays: a leftover of the same idea, for a later call.
+       - **The w89 identity dump moves by its telemetry alone** (the Pusaka probe on the fixture, 48 troops): its
+         six wave records lose `"over":0` from `start.tide` and its three record hashes change; every stat, text,
+         tooltip, preview and fight is byte for byte the same, since the probe plays with no board cap (Beban never
+         counted there). With the back line's change above and Beban still in, it was byte for byte main's.
+     - **The Shop's empty Items and Relics sections go, with their prices** (the owner's pick "Hapus setelah pasar Town
+       masuk (Recommended)"; 326's market is in): since the forge the Smithy makes items and small relics and the Shop
+       never had one on its shelf (248), so the two sections never showed after 280. Gone: Buy's Items and Relics
+       (`shopBuyOrder` is the Artifacts and the Materials), `TierPrices` and town.json's `tiers` (a small relic's Shop
+       price 12,000 / 20,000 / 32,000, +20% a buy, and its unread sale share), the shop block's `itemPrice`,
+       `itemRise` and `itemSellShare`; an older file's keys are read as nothing. An item or a small relic has no Shop
+       price (`basePrice` 0, refused as not sold) and sells at the market's price as since 326; a save's count of them
+       bought stays and moves nothing. The player sees nothing new.
+     - **Leftovers no player sees go** (the code audit's X1 and X2 of 317, never picked): the Toko-era names of the Army
+       tab's dot and K11's picture (`tokoNudge`, `_tokoTabDot`, `'tokoDot'`, `_picToko` are now `armyNudge`,
+       `_armyTabDot`, `'armyDot'`, `_picShop`); `Board.carveButton` (a test seam no test read); `To.allTroops` (no Fx
+       targets it); english_text_test's ids for the deleted Toko's hit keys (`'tab:bangkit'`, `'bangkit:'`); and
+       `Words.cancel` and `Words.onWishlist`, which only tests read. `Game.bindByDefault` stays: the probes' Pusaka knob
+       (`PUSAKA=bound`) calls it.
 330. **A Town takes no wave number: pinned by a test; the skip the owner saw is not reproduced yet** (the owner,
      2026-10-12, playing the develop build: "harusnya kota itu tidak di hitung wave, jadi setelah wave 7 masuk kota,
      maka ketika keluar kota adalah wave 8 bukan wave 9", a Town shouldn't count as a wave: after wave 7 he goes into a

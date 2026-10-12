@@ -42,7 +42,6 @@ const _boostEffectLooks = <String, (Object, String)>{
   'rate': (Item.gloves, 'Attack speed'),
   'mpRegen': (_icBolt, 'MP regen'),
   'gold': (Board._icCoin, 'Kill gold'),
-  'leaks': (_icSteelShield, 'Leaks forgiven'),
 };
 
 /// Each boost's icon: an [Item]'s, a ui_icons.png [Offset], an image file's (the Tavern's mug), or null for the
@@ -57,7 +56,6 @@ const _boostIcons = <Boost, Object?>{
   Boost.toast: Board._icCoin,
   Boost.mage: _icBolt,
   Boost.plate: null,
-  Boost.watch: _icSteelShield,
   Boost.banquet: _icCrown,
 };
 
@@ -81,7 +79,7 @@ List<(Object, String, String)> boostEffectRows(Game g, BoostOffer o) {
   return [
     for (final MapEntry(:key, :value) in g.boostRule(o.kind).effects.entries)
       if (_boostEffectLooks[key] case (final icon, final what))
-        (icon, what, switch (key) { 'leaks' => '$value a wave', 'taken' => '-${percent(1 - value)}', _ => '+${percent(value - 1)}' }),
+        (icon, what, key == 'taken' ? '-${percent(1 - value)}' : '+${percent(value - 1)}'),
     if (who != null) (Board._icSwords, 'Troops', who),
     (Board._icSword, 'Lasts', o.length),
   ];

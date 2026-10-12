@@ -15,8 +15,14 @@ part of 'game.dart';
 
 /// Whether the Bayangan are in the game: on (the owner, 2026-10-12, decisions-log 319: "Nyalakan"). Off, no face is
 /// drawn ([Game.omenDice] untouched), no save key is written and no event is sent, so a save loads and plays as before
-/// them: the off path a test switches to (and back in its tearDown), or a probe with `--dart-define=OMENS=false`.
-bool omensOn = const bool.fromEnvironment('OMENS', defaultValue: true);
+/// them: the off path a test switches to (and back to [omensDefault] in its tearDown), or a probe with
+/// `--dart-define=OMENS=false`.
+bool omensOn = omensDefault;
+
+/// What [omensOn] starts at: on, unless a build or probe gives `--dart-define=OMENS=false`. A test that switches it puts
+/// this back after (decisions-log 329: the tests' resets to off, from before 319, left every later test in their file
+/// playing without the Shadows).
+const omensDefault = bool.fromEnvironment('OMENS', defaultValue: true);
 
 /// The first wave whose chest's cards hide a Bayangan: a chest rolled earlier has no faces, and Lewati owes no skip buff.
 const omenFrom = 20;
@@ -628,13 +634,13 @@ extension Omens on Game {
   /// wave's queue ([Game.monster]), a necromancer's raised minions ([Game._summon], and [Game.decideSummon]'s count of
   /// them, which must match), a skill's bring-in ([BossSkills._bringIn]), Slime Hex's form, and the boss's blow a
   /// Dragon Crown tooltip counts ([Pusaka.bossBlowsLived]: another wave [at], from [tideStart]). [enemyStats] with this
-  /// wave's tide ([Game.waveTideFrom]), then the Bayangan's stat hooks ([_omenStats]); Lewati's skip buff for one of
+  /// wave's tide (from [Game.tideStart]), then the Bayangan's stat hooks ([_omenStats]); Lewati's skip buff for one of
   /// the wave's first monsters ([skipBuff]). Exactly [enemyStats]'s while [omensOn] is off.
   /// After a wipe, until the next new Town, every one is weakened ([Game.weakened]: [weakenedHp], [weakenedDmg] on its
   /// HP and damage, its kill gold kept; wipe.dart), the Bayangan's off switch or not.
   Stats spawnStats(String type, Tier tier, {bool raised = false, bool skipBuff = false, int? at, int? tideStart}) =>
-      _weakenedStats(_omenStats(enemyStats(type, tier, at ?? wave, raised: raised, tideStart: tideStart ?? waveTideFrom), type, tier,
-          raised: raised, skipBuff: skipBuff));
+      _weakenedStats(_omenStats(enemyStats(type, tier, at ?? wave, raised: raised, tideStart: tideStart ?? this.tideStart), type,
+          tier, raised: raised, skipBuff: skipBuff));
 
   /// [s] weakened by [Game.weakened] (wipe.dart): [s] itself at 0.
   Stats _weakenedStats(Stats s) {

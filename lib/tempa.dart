@@ -4,7 +4,7 @@ part of 'game.dart';
 // keeps buying levels with gold, on its Army detail's button (lib/ascend_page.dart), between waves. Each one multiplies
 // the type's HP and damage (a healer's heal) once more ([tempaHp], [tempaDmg]; [Game.statsOf]), and costs a share of a
 // late wave's gold ([purse]) that rises a level ([tempaRise]), so the late game's gold always has a use (the owner,
-// decision 2 a). A dot on the Army tab (the Toko's until decisions-log 296) says when gold piles up and something there can be bought ([Tempa.tokoNudge],
+// decision 2 a). A dot on the Army tab (the Toko's until decisions-log 296) says when gold piles up and something there can be bought ([Tempa.armyNudge],
 // decision 4 a).
 
 /// A wave's purse: about what wave [w] pays in kill gold late in a run, [purseK] × (4 + 2w) × (1 + [killGoldGrowth])^(w − 1),
@@ -24,7 +24,7 @@ double purseRaw(int w) => purseK * (4 + 2 * w) * pow(1 + killGoldGrowth, max(0, 
 const tempaFrom = awakenTop, tempaMax = 30, tempaHp = 0.05, tempaDmg = 0.05, tempaTroopPrice = 1.0;
 const tempaK = 0.2, tempaRise = 1.2, tempaRound = 1000;
 
-/// The Army tab's dot shows while the gold is at least this many purses of the next wave ([Tempa.tokoNudge]).
+/// The Army tab's dot shows while the gold is at least this many purses of the next wave ([Tempa.armyNudge]).
 const nudgePurses = 3;
 
 /// What Tempa level [n] + 1 costs after wave [w]: [tempaK] × [purse] × [tempaRise]^[n], rounded to [tempaRound], at
@@ -111,7 +111,7 @@ extension Tempa on Game {
   /// Gold piles up and the Army has something for it: the gold is at least [nudgePurses] × [purse] of the next wave,
   /// and some type with a living troop can buy its next Bangkit or Tempa level now. The Army tab's dot (named for the
   /// Toko, whose tab had it until decisions-log 296).
-  bool get tokoNudge {
+  bool get armyNudge {
     if (gold < nudgePurses * purse(wave + 1)) return false;
     return {for (final u in troops) if (u.alive) u.type}.any((type) => whyNotAscend(type) == null || whyNotTempa(type) == null);
   }

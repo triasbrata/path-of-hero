@@ -72,8 +72,8 @@ final guideRules = <GuideRule>[
   GuideRule('K16', 1, (g) => g.stalled),
   // Pasang: the tide comes in with the next wave ([Game.tideRising]).
   GuideRule('K17', tideFrom - 1, (g) => g.tideRising, passing: true),
-  // Gold waits for an Awaken or a Forge: the Army tab's dot ([Tempa.tokoNudge]).
-  GuideRule('K18', null, (g) => g.tokoNudge),
+  // Gold waits for an Awaken or a Forge: the Army tab's dot ([Tempa.armyNudge]).
+  GuideRule('K18', null, (g) => g.armyNudge),
   // The bosses' escorts come with the next wave.
   GuideRule('K19', escortFrom - 1, (g) => g.wave == escortFrom - 1, passing: true),
   // Some Pusaka can gain a star by Asah now.

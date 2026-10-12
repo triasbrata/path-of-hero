@@ -250,59 +250,41 @@ void main() {
     /// A game at wave 15 in a Town (the Shop open), with plenty of gold.
     Game shop() => inTown(gold: 1000000, wave: storeFrom);
 
-    test("Towns on: a small relic at its tier price, +20% of it a buy (the forge's Shop sells none, so only a count an "
-        "old save brought moves it); sold back at half its own recipe's gold", () {
+    test("Towns on: the Smithy's goods have no Shop price (decisions-log 329): never on the shelf, a sale at the "
+        "market's price; an old save's count bought is kept and moves nothing", () {
       final g = shop();
-      const tiers = {
-        Relic.fang: (12000, 14400),
-        Relic.thorns: (12000, 14400),
-        Relic.fury: (12000, 14400),
-        Relic.guard: (12000, 14400),
-        Relic.cleave: (20000, 24000),
-        Relic.venom: (20000, 24000),
-        Relic.manaSiphon: (20000, 24000),
-        Relic.spiritWard: (20000, 24000),
-        Relic.lastStand: (32000, 38400),
-        Relic.giantSlayer: (32000, 38400),
-        Relic.blessing: (32000, 38400),
-      };
-      expect(tiers.keys, smallRelics);
-      for (final MapEntry(key: r, value: (base, next)) in tiers.entries) {
+      for (final r in smallRelics) {
         // A sale at the market's price (decisions-log 326; market_test.dart): its cost times the Town's demand.
-        expect((g.basePrice(r), g.buyPrice(r), g.buyPrice(r, 1), g.sellPrice(r)), (base, base, next, g.marketPrice(r)),
-            reason: relicNames[r]);
+        expect((g.basePrice(r), g.buyPrice(r), g.buyPrice(r, 1), g.sellPrice(r)), (0, 0, 0, g.marketPrice(r)), reason: relicNames[r]);
       }
-      // The forge's Shop has none on its shelf (forge_shop_test.dart); a count bought before it (an old save's) still
-      // raises that kind's price, per kind, and the save keeps it.
       expect((g.whyNotBuy(Relic.cleave), g.buy(Relic.cleave), g.gold), (StoreRefusal.notSold, false, 1000000));
       g.storeBought[Relic.cleave] = 2;
-      expect((g.buyPrice(Relic.cleave), g.buyPrice(Relic.venom), g.sellPrice(Relic.cleave)), (28000, 20000, g.marketPrice(Relic.cleave)));
       final back = Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>);
-      expect((back.storeBought[Relic.cleave], back.buyPrice(Relic.cleave)), (2, 28000));
+      expect((back.storeBought[Relic.cleave], back.buyPrice(Relic.cleave)), (2, 0));
       g.relicBag[Relic.cleave] = 2;
       final two = g.marketSum(Relic.cleave, 0, 2);
       expect(g.sell(Relic.cleave, 2), 2);
       expect(g.gold, 1000000 + two);
-      // The items: town.json's shop block, today's numbers (a sale the market's); the Artifacts as today.
-      expect((g.buyPrice(Item.sword), g.buyPrice(Item.sword, 1), g.sellPrice(Item.sword)), (2000, 2200, g.marketPrice(Item.sword)));
+      // The items the same; the Artifacts as today.
+      expect((g.whyNotBuy(Item.sword), g.buyPrice(Item.sword), g.sellPrice(Item.sword)), (StoreRefusal.notSold, 0, g.marketPrice(Item.sword)));
       expect((g.buyPrice(Relic.grail), g.sellPrice(Relic.grail), g.sellPrice(Relic.ironBanner)), (24000, 12000, 8000));
     });
 
-    test("Towns on: town.json's numbers (a patched tier, recipe and shop)", () {
+    test("Towns on: town.json's numbers (a patched recipe); an older file's tier and item prices are read as nothing", () {
       final g = shop()
         ..townRules = TownRules.patch({
           'tiers': {'basic': {'shop': 10000, 'shopRise': 0.5, 'sellShare': 0.25}},
           'recipes': {'fang': {'gold': 800}},
           'shop': {'itemPrice': 3000, 'itemRise': 300, 'itemSellShare': 0.4},
         });
-      // The tier's and the shop's sell shares are read by nothing since the market (decisions-log 326); a recipe's gold
-      // is in the relic's cost, at the floor.
-      expect((g.buyPrice(Relic.fang), g.buyPrice(Relic.fang, 2)), (10000, 20000));
+      // A recipe's gold is in the relic's cost, at the floor; the Shop prices of town.json before decisions-log 329
+      // (`tiers`, the shop's `itemPrice`, `itemRise` and `itemSellShare`) are gone.
       expect(g.costOf(Relic.fang).gold, g.craftRecipe(Relic.fang)!.gold);
-      expect((g.sellPrice(Relic.fang), g.sellPrice(Relic.fury)), (g.marketPrice(Relic.fang), g.marketPrice(Relic.fury)));
-      expect((g.buyPrice(Item.potion), g.buyPrice(Item.potion, 1), g.sellPrice(Item.potion)), (3000, 3300, g.marketPrice(Item.potion)));
+      expect((g.buyPrice(Relic.fang), g.buyPrice(Item.potion)), (0, 0));
+      expect((g.sellPrice(Relic.fang), g.sellPrice(Item.potion)), (g.marketPrice(Relic.fang), g.marketPrice(Item.potion)));
+      expect(g.townRules.toJson().containsKey('tiers'), isFalse);
+      expect(g.townRules.shop.toJson().keys, ['from', 'matMarkup', 'matRise']);
     });
-
   });
 
   group("Asah's take", () {

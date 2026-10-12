@@ -126,8 +126,11 @@ void main() {
       ..slots = Random(seed + 400)
       ..townDice = Random(seed + 600) // the Towns' dice, and through a due Town (decisions-log 321)
       ..townPolicy = 'leave'
-      ..gold = 3000 // enough to live to its first Hero
-      ..capacity = 16;
+      ..gold = 3000
+      // Room for 24, enough to live to its first Hero: since decisions-log 329 a stalled wave's charge not won in 60 s
+      // is lost, and 16 of these lose the first boss wave (until then its boss walked over the line and the wave counted
+      // as won).
+      ..capacity = 24;
     const army = ['soldier', 'archer', 'knight', 'priest', 'wizard', 'lancer'];
     final first = fresh(7), made = <HeroMade>[];
     first.listeners.add((e) {

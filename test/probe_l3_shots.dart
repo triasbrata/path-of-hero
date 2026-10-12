@@ -136,7 +136,7 @@ void main() {
 
   group('the Bayangan Sap', () {
     setUp(() => omensOn = true);
-    tearDown(() => omensOn = false);
+    tearDown(() => omensOn = omensDefault);
 
     for (final size in const [Size(412, 860), Size(1266, 713)]) {
       final tag = '${size.width.round()}x${size.height.round()}';

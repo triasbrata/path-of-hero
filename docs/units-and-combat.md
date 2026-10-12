@@ -51,8 +51,8 @@ has neither, so tests and probes play as before (`armyMax`, `typeCap` null).
   batas atasnya harusnya memang 36"): `armyCap` = min(`capacity`, `armyMax`), `full` = alive ≥ `armyCap`, and
   capacity can't be bought past 36 (`maxCapacity`), at every screen size (camera-and-field.md: a narrow view's zone
   grows to hold it). Nobody is cut: a save with 48 alive keeps all 48 and its capacity 48, and buys wait until 35 or
-  fewer are alive; but since decisions-log 162 its tide counts from
-  earlier for each troop over the cap ("Beban", in "The tide" below). Resurrection's "the army is under its cap" is
+  fewer are alive (from decisions-log 162 to 329 its tide counted from earlier for each troop over the cap: "Beban",
+  in "The tide" below). Resurrection's "the army is under its cap" is
   the same `full`.
 - **At most a cap of each type alive** (`typeCap` = `typeCapBoard`; decisions-log 201, the owner on 2026-10-03: "user
   tidak bisa beli lebih dari 5 priest, tidak bisa beli 20 archer supaya game tetap balance"). It replaced the roster of
@@ -103,8 +103,8 @@ has neither, so tests and probes play as before (`armyMax`, `typeCap` null).
   type joins or the player presses Start (decisions-log 201 leaves the hold as it was; at 32, 24 to hold, only the
   three with one melee were, 5 + 8 + 10 = 23).
 - **One-time notes** (`limitNotes()`, the saved `notes` set): a save over the cap (capacity or alive) is told
-  "The army cap is now 36. You keep your troops; buy more when under 36." (key `army`), one with more alive than the cap
-  "Army cap 36. Each troop over it: Tide +2 waves" (`over`, `overNote`, decisions-log 162), one with types alive over
+  "The army cap is now 36. You keep your troops; buy more when under 36." (key `army`; Beban's `over` note, decisions-log
+  162, went in 329), one with types alive over
   their caps (`overCaps`) "Each troop type has a cap now. You keep yours; over it: Priest 17/5, Wizard 9/8, Templar
   13/10. Buy more of a type when under its cap." (`caps`, `capsNote`, three types a line), each once, in one message
   window, which fits a phone (`test/cap_warning_hud_test.dart`). An older save's `types` key (the roster's note) stays
@@ -267,7 +267,7 @@ the tier) and of the wave growth:
     doesn't.
   - Below it (`belowSpawnFloor`), `tick` skips the timer and brings the queue's next monster on at once, one a tick
     at most, at the usual spawn point in a random lane. Every spawn starts the gap afresh, so once the floor is met
-    the timer runs again from the spawn that met it (`spawnGapOf(wave, wavePaceFrom)`, the tide's pace included).
+    the timer runs again from the spawn that met it (`spawnGapOf(wave, tideStart)`, the tide's pace included).
   - So a wave's first monsters come one a tick up to the floor (48 troops: six in 0.2 s at 30 ticks a second, not
     over 4.5 s), and a field emptied early gets its next monster on the next tick, not after the gap.
   - Only when they come on moves: the queue's order, the mini boss and boss slots and their escorts, the Guard
@@ -374,10 +374,9 @@ atasi dengan mudah". After wave ~26 the crowd stopped mattering; only the boss a
   wave 73 meets HP ×1.23 (what a new game meets at 56), not ×1.46 at once. `tideCatchUp` 999 would be the full tide
   at once, 0 a start from the load. Such a save whose next wave already has the tide sets `Game.tideCaughtUp`, and
   the UI says so once (ui-hud.md).
-- `enemyStats(…, tideStart:)` defaults to `tideFrom`; the game passes its own `waveTideFrom` (`tideStart`, earlier
-  for an army over the cap: "Beban" below) wherever it makes a monster (`monster`, `_summon`, `_summonChoice`,
-  `_bringIn`, Slime Hex), and the spawn timer reads `spawnGapOf(wave, wavePaceFrom)` (`waveTideFrom` while
-  `overPace` is on, else `tideStart`).
+- `enemyStats(…, tideStart:)` defaults to `tideFrom`; the game passes its own `tideStart` wherever it makes a monster
+  (`monster`, `_summon`, `_summonChoice`, `_bringIn`, Slime Hex), and the spawn timer reads `spawnGapOf(wave,
+  tideStart)`. (From decisions-log 162 to 329 an army over the cap counted from earlier: "Beban" below.)
 - The HUD shows it on the wave meter, the "VICTORY!" popup announces it (ui-hud.md), and the telemetry records it
   (`start.tide`, telemetry.md).
 - **With the army cap** (decisions-log 161, qa-4's finding). An army at the cap (36 since decisions-log 260; 32 when
@@ -393,48 +392,13 @@ atasi dengan mudah". After wave ~26 the crowd stopped mattering; only the boss a
     loses ~0.1 a wave, not the owner's 1-3: Bangkit 5 makes it ~3 times as strong as the army that doesn't spend.
   - The warning: `Game.capPressed` / `capWarning` (the message window every `capWarnEvery` 5 waves) and the wave
     meter tooltip's last line (`capTip`); ui-hud.md "Message window".
-- **Beban, the over-cap tide** (decisions-log 162, amending 141's 3a; reports/late-economy-design.md §2.1, J1). An
-  army alive over the cap (a save from before it: the owner's 48 over 32) used to keep its extra troops for free, and
-  the tide never caught it until it had shrunk to 32. Now each troop over the cap brings a later wave's tide. The
-  numbers below were measured at the cap of 32; over the board's 36 (decisions-log 260) the same 48 are 12 over, wave
-  87's tide from 24 waves earlier (42: +56%):
-  - **The count** (`Game.overBy`): s = max(0, living troops − `armyCap`) while `armyMax` is on (the board's
-    `boardRules`); a plain `Game()` never counts.
-  - **The rule** (`overTideWaves(s, wave, overFrom)`): the wave's tide counts from `waveTideFrom` = `tideStart` −
-    round(min(`overTideMax` 60, `overTide` 2 × s) × min(1, (wave − `overFrom` + 1) / `overRamp` 5)). The owner's 16
-    over: wave 87 meets the tide of 32 waves later at full strength, HP ×1.69 from 34 (+69%) instead of ×1.23 from 66
-    (+23%).
-  - **The ramp:** `Game.overFrom` is the first wave started over the cap, set then when missing and never cleared
-    (saved as `overFrom`, only when set; null in a new game). It brings a fifth of the waves on that wave, all of them
-    5 waves on: 16 over adds 6, 13, 19, 26, then 32.
-  - **The pace too** (`overPace` true, as `overTide` 2 was measured): the spawn gap counts from the earlier wave as
-    well (`Game.wavePaceFrom`). The switch stays for a later tune: off, the gap keeps counting from `tideStart`.
-  - **Why 2, soft** (decisions-log 162; the owner's w86 save, buy-back only, 12 seeds): 2 is the only probed arm with
-    no game over from 0 falls the wave before. With 3 or 4 the crowd piled up: at a tide from 42 on wave 95 it brought
-    1.43× the base's crowd HP a second (HP ×1.69, a monster every 0.69 s instead of 0.78 s), 1 to 61 monsters on the
-    field in 120 s with nobody falling, then the line broke in one wave (1 run in 6 at either). Moving HP and damage
-    only (pace off) saved those runs but not a third. 2 loses 0.65 a wave over w87-96 against the design's 1-3: soft,
-    by the owner's rule "too soft rather than a cliff".
-  - **Not met on the w63 save** (decisions-log 162): there 2 loses 3 runs in 6 by w90 (the base loses none). Beban is
-    off in each collapse: it brings the army down to 32 sooner (all 6 by w89), and the plain 32-troop army breaks
-    over w80-90 (falls, rebuys, an empty bank). That is the 32-troop regime, not the over-cap tide. No player will
-    reach that save again, but it is a known risk for new runs: an army at 32 that doesn't spend can't hold w80-90
-    on the w63 economy (J2 and J3 are for that).
-  - **Frozen for the wave** (`Game.waveOver`: `by` = s at its start, `waves`; not saved): counted at each `startWave`,
-    after `wave++` and before the queue. Troops that fall in the wave change nothing until the next. Every reader in
-    a wave uses `waveTideFrom`: `monster`, `_summon`, `_summonChoice`, `_bringIn` (boss_skills.dart), Slime Hex
-    (hero_skills.dart) and `WaveStarted`'s `tide` (its `gap` from `wavePaceFrom`).
-  - **The HUD reads the coming wave between waves** (`Game.shownOver` / `shownTideFrom`: in a wave the frozen one;
-    between waves s as the army stands now, so a rebuy, a fall or a Lepas jenis shows at once): the wave meter's badge,
-    its tooltip (`tideTip`: its lines from the earlier wave, "A monster every" from `tideStart` with `overPace` off, then
-    "12 over the cap: Tide +24 waves", `overTip`), `capPressed` (the tide on)
-    and `capWarning`'s percent. ui-hud.md "Wave meter".
-  - **It limits itself:** each troop that falls over the cap gives 2 waves back, and Lepas jenis takes a type's
-    troops home (the owner's templar 13 + archer 3 are the 16 over).
-  - **An army at the cap or under it, so every new run, meets the tide exactly as before** (s = 0; no dice drawn;
-    `test/tide_test.dart` plays a wave at the board's cap with it on and off). `tideRising` and `tideCaughtUp` (the tide's
-    news) still read `tideStart`.
-  - The one-time note `over` ("The owner's limits" above); the telemetry's `start.tide.over` (telemetry.md).
+- **An army over the cap meets the tide as any army.** Beban, the over-cap tide (decisions-log 162), counted the tide
+  from 2 waves earlier for each troop alive over the cap (at most 60, ramped in over 5 waves from `overFrom`, the pace
+  too), so a save from before the cap (the owner's 48 over 32) paid for its extra troops. It went in decisions-log 329:
+  no real game goes over the cap since 141 and 260 (only a Phoenix Plume or Resurrection rise after Auto Buy already
+  rebought, +1 for a wave or two), and the saves from before it are deleted at launch. A save's `overFrom` is read as
+  nothing, and its `over` note key stays in `notes`, unread. The Bayangan's own count of an army over the cap (the
+  Beban factor, `omenFactor`, "The Bayangan" below) is a separate rule and stays.
 
 ### Ganti yang gugur (buying the fallen back, #92 part 1)
 
@@ -471,7 +435,7 @@ no guard joins a queue, no skip buff lands and a blow is what it was. A **slot**
 a necromancer or a skill raised.
 
 - **Every monster's stats** come from one wrapper, `spawnStats(type, tier, {raised, skipBuff})`: `enemyStats` with the
-  wave's tide (`waveTideFrom`), then `_omenStats` (Haste, Mend, the skip buff, Dark Hymn, Bone Arrows, Old Bones and Hardy). Its six callers: the queue's spawn (`monster`), the necromancer's
+  wave's tide (from `tideStart`), then `_omenStats` (Haste, Mend, the skip buff, Dark Hymn, Bone Arrows, Old Bones and Hardy). Its six callers: the queue's spawn (`monster`), the necromancer's
   raised minions (`_summon`) and `decideSummon`'s count of them (the two match), a skill's bring-in (`_bringIn`: Split,
   Swarm, Grave Call), Slime Hex's form (it keeps a skip buff the monster had), and the boss's blow the Dragon Crown
   tooltip counts (`bossBlowsLived`, another wave's, `at` and `tideStart`).
@@ -1055,8 +1019,8 @@ melee maka range jangan dinaikkan".
   with a lost game, one living troop that isn't a Hero yet becomes one (`_crownHero`), picked with
   `Game.heroes`, dice of its own like `loot` and `names`, so it doesn't shift the spawns. Any type, healers
   included. With no candidate, nobody. It stays a Hero until it dies, so a long run can have several.
-  Wave 0 is no 10th wave: a monster leaking in before the first wave (only tests do that) wins "wave 0",
-  and that crowns nobody (`wave > 0`).
+  Wave 0 is no 10th wave: a fight before the first wave (only tests have one) wins "wave 0", and that crowns
+  nobody (`wave > 0`).
 - **At most `heroMax` 5 alive** (the owner: "hero yang sudah mati maka slotnya bisa di pakai lagi untuk
   hero baru muncul di setiap 10 wave"): with 5 living Heroes a 10th wave's win crowns nobody (and shows
   no splash); a fallen Hero frees its place for the next 10th wave. Nothing extra is saved: the count is
@@ -1208,21 +1172,30 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
   - The book's numbers (`Game.fieldStats`: the Army page's eight, the Bag's and the Artifacts' previews, an item's
     line) show the walk a troop gets (`Stats.walking`), and the Army page's Speed is red at the cap (ui-hud.md "Field
     stats").
-- A monster with no foe walks left. Crossing `baseX` costs a life.
+- **No monster heads for the back line** (decisions-log 329; the owner picked "Hapus garis belakang", then: "monster
+  juga nga perlu ke garis belakang karna kan targetnya para troops"): its goal is always a troop (`_monsterFoe`,
+  "Fighting rules" above), and with no troop standing it waits where it is (a lone mending necromancer walks to the
+  nearest troop). One that goes past `baseX` to meet a troop walking in from behind the line costs nothing. Until then
+  a monster with no foe walked left, and one over the line was gone and cost a life, half a heart (Watchman's Brew
+  forgave a wave's first). The audit before: no monster crossed while 2 or more troops stood outside a march, in 397 waves on that day's rules; it
+  happened in an army's last seconds (Auto Buy's one fresh troop kept the wave from counting as wiped, so it cost up
+  to 2.5 hearts), in waves begun with no troop, and in a stall march. Each of those is now a lost wave
+  (lib/wipe.dart, game-overview.md "Lose"): the army falls in the end, a wave with no troop standing is lost
+  `emptyGrace` 5 s after its monsters come on, and a charge has `marchMax` s.
 - **Stalled waves** (`stallTime` 30 s, `_watchStall`, `Game.marching`; #39): every wave ends.
   - Progress: the wave's own monsters (raised minions don't count) get nearer the base, fall to a new
-    low of HP, die or leak, or one spawns. `_watchStall` keeps a running low of "what is left": their
+    low of HP or die, or one spawns. `_watchStall` keeps a running low of "what is left": their
     HP plus their way to the base, max(0, x − `baseX`). A spawn or a new low counts as progress.
   - Two more ways a wave stalls, for fights whose falling HP alone read as progress (decisions-log 153; qa-3: a mini
     boss led 2,000+ px off by a lone kiting wizard lost ~10% of its HP every 2 min, every blow a new low, and the
     wave went on for good):
     - **Drifting off:** `_watchStall` also keeps the front, the least way to the base of any of the wave's own
-      monsters, and its low since the last spawn, death or leak (each starts it afresh). While the front stands more
+      monsters, and its low since the last spawn or death (each starts it afresh). While the front stands more
       than `stallDrift` 10 tiles past that low, a new low of "what is left" is no progress. The stall clock runs, and
       the monsters march `stallTime` after the last progress. 10 tiles is twice Death Leap's reach (a monster
       turning on a troop that leapt behind it) and ten knockbacks.
-    - **Overtime:** `stallOvertime` 180 s after the wave's last spawn, the last life lost or the slots' last
-      progress (below), the monsters march whatever else. A plain monster falling, or its HP, doesn't count. None of
+    - **Overtime:** `stallOvertime` 180 s after the wave's last spawn or the slots' last progress (below), the
+      monsters march whatever else (a life lost to the back line restarted it too until decisions-log 329). A plain monster falling, or its HP, doesn't count. None of
       the owner's 149 waves of telemetry (w1–86, none marched) went on much over 110 s after its last spawn, by its
       spawn count times its gap (the longest, w78, 230 s in all); only a near-wiped army fights on longer.
       - **The slots' progress** (`stallProgress` 0.05, decisions-log 166): the wave's slot monsters (its mini boss
@@ -1230,29 +1203,37 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
         afresh, so a slow slot fight the army is still winning goes on. `_watchStall` keeps the slots' HP and max HP
         from that start (only a spawn brings a slot monster, so the same ones count until the next start, a dead one
         at 0 HP); HP healed back has to be lost again. With no slot monster alive the clock is the spawn's and the
-        life's alone, as before. At 14437d0's strength the overtime marched late slot fights that 6–10 troops
+        spawn's alone. At 14437d0's strength the overtime marched late slot fights that 6–10 troops
         were winning (one won at 515 s without it), and the mini boss leaked a life each time.
-      - **The longest:** `stallOvertimeMax` 300 s after the wave's last spawn or the last life lost, the monsters
+      - **The longest:** `stallOvertimeMax` 300 s after the wave's last spawn, the monsters
         march whatever the slots' progress (`MarchCause.overtimeMax`), so a slot monster ground down a little at a
         time, or healed back between blows, can't hold the wave for good. On the progress alone, qa-4's one stalled
         wave (w90, its last troop whittling a greatsword skeleton boss led off right) still ran at the 600 s cap.
       - What it leaves (decisions-log 166): in the late slot fights where the overtime marched with 6–10 troops alive,
         the fight now goes on, and the drift rule marches it 30–60 s later with 2–5 left, once the last ranged troops
-        kite the slot monster off; those lives stay lost.
+        kite the slot monster off (those lives were lost to the line then; since decisions-log 329 such a march has
+        `marchMax` s to be won).
     - Why a march began is `Marched.why` (`MarchCause`: `stalled`, `drifting`, `overtime`, `overtimeMax`), for the
       listeners.
-  - With no progress for `stallTime`, the wave has stalled and its monsters **march**. Every monster
-    (minions too) walks straight to `baseX` and passes through the troops: no shoves between the two
-    sides while marching. They don't attack, summon or heal any more (a necromancer finishes a cast
-    already started). Troops still hit them, and each one that gets through costs a life as usual.
-  - A march needs the monsters to be able to walk: the right-edge clamp lets a monster's own steps left
-    stand (#42, camera-and-field.md), so one the view glided past marches too.
-  - The UI says "Monsters broke through!" once (`Game.newMarch`, ui-hud.md). The march ends with the wave and
-    isn't saved (saves come only after a won wave).
+  - With no progress for `stallTime`, the wave has stalled and its monsters **charge the troops** (`Game.marching`,
+    `_charge`; decisions-log 329). Every monster (minions too) goes straight at the troop it goes for (`_monsterFoe`),
+    to the edge of its reach, and strikes it there; it doesn't summon, heal, use a skill or back off any more (a
+    necromancer finishes a cast already started). With no troop standing it waits. Until 329
+    the march walked straight to `baseX` through the troops (no shoves between the two sides) and struck nobody.
+  - **`marchMax` 60 s:** a wave still on 60 s after its march began is lost as a wiped one is (`WipeCause.slow`: a
+    heart, the monsters swept, the wave again; lib/wipe.dart). Until decisions-log 329 the march ended at the back
+    line, each monster over it half a heart, and the wave then counted as won: in that audit's 397 waves 7 marched; 6
+    were won within seconds (the troops cut the marchers down on their way), and a w60 boss wave lost 5 lives 87 s into
+    its march and still counted as won.
+  - A charge needs the monsters to be able to walk: the right-edge clamp lets a monster's own steps left
+    stand (#42, camera-and-field.md), so one the view glided past charges too.
+  - The UI says "Monsters charge! Win in 60 s or lose a heart." once (`Game.newMarch`, `marchNote`, ui-hud.md), and
+    `Sfx.leak` sounds (a monster over the line until decisions-log 329). The march ends with the wave and isn't saved
+    (saves come only between waves).
   - Why: a necromancer boss raises skeletons forever, because its MP regen pays for a cast every
     `summonEvery`. With the army down to 1–2 archers, a skeleton is always the nearest foe, so the boss
     was never shot while the necro healer mended it. The monsters chased the kiting archers instead of
-    walking to the base, so nothing died or leaked: wave 5 went on for good in 9 of 30 auto-player runs.
+    walking to the base, so nothing died or got through: wave 5 went on for good in 9 of 30 auto-player runs.
     A priests-only army out-healing a weak monster that isn't dark (it can't smite it) would stall too.
   - A normal wave always makes progress well inside 30 s, so the rule never fires there: the same
     auto-player plays those seeds identically (decisions-log 61).
@@ -1262,7 +1243,7 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
   level's colour (ui-hud.md).
 - **A shot whose target went flies on** (decisions-log 327; the owner: "particle yang sudah terkirim jangan hilang di
   tengah jalan"). Until then a shot whose target fell or left mid-flight was dropped where it was. Now, the first tick
-  its target isn't alive (fallen, or gone: a monster that leaked past the line), the shot keeps that target's place
+  its target isn't alive (fallen, or gone: a monster swept off by a lost wave), the shot keeps that target's place
   as `Shot.to`, frozen, and flies on to it at its own speed (`Shot.aim`: `to`, else its target's place). There it lands
   as on its target: its hit burst (a wizard's `fireball` or `shards`) and its ring (Arcane Blast's) at that spot, then
   - the unit of the target's side standing nearest the spot, within `landReach` (half a tile, a line shot's width,
@@ -1498,14 +1479,23 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
   - **`Status.noHeal`** on a troop: the Bayangan Blight's (a monster's, bad, so a cleanse ends it): in a wave its heal
     ceiling is its HP and the heal funnel gives it nothing ("Bayangan on the field").
 - **Game over** is `lives <= 0`. Then `tick` stops.
-- **An army wiped** (lib/wipe.dart, decisions-log 322; the owner: "Kalah wave: −1 hati, ulang"): checked at the end of
-  `tick`, after the raised joined and before the win, unless the leaks just ended the game. `_armyDown`: a troop fell this wave (`fallen` isn't empty), none
-  is alive (a troop Resurrection raised this tick counts), no Phoenix Plume rise is due (`_risesDue`, counted when its
-  `later` is set, dropped by `_endEffects`), and a monster lives or is queued (the last troop and the last monster
-  falling together is a win; a wave begun with no troop is never a wipe: only its leaks cost). Then `_wipe`:
-  - `wipeLives` 2 lives go (a heart; floor 0), `wipedOut` is set (until the next wave starts), `wipedAt` = `t`, the
-    lose sound, and the event `Wiped` (the lives left and lost, the monsters alive and queued, `over`). At 0 lives the
-    game is over as by leaks: the monsters stay and cheer, the tick's end scores it (`WaveEnded(won: false)`).
+- **An army wiped, and the other lost waves** (lib/wipe.dart, decisions-log 322, 329; the owner: "Kalah wave: −1 hati,
+  ulang", then "Hapus garis belakang"): checked at the end of `tick`, after the raised joined and before the win
+  (`_waveLost`, its `WipeCause`):
+  - `fell`, the army down: none is alive (a troop Resurrection raised this tick counts), no Phoenix Plume
+    rise is due (`_risesDue`, counted when its `later` is set, dropped by `_endEffects`), a monster lives or is queued
+    (the last troop and the last monster falling together is a win), and a troop fell this wave (`fallen` isn't empty);
+  - `empty`, the same with none fallen, `emptyGrace` 5 s on (`_emptyFrom`), counted from when the wave's monsters came
+    on (`waveSpawned` > 0; monsters a test put on the field with no spawn are no wave): a wave begun with no troop ("No
+    troops!"). Its monsters wait where they are meanwhile, and a troop bought then (by hand or Auto Buy) keeps the wave
+    on. Until decisions-log 329 it was never a wipe, and its monsters walked over the back line, half a heart each: how
+    4 of the audit's 5 whole runs ended;
+  - `slow`, a stalled wave's charge still on `marchMax` 60 s after it began ("Too slow!"; "Stalled waves" above).
+
+  Then `_wipe`:
+  - `wipeLives` 2 lives go (a heart; floor 0), `wipedOut` is set (until the next wave starts), `wipedAt` = `t`,
+    `wipeCause`, the lose sound, and the event `Wiped` (the lives left and lost, the monsters alive and queued, `over`,
+    `cause`, and the checkpoint's `checkpoint` and `debuff`, below). At 0 lives the game is over: the monsters stay and cheer (`WaveEnded(won: false)`).
   - Else the sweep: the living monsters leave `units` for `swept` (the UI draws them hopping for joy `wipeCheer` 2.4 s,
     then each goes in a summon circle, `_sweptGone`), the queue, line shots, beams, zones and the monsters'
     rings are cleared, the shots in the air are spent (they fly on and land their look alone, decisions-log 327), the march ends, `_endEffects`, the Grail's watch ends, `WaveEnded(won: false)`, the Tavern's
@@ -2111,7 +2101,7 @@ tick.
   - `shoveShare`: the boss (tier `boss`) isn't moved at all, and a mini boss goes half as far. A Hero goes
     `heroShoveShare` 0.5 as far, as a stun on it lasts half (#59); any other troop the whole way.
   - A monster never ends past the right edge (`rightLimit`, #42), a troop never behind the back line
-    (`_troopRear`: `max(baseX, cam)` with the view's `keepUpWithView`, plus `clearOfLine`). One already past
+    (`_troopRear`: `_rearEdge`, max(baseX, cam + `keepUpShift`), plus `clearOfLine`). One already past
     it isn't pushed further out.
   - A troop holding its ground isn't moved at all (`_shoveProof`: carried already, braced, or under
     `noShove`; one under Anchor's stand counts it for the Pusaka, `_fxStood`, a drag too). A monster always is, by

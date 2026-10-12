@@ -118,9 +118,10 @@ extension Store on Game {
   /// ([_armyClosed] alone).
   StoreRefusal? get _away => !inTown ? StoreRefusal.town : null;
 
-  /// [kind]'s price before any was bought; a small relic's is its tier's ([TierPrices.shop]: Basic
-  /// 12,000, Strong 20,000, Mighty 32,000) and an item's the [TownShop]'s; a material's the forge's Shop's
-  /// ([Materials.shopMatPrice]).
+  /// [kind]'s price before any was bought: a material's the forge's Shop's ([Materials.shopMatPrice]), an Artifact's
+  /// its own. An item or a small relic has none: the Smithy makes them, the Shop never sells one ([onShopShelf]), and a
+  /// sale is at the market's price ([sellPrice]); their Shop prices (town.json `tiers`, the shop's `itemPrice` and
+  /// `itemRise`) went in decisions-log 329.
   int basePrice(Enum kind) => switch (kind) {
         final Mat m => shopMatPrice(m),
         final PocketKind p => pocketSellPrice(p), // never sold here: its sale's price (pocket.dart)
@@ -128,22 +129,18 @@ extension Store on Game {
         Relic(rarity: Rarity.legenda) => legendaPrice, // the chest's Legenda, never sold here (pusaka.dart)
         Relic(rarity: Rarity.epik, pusaka: true) => epikPrice, // the chest's new Epik (owner: its own price), sold to it, never bought (draft.dart)
         Relic(pusaka: true) => langkaPrice, // the chest's Langka (owner 3c: sold to it, never bought), never sold here (draft.dart)
-        final Relic r => _tierPrices(r).shop,
-        _ => townRules.shop.itemPrice, // an item
+        _ => 0, // an item or a small relic: never on the shelf
       };
 
   /// What the next [kind] costs: its base price, risen by every one of it the store sold this game (and by
-  /// [ahead] more: what the one after would cost). A small relic rises its tier's [TierPrices.shopRise]
-  /// of its base a buy (Basic 12,000, 14,400, 16,800, …) and an item the [TownShop]'s rise; a material the forge's Shop's
-  /// ([Materials.shopMatPrice]: its [TownShop.matRise] a buy, 0 as shipped).
+  /// [ahead] more: what the one after would cost). A material the market's ([Materials.shopMatPrice] and its rise), an
+  /// Artifact [artefactRise] a buy; the rest are never sold here (their [basePrice]).
   int buyPrice(Enum kind, [int ahead = 0]) {
     final n = (storeBought[kind] ?? 0) + ahead;
     return switch (kind) {
       final Mat m => marketMatPrice(m, n, ahead), // dearer for each bought, by the market (market.dart)
       Relic(store: true) => (artefactPrice[kind]! * pow(artefactRise, n)).round(),
-      final Relic r when !r.pusaka => _tierPrices(r).priceAfter(n),
-      Relic() => basePrice(kind), // the chest's Pusaka: never sold here ([StoreRefusal.shelf])
-      _ => townRules.shop.itemPrice + townRules.shop.itemRise * n, // an item
+      _ => basePrice(kind), // the chest's Pusaka, an item, a small relic: never sold here ([whyNotBuy])
     };
   }
 
@@ -151,17 +148,14 @@ extension Store on Game {
   /// ([MatInfo.sell], town.json `materials`). An item and a small relic, the Smithy's goods, sell at the market's price
   /// for the next piece ([Market.marketPrice], decisions-log 326: 1.3x-4x their cost by grade and the Town's demand,
   /// lower the more of that exact product was sold); until then a small relic sold for half its craft gold and every
-  /// item for a flat 1,000 (the [TownShop]'s share of its price). A pocket item ([PocketKind], decisions-log 332) half its
-  /// worth ([Pockets.pocketSellPrice]), outside the market.
+  /// item for a flat 1,000 (half the Shop's item price, gone since decisions-log 329). A pocket item ([PocketKind],
+  /// decisions-log 332) half its worth ([Pockets.pocketSellPrice]), outside the market.
   int sellPrice(Enum kind) => switch (kind) {
         Mat() => townRules.materials[kind]?.sell ?? 0,
         final PocketKind p => pocketSellPrice(p),
         Item() || Relic(pusaka: false) => marketPrice(kind),
         _ => (basePrice(kind) * sellShare).round(),
       };
-
-  /// Small relic [relic]'s tier prices ([Relics.relicTier], town.json `tiers`).
-  TierPrices _tierPrices(Relic relic) => townRules.tiers[relicTier(relic)] ?? _townTiers[relicTier(relic)]!;
 
   /// How many [kind] are in the bag; a Pusaka: 1 while it waits in the Gudang (an oath never does: it never sells); a
   /// material ([Mat]): how many are held.

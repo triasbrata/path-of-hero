@@ -3,9 +3,12 @@ part of 'game.dart';
 // An army wiped mid-wave (decisions-log 322; game-overview.md "Lose"). Until then the game ended when the last troop
 // fell, so every run ended in a wipe at full hearts and the lives never mattered; the owner, 2026-10-12, picked "Kalah
 // wave: −1 hati, ulang". Now:
-// - the wipe ([Wipe._armyDown]): a troop fell this wave and none is alive (one Resurrection raised this tick counts), no
-//   Phoenix Plume rise is due ([Game._risesDue]), and a monster still lives or is queued: the last troop and the last
+// - the wipe ([Wipe._waveLost]): no troop is alive (one Resurrection raised this tick counts), no Phoenix Plume rise is
+//   due ([Game._risesDue]), a monster still lives or is queued, and a troop fell this wave: the last troop and the last
 //   monster falling together is a win;
+// - since decisions-log 329 the back line costs nothing (no monster heads for it: its goal is the troops, game.dart), so
+//   two more ways lose a wave the same way ([WipeCause]): no troop standing for [emptyGrace] s once the wave's monsters
+//   came on, none having fallen (a wave begun with none); and a stalled wave's charge not won within [marchMax] s;
 // - it costs [wipeLives] lives, a heart; at 0 the game is over as before (the monsters cheer, the scoreboard);
 // - else the wave's living and queued monsters are swept off with no gold, loot or score ([Game.swept] hop for joy a
 //   moment), the wave's effects end as at a won wave's end, and what it paid stays (kill gold, score, kills) while the
@@ -43,25 +46,50 @@ bool autoTryAgain = true;
 const weakenedHp = [1.0, 0.8, 0.7], weakenedDmg = [1.0, 0.85, 0.75];
 const weakenedMost = 2;
 
-extension Wipe on Game {
-  /// The army is down mid-wave ([Game.tick], after the raised joined): a troop fell this wave, none is alive and no rise
-  /// is due, while a monster lives or is still queued.
-  bool get _armyDown =>
-      fallen.isNotEmpty && _risesDue == 0 && !troops.any((u) => u.alive) && (queue.isNotEmpty || enemies.any((u) => u.alive));
+/// Why a wave was lost ([Wiped.cause]): its army fell; it had no troop to meet the monsters for [emptyGrace] s (until
+/// decisions-log 329 they walked over the back line, half a heart each); or it stalled and its charge wasn't won within
+/// [marchMax] s.
+enum WipeCause { fell, empty, slow }
 
-  /// The army fell: [wipeLives] lives go, and unless that ends the game the wave's monsters are swept off, it ends as
-  /// lost and it is played again (the file's comment).
-  void _wipe() {
+/// How long a wave whose monsters came on may go with no troop standing (none fallen: a wave begun with none) before it
+/// is lost ([WipeCause.empty]): time for a buy by hand, or Auto Buy's, to come in. Its monsters wait meanwhile.
+const emptyGrace = 5.0;
+
+extension Wipe on Game {
+  /// No troop stands mid-wave ([Game.tick], after the raised joined): none is alive and no rise is due, while a monster
+  /// lives or is still queued.
+  bool get _noneStand => _risesDue == 0 && !troops.any((u) => u.alive) && (queue.isNotEmpty || enemies.any((u) => u.alive));
+
+  /// Why the wave is lost now, if it is ([Game.tick], once a tick of the wave): the army down, a troop of it fallen and
+  /// none standing ([WipeCause.fell], 322's wipe, at once); none standing for [emptyGrace] s once the wave's monsters came
+  /// on, none fallen ([WipeCause.empty]; monsters a test put on the field with no spawn are no wave); or its monsters
+  /// charging longer than [marchMax] s ([WipeCause.slow]).
+  WipeCause? _waveLost() {
+    final none = _noneStand;
+    if (none && fallen.isNotEmpty) return WipeCause.fell;
+    if (none && waveSpawned > 0) {
+      if (t - (_emptyFrom ??= t) >= emptyGrace) return WipeCause.empty;
+    } else {
+      _emptyFrom = null;
+    }
+    return marching && t - _marchAt > marchMax ? WipeCause.slow : null;
+  }
+
+  /// The wave is lost ([why]): [wipeLives] lives go, and unless that ends the game the wave's monsters are swept off, it
+  /// ends as lost and it is played again (the file's comment).
+  void _wipe(WipeCause why) {
     final before = lives, left = enemies.where((u) => u.alive).toList();
     lives = max(0, lives - wipeLives);
     wipedOut = true;
     wipedAt = t;
+    wipeCause = why;
     sfx.add(Sfx.lose);
     _emit(Wiped(wave, t,
         lives: lives,
         lost: before - lives,
         foes: left.length + queue.length,
         over: over,
+        cause: why,
         checkpoint: over ? null : _checkpointNow,
         town: over || _checkpointNow == null ? null : sceneIdentity.name,
         debuff: over ? weakened : min(weakenedMost, weakened + 1)));
@@ -150,7 +178,7 @@ extension Wipe on Game {
 
   /// What the message window says after a wipe that didn't end the game: back to the checkpoint's Town and the waves
   /// played again ("Back to Millbrook: waves 21-27 again, foes weakened."), or the same wave before the first Town.
-  String get wipeNote => '${Words.armyFell} -1 heart.\n$wipeBack, foes weakened.';
+  String get wipeNote => '${wipeWhy(wipeCause)}! -1 heart.\n$wipeBack, foes weakened.';
 
   /// The waves played again: "Back to Millbrook: waves 21-27 again" ("wave 21 again" for one), or "Wave 7 again".
   String get wipeBack {
@@ -172,3 +200,13 @@ extension Wipe on Game {
     return n == 0 ? '' : '${cut(weakenedHp[n])} HP, ${cut(weakenedDmg[n])} damage';
   }
 }
+
+/// What the message window says when a wave stalls and its monsters begin to march ([Game.newMarch]).
+final marchNote = 'Monsters charge!\nWin in ${marchMax.round()} s or lose a heart.';
+
+/// A lost wave's cause as the player reads it ([Game.wipeNote], the battle log's line).
+String wipeWhy(WipeCause why) => switch (why) {
+      WipeCause.fell => 'Your army fell',
+      WipeCause.empty => 'No troops',
+      WipeCause.slow => 'Too slow',
+    };

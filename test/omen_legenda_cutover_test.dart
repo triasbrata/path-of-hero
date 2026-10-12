@@ -106,7 +106,7 @@ double healedBy(Game g, Unit u, [double s = 0.5]) {
 Map<String, dynamic> fixture(String name) => jsonDecode(File('test/fixtures/$name').readAsStringSync()) as Map<String, dynamic>;
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the row', () {
     test("Blight sits in the Legenda pool alone, after Thornproof; its numbers (seconds), title, icon (fx_hit_slime's "

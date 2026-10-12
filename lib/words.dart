@@ -23,7 +23,7 @@ abstract final class Words {
   static const bossChest = 'Boss Chest', missedChest = 'Missed Chest', reroll = 'Reroll', skip = 'Skip', take = 'Take';
   static const equip = 'Equip', move = 'Move', toVault = 'To Vault', remove = 'Remove', release = 'Release',
       sell = 'Sell', buy = 'Buy';
-  static const sure = 'Sure?', back = 'Back', cancel = 'Cancel', undo = 'Undo';
+  static const sure = 'Sure?', back = 'Back', undo = 'Undo';
   static const onlyBetweenWaves = 'Only between waves', notEnoughGold = 'Not enough gold', gameOver = 'Game over';
 
   /// Over a troop healer whose heal found it short of MP (decisions-log 297; [Game.noMp]).
@@ -79,7 +79,7 @@ abstract final class Words {
   /// The Wishlist (decisions-log 282): its name, the Army detail's tag that opens its picker and the picker's heading, what
   /// an item's type chip on the Smithy says, the mark of a wish the Bag pays for, what a wish tapped outside a Town says,
   /// and a material's tooltip line.
-  static const wishlist = 'Wishlist', addToWishlist = 'Add to wishlist', onWishlist = 'On wishlist', readyToCraft = 'Ready to craft',
+  static const wishlist = 'Wishlist', addToWishlist = 'Add to wishlist', readyToCraft = 'Ready to craft',
       craftInTown = 'Craft at the $smithy in a $town', neededForWishlist = 'Needed for your wishlist';
 
   /// A product's page's short "Add to wishlist" (until decisions-log 303 also the Wishlist tab's picker's tag); a type's

@@ -13,8 +13,10 @@ dulu untuk tulis score player ke board". The screens are in [ui-hud.md](ui-hud.m
 |---|---|
 | `killScore[tier]`: normal 10, elite 25, highElite 50, miniBoss 150, boss 500 | Every monster killed (`_hurt`), by its rank. The boss's raised skeletons (`cost` 0) score 0, like their gold. |
 | `waveScore` × n (100·n) | Winning wave n (beside the gold bonus), the first time only: a wave won again after a wipe sent the game back to a Town (`Game.bestWon`, decisions-log 333) scores its kills, not its win. |
-| `lifeScore` × lives left (50 each) | Once, in the tick where the game ends. Since decisions-log 322 it always ends at 0 lives (an army wiped costs a heart and the wave is played again; the game is over only when the hearts run out), so it pays nothing now; it paid when the last troop's fall ended a game with lives left. "Give up" after a wipe (decisions-log 333) sets the lives to 0: the hearts left score nothing. |
 
+- The lives left no longer score (decisions-log 329). Until then `lifeScore` paid 50 a life in the tick the game ended;
+  since decisions-log 322 a game ends only at 0 lives (an army wiped costs a heart and the wave is played again), so it
+  paid nothing. The guide's Goal topic says "Score: kills and waves won."
 - `Game.kills` counts every monster killed, raised skeletons included. It goes on the board beside the score.
 - Both are in the save (`score`, `kills`); a save from before them loads with 0.
 - The score only shows at game over and on the board (no live counter; the owner can ask for one).

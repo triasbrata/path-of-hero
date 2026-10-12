@@ -152,7 +152,10 @@ the middle of the screen is where our troops and the monsters actually hit each 
 
 ## Back line (`baseX`) and deploy zone
 
-- `baseX` is the zone start and the life-loss line. It only moves forward, and only when a wave is won
+- `baseX` is the zone start. Since decisions-log 329 it costs nothing: no monster heads for it (its goal is a troop),
+  and one that goes past it to meet a troop walking in loses nothing; until then a monster with no foe walked to it,
+  and one over it was gone and cost a life, half a heart. It only moves forward, and only when
+  a wave is won
   (#79, the owner: "garis belakang di majukan setiap selesai wave saja"):
   - mid-wave it stays put, however far the army fights its way forward. The view centres the battle, so
     the line and the zone can be far off screen to the left (the minimap shows them, #80: ui-hud.md "Minimap").
@@ -162,7 +165,8 @@ the middle of the screen is where our troops and the monsters actually hit each 
     the rear along with the view; #61 (decision 92) kept it `lineRoom` 2 tiles behind the rearmost
     troop mid-wave instead; #79 (decision 115) dropped that too.
   - With the line not dragging the rear along, the supports keep up with the view themselves
-    (`Game.keepUpWithView`, on: the orchestrator's option A): a healer's rest and a kiting archer never go
+    (the orchestrator's option A; its switch `keepUpWithView`, always on, went in decisions-log 329): a healer's
+    rest and a kiting archer never go
     behind max(baseX, cam + `keepUpShift`) + tile/2, and anyone out of sight (once the wave has shown a
     fight, within `keepUpInset` − `offViewBy` of the view's left edge) walking forward goes at the catch-up
     pace (#85's inset, above)

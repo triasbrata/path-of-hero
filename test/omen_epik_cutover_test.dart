@@ -96,7 +96,7 @@ Effect? bleedOn(Game g, Unit u) => g.effectOn(u, Status.bleed);
 Map<String, dynamic> fixture(String name) => jsonDecode(File('test/fixtures/$name').readAsStringSync()) as Map<String, dynamic>;
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("Bat Venom sits in the Epik pool alone, after Old Bones; its numbers, title, icon (a bat from an existing sheet, "

@@ -35,15 +35,18 @@ but the troops move freely.
    in summer value beginner goods, Ironvale and Ambergate in autumn, Frostgate and Highspire in winter the high-class
    ones, each with its own backdrop, yard and the kinds it pays well for; a drag, the wheel or a trackpad's swipe pans it sideways to look around; "Leave town" goes on
    to the next wave (with Auto Wave on, 5 s after coming in).
-5. **Lose.** A monster crossing the back line costs a life, half a heart: a game starts with 3 hearts
-   (6 lives). When the whole army falls mid-wave the wave is lost, not the game (decisions-log 322): it costs a heart,
-   the wave's monsters cheer a moment and are swept off, and a card asks "Try again" or "Give up" (decisions-log 333).
-   Trying again goes back to the last Town the player went into, as he left it, to gather gold and buy the army back:
-   the waves from there are played again ("Your army fell! -1 heart. Back to Millbrook: waves 21-27 again, foes
-   weakened."); before the first Town the same wave is played again. Until the next new Town the monsters are weakened
-   (-20% HP and -15% damage, -30% and -25% after a second fall). What was earned stays; a wave won again pays its gold
-   and drops again, but its score, Hero and boss chest come only the first time. Giving up ends the game. Game over at
-   0 lives (3 hearts = 3 chances); then the monsters cheer. The score (kills by rank, won waves) goes
+5. **Lose.** A game starts with 3 hearts. When the whole army falls mid-wave the wave is lost, not the game
+   (decisions-log 322): it costs a heart, the wave's monsters cheer a moment and are swept off, and a card asks "Try
+   again" or "Give up" (decisions-log 333). Trying again goes back to the last Town the player went into, as he left it,
+   to gather gold and buy the army back: the waves from there are played again ("Your army fell! -1 heart. Back to
+   Millbrook: waves 21-27 again, foes weakened."); before the first Town the same wave is played again. Until the next
+   new Town the monsters are weakened (-20% HP and -15% damage, -30% and -25% after a second fall). What was earned
+   stays; a wave won again pays its gold and drops again, but its score, Hero and boss chest come only the first time.
+   Giving up ends the game. A wave begun with no troop is lost the same way 5 s after its monsters come on ("No
+   troops!"; time to buy one), and so is a stalled wave whose monsters charge the troops and aren't beaten within 60 s
+   ("Too slow!"). The back line costs nothing: the monsters' goal is always the troops, never the line (until
+   decisions-log 329 each one over it cost half a heart). Game over when the last heart is lost (3 hearts = 3 chances);
+   then the monsters cheer. The score (kills by rank, won waves) goes
    on the scoreboard under the player's name, asked the first time ("Scoreboard", also on the welcome screen).
 
 ## What the player manages
@@ -63,9 +66,9 @@ but the troops move freely.
   the next grade.
 - **Materials:** every monster type drops its own parts (30 kinds, about three times as many as before the forge),
   lying where it fell until the wave is won, then into the Bag for the Smithy.
-- **Tavern boosts** (a Town's Tavern): eleven kinds from Common to Legendary, each for the next 2 waves: the Feast
-  (every troop +20% damage, 15% less damage taken), damage, max HP, damage taken, attack speed, MP regen, kill gold, a
-  forgiven leak a wave, or the Champion's Plate for one troop type; as many as the gold buys, cheap at the first
+- **Tavern boosts** (a Town's Tavern): ten kinds from Common to Legendary, each for the next 2 waves: the Feast
+  (every troop +20% damage, 15% less damage taken), damage, max HP, damage taken, attack speed, MP regen, kill gold, or
+  the Champion's Plate for one troop type; as many as the gold buys, cheap at the first
   Towns, a reroll of the unbought ones doubling in price.
 - **Relics** (one per troop, a Hero two): crafted at a Town's Smithy from materials, items and gold, twenty small
   relics in three tiers: seven Basic (fang, thorns, fury, guard and the forge's chill, shark tooth and grit), seven

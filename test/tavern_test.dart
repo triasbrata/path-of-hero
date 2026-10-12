@@ -1,9 +1,10 @@
 // The Tavern's boosts (decisions-log 266; lib/tavern.dart; docs/loot-items-relics.md "Towns: the Tavern"): town.json's
 // `tavern` block, the prices by wave, the roll (the first Feast, different kinds, a kind running left out, Legendary from
 // wave 30, the pity, the Plate's type, the odds), buying with no limit and the refusals, the reroll, the stats step (the
-// oath under it, the Hero aura over it, the cap), damage taken through a blow, the countdown, Lucky Toast's gold,
-// Watchman's Brew's leak, the save, the events and the telemetry, and the probe policy; each offer's length
-// (decisions-log 331): its odds, its price, its countdown or its end at the next Town, a replay counting nothing, the save.
+// oath under it, the Hero aura over it, the cap), damage taken through a blow, the countdown, Lucky Toast's gold, the
+// save, the events and the telemetry, and the probe policy; each offer's length (decisions-log 331): its odds, its price,
+// its countdown or its end at the next Town, a replay counting nothing, the save. (Watchman's Brew went with the back
+// line's cost, decisions-log 329.)
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -70,8 +71,8 @@ List<Boost> kinds(Game g) => [for (final o in g.tavernOffers) o.kind];
 /// Saved and loaded back, through JSON as the file does, into a game with the Towns (and so the Tavern) on.
 Game reloaded(Game g) => Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>);
 
-/// Starts [g]'s next wave (through a due Town first) with [foes] put on the field (none: one slime that leaks at once),
-/// and ticks until it ends.
+/// Starts [g]'s next wave (through a due Town first) with [foes] put on the field (none: one slime gone at once, so the
+/// wave is won), and ticks until it ends.
 void fight(Game g, [List<Unit Function(Game)> foes = const []]) {
   if (g.townDue && !g.inTown) expect(g.enterTown(), isTrue);
   if (g.inTown) expect(g.leaveTown(), isTrue);
@@ -81,7 +82,7 @@ void fight(Game g, [List<Unit Function(Game)> foes = const []]) {
   for (final f in foes) {
     f(g);
   }
-  if (foes.isEmpty) foeAt(g, 'slime', Point(g.baseX - 2, 40));
+  if (foes.isEmpty) foeAt(g, 'slime', Point(g.baseX + 200, 40)).gone = true;
   for (var i = 0; i < 200 && g.waveActive; i++) {
     g.tick(0.05);
   }
@@ -90,7 +91,7 @@ void fight(Game g, [List<Unit Function(Game)> foes = const []]) {
 
 void main() {
   group('town.json `tavern` (decisions-log 266)', () {
-    test('the shipped block is the defaults, nothing skipped: 11 kinds, every one two waves, the owner\'s Feast', () {
+    test('the shipped block is the defaults, nothing skipped: 10 kinds, every one two waves, the owner\'s Feast', () {
       final text = File('assets/config/town.json').readAsStringSync(), file = TownRules.parse(text);
       expect(file.skipped, isEmpty);
       expect(file.tavern.toJson(), (jsonDecode(text) as Map)['tavern']);
@@ -101,7 +102,7 @@ void main() {
       expect({for (final r in Rarity.values) rarityKeys[r]: [for (final MapEntry(:key, :value) in t.boosts.entries) if (value.rarity == r) key.name]}, {
         'common': ['ale', 'stew', 'broth', 'tea', 'rations', 'toast'],
         'rare': ['feast', 'mage'],
-        'epic': ['plate', 'watch'],
+        'epic': ['plate'], // Watchman's Brew went in decisions-log 329
         'legendary': ['banquet'],
       });
       expect(t.boosts[Boost.feast]!.effects, {'dmg': 1.20, 'taken': 0.85}, reason: 'the owner: atk + def, for every troop');
@@ -210,7 +211,7 @@ void main() {
         expect(kinds(inTown(g)), isNot(contains(Boost.ale)));
       }
       final early = inTown(tavern(rules: only('legendary')), 29);
-      expect([for (final k in kinds(early)) g0(k)], [Rarity.epik, Rarity.epik, Rarity.langka]);
+      expect([for (final k in kinds(early)) g0(k)], [Rarity.epik, Rarity.langka, Rarity.langka]); // one Epic since 329
       final late = inTown(tavern(rules: only('legendary')), 30);
       expect(kinds(late).first, Boost.banquet);
       // The free priest is the only type alive: the Plate is a Priests' one.
@@ -416,20 +417,10 @@ void main() {
       }
     });
 
-    test('Watchman\'s Brew: the first monster over the back line each wave costs no life, the next does', () {
-      final events = <GameEvent>[];
-      final g = tavern()
-        ..listeners.add(events.add)
-        ..boosts.add(RunningBoost(Boost.watch, 2));
-      final lives = g.lives;
-      fight(g, [(g) => foeAt(g, 'slime', Point(g.baseX - 2, 40)), (g) => foeAt(g, 'slime', Point(g.baseX - 2, 60))]);
-      expect(g.lives, lives - 1);
-      fight(g);
-      expect(g.lives, lives - 1, reason: 'one forgiven again in the next wave');
-      fight(g);
-      expect(g.lives, lives - 2, reason: 'its two waves are over');
-      expect(events.whereType<BoostSaved>(), hasLength(2));
-      expect(logLine(events.whereType<BoostSaved>().first), "${boostNames[Boost.watch]}: no life lost");
+    test('Watchman\'s Brew is gone (decisions-log 329): no kind forgives a monster, and a saved one is dropped', () {
+      expect(Boost.values.asNameMap().containsKey('watch'), isFalse);
+      final j = jsonDecode(jsonEncode(tavern().toJson())) as Map<String, dynamic>..['boosts'] = [{'kind': 'watch', 'left': 2}];
+      expect(Game.fromJson(j).boosts, isEmpty);
     });
   });
 
@@ -478,32 +469,31 @@ void main() {
   });
 
   test('the events and the telemetry: boostBought and tavernRerolled passed on, the visit in townLeft, the wave\'s '
-      'tavernSpent, boostSaved and its start\'s boosts', () {
+      'tavernSpent and its start\'s boosts', () {
     final sink = _Kept(), events = <GameEvent>[];
     final g = tavern(rules: only('epic'))..listeners.add(events.add);
     TelemetryAdapter([sink], installId: 'i', session: 's', platform: 'test', now: () => DateTime.utc(2026, 10, 8)).attach(g);
     inTown(g, 20);
-    expect(kinds(g), contains(Boost.watch));
+    expect(kinds(g), contains(Boost.plate));
     expect(g.rerollTavern(), isTrue);
-    final w = kinds(g).indexOf(Boost.watch), price = g.boostPrice(Boost.watch), reroll = g.tavernSpent, offered = [...kinds(g)];
-    expect(w, isNonNegative, reason: 'both Epics come in every roll');
+    final w = kinds(g).indexOf(Boost.plate), price = g.boostPrice(Boost.plate), reroll = g.tavernSpent, offered = [...kinds(g)];
+    expect(w, isNonNegative, reason: 'the one Epic comes in every roll');
     expect(g.buyBoost(w), isTrue);
     final bought = events.whereType<BoostBought>().single;
-    expect((bought.boost, bought.rarity, bought.price, bought.waves, bought.slot), (Boost.watch, Rarity.epik, price, 2, w));
-    expect(bought.effects, {'leaks': 1});
-    expect(logLine(bought), "${boostNames[Boost.watch]}: a leak a wave costs no life (2 waves)");
+    expect((bought.boost, bought.rarity, bought.price, bought.waves, bought.slot, bought.type), (Boost.plate, Rarity.epik, price, 2, w, 'priest'));
+    expect(bought.effects, {'dmg': 1.4, 'rate': 1.15});
     expect(passedOn, containsAll([EventKind.boostBought, EventKind.tavernRerolled]));
-    fight(g); // one slime leaks: forgiven
+    fight(g);
     final ev = [for (final r in sink.of('event')) r['event'] as Map<String, dynamic>];
-    expect(ev.singleWhere((e) => e['kind'] == 'boostBought'), containsPair('boost', 'watch'));
+    expect(ev.singleWhere((e) => e['kind'] == 'boostBought'), containsPair('boost', 'plate'));
     expect(ev.singleWhere((e) => e['kind'] == 'boostBought'), containsPair('rarity', 'epic'));
     expect(ev.singleWhere((e) => e['kind'] == 'tavernRerolled'), containsPair('price', reroll));
     final left = ev.singleWhere((e) => e['kind'] == 'townLeft');
-    expect(left['tavern'], {'offered': [for (final k in offered) k.name], 'bought': ['watch'], 'rerolls': 1, 'spent': reroll + price});
+    expect(left['tavern'], {'offered': [for (final k in offered) k.name], 'bought': ['plate'], 'rerolls': 1, 'spent': reroll + price});
     expect(kinds(g), isEmpty, reason: 'the offers go with the Town');
     final wave = sink.of('wave').single;
-    expect((wave['gold']['tavernSpent'], wave['boostSaved'], wave['livesLost']), (reroll + price, 1, 0));
-    expect(wave['start']['boosts'], {'watch': 2});
+    expect((wave['gold']['tavernSpent'], wave.containsKey('boostSaved'), wave['livesLost']), (reroll + price, false, 0));
+    expect(wave['start']['boosts'], {'plate': 2});
   });
 
   group('the lengths (decisions-log 331)', () {
@@ -618,11 +608,10 @@ void main() {
       final g = inTown(tavern(rules: only('common')), 20);
       expect(g.buyBoost(0), isTrue);
       expect(g.buyBoost(1), isTrue);
-      g.boosts.last.saved = 1; // as if it forgave a leak (none here: a Common)
       g.leaveTown();
       wipe(g);
       expect(g.wave, 20, reason: 'wave 21 to play again');
-      expect([for (final b in g.boosts) (b.left, b.fought, b.saved)], [(2, 0, 0), (2, 0, 0)]);
+      expect([for (final b in g.boosts) (b.left, b.fought)], [(2, 0), (2, 0)]);
       fight(g);
       expect([for (final b in g.boosts) b.left], [1, 1]);
       fight(g);
@@ -675,12 +664,12 @@ void main() {
       final g = tavern(rules: only('epic', lengths: {'town': 1}));
       TelemetryAdapter([sink], installId: 'i', session: 's', platform: 'test', now: () => DateTime.utc(2026, 10, 12)).attach(g);
       inTown(g, 20);
-      final w = kinds(g).indexOf(Boost.watch);
+      final w = kinds(g).indexOf(Boost.plate); // the one Epic (Watchman's Brew went in decisions-log 329)
       expect(g.buyBoost(w), isTrue);
       fight(g);
       final bought = [for (final r in sink.of('event')) r['event'] as Map<String, dynamic>].singleWhere((e) => e['kind'] == 'boostBought');
       expect((bought['waves'], bought['untilTown']), (0, true));
-      expect(sink.of('wave').single['start']['boosts'], {'watch': 0});
+      expect(sink.of('wave').single['start']['boosts'], {'plate': 0});
     });
 
     test('the probe policy "top": of one rarity the dearest, so the longest', () {
@@ -703,8 +692,8 @@ void main() {
   test('a plate\'s log line names its type; every effect has its words', () {
     final e = BoostBought(1, 0, boost: Boost.plate, rarity: Rarity.epik, price: 900, waves: 2, type: 'knight', slot: 0, effects: const {'dmg': 1.4, 'rate': 1.15});
     expect(logLine(e), "${boostNames[Boost.plate]} (${troopTypePlurals['knight']}): +40% damage, +15% attack speed (2 waves)");
-    expect(boostEffectLines(const {'taken': 0.85, 'hp': 1.2, 'mpRegen': 1.6, 'gold': 1.3, 'leaks': 2}),
-        ['15% less damage taken', '+20% max HP', '+60% MP regen', '+30% kill gold', '2 leaks a wave cost no life']);
+    expect(boostEffectLines(const {'taken': 0.85, 'hp': 1.2, 'mpRegen': 1.6, 'gold': 1.3}),
+        ['15% less damage taken', '+20% max HP', '+60% MP regen', '+30% kill gold']);
   });
 
   test('the probe policy: "top" buys the best offer it can pay, "all" every one, highest rarity first', () {

@@ -17,7 +17,7 @@ part of 'game.dart';
 /// [TownEntered], [TownLeft], [TownRolled]; decisions-log 216), and the Smithy's [Crafted] with [TownLeft.crafts] and
 /// [TownLeft.craftSpent] (decisions-log 233), in every game (decisions-log 321). [OmenDusk] (decisions-log 239) came without
 /// a raise: like every Bayangan event it is sent only while [omensOn] is on, which no player's game has yet. The Tavern's
-/// ([BoostBought], [BoostEnded], [BoostSaved], [TavernRerolled], [TownLeft.tavern], [WaveStarted.boosts]; decisions-log
+/// ([BoostBought], [BoostEnded], BoostSaved, [TavernRerolled], [TownLeft.tavern], [WaveStarted.boosts]; decisions-log
 /// 266) came without a raise too: only a game with the Tavern's switch on had them, which no player's game had yet. 10: the
 /// forge's ([ItemCrafted], [StoneCrafted], [ItemEnhanced]; decisions-log 249, 255), sent in every board game since the
 /// forge's cut-over (decisions-log 272), in every game since decisions-log 321. 11: the Tavern switched on
@@ -26,6 +26,8 @@ part of 'game.dart';
 /// (tests only) sends none. 13: an army wiped mid-wave no longer ends the game ([Wiped]; decisions-log 322). 14: the
 /// Towns' market and identities ([StoreSold] margin and pressure, [TownEntered] n and identity; decisions-log 326). 15: a
 /// Tavern boost's length is its offer's ([BoostBought.waves] 2 to 4, or 0 with [BoostBought.untilTown]; decisions-log 331).
+/// 16: the back line costs nothing (decisions-log 329): a [Wiped]'s `cause`, and Watchman's Brew's `boostSaved` gone;
+/// Beban went too (329), and with it [WaveStarted.tide]'s `over`.
 /// 17: the Town checkpoint (decisions-log 333): [Wiped] checkpoint and debuff, [TownEntered] again, [WaveStarted]
 /// weakened and again, and [WipeChosen].
 /// 18: the pocket items ([PocketUsed], [PocketCrafted], [WaveStarted.pocket]; decisions-log 332).
@@ -51,7 +53,7 @@ enum EventKind {
   crafted,
   itemCrafted,
   stoneCrafted, itemEnhanced, // Enhance (decisions-log 255)
-  boostBought, boostEnded, boostSaved, tavernRerolled, // the Tavern (decisions-log 266)
+  boostBought, boostEnded, tavernRerolled, // the Tavern (decisions-log 266; boostSaved, Watchman's Brew's, went in 329)
   wipe, // an army wiped mid-wave: a heart lost, the wave played again (decisions-log 322)
   wipeChoice, // after it, "Try again" or "Give up" (decisions-log 333)
   pocketUsed, pocketCrafted, // the pocket items (decisions-log 332)
@@ -605,19 +607,6 @@ final class PocketCrafted extends GameEvent {
   Map<String, Object?> get data => {'pocket': pocket.name, 'materials': _matJson(materials), 'gold': gold};
 }
 
-/// A Tavern boost forgave a monster crossing the back line: no life lost ([Tavern._boostLeak]; Watchman's Brew).
-final class BoostSaved extends GameEvent {
-  BoostSaved(super.wave, super.t, {required this.boost});
-
-  final Boost boost;
-
-  @override
-  EventKind get kind => EventKind.boostSaved;
-
-  @override
-  Map<String, Object?> get data => {'boost': boost.name};
-}
-
 /// Small relic [relic] was crafted at the Smithy ([Craft.craft], decisions-log 233) from its recipe: the [materials] and
 /// [items] it took, by kind, and the [gold].
 final class Crafted extends GameEvent {
@@ -707,9 +696,10 @@ final class WaveEnded extends GameEvent {
   Map<String, Object?> get data => {};
 }
 
-/// The army was wiped mid-wave ([Wipe._wipe], wipe.dart; decisions-log 322): the [lost] lives (a heart, fewer when fewer
-/// were left), the [lives] left, the monsters still alive or queued ([foes]), and whether it ended the game ([over]);
-/// else they were swept off and the wave is played again.
+/// The wave was lost ([Wipe._wipe], wipe.dart; decisions-log 322, 329): the army wiped mid-wave, none there, or its march
+/// not won in time ([cause]); the [lost] lives (a heart, fewer when fewer were left), the [lives] left, the monsters still
+/// alive or queued ([foes]), and whether it ended the game ([over]); else they were swept off and the wave is played
+/// again.
 final class Wiped extends GameEvent {
   Wiped(super.wave, super.t,
       {required this.lives,
@@ -718,10 +708,14 @@ final class Wiped extends GameEvent {
       required this.over,
       this.checkpoint,
       this.town,
-      this.debuff = 0});
+      this.debuff = 0,
+      this.cause = WipeCause.fell});
 
   final int lives, lost, foes;
   final bool over;
+
+  /// Why: the army fell, there was none, or the march wasn't won in time (decisions-log 329).
+  final WipeCause cause;
 
   /// The slot of the Town the game goes back to (wipe.dart, decisions-log 333), null before the first Town or at game
   /// over, and its name for the battle log ([town], not in [data]); [debuff] the monsters' weakening after it
@@ -734,8 +728,15 @@ final class Wiped extends GameEvent {
   EventKind get kind => EventKind.wipe;
 
   @override
-  Map<String, Object?> get data =>
-      {'lives': lives, 'livesLost': lost, 'foes': foes, 'over': over, 'checkpoint': checkpoint, 'debuff': debuff};
+  Map<String, Object?> get data => {
+        'lives': lives,
+        'livesLost': lost,
+        'foes': foes,
+        'over': over,
+        'cause': cause.name,
+        'checkpoint': checkpoint,
+        'debuff': debuff,
+      };
 }
 
 /// The events only the telemetry takes (#64): what a balancing log needs but a player doesn't. They go to
@@ -781,7 +782,7 @@ final class TavernRerolled extends TraceEvent {
 final class WaveStarted extends TraceEvent {
   WaveStarted(super.wave, super.t,
       {required this.army, required this.levels, required this.heroes, required this.gold, required this.capacity,
-      required this.lives, required this.bag, required this.relics, this.tide = const (hp: 1.0, dmg: 1.0, gap: Game.spawnGap, over: 0), this.pusaka = const {},
+      required this.lives, required this.bag, required this.relics, this.tide = const (hp: 1.0, dmg: 1.0, gap: Game.spawnGap), this.pusaka = const {},
       this.omens, this.materials, this.boosts, this.weakened = 0, this.again = false, this.pocket});
 
   final Map<String, int> army, levels, bag, relics;
@@ -808,10 +809,10 @@ final class WaveStarted extends TraceEvent {
   final List<(String, String?)> heroes;
   final int gold, capacity, lives;
 
-  /// The tide on this wave's crowd (#92, [tide]): the HP and damage multipliers, the seconds between two monsters
-  /// coming on ([spawnGapOf]), and how many waves earlier it counts from for an army over the cap ([Game.waveOver],
-  /// Beban, decisions-log 162; 0 at the cap or under it).
-  final ({double hp, double dmg, double gap, int over}) tide;
+  /// The tide on this wave's crowd (#92, [tide]): the HP and damage multipliers and the seconds between two monsters
+  /// coming on ([spawnGapOf]). Its `over` (Beban's waves earlier for an army over the cap, decisions-log 162) went with
+  /// Beban in decisions-log 329.
+  final ({double hp, double dmg, double gap}) tide;
 
   @override
   EventKind get kind => EventKind.waveStarted;
@@ -822,7 +823,6 @@ final class WaveStarted extends TraceEvent {
         'heroes': [for (final (type, skill) in heroes) {'type': type, 'skill': skill}],
         'tide': {
           for (final (k, v) in [('hp', tide.hp), ('dmg', tide.dmg), ('gap', tide.gap)]) k: (v * 10000).round() / 10000,
-          'over': tide.over,
         },
         'pusaka': pusaka,
         'omens': ?omens,
@@ -1100,8 +1100,9 @@ final class TownRolled extends TraceEvent {
 }
 
 /// Why a wave's monsters march ([Marched], [Game._watchStall]): no progress for [stallTime]; the same while they
-/// drift away from the base, whatever their HP did ([stallDrift]); [stallOvertime] after the last spawn, life lost or
-/// the slots' [stallProgress]; or [stallOvertimeMax] after the last spawn or life lost, whatever the slots did.
+/// drift away from the base, whatever their HP did ([stallDrift]); [stallOvertime] after the last spawn or the slots'
+/// [stallProgress]; or [stallOvertimeMax] after the last spawn, whatever the slots did (a life lost restarted both until
+/// decisions-log 329, when the back line stopped costing lives).
 enum MarchCause { stalled, drifting, overtime, overtimeMax }
 
 /// The wave stalled and its monsters began their march on the base ([stallTime]), and why.

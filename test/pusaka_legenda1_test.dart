@@ -159,7 +159,7 @@ class _Dice implements Random {
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("ten Legenda appended after the Smithy's small relics (save keys), chest-only (sold back at the Legenda price), "

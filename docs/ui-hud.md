@@ -247,17 +247,14 @@ the owner's ask (decisions-log 172, "Guide" below).
   is no count (the coming wave's size isn't known until it starts). In a Town it shows the Town's name, "In Millbrook",
   instead ("Towns on the HUD" below).
 - **The tide** (#92, units-and-combat.md "The tide"): from the tide's first wave (the wave shown ≥
-  `Game.shownTideFrom`: `tideStart`, earlier for an army over the cap, "Beban", decisions-log 162) the crowd's extra HP
-  follows the number, "+35%" on wave 65 (`tidePercent`, whole percent; "+0%" on the first wave; the owner's 48 over 32
-  on wave 87: "+69%" instead of "+23%"), in light blue (`_tideInk` 0xFF7FC8FF) at the number's size. From then the panel keeps room for
+  `Game.tideStart`; from decisions-log 162 to 329 earlier for an army over the cap, "Beban") the crowd's extra HP
+  follows the number, "+35%" on wave 65 (`tidePercent`, whole percent; "+0%" on the first wave), in light blue (`_tideInk` 0xFF7FC8FF) at the number's size. From then the panel keeps room for
   "+999%" (it grows once, at that wave, and doesn't twitch after). Before it there is no badge and no room.
   - Its tooltip (tooltip.dart, `_Hint.tide`): over the whole meter while the badge shows (`Board.tideBadgeAt`),
     in the loot tooltips' frame with the meter's crossed swords: "Tide", then "Monster HP +35%" (green, as the
     tooltips' first line), "Monster attack +16%", "A monster every 0.77 s" (a dot decimal), "Not the boss or mini boss"
-    (`tideInfo`; `Game.tideTip`). While the army is over the cap (Beban, `Game.shownOver`: between waves the coming
-    wave's as the army stands now, in a wave its own, frozen) its lines count from the earlier wave ("A monster every"
-    from `tideStart` while `overPace` is off), and a line follows: "12 over the cap: Tide +24 waves"
-    (`overTip`: the troops over, the waves earlier its tide counts from). While the army is full at the cap
+    (`tideInfo`; `Game.tideTip`). (Beban's line for an army over the cap, "12 over the cap: Tide +24 waves", went with
+    it in decisions-log 329.) While the army is full at the cap
     (`Game.capPressed`, below) a last line follows: "Army full (36): make types stronger" (`capTip`). Every glyph is in
     Pixelify Sans, and at 915×412 the tooltip stays inside the screen (`Board.tooltipBox`,
     `test/cap_warning_hud_test.dart`). A press on the meter still drops the minimap.
@@ -1285,14 +1282,15 @@ existing art only.
 - **Tooltip** (`_Hint.boost`, the loot tooltips' frame with the boost's icon; `Tavern.boostTip`): "Feast: 2 waves left"
   ("1 wave left"; one until the next Town "Feast: until next Town", and once that Town is marked a first line "Town
   after wave 12"), then what it does, an effect a line ("+20% damage", "15% less damage taken"), then who
-  ("All troops", "Knights"; none for the Lucky Toast and the Watchman's Brew).
+  ("All troops", "Knights"; none for the Lucky Toast).
 - **The troops' burst** (`_boostBursts`): as the field comes back from a Town (the fade's turn, `_townSync`), each living
   troop a boost bought there touches (`Tavern.boostTouches`: one with a troop effect, on every type or on its own; a
   boost no wave has counted yet, `RunningBoost.fought` 0) bursts once with the field's upgrade burst (`fx_upgrade.png`,
   a chest take's).
   `Board.fieldBursts` for tests.
 - **The battle log** (its Other chip): "Feast: +20% damage, 15% less damage taken (2 waves)" ("(until next Town)") at
-  the buy, "Feast ended" when it runs out or the next Town ends it, "Watchman's Brew: no life lost" when it forgives a leak, each with the boost's own icon.
+  the buy, "Feast ended" when it runs out or the next Town ends it, each with the boost's own icon ("Watchman's Brew: no
+  life lost" went with the Brew, decisions-log 329).
 
 ### The Bag's Materials (decisions-log 221)
 
@@ -1490,7 +1488,7 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
   differ: no spawn bar in a Town (no troop is bought there, as before), so the detail's foot has no "Replace fallen"
   either (`_replaceWords`; the offer waits for the field, where it lasts until the next wave); and a wish tapped on its
   Wishlist turns to the Smithy's Items tab on it (`_wishGo`), where outside a Town it says where it is made. Nothing is
-  given from the Army detail (giving is the Bag's, in a Town as on the field). The gold's red dot (`tokoNudge`) is on
+  given from the Army detail (giving is the Bag's, in a Town as on the field). The gold's red dot (`armyNudge`) is on
   the Army tab in a Town too.
   The Smithy's pages craft the relics and the items ("The Smithy" below); the Tavern's sell the boosts
   ("The Tavern" below); the Shop's is the Town's Shop on the Bag's code ("The Town's Shop" below).
@@ -1971,8 +1969,7 @@ icons; nothing new drawn). In every Town (since decisions-log 268; the Tavern-of
   ink (`_rarityInk`; a Common's grey) and in grey its own length and troops, " · 3 waves · All troops" (" · Until next
   Town · Knights"; each offer's length, decisions-log 331: " · 2 waves", " · 4 waves", " · Until next Town"; where shorter
   the length alone, since it sets the price, then "Until Town" for "Until next Town" (`Words.untilTown`; the 915×412
-  rows), then nothing; a boost that touches no troop, the Lucky Toast and the
-  Watchman's Brew, only its length); on the right the coin and the price ("1,550"; red, B0302A, while the gold is short), or once bought "Sold"
+  rows), then nothing; a boost that touches no troop, the Lucky Toast, only its length); on the right the coin and the price ("1,550"; red, B0302A, while the gold is short), or once bought "Sold"
   in grey with the icon faded (`_ghost`) and its words grey. A tap picks it (the facing page follows). Under them **Reroll**, a light tag
   (`_tag`, `_TagLook.go`; `.off` while the gold is short or every offer is sold, its press saying why: "Not enough gold",
   "Sold out") with the price in it ("Reroll 150"), and at the right in grey "Bought ones stay". Then "Active" (bold) with
@@ -1988,17 +1985,16 @@ icons; nothing new drawn). In every Town (since decisions-log 268; the Tavern-of
   Ale the sword (`Item.sword`, the Army page's damage icon), Hearty Stew the heart (0, 0), Iron Broth the shield
   (`Item.shield`), Spiced Tea the gloves (`Item.gloves`, attack speed), Travel Rations the backpack (160, 32), Lucky
   Toast the coin (96, 0), Mage's Brew the bolt (144, 0), the Champion's Plate its troop type's idle sprite standing in
-  the box (`book_<type>_idle`, `_idleBounds`), Watchman's Brew the steel shield (192, 0), King's Banquet the crown
-  (64, 16).
+  the box (`book_<type>_idle`, `_idleBounds`), King's Banquet the crown (64, 16).
 - **The right page (the pick's, action first):** the heading as the Bag's (`_detailHeading`'s band, 42·ts): the icon
   (`bagHeadIcon`: 16 px at 915×412, 32 on the desk), the name (20·ts) and at the right the rarity word in its ink (bold);
   what it does in ink (`boostDoes`: "Every troop: +20% damage, 15% less damage taken.", "Knights: +40% damage, +15%
-  attack speed.", "A leak a wave costs no life."); in grey "Rare boost. Lasts the next 3 waves." ("Lasts until next
+  attack speed."); in grey "Rare boost. Lasts the next 3 waves." ("Lasts until next
   Town, 5 waves or more.", the schedule's `minGap`); "Effect" (bold) and a
   row per line of `boostEffectRows`, inset paper cards that only tell (the Smithy's recipe rows): the icon (the Army
   page's stat icons where it has one: the sword for "Damage", the shield for "Damage taken", the gloves for "Attack
-  speed"; the heart for "Max HP", the bolt for "MP regen", the coin for "Kill gold", the steel shield for "Leaks
-  forgiven"), the words and at the right the value in green (2E8B3A: "+20%", "-15%"; "1 a wave"), then "Troops" (the
+  speed"; the heart for "Max HP", the bolt for "MP regen", the coin for "Kill gold"), the words and at the right the
+  value in green (2E8B3A: "+20%", "-15%"), then "Troops" (the
   crossed swords: "All troops", "Knights") for a boost that touches troops, and "Lasts" (ui_icons.png's sword: "2
   waves", "Until next Town").
   Then the page's **one bevelled button, Buy** (the page's width, max(20, 32·ts) tall): green "Buy (1,550 gold)" ("Buy
@@ -2040,11 +2036,11 @@ outside a Town.
   biar paddingnya tetap sama"): a section per kind of goods the shelf has some of, top to bottom (`shopBuySections`,
   `shopBuyKinds`, `_shopBuyBoard`, on bag.dart's board in sections, `_sections` and `_sectionsLay`, which the Smithy's
   Items board shares since decisions-log 277):
-  - **Items** (the seven grade-I kinds, `droppedItems`) and **Relics** (the small relics in play, `relicsInPlay`, in
-    `Relic` order): none is on the forge's shelf (`onShopShelf`, decisions-log 248), so neither section shows.
-    **Artifacts**: the store's Artifacts while their shelf is open (`shelfOpen`; never on the board, where they come from
+  - **Artifacts** (`shopBuyOrder`'s first): the store's Artifacts while their shelf is open (`shelfOpen`; never on the board, where they come from
     the Boss Chest), else no section. **Materials** (decisions-log 248): the materials that have dropped, in the order
-    they first did (`Game.matsSeen`).
+    they first did (`Game.matsSeen`). Items and Relics, the owner's "item [][][] relic [][][]", were sections too
+    until decisions-log 329: none was ever on the forge's shelf (`onShopShelf`, decisions-log 248), so they never
+    showed after decisions-log 280, and they went with their prices.
   - Each section is a small heading (bold, 13·ts; `_gridHead`), then its cells as the Bag's slots (`bagCellSize`, the
     Bag's gaps) in whole rows, the last row's spare slots empty, and a 6·ts gap before the next heading. The heading's
     words start exactly at the board's leftmost slot: the board and its headings stand on one span (`_gridSpan`: as many
@@ -2150,7 +2146,7 @@ outside a Town.
   a small relic and a Vault Artifact (a material's own grey line says it). A buy or sell asked for outside a Town is
   refused "Only in a Town" (`StoreRefusal.town`).
 - **Moved with it:** the fallen Heroes' Recall into the Army detail's Heroes section ("Army"), and the gold's red dot
-  (`tokoNudge`) onto the Army tab, whose detail's Next tag buys Awaken 4-5 and Forge ("Bookmarks"); in a Town too,
+  (`armyNudge`) onto the Army tab, whose detail's Next tag buys Awaken 4-5 and Forge ("Bookmarks"); in a Town too,
   where the book has the Army tab since decisions-log 301 (until then it had none, and so no dot). The Toko's pages (store_page.dart, ascend_page.dart's Awaken section, recall_page.dart)
   went in decisions-log 296.
 - **Fit:** test/town_shop_ui_test.dart (the strip, Sell), test/forge_shop_ui_test.dart (Buy) and
@@ -2367,8 +2363,8 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     with its red dot, ▶, a Ksatria in Bangkit 1's outline, ui_icons.png's green up arrow; K10 the Hero splash's
     portrait (this game's Hero, else the Pendeta); K11 the Shop tab, ▶, two materials (Orc Tooth, Wolf Claw), a coin (what a Town's Shop sells since the forge; an item and a relic until decisions-log 317); K12 two Legendary
     cards (Dragon Crown, Oath of One); K13 the same two rows as I3; K14 a fallen Hero faded with its crown,
-    ▶, the Army tab, whose detail recalls it; K15 "36/36" (`armyMaxBoard`) over two full rows of troops; K16 the lives' hearts (full, half, empty) over three
-    monsters marching; K17 an orc drawn bigger wave by wave with red up arrows between; K18 this game's gold (short,
+    ▶, the Army tab, whose detail recalls it; K15 "36/36" (`armyMaxBoard`) over two full rows of troops; K16 the lives' hearts (full, full, empty: the
+    heart a march not won costs; full, half, empty until decisions-log 329) over three monsters marching; K17 an orc drawn bigger wave by wave with red up arrows between; K18 this game's gold (short,
     "1812k") over the Army tab with its dot, ▶, a Ksatria in Bangkit 4's outline,
     the green up arrow; K19 the boss
     with three healing necromancers behind it; K20 a Pusaka, a relic and a coin, ▶, a star; K21 a Pusaka, ▶,
@@ -2484,9 +2480,9 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   | K13 | Type full | a type at its cap (`typeFull`, decisions-log 201; never without the board's caps) | 1 |
   | K14 | Hero fell (""Army": pick its type, / then "Recall" brings it back") | `fallenHeroes` not empty and `storeOpen` | none |
   | K15 | Full army | `armySize` at `armyMax` (36; 32 until decisions-log 260) | none |
-  | K16 | Too slow | `Game.stalled`: the last wave marched ("Monsters broke through!"); set with `newMarch`, cleared at the next wave's start, not saved | 1 |
+  | K16 | Too slow | `Game.stalled`: the last wave marched ("Monsters charge!"); set with `newMarch`, cleared at the next wave's start, not saved | 1 |
   | K17 | Tide | `tideRising` | 34 |
-  | K18 | Spend gold ("Red dot on "Army": / a type can buy more power.") | `tokoNudge` (the Army tab's dot, which it points at; the Toko's tab had it until decisions-log 296) | none |
+  | K18 | Spend gold ("Red dot on "Army": / a type can buy more power.") | `armyNudge` (the Army tab's dot, which it points at; the Toko's tab had it until decisions-log 296) | none |
   | K19 | Escorts | wave 49 won (`escortFrom` − 1) | 49 |
   | K20 | Sharpen (`Words.sharpen`; it quotes the button, decisions-log 187) | some Pusaka can Asah now (`whyNotAsah` null) | none |
   | K21 | Melt (`Words.melt`, likewise) | some Gudang Pusaka can melt (`whyNotLebur` null; the gold isn't asked) | none |
@@ -3109,7 +3105,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
       the tags 'carveBtn' and 'toVault', 'carveBar', 'empty') and `bagDetailText(key)` (the words: 'name', 'count',
       'where', 'desc', 'sharpen', 'carve', 'carveBar', 'next', 'meltArmed', 'empty', each row's 'title:<action>' and 'hint:<action>', the chooser's 'chooser') are for
       tests, with `bagActions` (each action row shown: what, where, whether it can now), `bagAction(act)`,
-      `bagChooser`, `bagBack`, `carveButton`, `carveArmed` and `carveWhyWords`.
+      `bagChooser`, `bagBack`, `carveArmed` and `carveWhyWords`.
   - **No Sell** (decisions-log 296): the Towns-off game's Sell rows (an item's "Sell +1000" and "Sell all", decisions-log
     169 and 202; a Vault Pusaka's "Sell +15k", 151) went with the Towns-off book; the Bag sells nothing, the Town's
     Shop's Sell side and its Sell Basket do (decisions-log 230 and 269). A bound Pusaka and an oath never sold.
@@ -3268,7 +3264,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     Tas (the bag, `ui_icons.png` (144, 32); a red dot, dark-rimmed, on its icon's top right while a type with a living
     troop could awaken further from the bag's items, `bagAwakens`, #92 part 2: `_bagTabDot`) and Settings (gear); on
     Pasukan's the same red dot while gold piles up, at least 3 purses of the next wave, and a type with a living troop
-    can buy its next Bangkit or Tempa level (`tokoNudge`, decisions-log 163: `_tokoTabDot`). Until decisions-log 296 a
+    can buy its next Bangkit or Tempa level (`armyNudge`, decisions-log 163: `_armyTabDot`). Until decisions-log 296 a
     game without the Towns had a fourth, Toko, the Shop (the coin stack, grey until the store opened, `_lockedTab`),
     with that dot. A Town's tabs: "Town". The open page's tab is the tall paper
     one (its fill is the page's colour); its last two rows cover the cover's top line (sprite row 6) and
@@ -3291,7 +3287,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   - The book opens on Pasukan: `_open(_home)` whenever the book has closed (`_bookT` 0), and
     when "Main Menu" is pressed (in a Town on the Smithy).
   - The field's tabs are Pasukan, Tas and Settings (the Shop is a Town's), and a Town's are Smithy, Tavern, Shop,
-    Pasukan, Tas and Settings ("Town"; Pasukan since decisions-log 301). The gold's red dot (`tokoNudge`) is on
+    Pasukan, Tas and Settings ("Town"; Pasukan since decisions-log 301). The gold's red dot (`armyNudge`) is on
     Pasukan's tab, whose detail buys the Awaken and Forge levels (decisions-log 230), in a Town too.
 - **No Shop page on the field** (decisions-log 296): the Toko, the Shop page of a game without the Towns
   (`lib/store_page.dart`'s goods in slots and the picked one's card with Buy / Sell; its "Awaken 4-5" section of a row
@@ -3299,7 +3295,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   the TOWNS define; with the Towns on (every board game since decisions-log 237) the player never saw it. What it held
   is elsewhere: a Town's Shop ("The Town's Shop"), Awaken 4-5 and Forge on the Army detail's Next tag
   (`_upgradeButton`, "Army"), the fallen Heroes' Recall in the Army detail's Heroes section, the gold's red dot on the
-  Army tab. `Board.storeAt('bagDot' | 'tokoDot' | 'tavernDot')` is where a tab's dot is this frame, `Board.tempaMarks`
+  Army tab. `Board.storeAt('bagDot' | 'armyDot' | 'tavernDot')` is where a tab's dot is this frame, `Board.tempaMarks`
   each Tempa "+n" drawn (where, and its text) and `Board.heroSplash` the Hero splash's title while it shows, for tests.
 - **Settings page (`_settingsPage`, `_Page.settings`):** replaces both pages' content. Like the other pages,
   mid-wave it is shown with the game paused by the book ("Pause").
@@ -4380,8 +4376,8 @@ follows the game's position, and never changes the game's positions (fights, the
   on it does nothing else: its tap up and drag are dropped, `_Message.tapped`) or after
   `time` (`_messageTime` 2 s; a one-time note `_noteTime` 8 s). Drawn after the HUD, before the tooltip and cursor.
   The limits' one-time notes (`Game.limitNotes`, decisions-log 141) show there when a save over them comes in, in
-  up to six lines (with Beban's "Army cap 36. Each troop over it:" / "Tide +2 waves", `overNote`, for an
-  army alive over the cap, decisions-log 162; it fits 915×412 8 px or more inside the screen), after the tide's "The Tide rises! Monsters get stronger every wave" when the same save also catches up
+  up to six lines (Beban's "Army cap 36. Each troop over it:" / "Tide +2 waves", decisions-log 162, went in 329; they
+  fit 915×412 8 px or more inside the screen), after the tide's "The Tide rises! Monsters get stronger every wave" when the same save also catches up
   with the tide (`Game.tideCaughtUp`, #92): one window, so neither hides the other. A save from before the Pusaka adds
   their note's three lines after those (`pusakaNotes`, decisions-log 151: "Your Artifacts now work for a whole type,
   / troops bought later too, and are never lost. / Put on for you: change or Undo in the Bag."); the Bag page keeps
@@ -4391,8 +4387,9 @@ follows the game's position, and never changes the game's positions (fights, the
   "Relic slots full"), a greyed row of the Tas page's list (its reason), a Remove refused ("Only between
   waves", #91), a greyed Sell's reason (the Shop's card and the Bag page's Sell row) and the Bag page's Sell all
   ("Sold Sword x86: +86,000 gold", decisions-log 169), and
-  for "Monsters broke through!" when a stalled wave's monsters start marching on the base (`Game.newMarch`,
-  drained in `update`; units-and-combat.md, "Stalled waves"). Also "The Tide rises! Monsters get stronger
+  for "Monsters charge!" / "Win in 60 s or lose a heart." when a stalled wave's monsters start charging the troops
+  (`Game.newMarch`, drained in `update`; `marchNote`, lib/wipe.dart; units-and-combat.md, "Stalled waves"; "Monsters
+  broke through!" until decisions-log 329). Also "The Tide rises! Monsters get stronger
   every wave" once when a save from before the tide comes in with it already on (`Game.tideCaughtUp`, drained in
   `update`, #92), and "Replace fallen"'s refusals and partial buys (above).
 - **The army cap's warning** (decisions-log 161; qa-4's finding: on the owner's w63 save the army held with no
@@ -4410,11 +4407,16 @@ follows the game's position, and never changes the game's positions (fights, the
     the Hero splash shows, a boss chest is due (`_chestHolds`) or another message is up; then it shows.
   - Its words fit a phone: at 915×412 the window stands 8 px or more inside the screen
     (`test/cap_warning_hud_test.dart`).
-- **An army wiped** (lib/wipe.dart, decisions-log 322; units-and-combat.md "An army wiped"): the heart lost pops as
-  the last troop falls; the monsters left hop for joy where they stood (the game-over hop, `Game.swept`, drawn with the
+- **A lost wave** (lib/wipe.dart, decisions-log 322, 329; units-and-combat.md "An army wiped, and the other lost
+  waves"): the heart lost pops as the wave is lost (the last troop falls, 5 s pass with no troop standing once the
+  wave's monsters came on, the charge runs out); the monsters left hop for joy where they stood (the game-over hop, `Game.swept`, drawn with the
   units) for `wipeCheer` 2.4 s, then each goes in a summon circle (`tiny_fx_summon.png`, the necromancer's). `update`
   sees `Game.wipedAt` change (`_savedWipe`) and, unless the game is over, saves the game at once (the heart lost stays
-  lost) and starts Auto Wave's countdown as a win does. Between waves the army's fallen are on "Replace fallen" and
+  lost) and starts Auto Wave's countdown as a win does. The note names the cause (`Game.wipeNote`, `wipeWhy`; decisions-log
+  329): "Your army fell! -1 heart.", "No troops! -1 heart." for a wave begun with none, "Too slow! -1 heart." for a
+  charge not won in time. The battle log's line: "Army fell: -1 heart, wave N again" (after a Town "...: -1 heart, back
+  to Millbrook from wave 21"; "No troops: ...", "Too slow: ..."; at the last heart "...: no hearts left"). Between
+  waves the army's fallen are on "Replace fallen" and
   Auto Buy buys them back as the gold allows; the Auto hold waits for the army as after any wave.
   - **Try again or Give up** (lib/wipe_ask.dart, decisions-log 333; the owner: "apakah dia mau try again atau game
     over"): once the hop is over (`wipeCheer` from `wipedAt`; at once for a game loaded with the choice waiting) a

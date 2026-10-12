@@ -172,7 +172,7 @@ void look(Game g, Unit o) {
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("the ten sit in the Legenda pool alone, among G-1B's (and G-3B's) after Barrier and Escort (today's seven until "
@@ -801,6 +801,8 @@ void main() {
   });
 
   group('off', () {
+    setUp(() => omensOn = false); // its own switch: it ran on an earlier test's reset (decisions-log 329)
+
     test('with omens off and every level held none of the ten acts', () {
       final all = [for (final k in batch) ...top(k)];
       final troop = troopBlow(tier: Tier.boss), foe = foeBlow();

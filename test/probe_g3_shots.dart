@@ -128,7 +128,7 @@ Future<Rect?> differs(ui.Image a, ui.Image b) async {
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   testWidgets('G-3 artifact shots', (tester) async {
     final key = GlobalKey();

@@ -224,7 +224,7 @@ rules and every constant are `lib/tempa.dart` (`extension Tempa on Game`); it is
   Awaken 5 first", "Already Forge +30 (Max)", "Not enough gold". A refused buy changes nothing and plays `Sfx.error`.
 - **Lepas jenis** keeps the levels and refunds none of them: its refund stays half the troops' price; the type bought
   again fights with its Tempa.
-- **The Army tab's dot** (`tokoNudge`, the owner's decision 4 a): while the gold is at least `nudgePurses` 3 × purse(wave +
+- **The Army tab's dot** (`armyNudge`, the owner's decision 4 a): while the gold is at least `nudgePurses` 3 × purse(wave +
   1) and a type with a living troop can buy its next Bangkit or Tempa level now (`whyNotAscend` / `whyNotTempa` null),
   a red dot on the Army's tab (ui-hud.md "Bookmarks"; the Toko's tab had it until decisions-log 296). Between waves only, since mid-wave the store refuses.
 - **Saved:** `tempa` (type → levels), only once one is bought, loaded before the troops so they come back at their
@@ -870,7 +870,7 @@ Legenda pool is thirty, the catalog's whole count (catalog-design §3.3), eight 
     sale or the fight brings them down) and at 24 or fewer works: HP and damage ×1.35. With the board's army cap
     (`armyMax`) a 25th troop can't join while it is held (`armyLocked`, part of `full`: Buy refuses with
     `fewOathBar` "Oath of the Few: up to 24 troops", Resurrection and a recall swap respect it too, `autoHeld` counts
-    against the 24); the cap itself (`armyCap`) stays, so Beban and the Bayangan's over-army count are untouched.
+    against the 24); the cap itself (`armyCap`) stays, so the Bayangan's over-army count is untouched.
     With no board cap (a plain `Game()`) it bars nothing. Its wait words are its own (`oathWaitingOf`: "Waiting: keep
     24 troops or fewer", the Bag's "Waiting: 48/24 troops", the chest note "Oath waits: keep 24 troops or fewer").
   - **Oath of the Wall**, **Blood Oath** and **Oath of the Vanguard** are fixed trades (`_oathStats`): the Wall
@@ -1228,7 +1228,8 @@ constant there.
   enemies get +10% to HP, damage, attack speed and walk speed (units-and-combat.md "Bayangan on the field"); two Lewati
   owe it once.
 - **The levels** (`Game.omens`): one entry a level, oldest first, so a kind's level is its count (`omenLevel`).
-- **The Beban factor** (`Game.omenFactor`), frozen at a wave's start beside Beban's: an army over the cap meets
+- **The Beban factor** (`Game.omenFactor`), frozen at a wave's start (Beban's tide beside it went in decisions-log
+  329; this factor stays, the Bayangan's own rule): an army over the cap meets
   stronger Bayangan, by `armySize / armyCap` (1 at or under it, at most `omenOverMax` 2: 48 troops over a cap of 32 is
   ×1.5), × `omenScale` 1, and × `omenAtCap` 1 at or under the cap. A kind's effective level is E = L × the factor
   (`omenE`); Guard counts by L.
@@ -1517,9 +1518,11 @@ and Smithy: Craft" below), and the Town's Shop buys them (decisions-log 230, "Th
   numbers of the Smithy's seven and the recipes' tiers since decisions-log 227, the recipes, the tiers' prices and the
   shop's item prices with the Craft step, decisions-log 233, "Town and Smithy: Craft" below): each small relic's recipe
   in its `relics` entry's `recipe` (version 2's `recipes` block, which still reads; the 11 of `townRelics` and the
-  forge's nine, by save key: its tier, materials, items and gold; every one of the 30 is in some recipe), `tiers` (Basic / Strong / Mighty: a sale's share of the craft gold, the Shop's price 12,000 /
-  20,000 / 32,000 and its rise 20% a buy), `relics` (each crafted relic's numbers: Fang's share 0.30, Fury's every 3
-  and ×2, …), `shop` (open from wave 1 won, so in every Town, decisions-log 253; an item 2,000 + 200 a buy, sold back at half). `TownRules.parse` keeps a
+  forge's nine, by save key: its tier, materials, items and gold; every one of the 30 is in some recipe), `relics` (each crafted relic's numbers: Fang's share 0.30, Fury's every 3
+  and ×2, …), `shop` (open from wave 1 won, so in every Town, decisions-log 253; the materials' markup and rise). Its
+  `tiers` (the Shop's price of a small relic, 12,000 / 20,000 / 32,000, its rise 20% a buy and a sale's share) and the
+  shop's item prices (`itemPrice` 2,000, `itemRise` 200, `itemSellShare`) went in decisions-log 329: the Shop sold
+  neither since the forge, and a sale is at the market's price (decisions-log 326); an older file's keys read as nothing. `TownRules.parse` keeps a
   number's default when it is missing, of the wrong kind or out of range, and leaves out a name the game doesn't know
   (a material, a monster type, a relic, an item) where it stands, listing it in `TownRules.skipped` (main.dart prints
   each with `debugPrint`). test/town_materials_test.dart pins the file to the defaults. The shop's `from` is the wave
@@ -1585,8 +1588,9 @@ the drops above, every game has it (decisions-log 321).
   the Towns' prices), a material at its sell price, a Vault Artifact as before. Selling the last of a kind leaves it on
   the shelf.
 - **When:** the Shop opens as without the forge (`shopFrom`: every Town as shipped), in a Town only.
-- **The page:** ui-hud.md "The Town's Shop" (Buy's sections: Materials alone, Items and Relics having none, decisions-log
-  280; the empty shelf's line; Sell and its basket, decisions-log 269).
+- **The page:** ui-hud.md "The Town's Shop" (Buy's sections: the Artifacts and the Materials; Items and Relics, empty
+  since the forge and hidden since decisions-log 280, went in 329; the empty shelf's line; Sell and its basket,
+  decisions-log 269).
 
 ## Town and Smithy: Craft (dark, decisions-log 233)
 
@@ -1637,16 +1641,12 @@ many as the bag can pay for (no limit a visit); every one of the 30 materials go
 - **A visit's crafts:** `TownLeft` carries the relics crafted in that Town (`crafts`) and their gold (`craftSpent`); the
   battle log says "Left town: 2 crafted" (just "Left town" for none).
 - **The Shop's prices** (inside the Store's own `basePrice`, `buyPrice` and `sellPrice`, so their callers don't
-  change; every number from town.json):
-  - a small relic costs its tier's `shop` price, Basic 12,000, Strong 20,000, Mighty 32,000, and its `shopRise`, 20% of
-    it, more after each one of that kind bought (`storeBought` counts per kind: Fang 12,000, 14,400, 16,800, …;
-    `TierPrices.priceAfter`; the forge's Shop sells none, decisions-log 248, so only a count from before it raises it).
-    The save restores `storeBought` of the Smithy's seven too;
-  - it sells back at the market's price ("Towns: the market" below, decisions-log 326; until then for its tier's
-    `sellShare`, half, of its craft gold, 150 to 1,750: `sellShare` stays in town.json, read by nothing);
-  - an item: the `shop` block's `itemPrice` 2,000, +`itemRise` 200 a buy (the forge's Shop sells none); sold back at
-    the market's price (until decisions-log 326 for `itemSellShare` half of `itemPrice`, 1,000 whatever the item:
-    kept, read by nothing);
+  change):
+  - a small relic and an item have no Shop price (`basePrice` 0; never on the shelf, decisions-log 248) and sell at
+    the market's price ("Towns: the market" below, decisions-log 326). Until decisions-log 329 town.json priced them
+    for a shelf that never had them: a small relic its tier's `shop` 12,000 / 20,000 / 32,000, +20% a buy
+    (`TierPrices`), an item `itemPrice` 2,000, +200 a buy; their sale shares, unread since 326, went too. The save still
+    restores `storeBought` of them (an old save's count), and it moves nothing;
   - an Artifact as before ("The store" below).
   Until decisions-log 321 a game without the Towns priced by the field Toko's constants (`itemPrice`, `relicPrice`).
 - **Asah** (`asahTake`, the design's decision 10: a 32,000-gold Mighty relic is never eaten while a
@@ -2112,11 +2112,12 @@ ui-hud.md's "The Tavern in battle"; the guide's K23 and its "Towns" topic name i
   | `toast` | Lucky Toast | Common | Kill gold ×1.30 |
   | `mage` | Mage's Brew | Rare | MP regen ×1.60 |
   | `plate` | Champion's Plate | Epic | Damage ×1.40, attack speed ×1.15, on ONE troop type (`"who": "type"`, rolled with the offer among the types alive) |
-  | `watch` | Watchman's Brew | Epic | The first monster over the back line each wave costs no life (`leaks` 1) |
   | `banquet` | King's Banquet | Legendary | Damage ×1.30, damage taken ×0.75, max HP ×1.25, attack speed ×1.10 |
 
   Travel Rations was "longer but weaker" (five waves) in the design; with every kind's lengths the same it is a cheap
-  Common with a little of everything.
+  Common with a little of everything. Watchman's Brew (Epic, `leaks` 1: the wave's first monster over the back line
+  cost no life) went in decisions-log 329, when the line stopped costing lives: the Plate is the one Epic, and a save's
+  offer or boost of `watch` is dropped as an unknown kind's.
 - **The roll** (`_rollTavern`, from `Towns.enterTown`): `offers` 3 different kinds, on `Game.tavernDice` (its own dice;
   not saved, a probe seeds it with seed + 800), so no other die moves. Each slot draws a rarity by `odds` (Common 0.55,
   Rare 0.30, Epic 0.13, Legendary 0.02, each a share of their sum) and a kind of it; a rarity with none left steps down,
@@ -2177,15 +2178,14 @@ ui-hud.md's "The Tavern in battle"; the guide's K23 and its "Towns" topic name i
   forge's Helm: every troop has it, shields or none); `def` and the blow's floor stay. A boost is a stat multiplier,
   never a relic factor: the relics' cap 3.0 neither counts it nor cuts it. A troop bought while a boost runs has it.
   Lucky Toast multiplies the kill gold at the pay line (after the Bayangan Thrift; not the won wave's bonus, not
-  Plunder's extra: `_boostGold`); Watchman's Brew forgives the wave's first monster over the back line (`_boostLeak`: it
-  still goes, no life is lost, the event `BoostSaved`).
+  Plunder's extra: `_boostGold`).
 - **The countdown** (`_boostWaveEnd`, at each wave's end, won or lost): one wave fewer each; a boost at 0 ends (the event
   `BoostEnded`) and the troops are refit, HP over the new max only capped (never killed). Bought between waves n and
   n+1, a 2-wave boost runs through waves n+1 and n+2. A Town comes at least 5 waves after the last, so no fixed length
   (4 at most) runs into the next Town (unless `schedule.minGap` is under the length; then a kind still running is left
   out of that Town's rolls). **A wave lost to a wipe** (decisions-log 322) and played again counts nothing (decisions-log
   331, until then it counted: it was fought): the replay is the same wave, as the wave meter reads it, so a boost bought
-  for waves 7 and 8 covers 7 played again and 8; only Watchman's Brew's leak forgiven starts again. **Until the next
+  for waves 7 and 8 covers 7 played again and 8. **Until the next
   Town** (`_boostTownEnd`): counted by no wave; it ends as the next Town is entered (`Towns.enterTown`, before that
   Town's Tavern rolls, so it may offer the kind again), with `BoostEnded` and the refit; a wipe changes nothing, nor
   going back into the checkpoint's Town after one (decisions-log 333: it is no new Town; the owner, "Ya, tetap"). The
@@ -2194,13 +2194,12 @@ ui-hud.md's "The Tavern in battle"; the guide's K23 and its "Towns" topic name i
 - **Probes:** `Game.tavernPolicy` ('top': the best offer it can pay, the highest rarity, then the dearest, so of one
   rarity the longest; 'all': every one it can pay in that order), from `_townByPolicy` before it leaves a Town; null: the player.
 - **Events and telemetry** (telemetry.md): `boostBought` and `tavernRerolled` passed on, `townLeft.tavern`, a wave's
-  `gold.tavernSpent`, `boostSaved` and its start's `boosts` (an until-Town one's 0; `boostBought`'s `waves` 0 and
-  `untilTown` true); the battle log's lines "Feast: +20% damage, 15% less damage taken (2 waves)" ("(until next
-  Town)"), "Feast ended" and "Watchman's Brew: no life lost".
+  `gold.tavernSpent` and its start's `boosts` (an until-Town one's 0; `boostBought`'s `waves` 0 and `untilTown` true);
+  the battle log's lines "Feast: +20% damage, 15% less damage taken (2 waves)" ("(until next Town)") and "Feast ended".
 - **Saved** ("Saved" below): the boosts running and the Town's Tavern keys.
 - **Tests:** test/tavern_test.dart (town.json's block, the prices, the roll, the odds, buying, rerolling, the stats, the
-  countdown, the gold, the leak, the save, the telemetry, the probe policy; the lengths' odds, prices, countdown, end at
-  the next Town, a wipe's replay, save and telemetry).
+  countdown, the gold, the save, the telemetry, the probe policy; the lengths' odds, prices, countdown, end at the next
+  Town, a wipe's replay, save and telemetry).
 
 ## Towns: the market (decisions-log 326)
 
@@ -2369,7 +2368,8 @@ there. The economy they were weighed against was measured with the full-economy 
   | a Pusaka (`artefactPrice`) | Grail of Immortality 24,000; Dragon Heart 30,000; Void Eye 36,000; God's Thunder 40,000; Dawn Star 40,000 | ×`artefactRise` 1.5 (bought again after selling it) | half its base, its stars gone with it |
 
   A small relic and an item sell back at the market's price ("Towns: the market" above, decisions-log 326; until then
-  half its craft gold, and the `shop` block's `itemSellShare` of its `itemPrice`, 1,000, decisions-log 233). The field's Toko sold an item at `itemPrice`
+  half its craft gold, and an item 1,000, half the `shop` block's `itemPrice`, gone in decisions-log 329; decisions-log
+  233). The field's Toko sold an item at `itemPrice`
   2,000 (+200 a buy) and a dropped relic at `relicPrice` 8,000 (+1,600); both went with the rules from before the
   Towns (decisions-log 321). The owner doubled the design's prices and raised selling from 20% to half.
   Measured income (#63, on the kill gold before #83): about 1.1k a wave at wave 15, 2–2.7k after wave 30, with

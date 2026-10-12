@@ -379,7 +379,7 @@ void main() {
   });
 
   group('the counters (batch L-1B\'s Shadows) answer them', () {
-    tearDown(() => omensOn = false);
+    tearDown(() => omensOn = omensDefault);
 
     test('Sunder weakens Steady Stance\'s cut; Unshaken shortens Snare Cord\'s slow and Dulling Mail\'s weaken; Defiant '
         "reads Challenge Letter's taunt", () {

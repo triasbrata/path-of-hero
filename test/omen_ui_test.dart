@@ -140,7 +140,7 @@ double fieldBottom(Size size) => size.height;
 
 void main() {
   setUp(() => omensOn = true);
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   for (final size in sizes) {
     final tag = '${size.width.round()}x${size.height.round()}';
