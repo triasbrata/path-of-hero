@@ -16,7 +16,6 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:flame/components.dart' show Vector2;
 import 'package:flame/game.dart' hide Game;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderRepaintBoundary;

@@ -79,7 +79,7 @@ void main() {
       ]);
     });
 
-    for (final (w, h) in [(20, 8), (16, 7), (18, 7), (32, 13), (9, 4)]) {
+    for (final (w, h) in [(20, 8), (16, 7), (18, 7), (24, 9), (32, 13)]) {
       test('$w x $h: fills its box, mirrors both ways, closed, never two cells thick', () {
         final cells = pixelRingCells(w, h).toSet();
         expect(cells.every((c) => c.$1 >= 0 && c.$1 < w && c.$2 >= 0 && c.$2 < h), isTrue, reason: 'inside its box');
