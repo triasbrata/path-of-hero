@@ -2082,7 +2082,7 @@ tick.
   - `shoveShare`: the boss (tier `boss`) isn't moved at all, and a mini boss goes half as far. A Hero goes
     `heroShoveShare` 0.5 as far, as a stun on it lasts half (#59); any other troop the whole way.
   - A monster never ends past the right edge (`rightLimit`, #42), a troop never behind the back line
-    (`_troopRear`: `max(baseX, cam)` with the view's `keepUpWithView`, plus `clearOfLine`). One already past
+    (`_troopRear`: `_rearEdge`, max(baseX, cam + `keepUpShift`), plus `clearOfLine`). One already past
     it isn't pushed further out.
   - A troop holding its ground isn't moved at all (`_shoveProof`: carried already, braced, or under
     `noShove`; one under Anchor's stand counts it for the Pusaka, `_fxStood`, a drag too). A monster always is, by

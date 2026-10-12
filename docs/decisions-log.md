@@ -11553,3 +11553,6 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        written while off was the default; since 319 every test after the first such reset in its file played without
        the Shadows, against 321's rule that the tests play the real rules. They now put the default back; the groups and
        tests that check the off path still switch it off themselves (testing.md "The Bayangan").
+     - **`Game.keepUpWithView` goes**, a `static const` always true (#61's option A): its off arms in `speedTo`,
+       `_rearEdge` and a healer's walk-in could never run. The rule itself is unchanged (camera-and-field.md "Back line").
+       Whether the keep-up floor still binds once 324's front cap is in is measured after that merge (the audit's item 8).

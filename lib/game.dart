@@ -1948,12 +1948,6 @@ class Game {
   /// A troop that has entered stays at least this far past the back line.
   static const clearOfLine = 4.0;
 
-  /// #61's option A: with the back line not following the view (since #79 it stays put all wave), the
-  /// supports keep up with the view themselves ([_rearEdge]) and anyone at or past its left edge walks up at
-  /// the catch-up pace ([speedTo]). False is #61's rule alone (option B), which in its A/B left the rear out of
-  /// sight and 40% more troops fell.
-  static const keepUpWithView = true;
-
   /// How far ahead of the foremost heavy-armored melee walking in the light melee may get ([paceLimit]).
   static const paceLead = 2.5 * tile;
 
@@ -4445,7 +4439,7 @@ class Game {
     final melee = troops.where((o) => o.alive && o.entered && o.line == 2).toList();
     if (melee.isEmpty) return own;
     final fastest = min(min(catchUpMost * own, walkCap(u.type)), max(own, melee.map((o) => o.walkSpeed).reduce(max)));
-    if (!u.entered || (keepUpWithView && u.pos.x < cam + keepUpShift - offViewBy)) return fastest; // bought mid-wave, or at the view's edge
+    if (!u.entered || u.pos.x < cam + keepUpShift - offViewBy) return fastest; // bought mid-wave, or at the view's edge
     final fighting = melee.where((o) => t - o.attackedAt < _engagedFor);
     final rear = (fighting.isEmpty ? melee : fighting).map((o) => o.pos.x).reduce(min);
     return rear - u.pos.x <= (2 - u.line) * tile + _catchUp ? own : fastest;
@@ -4516,7 +4510,11 @@ class Game {
   /// The back line or the view's left edge ([keepUpShift] inside it once the wave has shown a fight), whichever
   /// is further on: mid-wave the supports don't settle behind it (a healer's rest, a kiting archer), so they keep
   /// up with the view without being dragged (#61: the back line no longer follows the view; #85: the inset).
-  double get _rearEdge => keepUpWithView ? max(baseX, cam + keepUpShift) : baseX;
+  /// #61's option A: with the back line not following the view (since #79 it stays put all wave), the supports keep up
+  /// with the view themselves, and anyone at or past its left edge walks up at the catch-up pace ([speedTo]). #61's
+  /// rule alone (option B, the back line only) left the rear out of sight in its A/B, and 40% more troops fell; its
+  /// switch, always on, went in decisions-log 329.
+  double get _rearEdge => max(baseX, cam + keepUpShift);
 
   /// [u] struck or was struck in the last [_engagedFor] s.
   bool _inFight(Unit u) => t - u.attackedAt < _engagedFor || t - u.hurtAt < _engagedFor;
@@ -5141,7 +5139,7 @@ class Game {
 
     // Out of sight left of the view (decisions-log 312), it walks up into it before it heals or smites, so no heal of its
     // comes from off the screen (a Hero priest's ×3 reach healed the whole field from the back line, never seen).
-    final away = keepSupports && keepUpWithView && fighters.isNotEmpty && u.pos.x < cam + keepUpShift - offViewBy;
+    final away = keepSupports && fighters.isNotEmpty && u.pos.x < cam + keepUpShift - offViewBy;
     if (worst == null || away) {
       if (!away && smote()) return;
       if (fighters.isEmpty) return _rest(u, dt);

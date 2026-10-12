@@ -157,7 +157,8 @@ the middle of the screen is where our troops and the monsters actually hit each 
     the rear along with the view; #61 (decision 92) kept it `lineRoom` 2 tiles behind the rearmost
     troop mid-wave instead; #79 (decision 115) dropped that too.
   - With the line not dragging the rear along, the supports keep up with the view themselves
-    (`Game.keepUpWithView`, on: the orchestrator's option A): a healer's rest and a kiting archer never go
+    (the orchestrator's option A; its switch `keepUpWithView`, always on, went in decisions-log 329): a healer's
+    rest and a kiting archer never go
     behind max(baseX, cam + `keepUpShift`) + tile/2, and anyone out of sight (once the wave has shown a
     fight, within `keepUpInset` − `offViewBy` of the view's left edge) walking forward goes at the catch-up
     pace (#85's inset, above)
