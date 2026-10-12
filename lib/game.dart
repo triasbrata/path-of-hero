@@ -4689,9 +4689,11 @@ class Game {
   /// one-hit mark (Ember Brand's, [Unit.emberMark]) is spent before its defence by a direct blow of another type. A
   /// monster's blow on a troop the Bayangan Executioner bares ([Omens._omenBare], read before the blow) skips the troop's
   /// shields, blocks and cuts; a silver or gold monster the Bayangan Deathless saves ([Omens._omenDeathless]) is left at
-  /// 1 HP right after the blow, which then took only what it lost.
+  /// 1 HP right after the blow, which then took only what it lost. A phantom ([isPhantom], Phantom Rush's swordsman while
+  /// it dashes) takes nothing.
   double _hurt(Unit u, double dmg, Hit src, [Unit? by, double? cap]) {
     if (!u.alive) return 0;
+    if (u.move != null && isPhantom(u)) return 0; // Phantom Rush: no blow lands on a phantom (awaken_skills.dart, decisions-log 320)
     final bare = omensOn && u.side == Side.troop && by?.side == Side.enemy && _omenBare(u); // Executioner (omen.dart)
     if (by != null && t < by.firstStrikeAt) by.firstStrikeAt = t; // its first blow ([Unit.firstStrikeAt])
     final heap = t < u.downUntil; // a heap of bones (Reassemble): only holy damage touches it, and ends it
