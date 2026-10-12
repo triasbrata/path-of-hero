@@ -2917,7 +2917,7 @@ high elite's Curse of Frailty and an armored orc boss's Earthshaker (a moment) w
 
 Pure Dart (lib/wipe.dart). A soldier at 1 HP beside a werebear makes the wipe (`wipe`); `winNow` wins the wave on.
 - The wipe: 2 lives gone, not over, the wave back one with `lostWave` the lost one, no monster, queue, shot or zone
-  left, the swept ones hopping then gone in summon circles after `wipeCheer`, "Replace fallen" holding the army, the
+  left (the soldier fires none; a shot in the air at a wipe is test/shots_test.dart's), the swept ones hopping then gone in summon circles after `wipeCheer`, "Replace fallen" holding the army, the
   lose sound, the `Wiped` event (and its `wipe` kind) and one `WaveEnded(won: false)`, `wipeNote`; the next start plays
   the same wave with as many monsters.
 - What the lost wave paid stays (gold, score, kills) and no bonus or wave score comes; its lying materials are lost; the
@@ -2939,6 +2939,27 @@ The shots come from `test/probe_wipe_shots.dart` (a probe, not in the suite; `OU
 it is down; at 1600×947 and 915×412 the heart's pop with the message and the monsters hopping (`pop`, with 2× crops
 of the hearts and the message), a second on (`hop`) and after the hop (`after`: the summon circles, the meter's next
 wave). The pop shot's field is crowded with the bursts of the ticks played before it.
+
+## test/shots_test.dart: a shot whose target went flies on (decisions-log 327)
+
+Pure Dart (units-and-combat.md "A shot whose target went flies on"). Every shot is fired by hand (`fire`, a plain
+`Shot`) by a shooter held still, at monsters held still (`still`), so only the shot does anything; the units put on the
+spot come after its target fell, since two living ones closer than 12 shove each other apart.
+- A wizard's shot whose target falls mid-flight: `to` is that place (null while it homes), it flies on at its own
+  speed, its `fireball` burst lands there and its splash takes one blow off each orc round the spot (none past it); a
+  slime there at 1 HP dies for its kill gold and a kill.
+- Arcane Blast whose target leaked (`gone`): the `shards` burst, the arcane ring and the splash at the spot.
+- An archer's shot (no splash) whose target fell: the orc nearest the spot within `landReach` (half a tile) takes it,
+  the next one and one further off nothing; with nobody there, its burst alone.
+- A skeleton archer's shot at a knight that fell: a soldier on the spot takes it; one 30 off doesn't.
+- The wave's last monster gone with shots in the air: both are `spent`, the monster's arrow lands on the knight and
+  hurts nothing, the archer's lands where its target went.
+- A wipe with an archer's shot in the air at a monster: spent, frozen where the swept monster stood, its burst alone.
+
+The shots come from `test/probe_shot_through_shots.dart` (a probe, not in the suite; `OUT`, default
+`shots/shot-through/`): at 1600×947 a wizard's fireball and its Arcane Blast at an orc that falls when the shot is 32
+from it, with two orcs 14 above and below it, a frame every 48 ms; it prints the screen box round them and the HP the
+splash took.
 
 ## The Pusaka's ring in the sprites' pixels (decisions-log 325)
 

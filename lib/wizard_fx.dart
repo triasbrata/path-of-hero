@@ -68,7 +68,7 @@ extension on Board {
   void _magicShot(Canvas c, Game g, Shot sh, Offset at, int level) {
     final magic = sh.big ? WizardMagic.shards : WizardMagic.fireball;
     final f = magic.flightFrame(g.t - (_shotSeen[sh] ??= g.t));
-    _magicFrame(c, magic, f, at, _awakeFx(level), flip: sh.target.pos.x < sh.pos.x);
+    _magicFrame(c, magic, f, at, _awakeFx(level), flip: sh.aim.x < sh.pos.x);
   }
 
   /// Frame [f] of [magic]'s sheet with its [WizardMagic.anchor] on [at], mirrored with [flip].

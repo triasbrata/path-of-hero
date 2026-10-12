@@ -2104,13 +2104,13 @@ class Board extends PositionComponent
     }
 
     for (final sh in g.shots) {
-      final who = sh.from.type, at = _shotFrom(sh.from, sh.pos, sh.target), level = g.awakenLevel(who); // from its drawn body (body_look.dart)
+      final who = sh.from.type, at = _shotFrom(sh.from, sh.pos, sh.aim), level = g.awakenLevel(who); // from its drawn body (body_look.dart)
       if (sh.look != ShotLook.plain) {
-        _specialShot(c, g, sh.look, who, at, math.atan2(sh.target.pos.y - sh.pos.y, sh.target.pos.x - sh.pos.x)); // a Hero skill's
+        _specialShot(c, g, sh.look, who, at, math.atan2(sh.aim.y - sh.pos.y, sh.aim.x - sh.pos.x)); // a Hero skill's
       } else if (_arrows.contains(who)) {
         c.save();
         c.translate(at.dx, at.dy);
-        c.rotate(math.atan2(sh.target.pos.y - sh.pos.y, sh.target.pos.x - sh.pos.x));
+        c.rotate(math.atan2(sh.aim.y - sh.pos.y, sh.aim.x - sh.pos.x));
         c.drawImageRect(_img('tiny_arrow_$who.png'), const Rect.fromLTWH(0, 0, 32, 32),
             Rect.fromCenter(center: Offset.zero, width: 32, height: 32), _awakeFx(level));
         c.restore();

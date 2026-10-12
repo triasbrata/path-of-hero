@@ -107,12 +107,12 @@ void main() {
         if (c.args[2] != 'Hit.skill') '${c.file.split('/').last}: ${c.args[0]} ${c.args[2]}',
     ];
     expect(other, unorderedEquals([
-      // A normal blow and its splash past the target (_strike), a shot landing (its own tag; a normal shot's splash
-      // past the target extra), the necromancer's scythe.
+      // A normal blow and its splash past the target (_strike), a shot landing on its target or the unit on the spot
+      // its target went from (its own tag; a normal shot's splash past it extra), the necromancer's scythe.
       'game.dart: o o == foe ? Hit.normal : Hit.extra',
       'game.dart: foe Hit.normal',
-      'game.dart: o o == e || s.src != Hit.normal ? s.src : Hit.extra',
-      'game.dart: e s.src',
+      'game.dart: o o == on || s.src != Hit.normal ? s.src : Hit.extra',
+      'game.dart: on s.src',
       'game.dart: near Hit.normal',
       // Sent back: worn thorns, a reflect, a Parry's answer, a Bayangan's Thorns, Riposte's (a `hurtBy` burst); and the
       // Bayangan Toll's share of a killer troop's HP, a blow from no one like Thorns'.

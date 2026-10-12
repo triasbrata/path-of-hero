@@ -147,11 +147,11 @@ extension _BodyLook on Board {
   }
 
   /// Where troop [from]'s plain shot is drawn: from its drawn body, closing onto the game's path ([sh] at [at]) by
-  /// its target, as the share of the way it has gone.
-  Offset _shotFrom(Unit from, math.Point<double> at, Unit target) {
+  /// where it flies ([to]: its target, or the spot its target went from, [Shot.aim]), as the share of the way it has gone.
+  Offset _shotFrom(Unit from, math.Point<double> at, math.Point<double> to) {
     final b = _bodies[from];
     if (b == null || from.side != Side.troop) return Offset(at.x, at.y);
-    final lag = b.at - b.game, toShooter = at.distanceTo(b.game), toTarget = at.distanceTo(target.pos);
+    final lag = b.at - b.game, toShooter = at.distanceTo(b.game), toTarget = at.distanceTo(to);
     final k = toShooter + toTarget <= 0 ? 0.0 : toTarget / (toShooter + toTarget);
     return Offset(at.x + lag.x * k, at.y + lag.y * k);
   }

@@ -1259,6 +1259,34 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
   their hit on landing. A troop whose type has awakened shows it as `awakeFx(hit_<type>, level)`
   (`hit_<type>_awake<level>`; healers' `heal` the same way, but not a smite's `holy`), drawn in the
   level's colour (ui-hud.md).
+- **A shot whose target went flies on** (decisions-log 327; the owner: "particle yang sudah terkirim jangan hilang di
+  tengah jalan"). Until then a shot whose target fell or left mid-flight was dropped where it was. Now, the first tick
+  its target isn't alive (fallen, or gone: a monster that leaked past the line), the shot keeps that target's place
+  as `Shot.to`, frozen, and flies on to it at its own speed (`Shot.aim`: `to`, else its target's place). There it lands
+  as on its target: its hit burst (a wizard's `fireball` or `shards`) and its ring (Arcane Blast's) at that spot, then
+  - the unit of the target's side standing nearest the spot, within `landReach` (half a tile, a line shot's width,
+    `lineWidth`), is hit as its target would have been (`_standingOn`): the shot's damage and source (a normal shot's
+    `Hit.normal`), its `onHit`, the type's `landed` Fx (God's Thunder, Shatter Shard) and the relics' landing (Sweep,
+    Venom, Mana Siphon, Chill, Weak Spot), kill gold and every Fx `_hurt` runs. The owner, asked whether a single shot
+    should hit a monster standing there: "mau". The same for the monsters' shots at troops: a troop on the spot takes it;
+  - a splash shot (a wizard's plain shot, Arcane Blast; a shooter whose type holds Wide Blows) hurts every unit of the target's side within
+    its splash of the spot, as round a living target: the unit on the spot with the shot's own source, the rest
+    `Hit.extra` (a skill's all its `Hit.skill`), with Wide Blows' counter and `onHit` on each;
+  - with nobody on the spot, a single shot hits nothing: its look alone (and a splash shot only its splash).
+
+  Every shot flies so: the archers' and the wizards' plain shots and Arrow Rain's, Arcane Blast, the Hero skills'
+  special shots (Snipe, Crippling Shot, Javelin), Spellbreaker's silver arrow, and the monsters' (a skeleton archer's
+  arrow, Volley and a mini boss's Barbed Arrow, an orc rider mini boss's Spear Throw, a slime's Sticky Glob). The instant blows aren't shots and are as before:
+  melee and its splash, Circle Slash, Piercing Thrust, Crushing Blow, a healer's smite, Chain Lightning's and God's
+  Thunder's beams, the zones' pulses (Bone Rain's arrows); nor are the line shots (`LineShot`: Piercing Shot, Axe
+  Throw, Grave Wave), which fly their line whoever falls.
+  - **In the air when the wave ends** (its last monster gone) or the army is wiped: every shot still flying is `spent`:
+    it flies on (a wipe freezes its `to` too, the swept monsters having left the field) and lands its look and ring, and
+    hurts nobody. Until then a monster's shot in the air at a living troop as the wave ended still hurt it between
+    waves, and a wipe cleared every shot.
+  - The dice are the shot's own as before (`_hurt`'s rolls in the order the shots land); landing on the spot rolls them
+    where a dropped shot rolled none, so a seeded fight plays differently from that landing on. Nothing new is made a
+    tick: `to` keeps the target's place as it was.
 - **Awakening** (per troop type, from its items; loot-items-relics.md) raises its HP, MP and MP regen
   (`awakenHp`, `awakenMp`), its item caps and its price, changes its looks, and gives its troops an awakening
   skill (Awakening skills, below). A Hero and its aura change stats too (Heroes, above).
@@ -1472,8 +1500,8 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
     lose sound, and the event `Wiped` (the lives left and lost, the monsters alive and queued, `over`). At 0 lives the
     game is over as by leaks: the monsters stay and cheer, the tick's end scores it (`WaveEnded(won: false)`).
   - Else the sweep: the living monsters leave `units` for `swept` (the UI draws them hopping for joy `wipeCheer` 2.4 s,
-    then each goes in a summon circle, `_sweptGone`), the queue, shots, line shots, beams, zones and the monsters'
-    rings are cleared, the march ends, `_endEffects`, the Grail's watch ends, `WaveEnded(won: false)`, the Tavern's
+    then each goes in a summon circle, `_sweptGone`), the queue, line shots, beams, zones and the monsters'
+    rings are cleared, the shots in the air are spent (they fly on and land their look alone, decisions-log 327), the march ends, `_endEffects`, the Grail's watch ends, `WaveEnded(won: false)`, the Tavern's
     boosts count the wave, the wave's materials lying on the field are lost (`waveMaterials` cleared: they come with a
     win), "Replace fallen" lists the fallen (not the Heroes: Recall's), Auto's `_autoWon`, no after-wave heal, Lewati's
     skip buff it carried is owed again (`skipBuffDue`), `lostWave` = the wave and `wave` goes back one.
@@ -1983,7 +2011,7 @@ goes through `_hurt` with the shooter as the attacker, like a skill's.
 - **A special shot** (`Shot.special(from, target, pos, dmg:, speed:, splash:, big:, look:, onHit:)`): a
   `Shot` with its own damage, speed and look (`ShotLook`), so a melee troop can throw one (its type's
   `shotSpeed` is 0). Like every shot it homes on its target however far away, so it can be fired past the
-  shooter's range. `onHit` runs on each unit it hurt, after the damage (with splash, on each one in it).
+  shooter's range, and flies on to where its target went if that falls first ("Fighting rules", decisions-log 327). `onHit` runs on each unit it hurt, after the damage (with splash, on each one in it).
   A plain `Shot` has no speed of its own (`speed` null: the shooter's `shotSpeed`), the `plain` look and
   no `onHit`, so the normal attacks and #10's skills fly as before.
 - **A line shot** (`LineShot`, in `Game.lineShots`): flies a straight line from `start` towards a point,
