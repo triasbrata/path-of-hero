@@ -617,6 +617,8 @@ class TdGame extends FlameGame with KeyboardEvents, ScrollDetector {
         images.add('tiny_${necroHealer}_$a.png', a == 'shadow' ? from.clone() : await _recoloured(from, _necroHealerTint));
       }
       images.add('tiny_fx_holy.png', await _recoloured(images.fromCache('tiny_fx_heal.png'), _holyTint));
+      // The Pusaka's ring under a bound type's troops, in the sprites' pixels (pusaka_look.dart).
+      images.add(_pusakaRingImage, await _pixelRing(_pusakaRingSize.width.toInt(), _pusakaRingSize.height.toInt()));
       // Every monster strip's outline too, drawn in its rank's colour (tier_look.dart).
       for (final k in [...enemyTypes.keys, boss, necroHealer]) {
         for (final a in [..._anims, if (_summoners.contains(k)) 'summon', if (_casters.contains(k)) 'cast', ..._skillAnims(k)]) {
@@ -1327,6 +1329,10 @@ class Board extends PositionComponent
   /// anti-alias). For tests.
   ({List<Rect> rows, Paint paint}) get bookShadow =>
       (rows: _bookArea.isEmpty ? const <Rect>[] : [..._bookShadowRows], paint: _bookShadowPaint);
+
+  /// Pusaka [r]'s ring under the feet at [ground] (world units in [c]), drawn as the field draws it ([_ringUnder],
+  /// decisions-log 325). For tests.
+  void paintPusakaRing(Canvas c, Offset ground, Relic r) => _ringUnder(c, ground, r);
 
   /// Where the open book's left and right pages write this frame: inside each page's printed line, less the book's
   /// padding ([bookWriting]; Rect.zero: the book is shut). For tests.

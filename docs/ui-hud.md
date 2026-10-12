@@ -797,7 +797,18 @@ loot-items-relics.md "Pusaka"; this is how they are seen.
 
 - **The ring:** under every living troop of a type with a Pusaka bound, drawn right after its shadow, before the
   skills' rings: a 1 px oval 20 × 8 (`_pusakaRingSize`, a little wider than the guard's 16 and the effects' 18, which
-  sit inside it) round its feet, in the Pusaka's colour at 90%, steady (no pulse).
+  sit inside it) round its feet, centred 1 above them, in the Pusaka's colour at 90%, steady (no pulse). Every troop of
+  the type wears the same one, a Hero or an awakened troop too (theirs are the halo, and the coloured shadow and
+  outline). In the sprites' pixels (decisions-log 325, the owner: "ring putih atau kuning di bawah troops di buat jadi
+  pixelated"): its cells (`pixelRingCells`: each cell whose middle is inside the oval and one of whose four neighbours'
+  is not, a stepped line one cell thick, the units' shadows' kind of edge) one world unit each, as a sprite's pixels.
+  `TdGame.onLoad` builds them once as a white image with a clear pixel all round (`pusaka_ring`, `_pixelRing`), drawn
+  nearest and without anti-aliasing, flat in the Pusaka's colour (`_ringPaint`: `_flat`, alpha 0.9), its top left a
+  whole number of units from the feet (`_pusakaRingAt` (-11, -6)), so at any zoom its steps fall on the shadow's
+  pixels and each screen pixel is the colour or nothing. The guide's K6 picture draws it the same way (`_ringUnder`).
+  The field's other rings and ellipses stay smooth: the guard's (`_guardRing`), the effects' (`_statusRings`, a
+  Barrier's teal among them), Spear Wall's brace (`_braceRing`), a Hero's halo (`_heroHalo`) and a dragged troop's
+  reach disc (decisions-log 325 lists them for the owner).
 - **The icon:** left of the HP bar, 6 × 6 like a small relic's, past the ones the troop holds (6.5 left of the bar,
   13 behind one relic, 19.5 behind a Hero's two).
 - **The colours** (`_pusakaColors`), kept off the awakening's blue, crimson, gold, violet and white and off the grass's
@@ -828,8 +839,8 @@ loot-items-relics.md "Pusaka"; this is how they are seen.
   heals; Wrath Psalm's smite the holy hit burst (a Priest's smite's) on each monster it strikes; Grave Seal shows nothing
   of its own (the heals that don't land).
 - **Cheap at 32+ troops:** each frame `_PusakaLook.refresh` maps type → Pusaka once (before the units are drawn), so a
-  troop finds its own in one lookup, and the rings use five paints made once (`_pusakaRings`): no Paint per troop per
-  frame.
+  troop finds its own in one lookup, and each ring is one draw of the one ring image in a paint made once per Pusaka
+  (`_pusakaRings`): no Paint per troop per frame.
 - **The Grail's cut-in** (once a wave): the wave's first Grail save (`Game.grailFirst`, drained by `_grailNews` after
   the casts) shows for `grailCutTime` 1.6 s on the screen's clock: the tooltip frame's tan body at 2× (`_tipBody`,
   sliced 3/3/3/5, the foe banner's plate), centred under the top rows, the map and the boss bars (`_plateTop`), rising
