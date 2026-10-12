@@ -32,7 +32,7 @@ const logSize = 200;
 /// What an event is about. The twelve from waveStarted to pusakaMoved are [TraceEvent]s, for the telemetry only, and so
 /// are offerShown, offerRerolled, ukirFed, ukirStep, townRolled and tavernRerolled.
 enum EventKind {
-  fell, skill, heroSkill, awakenSkill, drop, strongFoe, monsterSkill, heroMade, awakened, waveWon, waveLost, //
+  fell, skill, heroSkill, awakenSkill, strongFoe, monsterSkill, heroMade, awakened, waveWon, waveLost, //
   waveStarted, spawned, bought, itemUsed, relicUsed, marched, storeBought, storeSold,
   relicTakenOff, typeReleased, pusakaBound, pusakaMoved,
   ascended, heroRecalled, grailSaved, pusakaReport,
@@ -127,22 +127,6 @@ final class AwakenSkillCast extends GameEvent {
 
   @override
   Map<String, Object?> get data => {'name': name, 'type': type, 'skill': skill.name, 'level': level};
-}
-
-/// A slain monster ([from], of [tier]) dropped an [item] or a [relic] (one of the two).
-final class LootDropped extends GameEvent {
-  LootDropped(super.wave, super.t, {required this.from, required this.tier, this.item, this.relic}) : assert((item == null) != (relic == null));
-
-  final String from;
-  final Tier tier;
-  final Item? item;
-  final Relic? relic;
-
-  @override
-  EventKind get kind => EventKind.drop;
-
-  @override
-  Map<String, Object?> get data => {'from': from, 'tier': tier.name, 'item': item?.name, 'relic': relic?.name};
 }
 
 /// A strong monster came onto the field: a high elite, a mini boss or the boss ([strongTiers]).
@@ -859,7 +843,7 @@ final class StoreSold extends TraceEvent {
   Map<String, Object?> get data => {..._lootJson(loot), if (plus > 0) 'plus': plus, 'n': n, 'gain': gain};
 }
 
-/// A store event's loot as [LootDropped] has it: `item` or `relic` by name, the other null; a material sold (the Towns'
+/// A store event's loot: `item` or `relic` by name, the other null (as a field drop's event had it, decisions-log 321); a material sold (the Towns'
 /// Shop, decisions-log 230) both null and its name under `material`.
 Map<String, Object?> _lootJson(Enum loot) =>
     {'item': loot is Item ? loot.name : null, 'relic': loot is Relic ? loot.name : null, if (loot is Mat) 'material': loot.name};

@@ -201,14 +201,9 @@ const _arrows = {'archer', 'skeleton_archer'}; // tiny_arrow_<who>.png, 32x32 po
 const _feetFx = {'summon', 'heal', 'holy'};
 const _fxFps = 15.0, _burstSize = 32.0; // a fx_<name>.png frame is drawn [_burstSize] world units tall
 
-/// The sparks of the "VICTORY!" popup and of a dropped relic's glint: ui_click.png's small x and its bigger x twinkling
-/// (frames 0, 1, 1, 1, 0), then dark for one (-1), [_sparkFps] steps a second.
+/// The sparks of the "VICTORY!" popup: ui_click.png's small x and its bigger x twinkling (frames 0, 1, 1, 1, 0), then
+/// dark for one (-1), [_sparkFps] steps a second.
 const _sparkFps = 12.0, _sparkSteps = [0, 1, 1, 1, 0, -1];
-
-/// A dropped relic's glint (ui_click.png's sparks), dyed the Hero gold.
-final _relicGlint = Paint()
-  ..filterQuality = FilterQuality.none
-  ..colorFilter = _dye(_heroGold);
 const _summoners = {boss, minion}; // tiny_<key>_summon.png: casting / rising from the ground
 // Healers with a tiny_<key>_cast.png strip, played for a heal; their attack strip is then a real attack
 // (the healing necromancer's scythe swing, Unit.swung). Other healers heal with their attack strip.
@@ -2078,16 +2073,6 @@ class Board extends PositionComponent
       }
     }
 
-    // Loot where monsters fell, bobbing until the wave is won.
-    for (final (p, loot) in [...g.drops, ...g.relicDrops]) {
-      final at = Offset(p.x, p.y - math.sin(_fieldClock * 4 + p.x).abs() * 2);
-      _icon(c, loot, Rect.fromCenter(center: at, width: 10, height: 10));
-      if (loot is Relic) {
-        // A relic glints: ui_click.png's x twinkling over it now and then (the "VICTORY!" popup's sparks), in gold.
-        final f = _sparkSteps[(_fieldClock * _sparkFps + p.x).floor() % _sparkSteps.length];
-        if (f >= 0) c.drawImageRect(_img('ui_click.png'), Rect.fromLTWH(f * 16.0, 0, 16, 16), Rect.fromCenter(center: at, width: 16, height: 16), _relicGlint);
-      }
-    }
     _matLootDraw(c, g); // town_look.dart: the materials lying where they fell, until the wave is won
     _groundZones(c, g); // hero_skill_fx.dart
     _groundRings(c, g); // hero_skill_fx.dart: a monster skill's rings bursting out
@@ -2475,12 +2460,10 @@ class Board extends PositionComponent
       c.restore();
     }
 
-    // The loot: each kind once, its count before its icon ("3x"), items, relics, then materials. The troops that fell:
-    // by name while few did ("Aldo Ash (Knight)"), else each type once with its count; sprites greyed.
-    // The Towns' materials last, in their order (town.dart).
+    // The loot: the materials the wave dropped (town.dart), each once in their order, its count before its icon ("3x");
+    // no item or relic drops (decisions-log 321). The troops that fell: by name while few did ("Aldo Ash (Knight)"),
+    // else each type once with its count; sprites greyed.
     final won = <MapEntry<Enum, int>>[
-      ...lootCounts(g.lastLoot).entries,
-      ...lootCounts(g.lastRelics).entries,
       for (final m in Mat.values) if (g.lastMaterials[m] case final n?) MapEntry(m, n),
     ];
     _victoryLoot = [for (final e in won) (e.key, e.value)];

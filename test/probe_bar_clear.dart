@@ -1,8 +1,8 @@
 // Nothing of the battle behind the spawn bar (decisions-log 287; ui-hud.md "Spawn bar"): the w89 save's waves fought on
 // the Board at each size (`SIZES`, default the owner's 1600x947, 1266x713, 1164x777 and 915x412), `FRAMES` frames each
 // at x2 with 3 more game steps between frames, a wave begun again whenever one ends. Each step, every unit's drawn
-// bottom (its shadow's last row, 6 under its y; a dying one's too), every shot's (8), every loot pile's (5; a relic's
-// glint 8) and the pinned plate's (the lowest unit pinned every 2 s) against the bar's top (the step), where it overlaps
+// bottom (its shadow's last row, 6 under its y; a dying one's too), every shot's (8) and the pinned plate's (the lowest
+// unit pinned every 2 s) against the bar's top (the step), where it overlaps
 // the bar across. A probe, not part of the suite (no `_test.dart`): queue `["test", "test/probe_bar_clear.dart"]` with a
 // mirror as `dir` (about 2 min; wave 90, a boss's, is about 3 min of the game). It never touches the real save (flutter_test_config.dart's temp dir). A line
 // `CLEAR {json}` a size; it fails on any overlap.
@@ -55,9 +55,9 @@ void main() {
       tester.view.physicalSize = Size(w, h);
       final g = b.state = w89();
       await frames(tester, 2);
-      final low = <String, double>{'unit': 0, 'shot': 0, 'loot': 0, 'plate': 0};
+      final low = <String, double>{'unit': 0, 'shot': 0, 'plate': 0};
       final over = <String>[];
-      var (steps, waves, boss, mini, loot, foes, pins, seconds) = (0, 0, false, false, 0, 0, 0, 0.0);
+      var (steps, waves, boss, mini, foes, pins, seconds) = (0, 0, false, false, 0, 0, 0.0);
       Rect bar = Rect.zero;
       void seen(String what, double x, double bottom, [double half = 7]) {
         low[what] = max(low[what]!, bottom);
@@ -77,19 +77,10 @@ void main() {
           final p = b.toScreen(o.pos.x, o.pos.y + 8);
           seen('shot', p.dx, p.dy, 8 * s);
         }
-        for (final (q, _) in g.drops) {
-          final p = b.toScreen(q.x, q.y + 5);
-          seen('loot', p.dx, p.dy, 5 * s);
-        }
-        for (final (q, _) in g.relicDrops) {
-          final p = b.toScreen(q.x, q.y + 8);
-          seen('loot', p.dx, p.dy, 8 * s);
-        }
         final plate = b.pinnedPlate;
         if (plate != Rect.zero) seen('plate', plate.center.dx, plate.bottom, plate.width / 2);
         boss |= g.bossBarUnits.any((u) => u.alive && u.tier == Tier.boss);
         mini |= g.bossBarUnits.any((u) => u.alive && u.tier == Tier.miniBoss);
-        loot = max(loot, g.drops.length + g.relicDrops.length);
         foes = max(foes, g.enemies.where((u) => u.alive).length);
       }
 
@@ -126,7 +117,6 @@ void main() {
             'lowest': {for (final e in low.entries) e.key: (e.value * 10).round() / 10},
             'boss': boss,
             'miniBoss': mini,
-            'maxLoot': loot,
             'maxFoes': foes,
             'pins': pins,
             'overlaps': over.length,

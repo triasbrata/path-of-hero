@@ -1,5 +1,5 @@
 // The spawn bar's step (decisions-log 287; ui-hud.md "Spawn bar", camera-and-field.md "Field size"; the owner, 2026-10-09:
-// "supaya battle jangan sampai di belakang dari action bar untuk spawn troops"): no unit, foe, shot, loot pile or plate
+// "supaya battle jangan sampai di belakang dari action bar untuk spawn troops"): no unit, foe, shot, material pile or plate
 // is ever drawn behind the bar. A long wave of the w89 save (wave 90: its whole army, the wave's foes, its drops) fought
 // headless gives how low anything on the field goes; then at the test windows and every landscape window from 900x400 to
 // 2600x1500 (step 100), between waves and in a wave, the bar (the step with its slopes, down to the screen's bottom) is
@@ -21,9 +21,9 @@ import 'troops_detail_test.dart' show boot, desk, frames, rich, tablet, wide;
 const owner = Size(1600, 947); // the owner's window
 
 /// How far under its place each thing is drawn at the most, world units: a unit's shadow's last row (its feet 5 under
-/// its y, the shadow 1 more), a shot (the wizard's fireball and Arcane Blast's star: lib/wizard_fx.dart), a loot icon (10 px), a
-/// relic's glint (16 px) and a material's pile (10 px).
-const unitUnder = 6.0, shotUnder = 8.0, lootUnder = 5.0, relicUnder = 8.0, matUnder = 5.0;
+/// its y, the shadow 1 more), a shot (the wizard's fireball and Arcane Blast's star: lib/wizard_fx.dart) and a material's
+/// pile (10 px). No item or relic lies on the field (decisions-log 321).
+const unitUnder = 6.0, shotUnder = 8.0, matUnder = 5.0;
 
 Game w89() => Game.fromJson(jsonDecode(File('test/fixtures/save-20261002-2222-w89-sellbug.json').readAsStringSync()) as Map<String, dynamic>,
     Random(89), Random(189), Random(389));
@@ -48,12 +48,6 @@ Game w89() => Game.fromJson(jsonDecode(File('test/fixtures/save-20261002-2222-w8
     for (final s in g.shots) {
       seen(s.pos.y + shotUnder, 'shot of ${s.from.type}');
     }
-    for (final (p, _) in g.drops) {
-      seen(p.y + lootUnder, 'loot');
-    }
-    for (final (p, _) in g.relicDrops) {
-      seen(p.y + relicUnder, 'relic');
-    }
     for (final (p, _, _) in g.matPops) {
       seen(p.y + matUnder, 'material');
     }
@@ -64,7 +58,7 @@ Game w89() => Game.fromJson(jsonDecode(File('test/fixtures/save-20261002-2222-w8
 
 void main() {
   test('a long wave: nothing on the field goes under the step\'s top (field y stepLip): units no lower than y fieldH - 2, '
-      'their shadows to 132; shots, loot and materials no lower', () {
+      'their shadows to 132; shots and materials no lower', () {
     final g = w89();
     expect(g.troops.where((u) => u.alive).length, greaterThanOrEqualTo(36), reason: 'the whole army');
     final (low, what) = lowestDrawn(g);

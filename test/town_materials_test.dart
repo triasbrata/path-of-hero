@@ -195,7 +195,6 @@ void main() {
     final on = townGame(mats: mats, loot: Random(4));
     kill(on, [('slime', Tier.normal, false), ('bat', Tier.highElite, false), ('orc', Tier.miniBoss, false), ('skeleton', Tier.normal, true)]);
     expect(mats.used, 2, reason: 'one draw for the slime, one for the bat\'s Rare; none for the mini boss and the raised one');
-    expect([on.relicDrops, on.drops], everyElement(isEmpty));
     final tally = {Mat.slimeGel: 1, Mat.batWing: 1, Mat.batFang: 1, Mat.orcTooth: 3, Mat.orcTusk: 3, Mat.evilEye: 1};
     expect(on.waveMaterials, tally);
     expect([for (final (_, m, n) in on.matPops) (m, n)],
@@ -203,7 +202,7 @@ void main() {
     expect(on.materials, isEmpty, reason: 'not in the bag before the win');
     winNow(on);
     expect([on.materials, on.lastMaterials], [tally, tally]);
-    expect(on.waveMaterials, isEmpty);
+    expect([on.waveMaterials, on.inventory, on.relicBag], everyElement(isEmpty));
     // The next win adds to the bag, and its own tally is the last.
     on.matDice = _Dice([]); // the elite's Common always drops: no draw
     kill(on, [('slime', Tier.elite, false)]);
@@ -215,9 +214,8 @@ void main() {
   test('relics and items never drop, on dice that always drop', () {
     final g = townGame(loot: _Dice([], 0.0), mats: _Dice([], 0.0));
     kill(g, [('orc', Tier.highElite, false), ('orc', Tier.miniBoss, false)]);
-    expect([g.relicDrops, g.drops], everyElement(isEmpty));
     winNow(g);
-    expect(g.relicBag, isEmpty);
+    expect([g.relicBag, g.inventory], everyElement(isEmpty));
   });
 
   test('the save: materials by name, only when any; a name this build doesn\'t know is skipped', () {

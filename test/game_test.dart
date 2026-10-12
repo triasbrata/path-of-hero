@@ -1561,26 +1561,21 @@ void main() {
           out.add((e.type, e.pos.y));
         }
       });
-      expect(g.lastLoot, isEmpty); // no item drops on the field: the Smithy makes them (decisions-log 321)
+      expect([g.inventory, g.relicBag], everyElement(isEmpty)); // no item or relic drops: the Smithy makes them (decisions-log 321)
       return out;
     }
 
     expect(spawns(0), spawns(1)); // the loot dice still draw for every kill, whatever they roll
   });
 
-  test('winning a wave picks up every drop into the inventory', () {
+  test('winning a wave leaves the items and relics in the bag as they were: none drops (decisions-log 321)', () {
     final g = bare();
     placeNow(g, 'knight', 2, 3);
     g.inventory[Item.sword] = 1;
-    g.drops.addAll([(const Point(100, 20), Item.sword), (const Point(120, 40), Item.sword), (const Point(140, 60), Item.potion)]);
+    g.relicBag[Relic.fang] = 1;
     winWave(g);
-    expect(g.lastLoot, [Item.sword, Item.sword, Item.potion]);
-    expect(g.inventory, {Item.sword: 3, Item.potion: 1});
-    expect(g.drops, isEmpty);
-
     winWave(g);
-    expect(g.lastLoot, isEmpty);
-    expect(g.inventory, {Item.sword: 3, Item.potion: 1});
+    expect([g.inventory, g.relicBag], [{Item.sword: 1}, {Relic.fang: 1}]);
   });
 
   test('an upgrade goes to every living troop of its type and leaves the inventory', () {
@@ -1918,19 +1913,6 @@ void main() {
       s.tick(0.05);
     }
     expect(s.impacts, [(target.pos, 'hit_archer')]);
-  });
-
-  test('winning a wave puts every relic dropped into the bag', () {
-    final g = bare();
-    placeNow(g, 'knight', 2, 3);
-    g.relicBag[Relic.fang] = 1;
-    g.relicDrops.addAll([(const Point(100, 20), Relic.fang), (const Point(120, 40), Relic.guard)]);
-    winWave(g);
-    expect(g.lastRelics, [Relic.fang, Relic.guard]);
-    expect(g.relicBag, {Relic.fang: 2, Relic.guard: 1});
-    expect(g.relicDrops, isEmpty);
-    winWave(g);
-    expect(g.lastRelics, isEmpty);
   });
 
   test('a troop holds one relic: a second one is refused and stays in the bag', () {
@@ -2930,27 +2912,6 @@ void main() {
     g.tick(0.05);
     final h = Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>);
     expect((h.waveSpawned, h.waveTotal), (0, 0));
-  });
-
-  test('won loot is counted once per kind, in the enum\'s order', () {
-    final items = lootCounts([Item.sword, Item.potion, Item.sword, Item.boots, Item.sword]);
-    expect(items, {Item.sword: 3, Item.boots: 1, Item.potion: 1});
-    expect(items.keys.toList(), [Item.sword, Item.boots, Item.potion]);
-    expect(lootCounts(<Relic>[]), isEmpty);
-    final relics = lootCounts([Relic.guard, Relic.fang, Relic.fang]);
-    expect(relics, {Relic.fang: 2, Relic.guard: 1});
-    expect(relics.keys.first, Relic.fang);
-  });
-
-  test('a won wave\'s loot counts what it picked up; the bag gets every one', () {
-    final g = bare();
-    placeNow(g, 'knight', 2, 3);
-    g.drops.addAll([(const Point(100, 20), Item.sword), (const Point(110, 30), Item.sword), (const Point(120, 40), Item.bow)]);
-    g.relicDrops.addAll([(const Point(100, 50), Relic.fang), (const Point(110, 60), Relic.fang)]);
-    winWave(g);
-    expect(lootCounts(g.lastLoot), {Item.sword: 2, Item.bow: 1});
-    expect(lootCounts(g.lastRelics), {Relic.fang: 2});
-    expect((g.inventory[Item.sword], g.inventory[Item.bow], g.relicBag[Relic.fang]), (2, 1, 2));
   });
 
   test('a refused relic leaves the troop and its price alone, and can go to a troop without one', () {

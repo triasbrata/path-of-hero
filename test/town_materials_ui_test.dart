@@ -2,7 +2,7 @@
 // (its page empty with none held), its cells in the game's order, all 30 on one page on the desk and on three at 915x412
 // (12 a page on the shorter landscape book, decisions-log 283),
 // a material's facing page (what drops it, what it is for, the Smithy's row, no Sell) and its tooltip; the "VICTORY!"
-// line's materials after the items; a dropped material's hop onto the field. One TdGame per widget test.
+// line's materials (no item drops); a dropped material's hop onto the field. One TdGame per widget test.
 //
 // Never let a wave be won or the game end here: the board saves after a pick, into the queue's temp HOME
 // (flutter_test_config.dart), never the real save.
@@ -143,16 +143,15 @@ void main() {
     await frames(tester, 40); // the last tap's gesture timer runs out
   });
 
-  testWidgets('"VICTORY!" lists the materials after the items, each kind once with its count', (tester) async {
+  testWidgets('"VICTORY!" lists the materials the wave dropped, each kind once with its count, in their order', (tester) async {
     final b = await boot(tester, desk);
     final g = b.state = matsGame();
     await frames(tester, 10);
     g
-      ..lastLoot = [Item.sword, Item.sword]
       ..lastMaterials = {Mat.evilEye: 1, Mat.slimeGel: 3}
       ..victoryAt = g.t;
     await frames(tester, 10);
-    expect(b.victoryLoot, [(Item.sword, 2), (Mat.slimeGel, 3), (Mat.evilEye, 1)]);
+    expect(b.victoryLoot, [(Mat.slimeGel, 3), (Mat.evilEye, 1)]);
   });
 
   testWidgets('a dropped material hops onto the field, and lies there (mat_loot_test.dart)', (tester) async {

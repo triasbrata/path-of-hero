@@ -59,7 +59,7 @@ Game sixWavesAndACraft() {
     }
     expect(foes.where((u) => u.alive), isEmpty, reason: 'wave $w');
     expect((g.waveActive, g.over), (false, false), reason: 'wave $w won');
-    expect([g.drops, g.lastLoot, g.inventory.keys], everyElement(isEmpty), reason: 'wave $w: no item drops with the forge');
+    expect(g.inventory.keys, isEmpty, reason: 'wave $w: no item drops with the forge');
     // ignore: avoid_print
     print('wave ${g.wave}: ${spawn.length} monsters, materials ${_sum(g.lastMaterials)} dropped, ${_sum(g.materials)} held '
         'in ${g.materials.length} kinds; items ${g.inventory.length}; seen ${g.matsSeen.length}');
@@ -162,8 +162,8 @@ void main() {
       }
       // ignore: avoid_print
       print('wave ${g.wave} at ${g.t.toStringAsFixed(1)} s: kills ${g.kills}, lying ${_sum(g.waveMaterials)} in '
-          '${g.waveMaterials.length} kinds, items dropped ${g.drops.length}, active ${g.waveActive}');
-      expect(g.drops, isEmpty);
+          '${g.waveMaterials.length} kinds, items held ${g.inventory.length}, active ${g.waveActive}');
+      expect(g.inventory, isEmpty);
       await frames(tester, 4);
       await shot('battle');
     });

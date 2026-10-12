@@ -225,8 +225,8 @@ extension _MatLook on Board {
     return air;
   }
 
-  /// The piles lying where monsters fell, on the ground under the units (in field units, as the items' loot: its 10-unit
-  /// icon bobbing 2 units on the field's clock), each its material's icon; from 2 up its count in the Bag's capsule
+  /// The piles lying where monsters fell, on the ground under the units (in field units, as the items' loot was before
+  /// decisions-log 321: a 10-unit icon bobbing 2 units on the field's clock), each its material's icon; from 2 up its count in the Bag's capsule
   /// ("x5"), in screen pixels over every icon. Called inside the field's transform, before the units.
   void _matLootDraw(Canvas c, Game g) {
     if (_matLoot.isEmpty) return;

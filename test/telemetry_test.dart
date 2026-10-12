@@ -97,8 +97,6 @@ void main() {
     send(g, MonsterSkillCast(3, 105.6, type: 'orc', tier: Tier.miniBoss, skill: MonsterSkill.warShout));
     send(g, TroopFell(3, 106, name: 'Sari', type: 'archer', killer: 'orc', killerTier: Tier.elite));
     send(g, TroopFell(3, 107, name: 'Budi', type: 'knight', hero: true)); // nothing struck it
-    send(g, LootDropped(3, 108, from: 'werebear', tier: Tier.miniBoss, item: Item.shield));
-    send(g, LootDropped(3, 108, from: 'werebear', tier: Tier.miniBoss, relic: Relic.fury));
     send(g, Bought(3, 110, cost: 50)); // more capacity mid-wave
     send(g, StoreSold(3, 111, loot: Item.sword, n: 1, gain: 500)); // mid-wave (were the store open then)
     send(g, Marched(3, 130.25));
@@ -159,8 +157,8 @@ void main() {
       'bonus': Game.waveBonus(3),
     });
     expect([w['dropped'], w['relicsDropped'], w['used'], w['relicsUsed'], w['relicsTakenOff']], [
-      {'shield': 1},
-      {'fury': 1},
+      {}, // nothing drops on the field (decisions-log 321): kept empty
+      {},
       {'bow': 1},
       {},
       {'guard': 1},
@@ -173,10 +171,10 @@ void main() {
       },
     ]);
 
-    // Passed on as they happened: the buys, the store's deals, the item, the falls and the drops; no troop's name.
+    // Passed on as they happened: the buys, the store's deals, the item and the falls; no troop's name.
     final events = [for (final r in kept.of('event')) r['event'] as Map<String, dynamic>];
     expect(events.map((e) => e['kind']),
-        ['bought', 'storeBought', 'storeSold', 'ascended', 'tempa', 'heroRecalled', 'itemUsed', 'relicTakenOff', 'fell', 'fell', 'drop', 'drop', 'bought', 'storeSold']);
+        ['bought', 'storeBought', 'storeSold', 'ascended', 'tempa', 'heroRecalled', 'itemUsed', 'relicTakenOff', 'fell', 'fell', 'bought', 'storeSold']);
     expect(events.any((e) => e.containsKey('name')), isFalse);
     expect(events.firstWhere((e) => e['kind'] == 'fell'), {'v': eventVersion, 'kind': 'fell', 'wave': 3, 't': 106, 'type': 'archer', 'hero': false, 'killer': 'orc', 'killerTier': 'elite', 'relics': []});
 

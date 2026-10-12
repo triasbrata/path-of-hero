@@ -333,8 +333,8 @@ void main() {
     expect((g.sellPrice(Relic.ironBanner), g.sell(Relic.ironBanner), g.gold), (langkaPrice ~/ 2, 1, 1000000 + langkaPrice ~/ 2));
   });
 
-  test("with the chest on, the boss's small relic is drawn and thrown away: the loot dice draw the same", () {
-    (int, List<(Point<double>, Relic)>) bossFalls(bool offers) {
+  test("the chest on or off, the boss's fall draws the loot dice the same (its small relic thrown away either way)", () {
+    int bossFalls(bool offers) {
       final g = plain(Random(3))
         ..offers = offers
         ..wave = 4;
@@ -349,14 +349,11 @@ void main() {
         g.tick(0.05);
       }
       expect(b.alive, isFalse);
-      return (dice.draws, [...g.relicDrops]);
+      expect(g.relicBag.values, everyElement(0), reason: 'no relic drops: the Smithy makes them');
+      return dice.draws;
     }
 
-    final (offDraws, offRelics) = bossFalls(false);
-    final (onDraws, onRelics) = bossFalls(true);
-    expect(onDraws, offDraws);
-    expect([...onRelics, ...offRelics], isEmpty); // no relic lies on the field: the Smithy makes them
-    expect(chestTakesBossRelic, isTrue);
+    expect(bossFalls(true), bossFalls(false));
   });
 
   test("an old save gets its catch-up chests: one per 3 boss waves won, at most 3, rolled when opened; the owner's w86 save 3", () {

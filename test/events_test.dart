@@ -99,7 +99,6 @@ void main() {
     expect(logLine(TroopFell(4, 1, name: 'Budi', type: 'soldier', killer: 'orc_rider', killerTier: Tier.miniBoss)),
         'Budi (Soldier) fell to Mini Boss Orc Rider');
     expect(logLine(TroopFell(4, 1, name: 'Budi', type: 'soldier', killer: 'orc', killerTier: Tier.normal)), 'Budi (${troopTypeNames['soldier']}) fell to Orc');
-    expect(logLine(LootDropped(4, 1, from: 'elite_orc', tier: Tier.highElite, item: Item.sword)), '${tierNames[Tier.highElite]} ${monsterTypeNames['elite_orc']} drops ${itemNames[Item.sword]}');
     expect(logLine(StrongFoe(5, 1, type: boss, tier: Tier.boss)), '${tierNames[Tier.boss]} appears: ${monsterTypeNames[boss]}');
     expect(logLine(StrongFoe(6, 1, type: 'werebear', tier: Tier.miniBoss)), 'Mini Boss appears: Werebear');
   });

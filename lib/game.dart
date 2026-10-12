@@ -239,13 +239,12 @@ class Stats {
 /// reach, the prism's splash), then the helm (less damage taken) and the ring (MP regen), which no Awaken recipe counts.
 enum ItemSlot { sword, shield, boots, bow, gloves, potion, staff, amulet, beads, torch, spear, prism, helm, ring }
 
-/// Loot monsters drop, collected when the wave is won and used on a troop TYPE: an upgrade goes to
+/// An item, made at a Town's Smithy (town.dart; none drops) and used on a troop TYPE: an upgrade goes to
 /// every troop of that type, now and later, and stacks up to the type's cap ([Game.capOf], its awakening
 /// recipe) (a potion adds [potionRegen]). The staff ("Tongkat Sihir") is for the casters only: only the
 /// wizard's and the priest's recipes take it, and they take no sword ([powerItem]). The value is the save key and the
-/// icon's name (`item_<name>.png`), so a new one is only ever appended: the first seven are the ones monsters drop
-/// ([droppedItems]), then the forge's 35 (decisions-log 245, crafted at a Smithy, never dropped; only in a game with the
-/// Towns on, [Relics.itemsInPlay]) by grade: the five new kinds' grade I, grade II of the twelve Awaken kinds, their grade
+/// icon's name (`item_<name>.png`), so a new one is only ever appended: the first seven are the ones monsters dropped
+/// ([droppedItems]), then the forge's 35 (decisions-log 245) by grade: the five new kinds' grade I, grade II of the twelve Awaken kinds, their grade
 /// III, then the helm's and the ring's three grades. Each has its kind ([slot]) and its [grade] (1 to 3); how many kinds
 /// and grades there are is read from the enum, never counted by hand.
 enum Item {
@@ -302,13 +301,17 @@ enum Item {
   final int grade;
 }
 
-/// The items monsters drop ([droppedItemKinds]), in [Item] order: the only ones a game without the Towns knows.
+/// The items monsters dropped ([droppedItemKinds]) in a game without the Towns (gone, decisions-log 321), in [Item]
+/// order: the first seven kinds' grade I.
 const droppedItems = [Item.sword, Item.shield, Item.boots, Item.bow, Item.gloves, Item.potion, Item.staff];
 
-/// The item kinds monsters drop: the first seven of [Item] (grade I, one of each kind), so the [loot] dice roll as they
+/// The item kinds monsters dropped: the first seven of [Item] (grade I, one of each kind), so the [loot] dice roll as they
 /// did before [Item] grew (decisions-log 245).
 const droppedItemKinds = 7;
 
+/// A kill's item roll from before the Smithy made every item: a normal or elite monster at [dropChance], the boss
+/// [bossDrops] for sure; the [Game.loot] dice still draw them and throw them away (decisions-log 321). [potionRegen]:
+/// a potion's HP/s.
 const dropChance = 0.08, bossDrops = 2, potionRegen = 5.0;
 
 /// What each item multiplies its stat by ([Stats.upgraded]); the shield adds [shieldDef] defence and the
@@ -454,8 +457,9 @@ String awakeFx(String fx, int level) => level > 0 ? '${fx}_awake$level' : fx;
 /// Rarer loot. The small relics ([RelicScope.troop], [Rarity.biasa]) are held by ONE troop (one relic each, a Hero
 /// two) and change only how that troop fights: fang heals it by [fangShare] of the damage it deals, thorns hit an
 /// attacker back with [thornsShare] of the blow, fury multiplies every [furyEvery]th attack by [furyHit], guard cuts
-/// the damage taken by [guardCut]. Only strong monsters drop one, by their rank ([relicChance]); a fallen troop's
-/// relic goes back in the bag. Every Pusaka is a row of [pusakaCatalog] (pusaka_catalog.dart), which gives its
+/// the damage taken by [guardCut]. The Smithy makes them (relics.dart); strong monsters dropped the first four
+/// ([droppedRelics], [relicChance]) in a game without the Towns, gone in decisions-log 321. A fallen troop's relic goes
+/// back in the bag. Every Pusaka is a row of [pusakaCatalog] (pusaka_catalog.dart), which gives its
 /// [rarity] and whether the Toko sells it ([store]); the enum value is its save key, so a new one is only ever
 /// appended. The [store] ones, today's five artefacts, are Pusaka (pusaka.dart, decisions-log 138):
 /// bound to a whole troop TYPE ([RelicScope.type]), with stars ([dragonHeartK], [dawnStarK], [godThunderK], [grailK],
@@ -821,15 +825,6 @@ const relicNames = {
   Relic.afterglow: 'Afterglow',
   Relic.reaper: 'Reaper',
 };
-
-/// Each kind in [loot] once with how many there are, in the enum's order (a won wave's loot as "Nx").
-Map<T, int> lootCounts<T extends Enum>(Iterable<T> loot) {
-  final counts = <T, int>{};
-  for (final k in [...loot]..sort((a, b) => a.index.compareTo(b.index))) {
-    counts[k] = (counts[k] ?? 0) + 1;
-  }
-  return counts;
-}
 
 /// How many of the troops in [fallen] were of each type, in [troopTypes]' order (the book's); a type with
 /// none is left out. The "VICTORY!" popup lists a won wave's fallen ([Game.lastFallen]) this way when more
@@ -1392,8 +1387,9 @@ int killGold(int base, Tier tier, int wave, [double r = killGoldGrowth]) => (bas
 const killScore = {Tier.normal: 10, Tier.elite: 25, Tier.highElite: 50, Tier.miniBoss: 150, Tier.boss: 500};
 const waveScore = 100, lifeScore = 50;
 
-/// A wave's monster drops a relic at this chance by its rank: none from normal and elite ones, the boss at
-/// most, never for sure. A necromancer's raised minions drop none, like the gold they don't pay.
+/// A wave's monster dropped a relic at this chance by its rank in a game without the Towns (decisions-log 321): none from
+/// normal and elite ones, the boss at most, never for sure; a necromancer's raised minions none. The [Game.loot] dice
+/// still roll it and throw it away.
 const relicChance = {Tier.normal: 0.0, Tier.elite: 0.0, Tier.highElite: 0.05, Tier.miniBoss: 0.10, Tier.boss: 0.30};
 
 /// Every wave after the first adds this share of the base hp / dmg (a healer's heal) to every monster, up to
@@ -2109,17 +2105,13 @@ class Game {
   final healQueue = <Unit>[]; // troops still waiting for their after-wave heal
   static const healGap = 0.4;
 
-  /// Loot lying where monsters fell, picked up into [inventory] when the wave is won.
-  final drops = <(Point<double>, Item)>[];
+  /// The Bag's items at +0, how many of each: the Smithy makes them (town.dart); no monster drops one (decisions-log 321).
   final inventory = <Item, int>{};
 
   /// The Bag's enhanced items (decisions-log 255; enhance.dart): how many of each (item, plus) stack, the plus 1 to
   /// [EnhanceRules.most]; +0 is [inventory]'s. Each stack is its own Bag cell.
   final enhancedBag = <(Item, int), int>{};
-  List<Item> lastLoot = const []; // what the last won wave picked up
-  final relicDrops = <(Point<double>, Relic)>[];
   final relicBag = <Relic, int>{};
-  List<Relic> lastRelics = const [];
 
   /// The Towns' materials (town.dart, decisions-log 221): the ones held (saved, by name), the ones dropped in the wave
   /// being fought (they come into [materials] when it is won, and a lost game loses them, like the loot), and the ones
@@ -5750,16 +5742,6 @@ class Game {
       lastBonus = waveBonus(wave);
       gold += lastBonus;
       score += waveScore * wave;
-      lastLoot = [for (final (_, item) in drops) item];
-      for (final item in lastLoot) {
-        inventory[item] = (inventory[item] ?? 0) + 1;
-      }
-      drops.clear();
-      lastRelics = [for (final (_, r) in relicDrops) r];
-      for (final r in lastRelics) {
-        relicBag[r] = (relicBag[r] ?? 0) + 1;
-      }
-      relicDrops.clear();
       lastMaterials = {...waveMaterials};
       for (final MapEntry(key: m, value: n) in waveMaterials.entries) {
         materials[m] = (materials[m] ?? 0) + n;

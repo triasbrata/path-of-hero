@@ -53,7 +53,7 @@ const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: 'dev');
 
 /// The events that go out as they happen; the others are only summed into the wave's record.
 const passedOn = {
-  EventKind.fell, EventKind.drop, EventKind.heroMade, EventKind.awakened, //
+  EventKind.fell, EventKind.heroMade, EventKind.awakened, //
   EventKind.bought, EventKind.itemUsed, EventKind.relicUsed, EventKind.storeBought, EventKind.storeSold,
   EventKind.relicTakenOff, EventKind.typeReleased, EventKind.pusakaBound, EventKind.pusakaMoved, EventKind.ascended,
   EventKind.heroRecalled,
@@ -342,9 +342,6 @@ class TelemetryAdapter {
         _count(w.fallen, type);
         if (hero) w.heroesFallen++;
         if (killer != null) _count2(w.killers, killer, killerTier!.name);
-      case LootDropped(:final item, :final relic):
-        if (item != null) _count(w.dropped, item.name);
-        if (relic != null) _count(w.relicsDropped, relic.name);
       case Bought(:final type, :final cost):
         _count(w.bought, type ?? 'capacity');
         w.spent += cost;
@@ -506,8 +503,9 @@ class TelemetryAdapter {
         // each Pusaka's steps taken.
         if (w.ukirPoints > 0) ...{'ukirItems': w.ukirItems, 'ukirPoints': w.ukirPoints, 'ukirSteps': w.ukirSteps},
         if (w.boostSaved > 0) 'boostSaved': w.boostSaved, // the leaks a Tavern boost forgave (Watchman's Brew)
-        'dropped': w.dropped,
-        'relicsDropped': w.relicsDropped,
+        // No item or relic drops on the field (decisions-log 246, 321): always empty, kept so the record's shape stays.
+        'dropped': const <String, int>{},
+        'relicsDropped': const <String, int>{},
         // The Towns' materials the wave dropped (town.dart; summed, never an event each): read off the game before a win
         // moves them into the bag.
         'materials': {for (final MapEntry(:key, :value) in g.waveMaterials.entries) key.name: value},
@@ -553,7 +551,7 @@ class _WaveSum {
   final spawns = <String, Map<String, int>>{}, raised = <String, Map<String, int>>{}, killers = <String, Map<String, int>>{};
   final monsterCasts = <String, Map<String, int>>{};
   final casts = <String, int>{}, heroCasts = <String, int>{}, awakenCasts = <String, int>{}, fallen = <String, int>{}, bought = <String, int>{};
-  final dropped = <String, int>{}, relicsDropped = <String, int>{}, used = <String, int>{}, relicsUsed = <String, int>{};
+  final used = <String, int>{}, relicsUsed = <String, int>{};
   final storeBought = <String, int>{}, storeSold = <String, int>{}, relicsTakenOff = <String, int>{};
   final ukirItems = <String, int>{}, ukirSteps = <String, int>{};
   final crafted = <String, int>{}, materialsUsed = <String, int>{};

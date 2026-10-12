@@ -261,8 +261,6 @@ void main() {
       for (var i = 0; i < bossDrops; i++) item, 'd0.0', relic, // the boss: its sure items' kinds, then the relic
       'd0.0', item, 'd0.0', relic, // the high elite orc
     ], reason: 'the loot draws as before the forge, in the same order');
-    expect(on.drops, isEmpty);
-    expect(on.relicDrops, isEmpty, reason: 'the Towns take the relics');
     expect(on.waveMaterials, {
       Mat.slimeGel: 1,
       Mat.batWing: 1,
@@ -276,8 +274,7 @@ void main() {
       Mat.soulOrb: 1,
     });
     winNow(on);
-    expect(on.inventory, isEmpty);
-    expect(on.lastLoot, isEmpty);
+    expect([on.inventory, on.relicBag], everyElement(isEmpty), reason: 'no item or relic drops: the Smithy makes them');
     expect(on.materials[Mat.boneShard], 4);
   });
 

@@ -38,9 +38,9 @@ const artefactRise = 1.5;
 /// a troop type is part of it (its awakening, caps and price), and a relic held by a troop stays on it.
 const sellShare = 0.5;
 
-/// Everything the store sells, in the book's order: the items monsters drop ([droppedItems]: not the forge's, decisions-log
-/// 245), the dropped relics ([droppedRelics]: not the Smithy's, relics.dart), the artefacts ([Art.store], in the game:
-/// [Art.live]; not the chest's Langka).
+/// Everything the store sold, in the book's order: the items monsters dropped ([droppedItems]: not the forge's,
+/// decisions-log 245), the dropped relics ([droppedRelics]: not the Smithy's, relics.dart), the artefacts ([Art.store],
+/// in the game: [Art.live]; not the chest's Langka). A Town's Shop deals in the artefacts and materials only.
 final storeGoods = <Enum>[...droppedItems, ...droppedRelics, for (final r in Relic.values) if (r.store && pusakaCatalog[r]!.live) r];
 
 /// Why the store won't buy or sell now ([Store.whyNotBuy], [Store.whyNotSell]): besides the store's own, a Pusaka
