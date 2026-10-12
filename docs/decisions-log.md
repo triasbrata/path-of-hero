@@ -11191,6 +11191,18 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        a troop more than before it fell). Now its type's last entry of the wave leaves the queue (`_autoRose`,
        ui-hud.md "Spawn bar"); one already bought stays bought and counts at the win as before (the type has its
        number again). Test: auto_replace_test's Resurrection case (it fails on the code before).
+     - **Three cheap frame-time wins** (drawing, and one read of the game; the w89 identity dumps SAME, Towns on and
+       off): `Board._text` drew an outlined label with a new `TextPaint` for each of its five outline passes and the
+       fill, six text layouts a frame; now one is kept per text, size, colour and weight (`_textPaint`; a fading
+       colour gets a fresh one each call, its outline passes sharing it; the kept ones are cleared when the fonts
+       change, so none keeps a fallback font's layout). `_awakeOf` built a `RegExp` on every call, several a burst a
+       frame: now each burst name is split once. `waveActive` filtered every troop before reaching a monster
+       (`enemies` is a view of `units`, troops first), thousands of times a tick late in a wave: now it looks from the
+       end, the same answer. Measured on a wave-30 save (34 troops, Auto Buy on) played whole on the Board at
+       1600×947 in 16 ms frames, the CPU side (update, build, picture recording), three runs of 3,580 frames each:
+       before (runs 2-3, twice) mean 3.2-3.7 ms, p95 5.2-6.4, p99 6.6-9.9, max 13.6-29.8; after mean 1.8-2.0 ms, p95
+       2.8-3.8, p99 3.6-5.8, max 8.0-9.8; the same kills, lives, army and gold. The identity probe's headless fights
+       6.8 s before, 6.2 s after.
      - **D1, the guide card K11's picture** showed the Shop tab, then a Sword and a Fang for gold: since the forge a
        Town's Shop sells materials (its words said so: "buy materials that dropped"). Now two materials (Orc Tooth,
        Wolf Claw), then the coin (`_picToko`, coach.dart; ui-hud.md "Guide").
