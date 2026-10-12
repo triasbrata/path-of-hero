@@ -529,6 +529,8 @@ void main() {
   });
 
   group('off', () {
+    setUp(() => omensOn = false); // its own switch: it ran on an earlier test's reset (decisions-log 329)
+
     test('with omens off and every level held none of the seven acts', () {
       final all = [for (final k in batch) ...top(k)];
       expect(skillShot(omens: all, factor: 2), closeToBlow(skillShot()), reason: 'Spell Ward');
