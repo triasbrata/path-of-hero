@@ -1933,7 +1933,8 @@ outside a Town.
     icon, name and how many the Bag holds) and what it is, then the Buy row (`_shopActions`):
     - **Buy** (`_buyRow`, `BagAction.buy`, on the action rows' look: `_actCard`, `_actTitle`, `_actLine`, `_rowTag`): the
       coin stack, "Buy", its light tag "Buy 2000" ("Buy 20k") and the line "2,000 gold, then 2,200" (now and the next;
-      "65 gold each" where the next costs the same, the forge's materials). A tap buys one (the heading's count, the coin
+      a material "65 gold, then 75", the market's 10% a buy, decisions-log 326; "65 gold each" where the next costs the
+      same). A tap buys one (the heading's count, the coin
       and the gold tell it; no message). Refused (`whyNotBuy`) the tag is greyed, the line says why in red ("Not enough
       gold"; an Artifact owned, its tag "Buy" alone), and a tap says why.
 - **Sell** (the owner: "untuk di sold bisa langsung di gabung aja semua yang mau di jual, mirip seperti ui dari bags",
