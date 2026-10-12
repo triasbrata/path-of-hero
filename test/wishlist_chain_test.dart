@@ -38,7 +38,7 @@ Game reload(Game g) => Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<S
 /// The ingredient wishes as saved: "knight/royalRing/gemRing".
 List<String> parts(Game g) => [for (final p in g.wishParts) p.names.join('/')];
 
-/// The tab's rows: "group:product ×need" (an ingredient's group "parts", with "for <products>").
+/// The tab's rows: "group:product ×need" (an ingredient's group "parts", then "for" and the products it is for).
 List<String> rows(Game g) => [
       for (final r in g.wishRows)
         '${r.parents.isNotEmpty ? 'parts' : r.type ?? 'free'}:${r.kind.name} ×${r.need}${r.parents.isEmpty ? '' : ' for ${r.parents.map((k) => k.name).join(',')}'}',
@@ -95,7 +95,8 @@ void main() {
     expect(rows(g), ['knight:royalRing ×1', 'free:cleave ×2', 'parts:sword ×2 for cleave', 'parts:gemRing ×1 for royalRing', 'parts:ring ×1 for gemRing']);
     // An ingredient row is for no troop: no type; it makes what it still wants (the Bag's are counted in its need).
     final gem = g.wishRows.firstWhere((r) => r.kind == Item.gemRing);
-    expect((gem.type, gem.make, gem.parents), (null, 1, [Item.royalRing]));
+    expect((gem.type, gem.make), (null, 1));
+    expect(gem.parents, [Item.royalRing]);
     expect([for (final p in gem.parts) (p.kind, p.need)], [(Mat.tealGem, 1), (Mat.wolfFang, 1), (Item.ring, 1), (null, 600)]);
     // A Steel Helm's Leather Cap; a set's items take none.
     g.wish('archer', Item.steelHelm);
@@ -128,7 +129,8 @@ void main() {
     giveMats(g, Item.royalRing);
     expect(g.craftItem(Item.royalRing), isTrue);
     expect(rows(g), ['knight:royalRing ×1', 'archer:royalRing ×1']);
-    expect((g.partWished(Item.gemRing), g.partHeldFor(Item.gemRing)), (false, isEmpty), reason: 'made: nothing kept for it');
+    expect(g.partWished(Item.gemRing), isFalse);
+    expect(g.partHeldFor(Item.gemRing), isEmpty, reason: 'made: nothing kept for it');
     // Given to the knight: its wish met, off with its chain; the archer's still wants one, its Gem Ring and Ring again.
     expect(g.useItem(Item.royalRing, 'knight'), isTrue);
     expect(parts(g), ['archer/royalRing/gemRing', 'archer/royalRing/gemRing/ring']);
@@ -146,7 +148,8 @@ void main() {
     g
       ..wishFreeAdd(Item.gemRing)
       ..wish('knight', Item.royalRing);
-    expect(rows(g), ['knight:royalRing ×1', 'free:gemRing ×1', 'parts:gemRing ×1 for royalRing', 'parts:ring ×1 for gemRing']);
+    // Two Gem Rings to make (the own one, the Royal Ring's), so two Rings: the Ring first, put on first under the free line.
+    expect(rows(g), ['knight:royalRing ×1', 'free:gemRing ×1', 'parts:ring ×2 for gemRing', 'parts:gemRing ×1 for royalRing']);
     expect(parts(g), ['free/gemRing/ring', 'knight/royalRing/gemRing', 'knight/royalRing/gemRing/ring'],
         reason: 'the own free line\'s Ring is its own too');
     expect(g.unwish('knight', Item.royalRing), isTrue);
@@ -196,7 +199,8 @@ void main() {
     expect((g.unwishPart(Item.gemRing), g.unwishPart(Item.ring)), (false, false), reason: 'none left');
     // The group's Remove: every ingredient wish, no parent.
     expect(g.unwishParts(), isTrue);
-    expect((parts(g), g.wishesOf('knight'), g.freeWishes), (isEmpty, [Item.royalRing, Item.royalHelm], [Relic.venom, Item.royalRing]));
+    expect(parts(g), isEmpty);
+    expect((g.wishesOf('knight'), g.freeWishes), ([Item.royalRing, Item.royalHelm], [Relic.venom, Item.royalRing]));
     expect(g.unwishParts(), isFalse);
   });
 
@@ -205,7 +209,8 @@ void main() {
     g.wish('knight', Item.royalRing);
     g.inventory[Item.royalRing] = 1;
     expect(g.useItem(Item.royalRing, 'knight'), isTrue);
-    expect((g.wishesOf('knight'), parts(g)), (isEmpty, isEmpty), reason: 'a Ring met drops at once, its chain with it');
+    expect(g.wishesOf('knight'), isEmpty, reason: 'a Ring met drops at once');
+    expect(parts(g), isEmpty, reason: 'its chain with it');
     // A free Cleave crafted: its Sword goes with the line.
     g.wishFreeAdd(Relic.cleave);
     final r = g.craftRecipe(Relic.cleave)!;
@@ -219,7 +224,8 @@ void main() {
     expect(parts(g), ['free/cleave/sword'], reason: 'still held for the Cleave');
     expect(g.partHeldFor(Item.sword), [Relic.cleave]);
     expect(g.craft(Relic.cleave), isTrue);
-    expect((g.wishFree, parts(g)), (isEmpty, isEmpty));
+    expect(g.wishFree, isEmpty);
+    expect(parts(g), isEmpty);
     // A Steel Helm given: its Leather Cap goes with the met wish.
     g.wish('knight', Item.steelHelm);
     g.inventory[Item.steelHelm] = 1;
