@@ -114,9 +114,6 @@ final _healer = troopTypeNames[Game.freeHealer]!;
 /// Tempa's level in words: "+5% HP and attack" (or each its own when they differ).
 final _tempaGain = tempaHp == tempaDmg ? '+${_pct(tempaHp)} HP and attack' : '+${_pct(tempaHp)} HP, +${_pct(tempaDmg)} attack';
 
-/// The seconds Auto waits in a Town before it leaves ([TownSchedule.autoLeave], town.json).
-double get _townAuto => loadedTownRules.schedule.autoLeave;
-
 /// How long a Tavern boost lasts (town.json `tavern.lengths`, decisions-log 331): "2-4 waves, or until next Town".
 String get _tavernLengths {
   final r = loadedTownRules.tavern, n = [for (final MapEntry(:key, :value) in r.lengths.entries) if (value > 0) key];
@@ -470,8 +467,9 @@ GuideText guideFor() => GuideText(
     GuideTopic('${Words.town}s', cards: ['K23', 'K24'], lines: [
       'The wave meter shows',
       'when the next ${Words.town} comes.',
-      'There, "${Words.autoWave}" leaves',
-      'after ${_secs(_townAuto)} seconds.',
+      // A Town is left by hand, Auto or not (decisions-log 328).
+      'There, "${Words.autoWave}" waits',
+      'until you tap "${Words.leaveTown}".',
       // The tent opens the Army page (decisions-log 301).
       'Tap the tent for "${Words.army}".',
       'The "${Words.tavern}" sells boosts for',

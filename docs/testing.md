@@ -673,7 +673,7 @@ a reroll's new faces; the overflow past `omenCap` along the pool and round to it
 level, and the skip buff owed from wave 20, once, saved; the save round trip by name (an unknown kind skipped); b86's
 catch-up exactly Wear Down 2 / Heal Siphon 2 / Mend 2 / Prey 2 / Armor 2, round-robin, 2 a wave, once, also across a save; w89's 19 owed,
 12 dealt; the Beban factor (48 over 32: ×1.5, at most ×2, 1 at or under the cap or with no cap) and E; the ease (each
-full eighth of the starting troops fallen takes the newest level, at most 2 a wave); telemetry 8's fields; and
+full eighth of the starting troops fallen, awakened archers, takes the newest level, at most 2 a wave); telemetry 8's fields; and
 `policyPick` taking the same cards on or off. With the Bayangan off (`--dart-define=OMENS=false`),
 `test/probe_pusaka_w89_identity.dart` (The Pusaka, above) is the same as on a base from before them; on, the default since
 decisions-log 319, its dump moves: the w89 save owes its catch-up (12, 2 a wave), so waves 90 and 91 meet those Shadows
@@ -1015,9 +1015,9 @@ from before them and the PNGs compare byte for byte, `cmp`).
   tavernDice +800 and the Shadows' `omenDice` +900 (none seeded it before, so a run with the Shadows on was never the
   same twice). `Game.dice` lists every die; `test/dice_test.dart` holds both to game.dart's `Random` fields. The omen
   shot probes and the w89 identity probe use it.
-- **The ease's knob** (`test/omen_ease_test.dart`, decisions-log 319): `omenEaseCount` ships `falls`; `omenFalls` with
-  each `OmenEaseCount` on a wave with a troop bought mid-wave and fallen twice, two fodder starters and an awakened
-  knight: 5, 3 and 1.
+- **The ease's knob** (`test/omen_ease_test.dart`, decisions-log 319): `omenEaseCount` ships `awakened` (the owner's
+  pick, decisions-log 318; `falls` before); `omenFalls` with each `OmenEaseCount` on a wave with a troop bought mid-wave
+  and fallen twice, two fodder starters and an awakened knight: 5, 3 and 1 (1 as shipped).
 
 ## The Legenda (decisions-log 155)
 
@@ -1171,8 +1171,8 @@ UI yet.
 
 `test/ascend_test.dart`, pure Dart on `bareGame`: the constants and level names; `awakenLevel` counts `ascended` only
 at `itemLevel` 3; Bangkit 4 and 5's HP and MP (×2.0, ×2.25 of the base, the heavy types' +20% after), damage (a heal)
-×1.25 and ×1.5625 of Bangkit 3's, the other stats, price and caps unchanged; the refusals in order; a buy (100k then
-250k, the troops refit with the HP gained, the burst, the sounds, the `Ascended` event and its log line); the nine
+×1.25 and ×1.5625 of Bangkit 3's, the other stats, price and caps unchanged; the refusals in order; a buy (40k then
+100k, the troops refit with the HP gained, the burst, the sounds, the `Ascended` event and its log line); the nine
 awakening skills' cooldown ×0.85 a level, MP, numeral and lines at Bangkit 3's, and a Bangkit 5 soldier's Disarm with
 Bangkit 3's numbers; the book's words (`awakenInfo`, `ascendInfo`); the save (round trip, the troops' HP at load, an
 old save, odd entries); the bag's hint (`bagLevel`, `bagAwakens` for fielded types only).
@@ -1240,8 +1240,8 @@ K5 over its chest 8 px inside 1266×713, 1164×777 and 915×412, both pages. The
 
 ## Tempa (decisions-log 163)
 
-`test/tempa_test.dart`, pure Dart on `bareGame`: the constants; the purse (wave 86 156k, 87 166k, 100 358k, 105 479k)
-and the prices pinned (wave 87 33k-69k, wave 100 72k-124k, never under 1k); the refusals in order; a buy (the troops
+`test/tempa_test.dart`, pure Dart on `bareGame`: the constants; the purse (wave 86 104k, 87 110k, 100 223k, 105 291k)
+and the prices pinned (wave 87 22k-46k, wave 100 45k-77k, never under 1k); the refusals in order; a buy (the troops
 refit with the HP gained, the burst, the sounds, the `Tempered` event and its log line) and the next level compounding;
 HP and damage ×1.05 a level on six types (the heavy ones' +20% after), the other stats, the price and the awakening
 skill unchanged; levels waiting below Bangkit 5; a Hero's ×3 on top; Lepas jenis keeping the levels with no refund of
@@ -1258,7 +1258,7 @@ purses, and the Tas rows' "+4" (`Board.tempaMarks`, `storeAt('tokoDot')`). The s
 
 ## Hero Gugur (#92 part 3)
 
-`test/recall_test.dart`, pure Dart on `bareGame`: the price (57k / 80k / 118k / 313k at waves 65 / 72 / 80 / 100); a
+`test/recall_test.dart`, pure Dart on `bareGame`: the price (42k / 57k / 81k / 195k at waves 65 / 72 / 80 / 100); a
 Hero's fall keeps it (name, type, attributes, skill, the wave; its relics in the bag), a troop's doesn't; Resurrection
 never raises it; a recall brings the same Hero back (its type's stats now with Bangkit and Pusaka ×3 on its two, full
 HP, empty slots, the aura, autoPlace's cell, no Hero or name dice drawn, `HeroRecalled` and no `Bought`); `heroMax`
@@ -1705,7 +1705,7 @@ apart, nothing of the top band (`pieces` and the hold line) over another; held (
 "Army 1/6 · Auto Wave waits" (its width that text's), on the screen and under the toggle; the spawn bar's Auto Buy face
 (its press area less k each way, on the step right of the hotbar since decisions-log 287) as wide as "Auto Buy", all
 nine slots beside it; a tap on Auto Buy turns
-`autoReplace` on and off, one on Auto Wave turns it off (settings.json too) and on; a wave and a Town's "Leave town 5"
+`autoReplace` on and off, one on Auto Wave turns it off (settings.json too) and on; a wave and a Town's "Leave town"
 with no overlap, nothing moved. The shots: `test/probe_auto_names_shots.dart` (not in the suite; `SIZES`, `OUT`): at each
 window the countdown, the hold line, Auto Buy on, a wave and a Town, a line of the top band's and the bar's rects per
 shot with any overlap, then the landscape band's width at k 2, 3 and 4 (as test/probe_hud_merge_width.dart).
@@ -1884,14 +1884,19 @@ turn.
   seeded 8-wave run fought for real the same through a Town (a probe going through it before wave 7) and with none,
   wave by wave; in both no relic or item drops and materials do (decisions-log 221, 246). Telemetry: the three events
   passed on, each won wave's `town` (blocked, the hit, marked), `telemetryVersion` 9 or later. The chip's tooltip
-  words (the Smithy, the Tavern, the Shop once open).
+  words (which Town, the Smithy, the Tavern, the Shop once open and what the Town pays well for; decisions-log 326).
 - town_hud_test.dart (booted `TdGame`s): the chip at 1266×713 and 915×412 (right-aligned under the meter, clear of the
   open book and its tabs, its words, its tooltip under the mouse, kept mid-wave, gone in the Town); a due Town gone into
-  after the cheer and saved, "Leave town" leaving it (saved) and starting no wave, then Start; Auto's countdown in the
-  Town ("Leave town 2", "1") leaving it and the wave starting once the fade back is over; a save made in the Town
-  reopening in it.
+  after the cheer and saved, "Leave town" leaving it (saved) and starting no wave, then Start; with Auto on no
+  countdown in the Town (decisions-log 328: 10 s on, still in it, Auto still on), left by hand (saved, `TownLeft.auto`
+  false), then Auto Wave's 5 s and the wave; a save made in the Town reopening in it.
+- town_wave_count_test.dart (booted `TdGame`s; decisions-log 330): a Town takes no wave number. Wave 7 won, the Town
+  marked for it ("Town after wave 7") gone into, its meter "next wave 8", left by hand (the same wave, none started)
+  and the next wave started is 8: with Auto off (by Start) and on (by its countdown), after a wipe played wave 7 again
+  first, from a save made in the Town, and with every roll hitting (the first Town after wave 6, wave 5's chest taken
+  at once: then wave 7).
 - Probes: `test/probe_town_shots.dart` (the chip between waves and mid-wave, its tooltip, the Town's "Leave town" and
-  with Auto "Leave town 5", the battle log's lines, at 1266×713, 915×412 and 412×860) and `test/probe_town_slots.dart`
+  with Auto on, still "Leave town", the battle log's lines, at 1266×713, 915×412 and 412×860) and `test/probe_town_slots.dart`
   (the board's Towns, on with no define, over waves 1-30 for 10 seeds, the gaps, seed 7's waves in the design's
   notation, the mini boss / boss marks checked).
 
@@ -2139,7 +2144,7 @@ decisions-log 283; `scrolledTo`, test/page_scroll.dart); `seen` scrolls a part i
 - The tabs (Smithy, Tavern, Shop, Army, Bag, Settings), the Tavern tab's dot until its page shows; the rows in their slots
   with their kinds and prices, the first not bought picked; "New offers every Town", Reroll's price, "None yet.".
 - The Feast's page: its name and rarity, "Every troop: +20% damage, 15% less damage taken.", the grey line, its Effect
-  rows (Damage +20%, Damage taken -15%, Troops All troops, Waves 2) and "Buy (800 gold)"; a Buy by a tap ("Feast! 2
+  rows (Damage +20%, Damage taken -15%, Troops All troops, Waves 2) and "Buy (700 gold)"; a Buy by a tap ("Feast! 2
   waves", the gold, the boost running 2 waves, "Sold", the Active slot), the white Buy's "Sold" again.
 - Another row picked; the gold short: the prices red, "Not enough gold" on Buy and on Reroll by a tap; a Reroll with gold
   (the Feast stays, the rows follow the offers, the next price higher, no dot); leaving the Town shuts the page.
@@ -2190,9 +2195,10 @@ on the board), at 1266×713, 915×412 and the owner's tablet's 1164×777.
   wide), the campfire's art ending at the tent's right, 4 world px before the stump; the Smithy (decisions-log 253,
   271): no piece's art on its ground floor between its walls (the smith's spot); on its left the stump, the log pile and
   the sawmill, each one's art after the last's, the logs 3 world px before the sawmill, the sawmill's art 2 clear of the
-  house; on its right the furnace's art against its right wall and the ore's 2 past it, the yard's pine 2 past the ore;
-  none under its sign; its place the stump to the ore with the house; the yard's two side by side, the line right of the
-  pine, so the pine's first tier shows whole (decisions-log 253); the anchors on the lane (the street's line, 10 world
+  house; on its right the furnace's art against its right wall and the ore's 2 past it, the yard's first piece 2 past the ore;
+  none under its sign; its place the stump to the ore with the house; the first Town's yard, Millbrook's (decisions-log
+  326; the pine and the clothes line until then, decisions-log 253): its pieces side by side left to right, each its
+  cell's size, the yard their span, its 156 world px; the anchors on the lane (the street's line, 10 world
   px under the grass strip's top), left to right, each at its thing (the tent, the furnace, the Tavern's door, the fruit
   table). A tap on the bare scene shuts the book, the room 0 to 1010 − the screen's width / k, the Smithy in the middle
   of the screen when the view isn't at an end (the places side by side, the rest 2 world px from the Town's left end,
@@ -2204,8 +2210,8 @@ on the board), at 1266×713, 915×412 and the owner's tablet's 1164×777.
   the book; with town.json's `shop.from` patched to 15 the tab says when it opens, and with the shipped file again it
   opens its page, the Shop's place in view. Leave: the Town dims first, then the field, its book on the Army without the
   Shop tab.
-- Auto: "Leave town 5"; a press on a tab stops it (the Town stays; left by hand, no wave by itself); with no press it
-  leaves at 0 and the wave starts once the fade back is over.
+- Auto on (decisions-log 328): no countdown in the Town, with no press for 6.4 s or after a tab's; the scene stays until
+  "Leave town", then the fade back (0.7 s) and Auto Wave's 5 s before the wave.
 - No guide card or pointer in a Town but its own; a save made in it reopens in it at once (no fade) on the Smithy; a
   game out of a Town shows none, and the field's book has no Shop tab.
 - Probe: `test/probe_town_scene_shots.dart` (queue `["test", "test/probe_town_scene_shots.dart"]`): shots at those
@@ -2346,6 +2352,41 @@ turned on per game (dark on the board).
   `shopJustOpened` never with the shipped file, at wave 10 alone with `shop.from` patched to 10. At 1266×713 and
   915×412 (booted `TdGame`): the field's tabs Army, Bag, Settings at waves 0, 1, 14, 15 and 40; the first Town's
   Smithy, Tavern, Shop, Army, Bag, Settings, its Shop tab opening the page.
+
+## test/market_test.dart, test/town_identity_test.dart: the Towns' identities and the market (decisions-log 326)
+
+The market for forged goods and each Town's identity (loot-items-relics.md "Towns: the market"; lib/market.dart).
+market_test.dart (rules, `bareGame` in its nth Town after wave 40):
+- the identity by the Town number (1-12: Millbrook, Willowmere, Millbrook, Ironvale, Ambergate, Ironvale, then
+  Frostgate and Highspire in turn), the seasons, four wanted kinds each, Millbrook's "Pays well for" line, the Town the
+  prices read (the one the player is in, else the next) and the scene's (the last gone into, as it fades out);
+- HPP: a Sword's 80 (its parts at the Shop's sell price, its gold), a Royal Sword's, +2 (two steps and a Mithril each)
+  and +4 (a Starmetal's own Mithril inside); every small relic's; what the market deals in (no material, no Artifact);
+- the fresh price: town.json's defaults (the table, the floor, the top, the kind bonus, 24, 10); Millbrook's Sword 206,
+  Boots 182, Royal Sword 509; in Towns 1, 2, 4-8 and 20 every item's margin by grade and wanted kind, at +3 the
+  enhanced column, its price the formula's, never under 1.3x nor over 4x its HPP; every small relic by its tier;
+  Frostgate's Royal Sword 774, +2 8,293, Boots at the floor;
+- the flood: 30 Swords sold, the margin down with each of the first 24 (gently: 6 sales keep 80% of the bonus), the
+  floor at 24 and after it; the gold each piece at its own step; the event's `margin` and `pressure`
+  (`eventVersion` 14); a Sword +2 and a Shield untouched, a Sword +2 sold its own key;
+- the recovery: 24, 14, 4, gone over three Towns, a material's price back, `townEntered`'s `n` and `identity`;
+- the materials: Slime Gel 25, 30, 30, 35 (the one after each), an Evil Eye 750 then 940 (a Trophy's 25%), the rise
+  stopping at 24;
+- the Sell page's words: hot (Boots, Wind Boots in Millbrook), none (the Sword; Boots +1 under 2x), flooded past half
+  way (12 sold still hot, 16 flooded), none at the floor (Frostgate's Boots) or for a material;
+- the save: `market` and `town.n` round trip; a new game writes neither and loads count 0; unknown keys, `sword+x`, a 0
+  and a string let go, 99 kept at 24; an old save's count guessed from its last Town's slot (wave 33: 4, and 1 more in
+  the Town);
+- town.json's `market`: the defaults read back; a floor under 1, a `most` of 0 and a table of three keep the defaults
+  (the table noted in `skipped`); a file's own floor and rows.
+
+town_identity_test.dart (a booted `TdGame` at 1600×947 gone into each identity's first Town: 1, 2, 4, 5, 7, 8): its
+season's layers, castle and street drawn and no other season's; its own yard's pieces on the street, no other
+identity's; the ribbon under the HUD's band as it comes up, gone after 3 s; the meter "In <name>".
+
+- Probe: `test/probe_market_shots.dart` (`SIZES`, by default 1600×947 and 915×412): each identity's arrival (the
+  ribbon, the book on the Smithy), its Sell page (the Sword flooded, a wanted kind hot) and its Town with the book shut;
+  it prints each Town's chip tooltip, its meter's words and its prices.
 
 ## test/town_life_test.dart: the Town's troops (decisions-log 229)
 

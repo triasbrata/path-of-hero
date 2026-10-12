@@ -1082,8 +1082,8 @@ extension on Board {
 
   /// [kind]'s Buy row on the Town's Shop page ([BagAction.buy], decisions-log 230): the coin stack, "Buy", its light tag
   /// "Buy 20k" ([Store.buy] at [Store.buyPrice]; a tap buys one: the coin and the heading's count tell it, as the Sell
-  /// row's Sell) and its line what one costs now and the next ("20,000 gold, then 24,000"; "65 gold each" where the next
-  /// costs the same, the forge's materials, decisions-log 248). Refused ([Store.whyNotBuy]) the tag is greyed, the line
+  /// row's Sell) and its line what one costs now and the next ("20,000 gold, then 24,000"; a material "65 gold, then 75",
+  /// the market's rise, decisions-log 326; "65 gold each" where the next costs the same, decisions-log 248). Refused ([Store.whyNotBuy]) the tag is greyed, the line
   /// says why in red ("Not enough gold"; an Artifact owned or off the shelf, its tag "Buy" alone) and a tap says why.
   void _buyRow(Canvas c, Game g, Enum kind, Rect r, _ActLook m) {
     final a = _assign, why = g.whyNotBuy(kind), price = g.buyPrice(kind), next = g.buyPrice(kind, 1), end = r.right - m.inset;

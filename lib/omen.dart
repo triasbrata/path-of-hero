@@ -67,8 +67,9 @@ const omenEaseShare = 0.125, omenEaseMax = 2;
 /// every wave eased every Shadow away); [omenEaseMax] caps the levels a wave.
 enum OmenEaseCount { falls, starters, awakened }
 
-/// The ease's count ([OmenEaseCount]): as designed until the owner answers.
-const omenEaseCount = OmenEaseCount.falls;
+/// The ease's count ([OmenEaseCount]): the owner's answer, [OmenEaseCount.awakened] (decisions-log 318; [falls] until
+/// then, so an army of cheap fodder eased every Shadow away the wave after its chest).
+const omenEaseCount = OmenEaseCount.awakened;
 
 /// An old save's catch-up ([Omens.omenCatchUp]): at most [omenCatchUpMax] levels owed, landing [omenCatchUpStep] a wave
 /// (the owner's answer 3).

@@ -20,12 +20,13 @@ Map<String, dynamic> json(String path) => jsonDecode(File(path).readAsStringSync
 Game load(Map<String, dynamic> j) => Game.fromJson(j, Random(1), Random(2), Random(3)).boardRules();
 
 /// What the game from before the forge read for each type of [w89] and [w8] (its level, Bangkit and Tempa that count, and
-/// its stats): the Towns-off rules, Awaken by the old item recipe, recorded before they went (decisions-log 321).
+/// its stats): the Towns-off rules, Awaken by the old item recipe, recorded before they went (decisions-log 321); the
+/// swordsman's HP at its 140 since decisions-log 318 (138 and 110 at 110).
 const _before = <String, Map<String, (int, int, int, String)>>{
   'w89': {
     'soldier': (0, 0, 0, 'hp 113 mp 20 heals false speed 27.5 dmg 12.5 range 14.399999999999999 rate 0.6400000000000001 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.0'),
     'knight': (0, 0, 0, 'hp 175 mp 20 heals false speed 37.5 dmg 39.0625 range 14.0 rate 0.5120000000000001 shotSpeed 0.0 splash 0.0 regen 0.0 def 5.0 mpRegen 1.0'),
-    'swordsman': (0, 0, 0, 'hp 138 mp 30 heals false speed 28.0 dmg 17.5 range 13.0 rate 0.5 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.5'),
+    'swordsman': (0, 0, 0, 'hp 175 mp 30 heals false speed 28.0 dmg 17.5 range 13.0 rate 0.5 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.5'),
     'archer': (2, 0, 0, 'hp 113 mp 45 heals false speed 42.96875 dmg 42.91534423828125 range 570.6304286883839 rate 0.10066329600000004 shotSpeed 200.0 splash 0.0 regen 0.0 def 0.0 mpRegen 2.25'),
     'lancer': (0, 0, 0, 'hp 150 mp 20 heals false speed 63.4765625 dmg 22.5 range 22.0 rate 0.8 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.0'),
     'priest': (5, 2, 4, 'hp 205 mp 135 heals true speed 20.0 dmg 113.95371093750002 range 286.6544639999999 rate 0.3145728000000001 shotSpeed 0.0 splash 0.0 regen 30.0 def 15.0 mpRegen 6.75'),
@@ -36,7 +37,7 @@ const _before = <String, Map<String, (int, int, int, String)>>{
   'w8': {
     'soldier': (0, 0, 0, 'hp 90 mp 20 heals false speed 22.0 dmg 10.0 range 12.0 rate 0.8 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.0'),
     'knight': (0, 0, 0, 'hp 140 mp 20 heals false speed 24.0 dmg 20.0 range 14.0 rate 0.6400000000000001 shotSpeed 0.0 splash 0.0 regen 0.0 def 2.5 mpRegen 1.0'),
-    'swordsman': (0, 0, 0, 'hp 110 mp 30 heals false speed 28.0 dmg 14.0 range 13.0 rate 0.5 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.5'),
+    'swordsman': (0, 0, 0, 'hp 140 mp 30 heals false speed 28.0 dmg 14.0 range 13.0 rate 0.5 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.5'),
     'archer': (0, 0, 0, 'hp 60 mp 30 heals false speed 22.0 dmg 9.0 range 64.0 rate 0.6 shotSpeed 200.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.5'),
     'lancer': (0, 0, 0, 'hp 120 mp 20 heals false speed 26.0 dmg 18.0 range 22.0 rate 1.0 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.0'),
     'priest': (0, 0, 0, 'hp 60 mp 60 heals true speed 20.0 dmg 18.0 range 115.19999999999999 rate 1.2 shotSpeed 0.0 splash 0.0 regen 5.0 def 2.5 mpRegen 3.0'),

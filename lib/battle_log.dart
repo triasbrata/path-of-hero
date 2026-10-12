@@ -88,7 +88,7 @@ String logLine(GameEvent e) => switch (e) {
       OmenEased(:final omen, :final level) => '${Words.shadow} eased: ${omen.title} down to $level',
       OmenDusk(:final share) => '${OmenKind.dusk.title}: monsters (not bosses) deal ${omenPercent(share)}% more',
       TownMarked(:final slot) => '${Words.townAfter} ${slot - 1}', // town.dart
-      TownEntered() => Words.town,
+      TownEntered(:final identity) => switch (identityKeyed(identity)) { final t? => '${Words.town}: ${t.name}', _ => Words.town },
       TownLeft(:final crafts) => crafts.isEmpty ? 'Left town' : 'Left town: ${crafts.values.fold(0, (a, b) => a + b)} ${Words.crafted}',
       Crafted(:final relic, :final gold) => 'Crafted ${relicNames[relic]} (${thousands(gold)} gold)', // town.dart's Smithy
       ItemCrafted(:final item, :final gold) => 'Crafted ${itemNames[item]} (${thousands(gold)} gold)', // the forge's items

@@ -164,7 +164,7 @@ void main() {
       expect(s.speed, closeTo(enemyStats(boss, Tier.boss, wave).speed * Tier.highElite.speed, 1e-9), reason: '$wave');
       if (wave >= 22) expect(s.hp, enemyStats('werebear', Tier.highElite, wave).hp, reason: '$wave'); // a high-elite werebear's
     }
-    expect(enemyStats(boss, Tier.highElite, 50).hp, 15158); // 320 x 3 x 13.6 x 1.1610 (the tide)
+    expect(enemyStats(boss, Tier.highElite, 50).hp, 15470); // 320 x 3 x 13.88 x 1.1610 (the tide; waveHp 0.17, decisions-log 318)
     expect(enemyStats(boss, Tier.highElite, 50).dmg, closeTo(80.0, 0.1)); // 13.9 x 5.34 x 1.0778
     // Below the mini boss necromancer in all of it (the buff's MP included).
     final mini = enemyStats(boss, Tier.miniBoss, 50), high = enemyStats(boss, Tier.highElite, 50);

@@ -158,19 +158,19 @@ void main() {
       table[w] = [for (final b in [Boost.ale, Boost.feast, Boost.plate, Boost.banquet]) g.boostPrice(b)];
     }
     expect(table, {
-      6: [50, 100, 150, 300],
+      6: [50, 100, 150, 250],
       7: [50, 100, 200, 350],
-      12: [150, 250, 500, 800],
-      20: [450, 800, 1400, 2350],
-      30: [1100, 1850, 3300, 5550],
-      50: [4750, 7950, 14000, 24000],
-      70: [18000, 29000, 53000, 88000],
-      86: [47000, 78000, 140000, 234000],
-    });
+      12: [150, 250, 450, 750],
+      20: [450, 700, 1300, 2150],
+      30: [950, 1600, 2900, 4800],
+      50: [3800, 6300, 11000, 19000],
+      70: [13000, 21000, 38000, 63000],
+      86: [31000, 52000, 93000, 156000],
+    }); // the purse grows with the kill gold's 4.5% a wave (5% until decisions-log 318)
     expect(table[6]![1], lessThan(500), reason: 'the Feast well under 500 at the first Towns');
     // A kind's own k prices it over its rarity's.
     final own = inTown(tavern(rules: rules({'boosts': {'ale': {'k': 1.0}}})), 20);
-    expect(own.boostPrice(Boost.ale), 1550);
+    expect(own.boostPrice(Boost.ale), 1400);
     // The rerolls: 0.1 purse at least 50, ×2 each in the visit.
     final g = inTown(tavern(rules: only('common')), 20);
     final prices = <int>[];
@@ -178,7 +178,7 @@ void main() {
       prices.add(g.tavernRerollPrice);
       expect(g.rerollTavern(), isTrue);
     }
-    expect(prices, [150, 300, 600, 1250]);
+    expect(prices, [150, 300, 550, 1150]);
     expect(inTown(tavern(), 7).tavernRerollPrice, 50);
   });
 
@@ -548,13 +548,13 @@ void main() {
       List<int> four(Game g, Boost k) =>
           [for (final n in [2, 3, 4]) g.boostPrice(k, waves: n), g.boostPrice(k, untilTown: true)];
       final w6 = inTown(tavern(), 6), w20 = inTown(tavern(), 20), w50 = inTown(tavern(), 50);
-      expect(four(w6, Boost.ale), [50, 100, 150, 250], reason: '4 waves a step over 3 (×2 is 100)');
-      expect(four(w6, Boost.feast), [100, 150, 200, 400]);
-      expect(four(w6, Boost.plate), [150, 250, 350, 700]);
-      expect(four(w20, Boost.ale), [450, 700, 950, 1900]);
-      expect(four(w20, Boost.feast), [800, 1150, 1550, 3200]);
-      expect(four(w20, Boost.plate), [1400, 2100, 2800, 5700]);
-      expect(four(w50, Boost.ale), [4750, 7150, 9550, 19000]);
+      expect(four(w6, Boost.ale), [50, 100, 150, 200], reason: '4 waves a step over 3 (×2 is 100)');
+      expect(four(w6, Boost.feast), [100, 150, 200, 350]);
+      expect(four(w6, Boost.plate), [150, 250, 350, 650]);
+      expect(four(w20, Boost.ale), [450, 650, 850, 1750]);
+      expect(four(w20, Boost.feast), [700, 1050, 1400, 2900]);
+      expect(four(w20, Boost.plate), [1300, 1900, 2550, 5200]);
+      expect(four(w50, Boost.ale), [3800, 5650, 7550, 15000]);
       // The 2-wave price is the one from before 331; every longer one dearer, at every wave.
       for (var w = 1; w <= 100; w++) {
         final g = tavern()..wave = w;
@@ -569,9 +569,9 @@ void main() {
       // An offer costs its own length's, and buying takes it.
       final g = inTown(tavern(rules: only('rare', lengths: {'4': 1}), gold: 10000), 20);
       expect({for (final o in g.tavernOffers.take(2)) o.kind}, {Boost.feast, Boost.mage});
-      expect([for (final o in g.tavernOffers.take(2)) g.offerPrice(o)], [1550, 1550], reason: 'a Rare\'s 4 waves after wave 20');
+      expect([for (final o in g.tavernOffers.take(2)) g.offerPrice(o)], [1400, 1400], reason: 'a Rare\'s 4 waves after wave 20');
       expect(g.buyBoost(0), isTrue);
-      expect((g.gold, g.boosts.single.left, g.boosts.single.untilTown), (10000 - 1550, 4, false));
+      expect((g.gold, g.boosts.single.left, g.boosts.single.untilTown), (10000 - 1400, 4, false));
     });
 
     test('a 3-wave boost runs three waves, a 4-wave one four', () {

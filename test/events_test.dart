@@ -256,7 +256,7 @@ void main() {
       ..wave = storeFrom
       ..inTown = true; // the Shop deals only in a Town
     final heard = traces(g);
-    final price = g.buyPrice(Relic.grail), back = g.sellPrice(Item.potion);
+    final price = g.buyPrice(Relic.grail), back = g.marketSum(Item.potion, 0, 2), margin = g.freshMargin(Item.potion);
     g.inventory[Item.potion] = 3;
     expect(g.buy(Relic.grail), isTrue);
     expect(g.sell(Item.potion, 2), 2);
@@ -264,7 +264,10 @@ void main() {
     expect(g.buy(Item.sword), isFalse); // no gold
     expect(heard.map((e) => e.toJson()..remove('t')), [
       {'v': eventVersion, 'kind': 'storeBought', 'wave': storeFrom, 'item': null, 'relic': 'grail', 'cost': price},
-      {'v': eventVersion, 'kind': 'storeSold', 'wave': storeFrom, 'item': 'potion', 'relic': null, 'n': 2, 'gain': 2 * back},
+      {
+        'v': eventVersion, 'kind': 'storeSold', 'wave': storeFrom, 'item': 'potion', 'relic': null, 'n': 2, 'gain': back, //
+        'margin': (margin * 100).round() / 100, 'pressure': 0, // the market's (decisions-log 326): each at its own step
+      },
     ]);
   });
 

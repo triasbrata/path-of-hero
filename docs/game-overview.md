@@ -29,8 +29,11 @@ but the troops move freely.
    waves, never a wave itself, warned a wave ahead on the wave meter (the first before wave 7 at the earliest, then
    at least 5 waves apart). Its Smithy crafts the items and the small relics from the monsters' materials (and from
    wave 30 enhances items), its Shop sells the materials that have dropped and buys back what the Bag holds (in every
-   Town), its Tavern sells boosts for the next 2 waves (offered three at a time, gacha-style; loot-items-relics.md
-   "Towns: the Tavern"); a drag, the wheel or a trackpad's swipe pans it sideways to look around; "Leave town" goes on
+   Town; forged goods at 1.3x-4x their cost by the Town's demand, less as one product floods: loot-items-relics.md
+   "Towns: the market"), its Tavern sells boosts for the next 2 waves (offered three at a time, gacha-style; loot-items-relics.md
+   "Towns: the Tavern"). Each Town has its identity by its number in the run, two a season: Millbrook and Willowmere
+   in summer value beginner goods, Ironvale and Ambergate in autumn, Frostgate and Highspire in winter the high-class
+   ones, each with its own backdrop, yard and the kinds it pays well for; a drag, the wheel or a trackpad's swipe pans it sideways to look around; "Leave town" goes on
    to the next wave (with Auto Wave on, 5 s after coming in).
 5. **Lose.** A monster crossing the back line costs a life, half a heart: a game starts with 3 hearts
    (6 lives). When the whole army falls mid-wave the wave is lost, not the game (decisions-log 322): it costs a heart,
@@ -64,17 +67,18 @@ but the troops move freely.
   relics in three tiers: seven Basic (fang, thorns, fury, guard and the forge's chill, shark tooth and grit), seven
   Strong and six Mighty (assets/config/town.json `relics`).
 - **The store** (a Town's Shop, open in every Town): sells only the materials
-  that have dropped (2.5x their sell price), no item or small relic (the Smithy makes them); what is in the bag sells
-  back (items and relics for half their worth). Its Artifact shelf (five overpowered artefacts) opens only in a game
+  that have dropped (2.5x their sell price, 10% dearer for each bought, back over 2-3 Towns), no item or small relic
+  (the Smithy makes them); what is in the bag sells back (an item and a small relic at the market's price, decisions-log
+  326). Its Artifact shelf (five overpowered artefacts) opens only in a game
   without the Boss Chest: on the board the chest is the Artifacts' one source.
 - **Awaken 4-5** (Bangkit 4-5 in the code, #92 part 2): a type at Awaken 3 buys two more awakening levels with gold
-  on its Army page (100k, then 250k), between any waves from wave 15 won: violet, then white, more HP and MP, ×1.25 damage a level and a shorter
+  on its Army page (40k, then 100k), between any waves from wave 15 won: violet, then white, more HP and MP, ×1.25 damage a level and a shorter
   awakening-skill cooldown.
 - **Forge** (Tempa in the code, decisions-log 163): past Awaken 5 the same Army page keeps selling levels, "Forge +1",
   "Forge +2", …: +5% HP and damage each, compounding, for a fifth of a late wave's gold, ×1.2 a level. A dot on the
   Army tab says when gold piles up (3 waves' worth) and something there can be bought.
 - **Fallen Heroes** (Hero Gugur in the code, #92 part 3): a fallen Hero is kept, and its type's Army page calls it
-  back ("Recall") between waves for about one wave's income (57k at wave 65): the same name,
+  back ("Recall") between waves for about one wave's income (42k at wave 65): the same name,
   attributes and skill; its relics stay in the bag. With the army full it swaps: one troop of its type goes home for
   half its price and the Hero takes its place.
 - Before a wave, troops on the field can be dragged to another cell of the zone.

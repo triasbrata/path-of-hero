@@ -3,7 +3,7 @@
 // "kalau belum ada item yang di pilih maka di sini cukup kosong"); Buy is the forge's
 // Materials alone (Items and Relics, which its shelf has none of, left out and Materials moved up into their place:
 // decisions-log 280), the materials seen in first-drop order at 2.5x their sell price (each cell's capsule), every cell's
-// tap picking its own kind; a material picked shows Buy ("Buy 65", "65 gold each"), a buy spends the gold and fills the
+// tap picking its own kind; a material picked shows Buy ("Buy 65", "65 gold, then 75"), a buy spends the gold and fills the
 // Bag and never joins matsSeen; the items and small relics held are on Sell; an empty shelf's Buy has no section, only
 // "Nothing to buy here yet." (the Artifact shelf open: Artifacts alone), an empty Bag's Sell "Nothing to sell yet." (the forge-off
 // shelf went with the forge-off build, decisions-log 296). The rules:
@@ -173,7 +173,8 @@ void main() {
         expect(b.shopPick, isNull, reason: '$tag: $kind put back');
       }
 
-      // Wolf Claw: Buy 65 ("65 gold each"); a buy spends 65 and fills the Bag, matsSeen as it was.
+      // Wolf Claw: Buy 65 ("65 gold, then 75": the market's 10% a buy, decisions-log 326); a buy spends 65 and fills the
+      // Bag, matsSeen as it was.
       await cell(tester, b, Mat.wolfClaw);
       expect(b.shopPick, Mat.wolfClaw);
       expect((b.bagDetailText('name'), b.bagDetailText('count')), ('Wolf Claw', 'x4'));
@@ -182,7 +183,7 @@ void main() {
         expect(inside(r, b.assignList) && inside(r, book) && inside(r, Offset.zero & size), isTrue, reason: '$tag $act: $r');
       }
       expect(b.bagDetailText('buy'), '${Words.buy} 65');
-      expect(b.bagDetailText('hint:buy'), anyOf('65 gold each', '65 gold'), reason: tag);
+      expect(b.bagDetailText('hint:buy'), anyOf('65 gold, then 75', '65 gold'), reason: tag);
       final order = [...g.matsSeen], gold = g.gold;
       await tapOn(tester, b.bagDetail('buy'));
       expect((g.materials[Mat.wolfClaw], g.gold, b.message, b.bagDetailText('count')), (5, gold - 65, null, 'x5'), reason: '$tag: one bought');

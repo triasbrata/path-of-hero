@@ -182,7 +182,7 @@ void main() {
       'greyed with why, a full army\'s swap; it fits the four sizes', (tester) async {
     final b = await boot(tester);
 
-    /// A field game after wave 65 (a recall 57k) with three knights fallen, Hero 1 to Hero 3, and room in the army.
+    /// A field game after wave 65 (a recall 42k) with three knights fallen, Hero 1 to Hero 3, and room in the army.
     Game fallen() {
       final g = shopGame(inTown: false)
         ..wave = 65
@@ -220,7 +220,7 @@ void main() {
       final newest = await reveal(2), next = b.troopDetail('recall:1');
       expect((next == Rect.zero, b.troopDetail('recall:0')), (false, Rect.zero), reason: '$size: two shown');
       expect(newest.top, lessThan(next.top), reason: 'the last to fall first');
-      expect(b.troopDetailWords('recall'), ['${Words.recall} 57k', '${Words.recall} 57k'], reason: '$size');
+      expect(b.troopDetailWords('recall'), ['${Words.recall} 42k', '${Words.recall} 42k'], reason: '$size');
       expect(b.troopDetailWords('heroes'), containsAllInOrder(['Fallen: Hero 3', 'Fallen: Hero 2', '+1 more']), reason: '$size');
       expect(inside(newest, b.bookArea) && inside(newest, Offset.zero & size), isTrue, reason: '$size: $newest');
       expect(newest.height, greaterThanOrEqualTo(18), reason: "$size: a finger's");
@@ -229,7 +229,7 @@ void main() {
         // A tap recalls the Hero: the knight back, the gold paid; Hero 1 shows now and "+1 more" goes.
         final army = g.armySize;
         await tapOn(tester, newest);
-        expect((g.fallenHeroes.length, g.armySize, g.gold), (2, army + 1, 1000000 - 57000));
+        expect((g.fallenHeroes.length, g.armySize, g.gold), (2, army + 1, 1000000 - 42000));
         expect(g.troops.any((u) => u.alive && u.hero && u.name == 'Hero 3'), isTrue);
         expect(b.heroSplash, 'Hero 3 is back!');
         await tester.tapAt(size.center(Offset.zero)); // the splash's tap closes it
@@ -254,11 +254,11 @@ void main() {
         await frames(tester);
         final f = g.fallenHeroes[1], out = g.recallSwapOf(f)!, refund = g.recallSwapRefundOf('knight');
         await reveal(1);
-        expect(b.troopDetailWords('recall').first, '${Words.recall} 57k, swap 1 ${troopTypeNames['knight']}');
+        expect(b.troopDetailWords('recall').first, '${Words.recall} 42k, swap 1 ${troopTypeNames['knight']}');
         expect(g.recallInfo(f).$2, contains(contains('${out.name} goes home (+${thousands(refund)} gold)')));
         final full = g.armySize;
         await tapOn(tester, b.troopDetail('recall:1'));
-        expect((g.armySize, out.alive, g.gold, g.fallenHeroes.length), (full, false, 1000000 - 57000 + refund, 1));
+        expect((g.armySize, out.alive, g.gold, g.fallenHeroes.length), (full, false, 1000000 - 42000 + refund, 1));
         await tester.tapAt(size.center(Offset.zero)); // its splash
         await frames(tester, 3);
         expect(b.heroSplash, isNull);

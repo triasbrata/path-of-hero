@@ -27,6 +27,12 @@ never another pack.
   python3 tool/sprite_map.py "Pine Trees.png" map.png --grid 32): each pine's cone, three tiers and trunk; a bare
   trunk stands inside each pine's box, a sprite of its own, cleared (the sprite's own pixels only).
 - town_props.png: Decor.png's props (PROPS), packed in rows with a 1 px gap (props_layout()).
+- The Towns' identities (decisions-log 326): town_autumn_bg_1..5.png and town_autumn_castle.png, the Autumn BG set,
+  town_winter_bg_1..5.png and town_winter_castle.png, the Winter BG set, laid out as the Normal BG's; town_ground_autumn
+  and town_ground_winter.png, Floor Tiles2.png's same cell as town_ground.png's in its autumn band (32, 192) and its
+  snowy band (32, 384); town_yards.png, each identity's yard pieces (YARDS) cut to their mapped boxes from the pack's
+  trees, Wheat.png, Boat.png, Garden Decorations.png, Alchemy Decor.png, Small Tent.png, Angel Statue.png, Ores.png
+  and Torch.png (the lit torch's six frames side by side), packed as town_props.png (yards_layout()).
 Every file is written as 8-bit RGBA (the pixels unchanged). lib/town_art.dart holds the files' names, the frame grids
 and each named cell's rect in its atlas, so the scene draws by name.
 
@@ -47,8 +53,14 @@ DART = ROOT / "lib/town_art.dart"
 PACK = "raw_sprites/gandalfhardcore-platformer"
 BG = "GandalfHardcore Background layers/Normal BG"
 
+# The Towns' seasons (decisions-log 326): (season, its BG set's folder, its castle's file), laid out as the Normal BG.
+SEASONS = [("autumn", "GandalfHardcore Background layers/Autumn BG", "Background Castle Autumn.png"),
+           ("winter", "GandalfHardcore Background layers/Winter BG", "Background Castle  Winter.png")]
 # Whole files, as they are: (out name, pack file, frame w, h or None).
 WHOLE = [(f"town_bg_{i}.png", f"{BG}/GandalfHardcore Background layers_layer {i}.png", None) for i in range(1, 6)] + [
+    (f"town_{season}_bg_{i}.png", f"{folder}/GandalfHardcore Background layers_layer {i}.png", None)
+    for season, folder, _ in SEASONS for i in range(1, 6)] + [
+    (f"town_{season}_castle.png", f"{folder}/{castle}", None) for season, folder, castle in SEASONS] + [
     ("town_castle.png", f"{BG}/Background Castle .png", None),
     ("town_smithy.png", "Furnace and Sawmill.png", (64, 64)),
     ("town_campfire.png", "Animated Sprites/Campfire with food sheet.png", (32, 32)),
@@ -56,6 +68,8 @@ WHOLE = [(f"town_bg_{i}.png", f"{BG}/GandalfHardcore Background layers_layer {i}
 # One piece of a sheet, cut to its pixels: (out name, pack file, x, y, w, h).
 SINGLES = [
     ("town_ground.png", "Floor Tiles2.png", 32, 0, 32, 14),  # the street, its grass over its earth (decisions-log 279)
+    ("town_ground_autumn.png", "Floor Tiles2.png", 32, 192, 32, 14),  # the same cell in the autumn band (326)
+    ("town_ground_winter.png", "Floor Tiles2.png", 32, 384, 32, 14),  # and in the snowy one
     ("town_tent.png", "Large Tent.png", 0, 7, 96, 121),  # the troops' rest
     ("town_ore.png", "Ores.png", 70, 90, 53, 38),  # the blue ore rock, beside the furnace
 ]
@@ -116,20 +130,61 @@ PROPS = [
     ("basket", 360, 49, 17, 15),  # a basket of apples, the Shop's
 ]
 DECOR, PROPS_W, GAP = "Decor.png", 128, 1
+# The Towns' yards (decisions-log 326): each identity's pieces, (name, pack file, x, y, w, h, frames), cut to the boxes
+# tool/sprite_map.py maps; an animation's next frames lie 32 px apart along its sheet's row (Torch.png's lit torch, the
+# flame's six frames), packed side by side.
+YARDS = [
+    ("flowerTree", "Flowering Tree.png", 4, 12, 85, 100, 1),  # Millbrook's: the flowering tree, the wheat, a sack, a sheaf
+    ("wheat", "Wheat.png", 133, 0, 19, 32, 1),
+    ("sack", "Wheat.png", 198, 12, 20, 20, 1),
+    ("sheaf", "Wheat.png", 226, 16, 12, 15, 1),
+    ("willow", "Weeping Willow1.png", 4, 1, 216, 191, 1),  # Willowmere's: the willow, a boat pulled up, potted plants
+    ("boat", "Boat.png", 1, 7, 78, 25, 1),
+    ("potGreen", "Garden Decorations.png", 36, 7, 23, 25, 1),
+    ("potOlive", "Garden Decorations.png", 37, 36, 21, 28, 1),
+    ("potSmall", "Garden Decorations.png", 71, 48, 18, 16, 1),
+    ("birch", "Birch1.png", 2, 5, 75, 107, 1),  # Ironvale's: a birch, the gold ore rock, a torch
+    ("oreGold", "Ores.png", 6, 90, 53, 38, 1),
+    ("torch", "Torch.png", 11, 33, 10, 31, 6),  # Ironvale's, Frostgate's and Highspire's
+    ("smallTent", "Small Tent.png", 0, 0, 64, 64, 1),  # Ambergate's: the market tent, the flower table, sunflowers, grapes
+    ("flowerTable", "Alchemy Decor.png", 79, 26, 37, 38, 1),
+    ("sunflowers", "Alchemy Decor.png", 163, 21, 27, 43, 1),
+    ("grapeBowl", "Alchemy Decor.png", 137, 46, 14, 18, 1),
+    ("cypress", "Garden Decorations.png", 130, 26, 28, 102, 1),  # Frostgate's: a cypress, urns on plinths, the angel
+    ("urnFern", "Garden Decorations.png", 99, 66, 27, 62, 1),
+    ("angel", "Angel Statue.png", 9, 0, 48, 64, 1),
+    ("urnRed", "Garden Decorations.png", 65, 74, 29, 54, 1),
+    ("bust", "Garden Decorations.png", 5, 83, 21, 45, 1),  # Highspire's: a bust, the alchemy table, an urn, a tree
+    ("alchemyTable", "Alchemy Decor.png", 35, 42, 26, 22, 1),
+    ("urn", "Garden Decorations.png", 35, 86, 27, 42, 1),
+    ("gardenTree", "Garden Decorations.png", 163, 38, 56, 90, 1),
+]
+YARDS_W, FRAME_STEP = 256, 32
 
 
-def props_layout():
-    """{name: (x, y, w, h)} in town_props.png, and its (width, height): the props tallest first (then by name), each
-    row filled left to right, a prop in the first row it fits, GAP px between props and rows."""
+def packed(cells, width):
+    """{name: (x, y, w, h)} of cells (name, w, h) packed into an atlas [width] px wide, and its (width, height): the
+    cells tallest first (then by name), each row filled left to right, a cell in the first row it fits, GAP px between
+    cells and rows."""
     rows, at = [], {}  # rows: [y, height, next x]
-    for name, _, _, w, h in sorted(PROPS, key=lambda p: (-p[4], p[0])):
-        row = next((r for r in rows if r[2] + w <= PROPS_W and h <= r[1]), None)
+    for name, w, h in sorted(cells, key=lambda p: (-p[2], p[0])):
+        row = next((r for r in rows if r[2] + w <= width and h <= r[1]), None)
         if row is None:
             row = [rows[-1][0] + rows[-1][1] + GAP if rows else 0, h, 0]
             rows.append(row)
         at[name] = (row[2], row[0], w, h)
         row[2] += w + GAP
-    return at, (PROPS_W, rows[-1][0] + rows[-1][1])
+    return at, (width, rows[-1][0] + rows[-1][1])
+
+
+def props_layout():
+    """{name: (x, y, w, h)} in town_props.png, and its (width, height)."""
+    return packed([(name, w, h) for name, _, _, w, h in PROPS], PROPS_W)
+
+
+def yards_layout():
+    """{name: (x, y, w, h)} in town_yards.png (an animation's whole row of frames), and its (width, height)."""
+    return packed([(name, w * frames, h) for name, _, _, _, w, h, frames in YARDS], YARDS_W)
 
 
 def house_layout():
@@ -232,15 +287,29 @@ def images(pack):
         out[name] = (w, h, crop(sheet(src), x, y, w, h))
     for name, src, box, bands in STACKS:
         out[name] = stack(sheet(src), box, bands)
-    names = [c[0] for c in HOUSE] + [p[0] for p in PROPS]
-    if len(set(names)) != len(names):
-        sys.exit("HOUSE / PROPS: a name twice")
+    for names in ([c[0] for c in HOUSE] + [p[0] for p in PROPS], [y[0] for y in YARDS]):
+        if len(set(names)) != len(names):
+            sys.exit("HOUSE / PROPS / YARDS: a name twice")
     for name, x, _, w, h in HOUSE:
         if x >= 224 or w != HOUSE_CELL or h not in (HOUSE_CELL, HOUSE_CELL // 2):
             sys.exit(f"HOUSE: {name} is not a 16x16 (or 16x8) cell of the left house")
     out["town_house.png"] = atlas(sheet(HOUSE_FILE), HOUSE, *house_layout())
     out["town_props.png"] = atlas(sheet(DECOR), PROPS, *props_layout())
+    at, (aw, ah) = yards_layout()
+    yards = bytearray(aw * ah * 4)
+    for name, src, x, y, w, h, frames in YARDS:
+        ax, ay, _, _ = at[name]
+        for f in range(frames):
+            px = crop(sheet(src), x + f * FRAME_STEP, y, w, h)
+            for r in range(h):
+                o = ((ay + r) * aw + ax + f * w) * 4
+                yards[o:o + w * 4] = px[r * w * 4:(r + 1) * w * 4]
+    out["town_yards.png"] = (aw, ah, bytes(yards))
     return out
+
+
+def frames_of(name):
+    return next(frames for n, *_, frames in YARDS if n == name)
 
 
 def dart_cells(var, at, doc):
@@ -269,11 +338,18 @@ def dart(made):
         "const townCastle = 'town_castle.png';",
         "const townLayerW = 1024, townLayerH = 346;",
         "",
+        "/// The Towns' seasons (decisions-log 326): the Autumn and the Winter BG, laid out as [townLayers] and [townCastle].",
+    ] + [f"const town{season.title()}Layers = [" + ", ".join(f"'town_{season}_bg_{i}.png'" for i in range(1, 6)) +
+         f"], town{season.title()}Castle = 'town_{season}_castle.png';" for season, _, _ in SEASONS] + [
+        "",
         "/// The street (decisions-log 279): Floor Tiles2's grass top over its dark earth, "
         "[townGroundW]x[townGroundH], one",
         "/// tile of its 32-px repeat, tiled along the street; its last row is the earth's one colour.",
         "const townGroundTile = 'town_ground.png';",
         f"const townGroundW = {single['town_ground.png'][0]}, townGroundH = {single['town_ground.png'][1]};",
+        "",
+        "/// Their streets: Floor Tiles2's same cell in its autumn and its snowy band, as big as [townGroundTile].",
+        "const townGroundAutumn = 'town_ground_autumn.png', townGroundWinter = 'town_ground_winter.png';",
         "",
         f"/// The house's {len(HOUSE)} cells ([townHouseCells]), {HOUSE_COLS} a row of {HOUSE_CELL}x{HOUSE_CELL} "
         f"({hw}x{hh}): the scene rebuilds the",
@@ -305,13 +381,31 @@ def dart(made):
         "",
     ]
     lines += dart_cells("townPropCells", props, "Each prop's rect in [townProps].")
+    yards, (yw, yh) = yards_layout()
+    first = {name: (x, y, w // frames, h) for (name, (x, y, w, h)), frames in zip(yards.items(),
+                                                                                    (frames_of(n) for n in yards))}
     lines += [
+        "",
+        f"/// The Towns' yards' pieces ([townYardCells]), {yw}x{yh} (decisions-log 326): an animation's next frames beside",
+        "/// its first, [townYardFrames] of them.",
+        "const townYards = 'town_yards.png';",
+        "",
+    ]
+    lines += dart_cells("townYardCells", first, "Each yard piece's (first frame's) rect in [townYards].")
+    lines += [
+        "",
+        "/// The yard pieces' frames, an animation's (the others one).",
+        "const townYardFrames = <String, int>{" + ", ".join(
+            f"'{name}': {frames}" for name, *_, frames in YARDS if frames > 1) + "};",
         "",
         "/// Every file of the Town scene.",
         "const townImages = [",
         "  ...townLayers,",
-    ] + [f"  {v}," for v in ("townCastle", "townGroundTile", "townHouse", "townSmithy", "townCampfire",
-                             "townTent", "townOre", "townPine", "townProps")] + [
+        "  ...townAutumnLayers,",
+        "  ...townWinterLayers,",
+    ] + [f"  {v}," for v in ("townCastle", "townAutumnCastle", "townWinterCastle", "townGroundTile",
+                             "townGroundAutumn", "townGroundWinter", "townHouse", "townSmithy", "townCampfire",
+                             "townTent", "townOre", "townPine", "townProps", "townYards")] + [
         "];",
         "",
     ]

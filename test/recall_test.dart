@@ -70,11 +70,11 @@ FallenHero knight([String name = 'Budi Santoso']) =>
     FallenHero(name: name, type: 'knight', stats: const [HeroStat.hp, HeroStat.defence], skill: heroSkillPool('knight').first, fell: 60);
 
 void main() {
-  test('the price: 2500 x 1.05^(wave - 1), to the thousand: 57k at 65, 80k at 72, 118k at 80, 313k at 100', () {
-    expect((heroRecallK, heroRecallRound, killGoldGrowth, heroMax), (2500, 1000, 0.05, 5));
-    expect([for (final w in [65, 72, 80, 100]) heroRecallPrice(w)], [57000, 80000, 118000, 313000]);
+  test('the price: 2500 x 1.045^(wave - 1), to the thousand: 42k at 65, 57k at 72, 81k at 80, 195k at 100', () {
+    expect((heroRecallK, heroRecallRound, killGoldGrowth, heroMax), (2500, 1000, 0.045, 5));
+    expect([for (final w in [65, 72, 80, 100]) heroRecallPrice(w)], [42000, 57000, 81000, 195000]);
     expect([heroRecallPrice(0), heroRecallPrice(1), heroRecallPrice(storeFrom)], [3000, 3000, 5000]);
-    expect(afterWave(72).recallPrice, 80000, reason: 'the last wave played');
+    expect(afterWave(72).recallPrice, 57000, reason: 'the last wave played');
   });
 
   test('a Hero that falls is kept (name, type, attributes, skill, the wave); a troop is not; its relics are in the bag', () {
@@ -132,14 +132,14 @@ void main() {
     final want = g.statsOf('knight').heroic({HeroStat.hp, HeroStat.defence}, heroBoost);
     expect((u.stats.hp, u.stats.def, u.stats.dmg, u.hp), (want.hp, want.def, want.dmg, want.hp.toDouble()), reason: 'Bangkit 4 and Dawn Star, x3, full HP');
     expect(priest.stats.hp, g.statsOf('priest').boosted(auraBoost).hp, reason: 'the aura is back');
-    expect((g.gold, g.fallenHeroes.isEmpty, g.aliveOf('knight'), g.heroCount), (gold - 57000, true, 1, 1));
+    expect((g.gold, g.fallenHeroes.isEmpty, g.aliveOf('knight'), g.heroCount), (gold - 42000, true, 1, 1));
     expect(g.heroes.nextInt(1 << 30), Random(7).nextInt(1 << 30), reason: 'no Hero dice');
     expect(g.names.nextInt(1 << 30), Random(8).nextInt(1 << 30), reason: 'no name dice');
     // autoPlace's cell, marching in from the left.
     expect(g.inZone((u.post.x / tile).floor(), (u.post.y / tile).floor()), isTrue);
     expect((u.arriving, u.entered, u.pos.x < g.baseX, u.pos.y), (true, false, true, u.post.y));
     final e = events.whereType<HeroRecalled>().single;
-    expect((e.name, e.type, e.skill, e.fell, e.cost, e.wave), ('Budi Santoso', 'knight', f.skill, 60, 57000, 65));
+    expect((e.name, e.type, e.skill, e.fell, e.cost, e.wave), ('Budi Santoso', 'knight', f.skill, 60, 42000, 65));
     expect(e.stats, [HeroStat.hp, HeroStat.defence]);
     expect(events.whereType<Bought>(), isEmpty, reason: 'not a troop bought');
     expect(g.sfx, contains(Sfx.clear));
@@ -240,7 +240,7 @@ void main() {
     expect(g.recallHero(f), isTrue);
 
     final u = g.heroRecalled.single;
-    expect((g.armySize, g.heroCount, g.gold), (armyMaxBoard, 2, gold - 57000 + refund), reason: 'the count unchanged');
+    expect((g.armySize, g.heroCount, g.gold), (armyMaxBoard, 2, gold - 42000 + refund), reason: 'the count unchanged');
     expect((out.alive, g.units.contains(out), g.toReplace.isEmpty, g.fallen.isEmpty), (false, false, true, true),
         reason: 'home, not fallen');
     expect(g.relicBag[Relic.fury], bag + 1, reason: 'its relic back to the bag');
@@ -249,10 +249,10 @@ void main() {
     expect(g.inZone((u.post.x / tile).floor(), (u.post.y / tile).floor()), isTrue);
     expect(g.fallenHeroes, isEmpty);
     final e = events.whereType<HeroRecalled>().single;
-    expect((e.swapped, e.refund, e.cost), (out.name, refund, 57000));
+    expect((e.swapped, e.refund, e.cost), (out.name, refund, 42000));
     expect(e.toJson()['refund'], refund);
     expect(e.toJson().containsKey('swapped'), isFalse, reason: 'no troop names in the telemetry');
-    expect(logLines(e), ['Budi Santoso (${troopTypeNames['knight']}) is back (57k gold)', '${out.name} goes home (+${shortPrice(refund)} gold)']);
+    expect(logLines(e), ['Budi Santoso (${troopTypeNames['knight']}) is back (42k gold)', '${out.name} goes home (+${shortPrice(refund)} gold)']);
     expect(events.whereType<TypeReleased>(), isEmpty, reason: 'the type stays');
 
     // The next recall swaps the next: knights[5] now (knights[3] is as whole).
@@ -301,7 +301,7 @@ void main() {
     expect(g.recallInfo(f).$2.where((l) => l.contains('goes home')), isEmpty);
     expect(g.recallHero(f), isTrue);
     expect(g.troops.where((u) => u.alive), containsAll(before));
-    expect((g.armySize, g.gold), (armyMaxBoard, gold - 57000));
+    expect((g.armySize, g.gold), (armyMaxBoard, gold - 42000));
     final e = events.whereType<HeroRecalled>().single;
     expect((e.swapped, e.refund, logLines(e).length), (null, 0, 1));
   });
