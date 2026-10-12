@@ -1383,10 +1383,10 @@ const killGoldGrowth = 0.05;
 int killGold(int base, Tier tier, int wave, [double r = killGoldGrowth]) => (base * tier.reward * pow(1 + r, max(0, wave - 1))).floor();
 
 /// The score ([Game.score], docs/scoreboard.md): points for every kill by the monster's rank (the boss's
-/// raised skeletons pay no gold and score nothing), [waveScore] × n for winning wave n, and when the game
-/// is over [lifeScore] for every life left.
+/// raised skeletons pay no gold and score nothing) and [waveScore] × n for winning wave n. The lives left paid 50 each
+/// at the game's end until decisions-log 329: since 322 a game ends only at 0 lives, so they paid nothing.
 const killScore = {Tier.normal: 10, Tier.elite: 25, Tier.highElite: 50, Tier.miniBoss: 150, Tier.boss: 500};
-const waveScore = 100, lifeScore = 50;
+const waveScore = 100;
 
 /// A wave's monster dropped a relic at this chance by its rank in a game without the Towns (decisions-log 321): none from
 /// normal and elite ones, the boss at most, never for sure; a necromancer's raised minions none. The [Game.loot] dice
@@ -2046,7 +2046,7 @@ class Game {
     return (title, [...lines, if (over.waves > 0) overTip(over.by, over.waves), if (capPressed) capTip(armyMax!)]);
   }
 
-  /// Points so far ([killScore], [waveScore], and [lifeScore] once the game is over) and monsters killed
+  /// Points so far ([killScore], [waveScore]) and monsters killed
   /// (the boss's raised skeletons too): what goes on the scoreboard.
   int score = 0, kills = 0;
 
@@ -5848,9 +5848,8 @@ class Game {
       _rollTown(); // then the Town two waves ahead, rolled now so the auto-save keeps it (town.dart)
     }
     _autoReplaceTick(); // Auto buys back the fallen the gold now covers (auto_replace.dart)
-    // The game ended this tick (the next one returns at once): every life left scores, and the wave is lost.
+    // The game ended this tick (the next one returns at once): the wave is lost.
     if (over) {
-      score += lives * lifeScore;
       _watchGrail(end: true);
       _emit(WaveEnded(wave, t, won: false));
       _boostWaveEnd();

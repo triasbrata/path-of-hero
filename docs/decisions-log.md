@@ -11545,3 +11545,6 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      - **The guide's first page** said "No hearts or troops: game over.", wrong since 322 (an army wiped costs a heart
        and the wave is played again). Now (guide_text.dart, 4 lines of at most 6 words): "Monsters come from the right.
        / Past the line: half a heart. / Army down: a heart, wave again. / No hearts left: game over."
+     - **The lives term in the score goes** (`lifeScore`, 50 a life left, added in the tick the game ended): since 322 a
+       game ends only at 0 lives, so it always added 0. The guide's Goal topic said "Score: kills, waves won, hearts
+       left."; now "Score: kills and waves won." (scoreboard.md). Scores, saves and telemetry don't change.

@@ -3078,13 +3078,13 @@ void main() {
     expect(g.score, 500 + 600);
   });
 
-  test('every life left scores once as the game ends, which leaves none: a wipe ends it only at the last heart (wipe.dart), '
-      'and a game lost on lives gets nothing for them', () {
+  test('the game\'s end adds nothing to the score: a wipe ends it only at the last heart (wipe.dart), and a game lost on '
+      'lives ends with none', () {
     final (g, s) = doomedSoldier();
     g.lives = wipeLives;
     g.tick(0.05);
     expect((s.alive, g.over, g.lives), (false, true, 0));
-    expect(g.score, 0 * lifeScore);
+    expect(g.score, 0);
     g.tick(0.05);
     expect(g.score, 0);
 

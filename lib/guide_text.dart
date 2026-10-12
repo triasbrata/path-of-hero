@@ -417,7 +417,7 @@ GuideText guideFor() => GuideText(
   },
   topics: [
     const GuideTopic('Goal', intro: [1, 7], lines: [
-      'Score: kills, waves won, hearts left.',
+      'Score: kills and waves won.',
       'See it at the end',
       'and on "${Words.scoreboard}".',
     ]),
