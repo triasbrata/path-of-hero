@@ -11297,3 +11297,55 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        probe_book_shadow_shots and probe_town_shop_tabs_shots gone; probe_bar_clear and probe_fx_ui_shots draw no field
        loot. The probe kits outside the repo (the auto-player, the replay kit, the QA runs) go through a due Town at once
        (`townPolicy` 'leave'; on a ref before 321 a plain `Game()` meets no Town, so it changes nothing there).
+323. **A forged ingredient links to its forge page, and joins the Wishlist with its parent, never for a troop** (the
+     owner, 2026-10-12: "jika material dari item yang mau di forge, adalah hasil forge ketika user click itu akan
+     mengarah ke forge item tersebut, begitu juga kalau user whitelist item yang item untuk forgenya ada item yang perlu
+     di forge dulu maka item itu juga akan langsung ke whitelist. cuma perlu hati hati karna jangan sampai item
+     requirement untuk forge ini malah ada cta untuk give to troops karna ini di whitelist bukan untuk troops", i.e. a
+     material of an item to forge that is itself forged opens that item's forge page when tapped; wishing for an item
+     whose recipe needs an item that must be forged first puts that item on the wishlist too; careful that it never gets
+     a "give to troops" call to action, since it is wished as an ingredient, not for troops. His answers: its row on the
+     Wishlist tab "sama saja seperti whitelist biasa tapi jangan sampai ada tulisan untuk give to trops" (the same as a
+     normal wishlist row, but never any "give to troops" wording); when the parent wish is removed or met, its added
+     ingredient wishes "Ikut terhapus" (go with it), the player's own wishes for them staying). Built by wish-chain.
+     loot-items-relics.md "The Wishlist" ("Ingredient wishes", "Saved") and ui-hud.md "The Smithy" ("A forged ingredient
+     is a link", "Kept for a craft", the Wishlist tab's parts and "Ingredients"), "The Bag" ("The free line") and "Army"
+     hold it.
+     - **Which recipes:** the Cap's and the Ring's grades II and III take the grade below (Steel Helm ← Leather Cap,
+       Royal Helm ← Steel Helm, Gem Ring ← Ring, Royal Ring ← Gem Ring), and ten relics an item: Cleave ← Sword, Venom ←
+       Bow, Mana Siphon ← Staff, Spirit Ward ← Shield, Last Stand ← Tower Shield, Giant Slayer ← Steel Gloves, Blessing ←
+       Big Potion (the last three the forge's changes), Avalanche ← Steel Sword, Afterglow ← Magic Staff, Reaper ← Long
+       Bow. No recipe takes a relic, and no Awaken set item takes an item; the Royal Helm and the Royal Ring chain two
+       deep. Every item has a recipe, so every item part is a link and an ingredient.
+     - **The link:** on a product's Smithy page a recipe row of an item has the action rows' green "›" and is lit under
+       the mouse; its tap (on tap up: a drag over the page still scrolls it) opens that item's page on the Items tab, as
+       picking it on the board. The page then has **Back** on its Recipe line (the Bag chooser's tag), a step at a time
+       along the trail (Royal Ring → Gem Ring → Ring, back twice); a board pick, the strip or the book turning drop the
+       trail. On the Wishlist tab a row's part the Smithy makes opens its page the same way (on tap up through the Bag
+       cell's tap, so a long press keeps the tooltip), Back returning to the tab. The Bag's item page lists no recipe:
+       nothing to link there.
+     - **The chain:** `wish`, `wishSet` and `wishFreeAdd` (the Army detail's picker, "+" and "Wishlist all", the Smithy's
+       and the Bag's free lines) put on an ingredient wish (`WishPart`: the root wish's type or none, its product and the
+       chain down, "knight/royalRing/gemRing/ring") for every forgeable item its recipe takes, recursively, once each.
+       Its count is read live rather than stored: the recipe's count for each of the parent still to make, less the
+       Bag's, the Bag's going to the wishes for it in order (nearer the root first). Asked was "the recipe count × the
+       parent's count, minus nothing (the tab shows have/need)"; a count fixed when wished would ask again, after the
+       Royal Ring's craft, for the Gem Ring that craft used up. Two parents' counts add up; it stays while either needs it. The player's own wish for the same product stays a
+       wish of its own (its own row; kept when the parent goes).
+     - **The rows:** the Wishlist tab's last group, **Ingredients** (`Words.ingredients`; no sprite; its Remove takes
+       every ingredient wish off, the parents staying), a row per product still wanted: "Gem Ring ×1" and in grey "for
+       Royal Ring" (the product it is for, never a troop), its parts, status, Craft and ✕ (it and those under it off, the
+       parent staying). No Give: no tag, no words, no "for Knight". Its Craft says "Gem Ring crafted!" only, and the one
+       made stays in the Bag for the parent. On the made product's own Smithy page, while an ingredient wish keeps it and no
+       type's open wish asks for it, the Give row ("Give to troops") gives way to a grey "Needed for Royal Ring"
+       (`Words.neededFor`): the owner's warning taken to the page the link opens. The Bag's own item page keeps its rows.
+       Chosen over listing the ingredient under its parent's type group: that heading is the troop's sprite and name.
+     - **Off:** removing a wish (a row's ✕, a group's Remove, Remove on its page, the Army detail's ✕ and "Remove set")
+       takes its ingredient wishes off, recursively, and so does a met parent: a type's wish held in full (a Cap's or a
+       Ring's drops at once; an Awaken item's waiting for its Awaken loses its ingredients at once), a free line crafted.
+     - **Save:** `wishlist.parts`, a list of name lists (["knight", "royalRing", "gemRing", "ring"], a free line's type
+       "free"), written with every `wishlist` (empty too) for the wishes saved. A save without the key (before 323) puts
+       its wishes' ingredients on at load as a wish put on now does; one with it loads only what it holds (an ingredient
+       taken off by hand stays off). An unknown name, a type that isn't one, a lost root or parent, a part the parent's
+       recipe doesn't take: skipped. Additive: a build from before skips the key (no troop type has the name);
+       `Game.saveVersion` stays 3. Save-affecting.

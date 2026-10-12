@@ -1572,6 +1572,16 @@ forge's strip and its Items and Enhance tabs follow them.
   needs of it (`craftItemNeed`: "Soldier needs 1 for Awaken 1", "Soldier needs 1" where shorter: Craft reserves no item,
   the design's decision 11), and on the right "have / need" ("8 / 4", the gold's "4,090 / 1,000"), green (2E8B3A) when
   enough, red (B0302A) when short.
+- **A forged ingredient is a link** (decisions-log 323; the owner, 2026-10-12: "jika material dari item yang mau di
+  forge, adalah hasil forge ketika user click itu akan mengarah ke forge item tersebut"): a row of an item the Smithy
+  makes (a relic's item, the Cap's and the Ring's grade below; every item has a recipe) has the action rows' green "›"
+  (ui_icons.png's `_icOpen`) at its right, its "have / need" left of it, and its card lit (`_frameLit`) under the mouse
+  and while pressed. Its tap (on tap up, so a drag over the page scrolls it; `_assign.taps`, cut to the view) opens that
+  product's page as picking it on its board does (`_smithyLink`: the Items tab on the item, its board on its page); the
+  page it came from goes on a trail (`_SmithyView.trail`), and the new page's "Recipe" line, a tag tall then, has the
+  light tag **Back** (`Words.back` with ui_icons.png's small back arrow, the Bag chooser's) at its right: a tap goes back
+  a step (`_smithyBack`: the Royal Ring → the Gem Ring → the Ring, then back twice). A pick on a board, a tab tapped on the
+  strip or the book turned clears the trail (no Back then). A material's row only tells, as before.
 - **Craft:** the page's one bevelled ui_buttons button (its main standalone action, the owner's button rule), the
   page's width, max(20, 32·ts) tall: the green one "Craft (1,000 gold)" ("Craft (1000)", "Craft" where shorter) while it
   can be crafted; else the white one with why (`CraftRefusal.text`: "Need 2 more Wolf Claw", "Need 1 Gloves", "Not enough
@@ -1654,6 +1664,12 @@ forge's strip and its Items and Enhance tabs follow them.
     "Knight: Awaken 1!"; greyed with why while the type can't take it ("Opens at Awaken 1", `itemRefusal`) or none is in
     the Bag, a tap saying it. Two types or more: its line says who for ("1 in Bag. For Knight, Archer"; "For Knight +1"
     where short) and its tap opens the Bag's chooser on them (the filter's chips set to them; All shows the rest).
+    **Kept for a craft** (decisions-log 323; the owner: "jangan sampai item requirement untuk forge ini malah ada cta
+    untuk give to troops karna ini di whitelist bukan untuk troops"): a product an ingredient wish holds for its parent's
+    craft, made or still to make (`partHeldFor`), with no type's open wish for it, has no Give row on its Smithy page: in
+    its place, in grey, "Needed for Royal Ring" ("Needed for Gem Ring +1" for two; `Words.neededFor`, `_smithyKept`), no
+    tap. Once no parent needs it (the parent made, met or taken off) the Give row is back. The Bag's own item page keeps
+    its rows (the Bag is where any item goes on a troop).
     **Its free line** (decisions-log 302, 303; `_freeLine`), under the status (or the grade line, the tier line):
     the link tags "-" and "+" with how many more it asks between them in bold ink ("×2": off the Wishlist what "Add" would
     ask, 1 at first, `_SmithyView.freeMore`; on it what is still to make, `wishFreeMore`; "-" greyed at one), and at the
@@ -1690,6 +1706,20 @@ forge's strip and its Items and Enhance tabs follow them.
       same message; greyed with why while refused, a tap saying it), and for a type's wish while the Bag holds one
       **Give to Knight** ("Give" where short; the item page's one-tap `_wishGive`: "Shield given to Knight (1/3)", or the
       Awaken it brings; greyed with why while the type can't take it, a tap saying it).
+    - **Its parts that the Smithy makes** (decisions-log 323): a tap on one (the Royal Ring's Gem Ring) opens its page on
+      the Items tab as the recipe rows' link does (`_smithyLink`, on tap up through the Bag cells' `_bagTap`, so a long
+      press still shows the tooltip), its icon on the small slot's lit card (`_frameLit`) under the mouse and while
+      pressed; its page's Back returns to the tab on the spread it was on. A material's part only tells.
+    - **Ingredients** (decisions-log 323; the owner on its row: "sama saja seperti whitelist biasa tapi jangan sampai ada
+      tulisan untuk give to trops"): last, after "For the Bag", the group **Ingredients** (`Words.ingredients`, no sprite;
+      its Remove takes every ingredient wish off, `unwishParts`, the wishes they were for staying: "Ingredients: wishlist
+      cleared"), a row per product an ingredient wish still wants made (`WishRow.parents`): a row as any other, its icon,
+      "Gem Ring ×1" and in grey the product it is for, "for Royal Ring" ("for Gem Ring +1" for two; never a troop), its
+      parts, status, Craft and ✕ ("Gem Ring: off the wishlist", `unwishPart`: it and the ingredient wishes under it; the
+      wish it was for stays). No Give: no tag, no words, no troop (it has no type, and `_wishTags` gives only a type's
+      row a Give). Its Craft says only "Gem Ring crafted!"; the one made stays in the Bag for the parent's craft, its row
+      gone once the Bag holds what the parents still need (the row's count is read live: rules in loot-items-relics.md
+      "The Wishlist", "Ingredient wishes").
     A wish met (a type's held in full, a free line's crafted) drops off the tab; the Awaken a Give brings ends the type's
     set. The rows run down the left page and on down the right one from its top: the tab has no product page (the rows
     craft and give themselves, and the parts' tooltips say where a material drops). A heading never ends a page, and a
@@ -1768,7 +1798,11 @@ forge's strip and its Items and Enhance tabs follow them.
   at 1600×947 and 915×412 down to the empty hint, the item page's one-tap Give, a product's page's free line (no types'
   chips; "-" ×n "+", Add, its crafts counting down on the tab, the met one dropping it, Remove) and the Bag's item and
   relic pages' free line at 1266×713 and 915×412, the Army detail's needs rows' "+" and Wishlist all, the materials'
-  star in the Bag and the Shop (a free relic's too); `wishFlow` by itself.
+  star in the Bag and the Shop (a free relic's too); `wishFlow` by itself. test/smithy_chain_ui_test.dart (decisions-log
+  323) at 1600×947 and 915×412: a recipe row's link from an item's page and a relic's, two steps on and Back twice, a
+  material's row and a board pick (no Back); a Wishlist row's part's link and Back to the tab; the "Ingredients" rows
+  ("for Royal Ring", parts, Craft, ✕; no Give tag nor words nor troop), "Needed for Royal Ring" on a kept product's page,
+  an ingredient row's Craft, ✕ and the group's Remove leaving the parents.
 - **For tests:** `Board.smithyPick`, `smithyCells` (the board in order), `smithyMarks(relic)` (`BagMarks`: `count`,
   `ready`, `faded`, `lit`), `smithyAt(key)` and `smithyText(key)` ('recipe', 'craft', 'noLimit', 'equip';
   'effect', 'tier'), `smithyRows` (`SmithyRow`: the kind, where, "have / need", short, the monster and the warning as
@@ -1785,7 +1819,10 @@ forge's strip and its Items and Enhance tabs follow them.
   'wishCraft:<key>' | 'wishGive:<key>' | 'wishGiveWhy:<key>')` (a row's key its group and product, "knight:sword",
   "free:fang"; 'wishLines': every row, "knight:sword ×2|free:fang ×2"; 'wishPage': the spread's rows; 'wishPer': the
   rows each spread's pages hold, "4+6,3+6"; 'wishParts': "boneShard 6/4,orcTooth 4/4,gold 40"; 'wishCraft': why it is
-  greyed, '' while it works); a product's page's or a Bag page's free line `smithyAt('freeLess' | 'freeMore' |
+  greyed, '' while it works; an ingredient row's group "parts", "parts:gemRing", and each row's part
+  `smithyAt('wishPart:<key>:<part>')`, decisions-log 323); the links' `smithyAt('back')` and `smithyTrail` (the steps
+  back), a kept product's `smithyAt('kept')` and `smithyText('kept')` ("Needed for Royal Ring"); a product's page's or a
+  Bag page's free line `smithyAt('freeLess' | 'freeMore' |
   'freeAdd')`, `bagDetail(…)` and `smithyText('free' | 'freeAdd')`, `bagDetailText(…)` ("off ×1", "on ×2"); `set
   smithyTab` (a test's start on a tab);
   `smithyAt('tab:wishlist' | 'tab:items' | 'tab:relics' | 'tab:enhance' | 'grade:1' … | 'give')` ('grade:2': where Grade II's heading's
@@ -2546,7 +2583,9 @@ the page holds every page and card, and a one-time card opens at its break ("A o
          to craft" or its first want ("Need 2 Wolf Claw"). The tag opens the picker under them: "Tap an item to add or
          remove it" in grey, then the type's products (`wishable`) by grade as the Smithy's sections, each grade's
          heading ("Grade II", bold) over its cells, a wished one on the pick's lit card with the gold star; a tap puts it
-         on or takes it off ("Steel Sword: on Knight's wishlist"). While it is open each wish in the row carries the
+         on or takes it off ("Steel Sword: on Knight's wishlist"; a Royal Ring's or a Royal Helm's forged ingredients go
+         on and off with it, decisions-log 323: the Smithy's "Ingredients", never this type's cells). While it is open
+         each wish in the row carries the
          small red ✕ (ui_icons.png (180, 84), 7×8) in the ▲'s place, and a tap takes it off. The picker closes with
          Done, a turned page, or another type's pick (which shows its own closed). Light controls only (tags and
          cells), on tap UP as the detail's. `troopDetail('wishlist' | 'wishEdit' | 'wish:<item>' | 'pick:<item>')`,
@@ -2818,7 +2857,9 @@ the page holds every page and card, and a one-time card opens at its break ("A o
       (`_freeLine`, max(20, 26·ts) tall, max(4, 6·ts) under the lines): "-" ×n "+" and "Add to wishlist", then
       "Remove"; the message window says when it goes on or off, and the Smithy's Wishlist tab lists it under "For the
       Bag". A material's page has none. `bagDetail('freeLess' | 'freeMore' | 'freeAdd')`, `bagDetailText('free' |
-      'freeAdd')` for tests.
+      'freeAdd')` for tests. Its "Add to wishlist" puts the product's forged ingredients on too (decisions-log 323, the
+      Smithy's "Ingredients"). The Bag's pages list no recipe, so they have no ingredient to link (the Smithy's recipe
+      rows and Wishlist rows do).
     - **The action list** (`_actionList`; `_actionsFor`, `BagAction`): max(4, 6·ts) under the lines (the free line's),
       a row per action,
       max(3, 4·ts) apart on whole pixels, the page's width; scrolled by the wheel or a drag, with the capsule bar

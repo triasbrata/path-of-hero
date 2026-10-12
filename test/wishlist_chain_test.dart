@@ -200,7 +200,7 @@ void main() {
     // The group's Remove: every ingredient wish, no parent.
     expect(g.unwishParts(), isTrue);
     expect(parts(g), isEmpty);
-    expect((g.wishesOf('knight'), g.freeWishes), ([Item.royalRing, Item.royalHelm], [Relic.venom, Item.royalRing]));
+    expect((g.wishesOf('knight'), g.freeWishes), ([Item.royalRing, Item.royalHelm], <Enum>[Relic.venom, Item.royalRing]));
     expect(g.unwishParts(), isFalse);
   });
 

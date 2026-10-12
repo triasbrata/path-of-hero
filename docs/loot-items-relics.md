@@ -1935,7 +1935,7 @@ Bag's stack cells and the tint are ui-hud.md's ("The Smithy", the Bag's "Enhance
   the refusals, an enhanced item on a type, the swap at the cap and the Cap's chain, the Shop's price, the events, the
   save and a save without the keys).
 
-## The Wishlist (decisions-log 282, 300, 302, 303)
+## The Wishlist (decisions-log 282, 300, 302, 303, 323)
 
 The owner, 2026-10-09: the player puts the Smithy's products they mean to make on a list, per troop type, as a target.
 A wish only marks and orders: nothing crafts or gives by itself (crafting and giving stay the player's taps). It is
@@ -1948,8 +1948,12 @@ became the Smithy's first tab. Then (decisions-log 303): "wishlist yang ada di t
 user untuk merealisasikan wishlistnya jadi harusnya tidak ada perubahan wishlist di situ. penambahan wishlist itu
 dilakukan di tempat lain misalkan di page army,bags, dan smithy selain tab wishlist" (the tab is where wishes are made,
 a row per thing to make with its materials have/need and whether it is ready; wishes go on from the Army detail, the Bag's
-pages and the Smithy's other tabs, and come off from those and from the tab's rows). The rules are lib/wishlist.dart's
-`extension Wishlist on Game`; the pages are ui-hud.md's ("The Smithy", "The Bag", "Army").
+pages and the Smithy's other tabs, and come off from those and from the tab's rows). Then (decisions-log 323, 2026-10-12):
+"jika material dari item yang mau di forge, adalah hasil forge ketika user click itu akan mengarah ke forge item
+tersebut, begitu juga kalau user whitelist item yang item untuk forgenya ada item yang perlu di forge dulu maka item itu
+juga akan langsung ke whitelist" (an ingredient that is itself forged links to its forge page, and wishing for a product
+puts the forged products its recipe takes on the Wishlist too), never with a "give to troops" for them. The rules are
+lib/wishlist.dart's `extension Wishlist on Game`; the pages are ui-hud.md's ("The Smithy", "The Bag", "Army").
 
 - **When:** in every game, where the Smithy makes items (`wishOn`, a game without the Towns' off switch, went in
   decisions-log 321).
@@ -1996,6 +2000,33 @@ pages and the Smithy's other tabs, and come off from those and from the tab's ro
   (not its gold), and `freeNeed(kind, part)` that part for the rest of the line, (the Bag's at most the need, the recipe's
   count times the ones still to make). An item on a free line is `wished` like a type's (the
   Items board's star and order), a relic on one carries the star on the Relics board (`freeWished`).
+- **Ingredient wishes** (decisions-log 323; `WishPart`, `Game.wishParts`): a wish put on (`wish`, `wishSet`,
+  `wishFreeAdd`: from the Army detail, a set, a product's Smithy or Bag page) puts on with it, for every product its
+  recipe takes that the Smithy makes (`canWishFree`), an ingredient wish, and theirs in turn (`_wishChain`): the Royal
+  Ring's Gem Ring and the Gem Ring's Ring. Each is a root wish (a type's, or a free line) and the chain of products down
+  to it, "knight/royalRing/gemRing/ring"; once each, a product never under itself. It is for its parent's craft, never
+  for a troop: no type, no Give.
+  - **The recipes that take a forged product** (town.json, with the forge's changes; test/wishlist_chain_test.dart pins
+    them): the Cap's and the Ring's grade below (Steel Helm ← Leather Cap, Royal Helm ← Steel Helm, Gem Ring ← Ring,
+    Royal Ring ← Gem Ring), and ten relics' items: Cleave ← Sword, Venom ← Bow, Mana Siphon ← Staff, Spirit Ward ←
+    Shield, Last Stand ← Tower Shield, Giant Slayer ← Steel Gloves, Blessing ← Big Potion, Avalanche ← Steel Sword,
+    Afterglow ← Magic Staff, Reaper ← Long Bow. None takes a relic (`Recipe.items` holds items only), and no Awaken
+    set's item takes an item, so a set adds no ingredient today; the Royal Helm and the Royal Ring chain two deep.
+  - **How many, read live** (`_partShares`, `partNeeds`): an ingredient wish wants the recipe's count for each of its
+    parent still to make (a type's wish: what it lacks less what the Bag holds, `WishRow.make`; a free line: what the
+    Bag lacks; an ingredient: its own still to make), and the Bag's of the product go to the wishes for it in order, the
+    ones nearer their root first. So the count is not stored: once the parent is crafted its ingredients want none (a
+    goal fixed when wished would ask again for the Gem Ring its Royal Ring's craft used up). One product for two parents:
+    the counts add up (the knight's and the archer's Royal Rings: Gem Ring ×2, Ring ×2), and it stays while either wants
+    it. `partWishes`, `partWished(kind)`: the products still wanted (an ingredient wish is `wished`: the Items board's
+    star and order, its materials in `wishMats`); `partHeldFor(kind)`: the products a made one is kept for while a
+    parent still needs it.
+  - **Off with the parent** (the owner: "Ikut terhapus"; `_wishPrune`): `unwish`, `unwishAll`, `unwishFree`,
+    `unwishFreeAll`, a met type's wish (`_wishGiven`: given in full; a Cap's or a Ring's goes at once, and an Awaken item's
+    met wish, waiting for its Awaken, has its ingredients go at once) and a met free line (`_wishSweep`) take their
+    ingredient wishes off, recursively. An ingredient's own ✕ is `unwishPart(kind)` (every ingredient wish for it and
+    those under them; the parent stays), the "Ingredients" group's Remove `unwishParts()`. The player's own wish for the
+    same product (a type's, a free line) is another wish: its own row, kept when the parent goes.
 - **What a wish lacks:** `wishShort(item)`, the item's recipe rows (`itemCraftRows`) the Bag is short of, each
   material and item with have / need, then the gold; none: the Bag pays for one (`canMake`), wherever the game is (the
   Smithy page's "Ready to craft" / "Missing: …"). The recipe is the same whoever wishes for it.
@@ -2006,7 +2037,9 @@ pages and the Smithy's other tabs, and come off from those and from the tab's ro
   less to make for a type; a free line's `need`, the Bag's count being what it waits on) and `parts` (the recipe's rows,
   `itemCraftRows` or `craftRows`, each its kind, the gold none, with the Bag's have and the row's need times `make`).
   `wishRowShort(row)` is what the Bag lacks for them (each part short and by how many; none: "Ready"). A met wish has no
-  row; a type's row with nothing to make (the Bag holds them) has no parts and waits on its Give.
+  row; a type's row with nothing to make (the Bag holds them) has no parts and waits on its Give. Last (decisions-log
+  323), a row per product an ingredient wish still wants made, in the order first put on: no type, `parents` the
+  products it is for ("for Royal Ring"), `need` and `make` its `partNeeds` count.
 - **The materials:** `wishMats`, every material an open wish's recipe takes (held or short; a free relic's too): the
   Bag's Materials and the Shop's Buy mark them (decisions-log 300; the Smithy shows no materials' grid since
   decisions-log 302: its recipe rows and the Wishlist tab's rows say what each takes), and a material's tooltip
@@ -2015,12 +2048,15 @@ pages and the Smithy's other tabs, and come off from those and from the tab's ro
   (`smithyItemOrder`, smithy_page.dart). The board's sections and pages are as many as before: no item moves to another
   grade, and nothing is shown twice.
 - **Saved** as `wishlist` (type → item name → goal, in order; its `free` the open free lines, product name → goal, in
-  order), only with some wish ("Saved" below).
+  order; its `parts` the ingredient wishes, decisions-log 323), only with some wish ("Saved" below).
 - **Tests:** test/wishlist_test.dart (who can wish for what, the list's edits, the counts read live, a whole set on and
   off, done and the Awaken's drop, the board's order, what a wish lacks and the materials, free lines and their drop,
   the rows and what they lack, the save with its free lines, a list from before the goals and an old save, nothing
   crafted or given by itself),
-  test/wishlist_ui_test.dart and test/smithy_wish_ui_test.dart (the pages).
+  test/wishlist_ui_test.dart and test/smithy_wish_ui_test.dart (the pages); test/wishlist_chain_test.dart (decisions-log
+  323: the recipes that take a forged product, the chain one and two deep from a type's wish, a set and a free line, the
+  counts read live and two parents', the own wish kept apart, off with the parent by a tap or met, an ingredient's ✕
+  and the group's, the star and the materials, the save's `parts`) and test/smithy_chain_ui_test.dart (its pages).
 
 ## Towns: the Tavern (decisions-log 266-268)
 
@@ -2367,7 +2403,13 @@ type, an item name this build doesn't know and a goal under 1 are skipped, an it
 an empty Wishlist. A build from before the goals skips a type whose value is a map (no wish, no crash). Its `free`
 (decisions-log 302: the open free lines, product name → how many the Bag is to hold, in order; no item and no relic
 share a name) loads the same way, an unknown name and a goal under 1 skipped; a build from before them skips the key
-(it is no troop type), so the save keeps version 3.
+(it is no troop type), so the save keeps version 3. Its `parts` (decisions-log 323) are the ingredient wishes, each a
+list of names, the type (a free line's "free"), the root's product, then the chain ("knight", "royalRing", "gemRing",
+"ring"), a parent before its own; written with every `wishlist` (an empty list too), only for the wishes saved (an open
+free line's). Loaded after the wishes: one whose root wish (or parent) didn't load, a name this build doesn't know, a type
+that isn't one or a product its parent's recipe doesn't take is skipped. A save without the key (from before 323) puts
+its wishes' ingredients on as a wish put on now does (a met wish's none); a build from before skips it (no troop type
+has the name), so the save keeps version 3.
 
 The save's format is version 3 (`v`, `Game.saveVersion`) since the forge's data ("The forge: data" above); a
 version-2 save (`Game.saveLoadsFrom`) loads forward whole, nothing discarded, and is written back as version 3. An item

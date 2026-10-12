@@ -86,10 +86,13 @@ void giveMats(Game g, Item item) {
   }
 }
 
-/// The Smithy's Items tab on [item]'s page (its board's pager turned to it, its cell tapped).
+/// The Smithy's Items tab on [item]'s page (its board's pager back to the first page, then on to it; its cell tapped).
 Future<void> pickItem(WidgetTester tester, Board b, Item item) async {
   await tapOn(tester, b.smithyAt('tab:items'));
-  while (!b.smithyItemCells.any((c) => c.$1 == item)) {
+  for (var i = 0; i < 9 && b.smithyItemPage > 0; i++) {
+    await tapOn(tester, b.smithyItemPager('back'));
+  }
+  for (var i = 0; i < 9 && !b.smithyItemCells.any((c) => c.$1 == item); i++) {
     await tapOn(tester, b.smithyItemPager('on'));
   }
   await tapOn(tester, b.smithyItemCells.firstWhere((c) => c.$1 == item).$2);
@@ -141,7 +144,7 @@ void main() {
 
       // A relic's item: Cleave's Sword opens the Sword's page; Back to the Relics tab on Cleave.
       await tapOn(tester, b.smithyAt('tab:relics'));
-      while (!b.smithyCells.any((c) => c.$1 == Relic.cleave)) {
+      for (var i = 0; i < 9 && !b.smithyCells.any((c) => c.$1 == Relic.cleave); i++) {
         await tapOn(tester, b.smithyBoardPager('on'));
       }
       await tapOn(tester, b.smithyCells.firstWhere((c) => c.$1 == Relic.cleave).$2);
@@ -170,17 +173,20 @@ void main() {
       expect(b.smithyText('wishLines')!.split('|'),
           ['knight:royalRing ×1', 'archer:royalRing ×1', 'free:cleave ×1', 'parts:gemRing ×1', 'parts:ring ×1', 'parts:sword ×1']);
       expect(b.smithyText('wishType:parts'), Words.ingredients, reason: tag);
-      expect([for (final (gr, _) in b.smithyWishHeads) gr].toSet(), containsAll(['knight', 'archer', 'free']));
+      expect({for (final (gr, _) in b.smithyWishHeads) gr}, containsAll(['knight', 'archer', 'free']));
 
       // The rows: "for Royal Ring", parts, status, Craft; no Give, no troop's name.
       Future<void> onRow(String key) async {
-        while (b.smithyAt('wishRow:$key') == Rect.zero && b.smithyWishPage < b.smithyWishPages - 1) {
+        for (var i = 0; i < 9 && b.smithyWishPage > 0; i++) {
+          await tapOn(tester, b.smithyWishPager('back'));
+        }
+        for (var i = 0; i < 9 && b.smithyAt('wishRow:$key') == Rect.zero && b.smithyWishPage < b.smithyWishPages - 1; i++) {
           await tapOn(tester, b.smithyWishPager('on'));
         }
         expect(b.smithyAt('wishRow:$key'), isNot(Rect.zero), reason: '$tag $key shown');
       }
 
-      for (final (key, product) in [('parts:gemRing', 'Royal Ring'), ('parts:ring', 'Gem Ring'), ('parts:sword', 'Cleave')]) {
+      for (final (key, product) in [('parts:gemRing', 'Royal Ring'), ('parts:ring', 'Gem Ring'), ('parts:sword', relicNames[Relic.cleave]!)]) {
         await onRow(key);
         final words = rowWords(b, key);
         expect(b.smithyText('wishTitle:$key'), anyOf(endsWith('for $product'), isNot(contains('for'))), reason: '$tag $key: $words');
@@ -196,7 +202,7 @@ void main() {
       expect(b.smithyText('wishParts:parts:gemRing'), 'tealGem 0/1,wolfFang 0/1,ring 0/1,gold 600', reason: tag);
 
       // A part the Smithy makes opens its page; Back returns to the tab on the same spread.
-      while (b.smithyWishPage > 0) {
+      for (var i = 0; i < 9 && b.smithyWishPage > 0; i++) {
         await tapOn(tester, b.smithyWishPager('back'));
       }
       final part = b.smithyAt('wishPart:knight:royalRing:gemRing');
@@ -237,7 +243,7 @@ void main() {
       // The group's Remove (two taps): every ingredient wish, no parent.
       g.inventory[Item.gemRing] = 0;
       await frames(tester, 2);
-      while (b.smithyAt('wishOffAll:parts') == Rect.zero && b.smithyWishPage < b.smithyWishPages - 1) {
+      for (var i = 0; i < 9 && b.smithyAt('wishOffAll:parts') == Rect.zero && b.smithyWishPage < b.smithyWishPages - 1; i++) {
         await tapOn(tester, b.smithyWishPager('on'));
       }
       await tapOn(tester, b.smithyAt('wishOffAll:parts'));
