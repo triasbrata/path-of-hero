@@ -11191,3 +11191,13 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        a troop more than before it fell). Now its type's last entry of the wave leaves the queue (`_autoRose`,
        ui-hud.md "Spawn bar"); one already bought stays bought and counts at the win as before (the type has its
        number again). Test: auto_replace_test's Resurrection case (it fails on the code before).
+     - **D1, the guide card K11's picture** showed the Shop tab, then a Sword and a Fang for gold: since the forge a
+       Town's Shop sells materials (its words said so: "buy materials that dropped"). Now two materials (Orc Tooth,
+       Wolf Claw), then the coin (`_picToko`, coach.dart; ui-hud.md "Guide").
+     - **D2, the battle log's Loot chip** filtered the field's item and relic drops, which a board game no longer has
+       (the Smithy makes them): always empty, it went; a Towns-off game's drops (the tests') stay under All
+       (ui-hud.md "The battle log"). The chips are six, each wider.
+     - **A1, `flutter analyze` at 0:** the seven infos (`avoid_renaming_method_parameters`: the Board's overrides named
+       their parameter `s` and `e`) renamed to Flame's `size` and `event`, so a new info stands out; process.md says
+       none. A stricter pass (57 more lints, strict casts and inference) found ~22,000, 97% of them style this code
+       doesn't follow; none of it is on.

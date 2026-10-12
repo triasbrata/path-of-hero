@@ -813,9 +813,9 @@ class Board extends PositionComponent
   Offset get _origin => Offset(0, _hotGeom().stepTop - (backdropH + stepLip) * _scale);
 
   @override
-  void onGameResize(Vector2 s) {
-    super.onGameResize(s);
-    size = s;
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    this.size = size;
   }
 
   /// Where the Start/Pause toggle is this frame while it starts a wave: Rect.zero while it doesn't (it pauses or
@@ -1729,16 +1729,16 @@ class Board extends PositionComponent
   }
 
   @override
-  void onTapDown(TapDownEvent e) {
-    final p = e.localPosition.toOffset();
+  void onTapDown(TapDownEvent event) {
+    final p = event.localPosition.toOffset();
     _town.press = null; // a new press: the last one's Town tap is gone (town_scene.dart)
     _bar.down = null; // and the spawn bar's card it went down on (spawn_bar.dart)
     _clicks.add((p, _clock));
     _press = (at: p, down: _clock, up: null);
     _grid.down = _bagLootAt(p); // the Bag cell (or the Town's Shop's) under it, for its tap up (bag.dart)
     _handAt = p;
-    _touch = e.deviceKind != ui.PointerDeviceKind.mouse;
-    _tip.down(e);
+    _touch = event.deviceKind != ui.PointerDeviceKind.mouse;
+    _tip.down(event);
     _welcomeTap = welcome != null;
     if (!_welcomeTap) _townPress(p); // in a Town it stops Auto's countdown (town_scene.dart)
     _pauseDown(); // pause.dart
@@ -1768,14 +1768,14 @@ class Board extends PositionComponent
 
   // On tap up, not down: a drag out of a bag slot must not pick it too.
   @override
-  void onTapUp(TapUpEvent e) {
+  void onTapUp(TapUpEvent event) {
     if (_press case final press?) _press = (at: press.at, down: press.down, up: _clock); // it comes back up
     if (_tip.up()) return; // a long press that showed a tooltip is no tap
     _townTapUp(); // a press on a Town's scene came up unmoved: its tap (town_scene.dart)
     if (_chest.tapped) return; // the press was the chest popup's (chest_popup.dart)
     if (_coach.tapped) return; // or a guide card's (coach.dart): nothing under it reacts
     if (_foeSplash.tapped) return; // or it closed a foe skill's splash (foe_splash.dart)
-    final p = e.localPosition.toOffset();
+    final p = event.localPosition.toOffset();
     if (!_welcomeTap && !_herald.tapped && !_msg.tapped && _barTap(p)) return; // the spawn bar: a card buys one (spawn_bar.dart)
     if (_plateTap(p)) return; // a Lepas on the pinned plate: that relic comes off, and the pin stays (plates.dart)
     if (_handTap(p)) return; // loot in hand given to the troop under it, and nothing pinned (drop_popup.dart)
@@ -1816,18 +1816,18 @@ class Board extends PositionComponent
   }
 
   @override
-  void onPointerMove(PointerMoveEvent e) {
-    _mouse = _handAt = e.localPosition.toOffset();
+  void onPointerMove(PointerMoveEvent event) {
+    _mouse = _handAt = event.localPosition.toOffset();
     _touch = false;
   }
 
   @override
-  void onDragStart(DragStartEvent e) {
-    super.onDragStart(e);
-    final p = _dragPos = e.localPosition.toOffset();
+  void onDragStart(DragStartEvent event) {
+    super.onDragStart(event);
+    final p = _dragPos = event.localPosition.toOffset();
     _handAt = p;
     // Flame leaves a drag's kind unknown (a mouse's too): then the press that began it ([onTapDown]) told.
-    if (e.deviceKind != ui.PointerDeviceKind.unknown) _touch = e.deviceKind != ui.PointerDeviceKind.mouse;
+    if (event.deviceKind != ui.PointerDeviceKind.unknown) _touch = event.deviceKind != ui.PointerDeviceKind.mouse;
     // It began on the chest popup (chest_popup.dart), a guide card (coach.dart) or a foe skill's splash (foe_splash.dart).
     if (_chest.tapped || _coach.tapped || _foeSplash.tapped) return;
     if (welcome == null && _log.open && _log.panel.contains(p)) {
@@ -1854,14 +1854,14 @@ class Board extends PositionComponent
       if (rect.contains(p) && state.bagOf(item, plus) > 0 && !state.over) {
         _itemDrag = item;
         _dragPlus = plus; // an enhanced stack's (decisions-log 255)
-        dragAt = e.localPosition.clone();
+        dragAt = event.localPosition.clone();
         return;
       }
     }
     for (final (rect, relic) in _cellsStay ? const <(Rect, Relic)>[] : _relicSlots) {
       if (rect.contains(p) && (state.relicBag[relic] ?? 0) > 0 && !state.over) {
         _relicDrag = relic;
-        dragAt = e.localPosition.clone();
+        dragAt = event.localPosition.clone();
         return;
       }
     }
@@ -1870,39 +1870,39 @@ class Board extends PositionComponent
       _itemDrag = loot is Item ? loot : null;
       _relicDrag = loot is Relic ? loot : null;
       _dragPlus = _pickPlus;
-      dragAt = e.localPosition.clone();
+      dragAt = event.localPosition.clone();
       return;
     }
     if (dragging == null && !state.waveActive && !state.over && !_onBar(p)) {
-      if (_cellAt(e.localPosition) case (final c, final r)) {
+      if (_cellAt(event.localPosition) case (final c, final r)) {
         _relocating = state.troopAt(c, r);
         dragging = _relocating?.type;
-        dragAt = e.localPosition.clone();
+        dragAt = event.localPosition.clone();
       }
     }
   }
 
   @override
-  void onDragUpdate(DragUpdateEvent e) {
-    super.onDragUpdate(e);
+  void onDragUpdate(DragUpdateEvent event) {
+    super.onDragUpdate(event);
     // Where the pointer is now: where the drag began plus every move since. Flame's localEndPosition adds the
     // move to where the pointer already is, so it runs one move ahead (a drop could miss the troop under it).
-    final p = _dragPos += e.localDelta.toOffset();
+    final p = _dragPos += event.localDelta.toOffset();
     if (_mouse != null) _mouse = p; // no hover events while a button is down
     if (_log.dragY case final y?) {
       _log
         ..scroll += y - p.dy // up: on to older ones
         ..dragY = p.dy;
     }
-    if (_assign.dragY != null) _assign.scroll -= e.localDelta.y; // up: on down the list
+    if (_assign.dragY != null) _assign.scroll -= event.localDelta.y; // up: on down the list
     _barDragTo(p); // a swipe on the spawn bar's cards turns their page (spawn_bar.dart)
-    if (_detail.dragY != null) _detail.scroll -= e.localDelta.y; // the same (troop_detail.dart)
-    _pageScrollDragBy(e.localDelta.y); // the same (page_scroll.dart)
+    if (_detail.dragY != null) _detail.scroll -= event.localDelta.y; // the same (troop_detail.dart)
+    _pageScrollDragBy(event.localDelta.y); // the same (page_scroll.dart)
     for (final col in _columns) {
-      if (col.dragY != null) col.scroll -= e.localDelta.y; // licence_page.dart
+      if (col.dragY != null) col.scroll -= event.localDelta.y; // licence_page.dart
     }
     if (dragging != null || _itemDrag != null || _relicDrag != null) dragAt = Vector2(p.dx, p.dy);
-    _townDrag(p, e.localDelta.toOffset()); // town_scene.dart
+    _townDrag(p, event.localDelta.toOffset()); // town_scene.dart
     _handAt = p;
   }
 
@@ -1920,9 +1920,9 @@ class Board extends PositionComponent
   }
 
   @override
-  void onDragEnd(DragEndEvent e) {
-    super.onDragEnd(e);
-    if (_townLetGo(e.velocity.toOffset())) return; // a Town's pan glides on; one that never moved is a tap (town_scene.dart)
+  void onDragEnd(DragEndEvent event) {
+    super.onDragEnd(event);
+    if (_townLetGo(event.velocity.toOffset())) return; // a Town's pan glides on; one that never moved is a tap (town_scene.dart)
     final at = dragAt, unit = _relocating, item = _itemDrag, relic = _relicDrag;
     _log.dragY = _assign.dragY = _detail.dragY = _bar.dragX = null;
     _pageScrollDragEnd();

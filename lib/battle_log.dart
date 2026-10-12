@@ -30,12 +30,13 @@ Color _pusakaLogInk(Relic r) => switch (r) {
 /// The relic most sent back to the bag (the first by kind among equals).
 Relic _mostBack(Map<Relic, int> back) => back.entries.reduce((a, b) => b.value > a.value || (b.value == a.value && b.key.index < a.key.index) ? b : a).key;
 
-/// The filter chips over the log, and the kinds each shows.
+/// The filter chips over the log, and the kinds each shows. A field drop ([EventKind.drop]) had a Loot chip of its own
+/// until decisions-log 317: no item or relic lies on the field of a board game (the Smithy makes them), so it was always
+/// empty; a game with the Towns off (the tests') still lists its drops under All.
 enum _LogChip {
   all('All', EventKind.values), // the log holds no TraceEvents
   fell('Fallen', [EventKind.fell]),
   skill('Skill', [EventKind.skill, EventKind.heroSkill, EventKind.awakenSkill]),
-  loot('Loot', [EventKind.drop]),
   pusaka(Words.artifact, [EventKind.grailSaved, EventKind.pusakaReport, EventKind.offerPicked, EventKind.pusakaAsah, EventKind.pusakaLebur]), // decisions-log 149, 152, 154, 164
   foe('Monsters', [EventKind.strongFoe, EventKind.monsterSkill, EventKind.omenGained, EventKind.omenEased, EventKind.omenDusk]), // decisions-log 180, 239
   rest('Other', [EventKind.heroMade, EventKind.heroRecalled, EventKind.awakened, EventKind.ascended, EventKind.tempa, EventKind.waveWon, EventKind.waveLost, //
