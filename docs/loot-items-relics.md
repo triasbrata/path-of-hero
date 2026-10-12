@@ -1508,9 +1508,11 @@ and Smithy: Craft" below), and the Town's Shop buys them (decisions-log 230, "Th
   numbers of the Smithy's seven and the recipes' tiers since decisions-log 227, the recipes, the tiers' prices and the
   shop's item prices with the Craft step, decisions-log 233, "Town and Smithy: Craft" below): each small relic's recipe
   in its `relics` entry's `recipe` (version 2's `recipes` block, which still reads; the 11 of `townRelics` and the
-  forge's nine, by save key: its tier, materials, items and gold; every one of the 30 is in some recipe), `tiers` (Basic / Strong / Mighty: a sale's share of the craft gold, the Shop's price 12,000 /
-  20,000 / 32,000 and its rise 20% a buy), `relics` (each crafted relic's numbers: Fang's share 0.30, Fury's every 3
-  and ×2, …), `shop` (open from wave 1 won, so in every Town, decisions-log 253; an item 2,000 + 200 a buy, sold back at half). `TownRules.parse` keeps a
+  forge's nine, by save key: its tier, materials, items and gold; every one of the 30 is in some recipe), `relics` (each crafted relic's numbers: Fang's share 0.30, Fury's every 3
+  and ×2, …), `shop` (open from wave 1 won, so in every Town, decisions-log 253; the materials' markup and rise). Its
+  `tiers` (the Shop's price of a small relic, 12,000 / 20,000 / 32,000, its rise 20% a buy and a sale's share) and the
+  shop's item prices (`itemPrice` 2,000, `itemRise` 200, `itemSellShare`) went in decisions-log 329: the Shop sold
+  neither since the forge, and a sale is at the market's price (decisions-log 326); an older file's keys read as nothing. `TownRules.parse` keeps a
   number's default when it is missing, of the wrong kind or out of range, and leaves out a name the game doesn't know
   (a material, a monster type, a relic, an item) where it stands, listing it in `TownRules.skipped` (main.dart prints
   each with `debugPrint`). test/town_materials_test.dart pins the file to the defaults. The shop's `from` is the wave
@@ -1576,8 +1578,9 @@ the drops above, every game has it (decisions-log 321).
   the Towns' prices), a material at its sell price, a Vault Artifact as before. Selling the last of a kind leaves it on
   the shelf.
 - **When:** the Shop opens as without the forge (`shopFrom`: every Town as shipped), in a Town only.
-- **The page:** ui-hud.md "The Town's Shop" (Buy's sections: Materials alone, Items and Relics having none, decisions-log
-  280; the empty shelf's line; Sell and its basket, decisions-log 269).
+- **The page:** ui-hud.md "The Town's Shop" (Buy's sections: the Artifacts and the Materials; Items and Relics, empty
+  since the forge and hidden since decisions-log 280, went in 329; the empty shelf's line; Sell and its basket,
+  decisions-log 269).
 
 ## Town and Smithy: Craft (dark, decisions-log 233)
 
@@ -1628,16 +1631,12 @@ many as the bag can pay for (no limit a visit); every one of the 30 materials go
 - **A visit's crafts:** `TownLeft` carries the relics crafted in that Town (`crafts`) and their gold (`craftSpent`); the
   battle log says "Left town: 2 crafted" (just "Left town" for none).
 - **The Shop's prices** (inside the Store's own `basePrice`, `buyPrice` and `sellPrice`, so their callers don't
-  change; every number from town.json):
-  - a small relic costs its tier's `shop` price, Basic 12,000, Strong 20,000, Mighty 32,000, and its `shopRise`, 20% of
-    it, more after each one of that kind bought (`storeBought` counts per kind: Fang 12,000, 14,400, 16,800, …;
-    `TierPrices.priceAfter`; the forge's Shop sells none, decisions-log 248, so only a count from before it raises it).
-    The save restores `storeBought` of the Smithy's seven too;
-  - it sells back at the market's price ("Towns: the market" below, decisions-log 326; until then for its tier's
-    `sellShare`, half, of its craft gold, 150 to 1,750: `sellShare` stays in town.json, read by nothing);
-  - an item: the `shop` block's `itemPrice` 2,000, +`itemRise` 200 a buy (the forge's Shop sells none); sold back at
-    the market's price (until decisions-log 326 for `itemSellShare` half of `itemPrice`, 1,000 whatever the item:
-    kept, read by nothing);
+  change):
+  - a small relic and an item have no Shop price (`basePrice` 0; never on the shelf, decisions-log 248) and sell at
+    the market's price ("Towns: the market" below, decisions-log 326). Until decisions-log 329 town.json priced them
+    for a shelf that never had them: a small relic its tier's `shop` 12,000 / 20,000 / 32,000, +20% a buy
+    (`TierPrices`), an item `itemPrice` 2,000, +200 a buy; their sale shares, unread since 326, went too. The save still
+    restores `storeBought` of them (an old save's count), and it moves nothing;
   - an Artifact as before ("The store" below).
   Until decisions-log 321 a game without the Towns priced by the field Toko's constants (`itemPrice`, `relicPrice`).
 - **Asah** (`asahTake`, the design's decision 10: a 32,000-gold Mighty relic is never eaten while a
@@ -2278,7 +2277,8 @@ there. The economy they were weighed against was measured with the full-economy 
   | a Pusaka (`artefactPrice`) | Grail of Immortality 24,000; Dragon Heart 30,000; Void Eye 36,000; God's Thunder 40,000; Dawn Star 40,000 | ×`artefactRise` 1.5 (bought again after selling it) | half its base, its stars gone with it |
 
   A small relic and an item sell back at the market's price ("Towns: the market" above, decisions-log 326; until then
-  half its craft gold, and the `shop` block's `itemSellShare` of its `itemPrice`, 1,000, decisions-log 233). The field's Toko sold an item at `itemPrice`
+  half its craft gold, and an item 1,000, half the `shop` block's `itemPrice`, gone in decisions-log 329; decisions-log
+  233). The field's Toko sold an item at `itemPrice`
   2,000 (+200 a buy) and a dropped relic at `relicPrice` 8,000 (+1,600); both went with the rules from before the
   Towns (decisions-log 321). The owner doubled the design's prices and raised selling from 20% to half.
   Measured income (#63, on the kill gold before #83): about 1.1k a wave at wave 15, 2–2.7k after wave 30, with

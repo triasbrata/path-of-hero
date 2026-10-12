@@ -211,13 +211,12 @@ void main() {
       expect([for (final i in droppedItems) r.items[i]!.effect], [swordDmg, shieldDef, bootsSpeed, bowRange, glovesRate, potionRegen, staffDmg]);
       // The schedule as version 2's but its autoLeave, Auto's wait in a Town, gone since decisions-log 328.
       expect(r.toJson()['schedule'], {...old['schedule'] as Map<String, dynamic>}..remove('autoLeave'), reason: 'schedule');
-      for (final k in ['parts', 'tiers']) {
-        expect(r.toJson()[k], old[k], reason: k);
-      }
+      expect(r.toJson()['parts'], old['parts'], reason: 'parts'); // its `tiers`, the Shop's relic prices, went in decisions-log 329
       for (final k in ['necromancerSlot', 'forge']) {
         expect((r.toJson()['drops'] as Map)[k], (old['drops'] as Map)[k], reason: 'drops.$k');
       }
-      expect({...r.shop.toJson(), 'from': 15}, old['shop'], reason: "the Shop's prices; its opening 1 since decisions-log 253");
+      expect({...r.shop.toJson(), 'from': 15}, {...old['shop'] as Map<String, dynamic>}..removeWhere((k, _) => k.startsWith('item')),
+          reason: "the Shop's prices; its opening 1 since decisions-log 253, its item prices gone in 329");
       final mats = r.toJson()['materials'] as Map<String, dynamic>;
       expect({for (final m in droppedMats) m.name: mats[m.name]}, old['materials'], reason: 'the 30 as before');
     });

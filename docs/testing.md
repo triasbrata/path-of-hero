@@ -2329,8 +2329,8 @@ turned on per game (dark on the board).
   915×412; the Army detail's Recall at the three sizes (newest first, two and "+1 more"), a recall and its splash, a
   refusal said on a tap, a full army's swap with its refund; the gold's dot on the Army tab (the w89 save).
 - test/shop_tabs_ui_test.dart (decisions-log 269; booted `TdGame`s in a Town, the forge on): at the three sizes the
-  strip, Buy's Materials alone (the shelf at its prices; Items and Relics, none on the forge's shelf, not drawn:
-  decisions-log 280), every heading's words
+  strip, Buy's Materials alone (the shelf at its prices; Items and Relics no section of Buy's since decisions-log
+  329, never drawn since 280), every heading's words
   at the board's leftmost slot (`shopSections` against `bagSlots`), a material bought; Sell's grid equal to
   `shopSellLoot` (each enhanced stack its own cell; a bound Artifact, an oath and a worn relic absent); the Sell Basket:
   a tap adds a cell at 1 and selects its line ("1/2", "1 x 1500 = 1500"), +, All and - (never past what is held; at 1

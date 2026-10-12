@@ -38,11 +38,6 @@
     "lichOrb": {"grade": "trophy", "sell": 800},
     "mithril": {"grade": "crafted", "sell": 770}, "starmetal": {"grade": "crafted", "sell": 2970}
   },
-  "tiers": {
-    "basic":  {"sellShare": 0.5, "shop": 12000, "shopRise": 0.2},
-    "strong": {"sellShare": 0.5, "shop": 20000, "shopRise": 0.2},
-    "mighty": {"sellShare": 0.5, "shop": 32000, "shopRise": 0.2}
-  },
   "relics": {
     "fang":        {"share": 0.30,
                     "recipe": {"tier": "basic", "materials": {"batWing": 2, "slimeGel": 2}, "items": {}, "gold": 300},
@@ -96,7 +91,7 @@
     "reaper":      {"below": 0.15, "bossK": 1.5,
                     "recipe": {"tier": "mighty", "materials": {"bearFur": 2, "bigBone": 2, "bearClaw": 1, "soulOrb": 1}, "items": {"longBow": 1}, "gold": 2450}}
   },
-  "shop": {"from": 1, "itemPrice": 2000, "itemRise": 200, "itemSellShare": 0.5, "matMarkup": 2.5, "matRise": 0.0},
+  "shop": {"from": 1, "matMarkup": 2.5, "matRise": 0.0},
   "items": {
     "sword":         {"materials": {"boneShard": 2, "orcTooth": 2}, "items": {}, "gold": 20, "effect": 1.25},
     "shield":        {"materials": {"orcTooth": 2, "boneShard": 1, "slimeGel": 1}, "items": {}, "gold": 20, "effect": 2.5},

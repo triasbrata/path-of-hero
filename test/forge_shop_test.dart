@@ -9,7 +9,7 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
-import 'package:tower_defense/main.dart' show BagCategory, onShopShelf, shopBuyKinds, shopBuySections, shopSellLoot;
+import 'package:tower_defense/main.dart' show BagCategory, onShopShelf, shopBuyKinds, shopBuyOrder, shopBuySections, shopSellLoot;
 
 import 'hero_skill_helpers.dart';
 
@@ -36,10 +36,12 @@ Game forgeShopGame({bool inTown = true}) {
 void main() {
   const seen = [Mat.wolfClaw, Mat.slimeGel, Mat.lichOrb, Mat.evilEye, Mat.soulOrb];
 
-  test("the shelf is the materials seen, in first-drop order: Buy's one section Materials (Items and Relics, which have "
-      'none, left out); Sell is what the player holds, in the Bag\'s order; no item, no small relic on the shelf', () {
+  test("the shelf is the materials seen, in first-drop order: Buy's one section Materials (Items and Relics no section "
+      'of it since decisions-log 329); Sell is what the player holds, in the Bag\'s order; no item, no small relic on '
+      'the shelf', () {
     final g = forgeShopGame()..offers = true; // the board's: the Artifact shelf closed beside the boss's chest
     final relic = droppedRelics.first;
+    expect(shopBuyOrder, [BagCategory.artifacts, BagCategory.materials]);
     expect(shopBuySections(g), [BagCategory.materials]);
     expect(shopBuyKinds(g, BagCategory.materials), seen, reason: 'the shelf alone, never a held kind not dropped');
     expect([shopBuyKinds(g, BagCategory.items), shopBuyKinds(g, BagCategory.relics)], [isEmpty, isEmpty]);

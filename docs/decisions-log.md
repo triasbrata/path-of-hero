@@ -11856,6 +11856,14 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
          six wave records lose `"over":0` from `start.tide` and its three record hashes change; every stat, text,
          tooltip, preview and fight is byte for byte the same, since the probe plays with no board cap (Beban never
          counted there). With the back line's change above and Beban still in, it was byte for byte main's.
+     - **The Shop's empty Items and Relics sections go, with their prices** (the owner's pick "Hapus setelah pasar Town
+       masuk (Recommended)"; 326's market is in): since the forge the Smithy makes items and small relics and the Shop
+       never had one on its shelf (248), so the two sections never showed after 280. Gone: Buy's Items and Relics
+       (`shopBuyOrder` is the Artifacts and the Materials), `TierPrices` and town.json's `tiers` (a small relic's Shop
+       price 12,000 / 20,000 / 32,000, +20% a buy, and its unread sale share), the shop block's `itemPrice`,
+       `itemRise` and `itemSellShare`; an older file's keys are read as nothing. An item or a small relic has no Shop
+       price (`basePrice` 0, refused as not sold) and sells at the market's price as since 326; a save's count of them
+       bought stays and moves nothing. The player sees nothing new.
      - **Leftovers no player sees go** (the code audit's X1 and X2 of 317, never picked): the Toko-era names of the Army
        tab's dot and K11's picture (`tokoNudge`, `_tokoTabDot`, `'tokoDot'`, `_picToko` are now `armyNudge`,
        `_armyTabDot`, `'armyDot'`, `_picShop`); `Board.carveButton` (a test seam no test read); `To.allTroops` (no Fx

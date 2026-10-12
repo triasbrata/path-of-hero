@@ -105,8 +105,7 @@ void main() {
     expect([for (final m in [Mat.slimeGel, Mat.bearFur, Mat.slimeCore, Mat.bearClaw, Mat.darkGem, Mat.lichOrb]) r.materials[m]!.sell], [10, 50, 40, 200, 200, 800]);
     expect([for (final k in townRelics) r.recipes[k]!.gold], [300, 300, 400, 400, 1000, 1000, 1000, 1000, 3000, 3500, 3000]);
     expect(r.recipes['giantSlayer']!.items, {Item.gloves: 1});
-    expect([for (final t in RelicTier.values) r.tiers[t]!.shop], [12000, 20000, 32000]);
-    expect((r.shop.from, r.shop.itemPrice, r.shop.itemRise), (1, 2000, 200)); // open in every Town (decisions-log 253)
+    expect((r.shop.from, r.shop.matMarkup), (1, 2.5)); // open in every Town (decisions-log 253)
     expect(r.relics['fury'], {'every': 3, 'hit': 2.0});
   });
 
@@ -155,9 +154,9 @@ void main() {
     final fang = odd.recipes['fang']!;
     expect([fang.materials, fang.items], [{Mat.batWing: 3}, <Item, int>{}]);
     expect((fang.gold, fang.tier), (300, RelicTier.mighty));
-    expect((odd.tiers[RelicTier.basic]!.shop, odd.tiers[RelicTier.basic]!.sellShare), (9000, 0.5));
+    expect(odd.toJson().containsKey('tiers'), isFalse, reason: 'the tier prices, gone in decisions-log 329: read as nothing');
     expect([odd.relics['fury'], odd.relics['thorns']], [{'every': 3, 'hit': 3.0}, {'share': 0.30}]);
-    expect((odd.shop.from, odd.shop.itemPrice), (1, 2500));
+    expect((odd.shop.from, odd.shop.toJson().containsKey('itemPrice')), (1, false));
     expect(odd.skipped, [
       'drops: no normal',
       'drops: no elite',

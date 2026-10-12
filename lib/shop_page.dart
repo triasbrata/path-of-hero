@@ -42,17 +42,17 @@ const shopNothingToBuy = 'Nothing to buy here yet.';
 /// does ([Board._shopSellDetail]); the band is this tall whatever is picked, so the price row and the lines never move.
 const shopDetailLines = 3;
 
-/// Buy's sections, in their order on the page (decisions-log 269; the owner's "item [][][] relic [][][]"), by the Bag's
-/// categories ([bagCategoryNames] their headings).
-const shopBuyOrder = [BagCategory.items, BagCategory.relics, BagCategory.artifacts, BagCategory.materials];
+/// Buy's sections, in their order on the page (decisions-log 269), by the Bag's categories ([bagCategoryNames] their
+/// headings). Its Items and Relics, the owner's "item [][][] relic [][][]", went in decisions-log 329: empty since the
+/// forge (decisions-log 248: the Smithy makes them), a section with nothing in it already hidden (decisions-log 280).
+const shopBuyOrder = [BagCategory.artifacts, BagCategory.materials];
 
 /// What the shelf sells under Buy's [section] ([onShopShelf]), in its order: the store's Artifacts while their shelf is
 /// open, and the forge's Shop's (decisions-log 248) materials that have dropped, in the order they first did
 /// ([Game.matsSeen]), never an item or a small relic.
 /// [BagCategory.all]: every section's, in order.
 List<Enum> shopBuyKinds(Game g, BagCategory section) => switch (section) {
-      BagCategory.items => [for (final i in droppedItems) if (onShopShelf(g, i)) i],
-      BagCategory.relics => [for (final r in g.relicsInPlay) if (onShopShelf(g, r)) r],
+      BagCategory.items || BagCategory.relics => const [], // the Smithy's goods: no section of Buy's ([shopBuyOrder])
       BagCategory.artifacts => [for (final k in storeGoods) if (k is Relic && k.pusaka && onShopShelf(g, k)) k],
       BagCategory.materials => [for (final m in g.matsSeen) if (onShopShelf(g, m)) m],
       BagCategory.all => [for (final s in shopBuyOrder) ...shopBuyKinds(g, s)],

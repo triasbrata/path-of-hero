@@ -1977,11 +1977,11 @@ outside a Town.
   biar paddingnya tetap sama"): a section per kind of goods the shelf has some of, top to bottom (`shopBuySections`,
   `shopBuyKinds`, `_shopBuyBoard`, on bag.dart's board in sections, `_sections` and `_sectionsLay`, which the Smithy's
   Items board shares since decisions-log 277):
-  - **Items** (the seven grade-I kinds, `droppedItems`) and **Relics** (the small relics in play, `relicsInPlay`, in
-    `Relic` order): none is on the forge's shelf (`onShopShelf`, decisions-log 248), so neither section shows.
-    **Artifacts**: the store's Artifacts while their shelf is open (`shelfOpen`; never on the board, where they come from
+  - **Artifacts** (`shopBuyOrder`'s first): the store's Artifacts while their shelf is open (`shelfOpen`; never on the board, where they come from
     the Boss Chest), else no section. **Materials** (decisions-log 248): the materials that have dropped, in the order
-    they first did (`Game.matsSeen`).
+    they first did (`Game.matsSeen`). Items and Relics, the owner's "item [][][] relic [][][]", were sections too
+    until decisions-log 329: none was ever on the forge's shelf (`onShopShelf`, decisions-log 248), so they never
+    showed after decisions-log 280, and they went with their prices.
   - Each section is a small heading (bold, 13·ts; `_gridHead`), then its cells as the Bag's slots (`bagCellSize`, the
     Bag's gaps) in whole rows, the last row's spare slots empty, and a 6·ts gap before the next heading. The heading's
     words start exactly at the board's leftmost slot: the board and its headings stand on one span (`_gridSpan`: as many
