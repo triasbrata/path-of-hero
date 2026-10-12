@@ -35,7 +35,7 @@ enum _Aim { down, left, right, up }
 /// tooltip ([Game.relicInfo], its tier among its lines; decisions-log 227); and the spawn bar's "+Room" (spawn_bar.dart,
 /// the Army header's until decisions-log 283): what the capacity buy does and costs ([Game.roomTip], decisions-log 260,
 /// 292).
-enum _Hint { hp, mp, awaken, hero, tide, recall, pusaka, omens, carve, town, relic, room, boost, troop, autoReplace }
+enum _Hint { hp, mp, awaken, hero, tide, recall, pusaka, omens, carve, town, relic, room, boost, troop, autoReplace, pocket, pocketBoost }
 
 /// The tooltip's state between frames.
 class _Tips {
@@ -70,12 +70,14 @@ extension on Board {
       for (final (r, i, _) in _slots) (r, i, null),
       for (final (r, x) in _relicSlots) (r, x, null),
       for (final (r, m) in _matSlots) (r, m, null),
+      for (final (r, p) in _pocketCells) (r, p, null),
       ...t.rows,
       ...t.hints,
       if (_tideAt != Rect.zero) (_tideAt, _Hint.tide, null),
       if (_omenRow.at != Rect.zero) (_omenRow.at, _Hint.omens, null),
       if (_townChipAt != Rect.zero) (_townChipAt, _Hint.town, null),
       for (final (i, r) in _boostChipsAt.indexed) (r, _Hint.boost, '$i'), // a boost's chip under it (tavern_look.dart)
+      for (final (i, r) in _pocket.chips.indexed) (r, _Hint.pocketBoost, '$i'), // a pocket boost's chip by them
     ];
     final pointed = p == null || dragAt != null ? null : areas.where((a) => a.$1.contains(p)).firstOrNull, hit = pointed ?? omens;
     // An item cell's plus: an enhanced stack's tooltip is its own (decisions-log 255), from one cell to the next too.
@@ -100,6 +102,7 @@ extension on Board {
     final (String title, List<(Item?, String)> lines) = switch (what) {
       Relic r => _plain(state.relicInfo(r)),
       Item i => _plain(state.itemInfo(i, type, plus)),
+      PocketKind p => _plain(state.pocketInfo(p)), // a pocket item in the Bag (pocket.dart)
       // A material's (town.dart), and while a wish's recipe takes it "Needed for your wishlist" (decisions-log 282).
       Mat m => _plain(switch (state.matInfo(m)) { (final t, final l) => (t, [...l, if (state.wishMats.contains(m)) Words.neededForWishlist]) }),
       _Hint.hp => _plain(state.hpInfo(type!)),
@@ -113,6 +116,8 @@ extension on Board {
       _Hint.room => _plain(state.roomTip), // the spawn bar's "+Room" (spawn_bar.dart)
       _Hint.troop => _plain(state.spawnTip(type!)), // a spawn bar's card (spawn_bar.dart)
       _Hint.autoReplace => _plain(state.autoTip), // the spawn bar's Auto (auto_replace.dart)
+      _Hint.pocket => _plain(state.pocketSlotTip(int.parse(type!), keys: !_touch)), // a pocket slot (pocket_look.dart)
+      _Hint.pocketBoost => _plain(state.pocketBoostTip(int.parse(type!))), // a pocket boost's chip (tavern_look.dart)
       // A small relic on the Army detail (troop_detail.dart): what it is, without the Bag's "Tap, then pick a troop".
       _Hint.relic => _plain(switch (state.relicInfo(Relic.values.byName(type!))) { (final t, final l) => (t, [...l]..remove(tapLine)) }),
       _ => state.awakenInfo(type!),
@@ -152,6 +157,15 @@ extension on Board {
         _barSprite(c, state, type!, titleIcon); // a spawn bar's card: its type's sprite (spawn_bar.dart)
       case _Hint.autoReplace:
         c.drawImageRect(_img('ui_icons.png'), _counterShield, titleIcon, _px); // the army's shield (troop_counter.dart)
+      case _Hint.pocket:
+        switch (state.pocketSlots[int.parse(type!)]) {
+          case final kind?:
+            _icon(c, kind, titleIcon);
+          case null:
+            _uiIcon(c, _icPack, titleIcon); // an empty slot: the pack (tavern_page.dart)
+        }
+      case _Hint.pocketBoost:
+        _icon(c, state.pocketBoosts[int.parse(type!)].kind, titleIcon);
       default:
         _icon(c, what, titleIcon, null, plus);
     }

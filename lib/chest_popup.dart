@@ -334,6 +334,7 @@ extension on Board {
     _slots.clear();
     _relicSlots.clear();
     _matSlots.clear();
+    _pocketCells.clear();
     _tip.rows.clear();
     _tip.hints.clear();
     _troops

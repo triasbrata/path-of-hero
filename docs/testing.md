@@ -2177,6 +2177,45 @@ The shots: `test/probe_tavern_hud_shots.dart` (not part of the suite) at those t
 card K23, the Tavern tab's dot, the bursts, the battle log's Tavern line, the chips under the Town chip, a chip's
 tooltip, six chips.
 
+## test/pocket_test.dart: the pocket items (decisions-log 332)
+
+The rules of lib/pocket.dart (loot-items-relics.md "Pocket items") on seeded games, no widgets:
+
+- town.json's `pocket` block reads as the defaults; a patch merges into a kind (its materials map too); the effect lines
+  from the rules; the price from the Tavern's `purseAt` at every wave, the Pocket Watch dearest.
+- Crafting: in a Town only; its materials and gold taken; the first one into the first empty slot, one taken out stays
+  out; the cap ("Full: 3/3"); every refusal. Put in a slot (it moves from another), taken out.
+- Using: the refusals in their order (game over, paused, Town, empty, none left, between waves for all but the bottles,
+  the cooldown, nobody to act on); the Heal Bottle through the heal funnel, its `PocketUsed` and log line; MP; the bottles
+  between waves; the Rage Tonic's 15 s and its renewal; the Iron Draught under the Tavern's caps with a Banquet; the
+  boosts' end at the wave's end while the cooldown runs on; the Frost Bomb's slow and daze (a boss's share, a monster
+  not yet on the field none); the Fire Bomb's blow (a boss's share, a kill and its gold); the Holy Water's cleanse, its
+  ward and a stun; the Pocket Watch's clocks.
+- The save round trip and an odd save (an unknown kind, a kind twice, a count past its cap or under 1); the Shop's sell
+  price (half its worth), never sold nor marketed; the telemetry (the events, a wave's `pocket`, its start's).
+
+## test/pocket_ui_test.dart: the pocket bar (decisions-log 332)
+
+Booted TdGames (ui-hud.md "The pocket bar"); `pocketGame` a board game after wave 11 with three Heal Bottles and two Rage
+Tonics in the bar.
+
+- At 1600x947, 1266x713, 1164x777 and 915x412: four slots of 44 px at least in a column right-aligned with the wave meter,
+  over the step, beside the open book between waves (the book's right at most the column's left), still in a wave; none
+  with nothing in it, none in a Town.
+- At 915x412 with the map open the Shadows' chips, the Town chip, a Tavern boost's chip and a pocket boost's are over none
+  of it, the Town chip left of it.
+- A tap uses one (every troop healed); its cooldown only the error; an empty slot says how to fill it; a booster between
+  waves "Only in a wave". The Frost and Fire Bombs on monsters on the field, their bursts drawn. Keys 2 and the keypad's 1.
+- A slot's tooltip (its lines, "Ready in", "Key: 2") and the boost chip's ("Rage Tonic: 15 s left"). The open battle log
+  takes the slot's tap; shut, the tap uses one.
+- The Bag's Pocket chip, its cells, the row taking one out and putting it back, greyed with the bar full ("Pocket full").
+- The Smithy's Pocket section: its eight cells under its heading, a pick's effect and "Craft (50 gold)", Craft putting
+  the first one in the bar.
+
+test/hud_sweep_test.dart counts the bar among the HUD's pieces (touch_hud_test.dart's `pieces`, 'pocket'; a Heal
+Bottle in it): over none of them at any window size. The shots: `test/probe_pocket_shots.dart` (not part of the suite) at those four sizes: in a wave, the map open, a
+slot's tooltip, the log open, between waves, the Bag's Pocket chip, the Smithy's section.
+
 ## test/town_scene_test.dart: the Town scene (decisions-log 224)
 
 The scene drawn in a Town (ui-hud.md "Town"; lib/town_scene.dart), on booted `TdGame`s with the Towns on per game (dark

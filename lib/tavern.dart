@@ -627,9 +627,11 @@ extension Tavern on Game {
   }
 
   /// [type]'s stats [s] with the boosts running ([Game.statsOf]'s last step; only called while any runs): the product of
-  /// each one's multipliers that works on [type], each stat's stopped at [TavernRules.most]. Damage (a healer's heal), max
-  /// HP, the pause between attacks (÷: faster), MP regen, and the damage taken ([Stats.taken], cut after the Guard relic
-  /// as the forge's Helm: every troop has it, shields or not). Outside the relics' cap: a boost is no relic factor.
+  /// each one's multipliers that works on [type], the pocket's boosts' too ([Game.pocketBoosts], every type; decisions-log
+  /// 332), each stat's stopped at [TavernRules.most], so a Tavern boost and a pocket one together never pass it. Damage (a
+  /// healer's heal), max HP, the pause between attacks (÷: faster), MP regen, and the damage taken ([Stats.taken], cut
+  /// after the Guard relic as the forge's Helm: every troop has it, shields or not). Outside the relics' cap: a boost is no
+  /// relic factor.
   Stats _boostStats(String type, Stats s) {
     final r = townRules.tavern, m = r.most;
     var (dmg, taken, hp, rate, mp) = (1.0, 1.0, 1.0, 1.0, 1.0);
@@ -637,6 +639,10 @@ extension Tavern on Game {
       if (b.type != null && b.type != type) continue;
       final e = r.boosts[b.kind]!;
       (dmg, taken, hp, rate, mp) = (dmg * e.dmg, taken * e.taken, hp * e.maxHp, rate * e.rate, mp * e.mpRegen);
+    }
+    for (final b in pocketBoosts) {
+      final e = pocketRule(b.kind);
+      (dmg, taken, rate) = (dmg * e.dmg, taken * e.taken, rate * e.rate);
     }
     (dmg, taken, hp, rate, mp) = (min(dmg, m.dmg), max(taken, m.taken), min(hp, m.maxHp), min(rate, m.rate), min(mp, m.mpRegen));
     return s._with(

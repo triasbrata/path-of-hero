@@ -59,6 +59,7 @@ extension Wipe on Game {
     _watchGrail(end: true);
     _emit(WaveEnded(wave, t, won: false));
     _boostWaveEnd(replay: true); // the Tavern's boosts don't count a wave played again (tavern.dart)
+    _pocketWaveEnd(); // the pocket's boosts and ward end with it (pocket.dart)
     waveMaterials.clear(); // what lay on the field comes only with a win
     toReplace
       ..clear()

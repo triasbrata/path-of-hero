@@ -78,7 +78,8 @@ extension _TownLook on Board {
     final label = _townChipLabel(g), ck = capsuleK(icon + 4), pad = capsulePad(fs, ck), gap = capsuleGap(fs);
     final w = (2 * pad + icon + gap + _textWidth(label, fs)).ceilToDouble(), h = icon + 2 * (ck + 1);
     final left = (_meterAt.right - w).roundToDouble();
-    final at = _townChipAt = Rect.fromLTWH(left, _underMeter(left, w), w, h);
+    final top = _underMeter(left, w); // and left of the pocket bar where it would come down beside it (pocket_look.dart)
+    final at = _townChipAt = Rect.fromLTWH((_stackRight(top, h) - w).roundToDouble(), top, w, h);
     _nine(c, _capsuleSrc, at, ck, l: 1, t: 1, r: 1, b: 1, sheet: 'ui_bars.png', seam: 0); // its corners stay cut
     _townMark(c, Rect.fromLTWH(at.left + pad, at.top + ck + 1, icon, icon));
     _text(c, label, Offset(at.left + pad + icon + gap, at.center.dy), size: fs, color: const Color(0xFFFFF1D6));

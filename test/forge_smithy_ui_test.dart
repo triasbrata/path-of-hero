@@ -236,6 +236,7 @@ void main() {
       }
       final strip = tabs.first.bottom;
       for (final (p, page) in pages.indexed) {
+        if (page.cells.isEmpty) continue; // a page of the Pocket section's alone, after the grades' (decisions-log 332)
         final x0 = page.cells.map((c) => c.$2.left).reduce(min);
         for (final (item, r) in page.cells) {
           expect(inside(r, left) && r.top >= strip, isTrue, reason: '$tag page $p $item: $r under the strip, on the page');
@@ -361,7 +362,7 @@ void main() {
     (Size(1600, 947), 4, 3, 4, 1),
     (Size(1266, 713), 4, 3, 4, 1),
     (Size(1164, 777), 4, 3, 4, 1),
-    (Size(915, 412), 3, 2, 3, 1),
+    (Size(915, 412), 3, 3, 3, 1), // the Pocket section after grade III its own page (decisions-log 332)
   ]) {
     final tag = '${size.width.round()}x${size.height.round()}';
     testWidgets('at $tag with no materials the Items board shows $items rows a page over $itemPages page(s), the Relics $relics '

@@ -137,6 +137,7 @@ class _SmithyView {
   BagLoot? enhancePick; // the Enhance tab's stone or item stack (null: none yet: [Board._smithyEnhancePick] picks one)
   SmithyTab tab = SmithyTab.wishlist; // the strip's tab on: the Wishlist at first (decisions-log 302), then the player's, for the session
   Item? item; // the item whose recipe the Items tab's facing page shows (null: none yet: [Board._smithyItem] picks one)
+  PocketKind? pocket; // or the pocket item picked in its Pocket section (decisions-log 332), shown before [item]
   bool toItem = true; // the Items board turns to the pick's page once it is laid out (the pick new: none yet)
   bool toBoard = true; // the Relics or Enhance board turns to the pick's page the same (the pick or the tab new)
   final board = _BagGrid(smithy: true, category: BagCategory.relics); // the relics' board, paged by its pager where they don't fit
@@ -176,6 +177,7 @@ class _SmithyView {
   void unpick() {
     pick = null;
     item = null;
+    pocket = null;
     toItem = toBoard = true;
     enhancePick = null;
     wishArmed = null;
@@ -306,6 +308,7 @@ extension on Board {
     _smithy
       ..tab = SmithyTab.items
       ..item = item
+      ..pocket = null
       ..toItem = true
       ..trail.clear();
   }
@@ -324,6 +327,7 @@ extension on Board {
         v
           ..tab = SmithyTab.items
           ..item = item
+          ..pocket = null
           ..toItem = true;
       case final Relic relic:
         v
@@ -344,6 +348,7 @@ extension on Board {
       case final Item item:
         v
           ..item = item
+          ..pocket = null
           ..toItem = true;
       case final Relic relic:
         v
@@ -359,8 +364,8 @@ extension on Board {
   /// at its plus ([_smithyEnhancePick]), else the relic ([_smithyPick]). Its cell and its recipe's materials are on the
   /// lit card ([_bagCell]).
   BagLoot _smithyShownAt(Game g) => switch (_smithyTab(g)) {
-        SmithyTab.wishlist => (kind: _smithyItem(g), plus: 0), // no facing page there (decisions-log 303): the Items tab's
-        SmithyTab.items => (kind: _smithyItem(g), plus: 0),
+        SmithyTab.wishlist => (kind: _smithy.pocket ?? _smithyItem(g), plus: 0), // no facing page there (decisions-log 303): the Items tab's
+        SmithyTab.items => (kind: _smithy.pocket ?? _smithyItem(g), plus: 0), // its pocket item picked (decisions-log 332), else its item
         SmithyTab.relics => (kind: _smithyPick(g), plus: 0),
         SmithyTab.enhance => _smithyEnhancePick(g),
       };
@@ -373,6 +378,7 @@ extension on Board {
         final Item i => g.itemRecipe(i)?.materials,
         final Relic r => g.craftRecipe(r)?.materials,
         final Mat stone => g.stoneRecipe(stone)?.materials,
+        final PocketKind p => g.pocketRule(p).materials,
         _ => null,
       } ??
       const {};
@@ -445,17 +451,19 @@ extension on Board {
     }
 
     if (tab == SmithyTab.items) {
-      // Every grade's items at once (decisions-log 277), a section per grade under its heading.
-      final item = _smithyItem(g);
+      // Every grade's items at once (decisions-log 277), a section per grade under its heading; then the pocket items
+      // (decisions-log 332), every kind, under "Pocket".
+      final grades = Words.gradeNumerals.length;
       final secs = [
-        for (var n = 1; n <= Words.gradeNumerals.length; n++) (title: gradeTitle(n), loot: [for (final i in smithyItemOrder(g, n)) (kind: i, plus: 0)], note: ''),
+        for (var n = 1; n <= grades; n++) (title: gradeTitle(n), loot: [for (final i in smithyItemOrder(g, n)) (kind: i, plus: 0)], note: ''),
+        (title: Words.pocket, loot: [for (final p in PocketKind.values) (kind: p, plus: 0)], note: ''),
       ];
-      final (height: _, :heads) = board(v.items, secs, v.toItem ? (kind: item, plus: 0) : null);
+      final (height: _, :heads) = board(v.items, secs, v.toItem ? pick : null);
       v.toItem = false;
       for (final (i, r) in heads) {
-        v.at['grade:${i + 1}'] = r;
+        v.at[i < grades ? 'grade:${i + 1}' : 'pocket'] = r;
       }
-      v.texts['grades'] = [for (final (i, _) in heads) secs[i].title].join('|');
+      v.texts['grades'] = [for (final (i, _) in heads) if (i < grades) secs[i].title].join('|');
     } else {
       // The relics' or the Enhance tab's board: as many columns as the page takes and the rows that hold them, centred,
       // no empty slot after the last (a section with no heading, [_sections]). The Enhance tab's: the stones, then the
@@ -856,6 +864,7 @@ extension on Board {
           Item() when item != null => g.enhanceRows(plus),
           final Item i => g.itemCraftRows(i),
           final Mat stone => g.stoneCraftRows(stone),
+          final PocketKind p => g.pocketCraftRows(p),
           _ => g.craftRows(pick as Relic),
         },
         n = recipe.length;
@@ -863,11 +872,14 @@ extension on Board {
       final Item i when item != null => _enhanceLines(g, i, plus),
       final Item i => ('${g.itemEffect(i).first} for one troop type.', smithyGradeLine(g, i)),
       final Mat stone => _stoneLines(g, stone),
+      final PocketKind p => _pocketLines(g, p),
       _ => _relicLines(g, pick as Relic),
     };
     // Under the button: Craft's "No limit", or what an item does a step up (none at the top).
     final top = item != null && plus >= g.plusMost;
-    final greys = item == null
+    final greys = pick is PocketKind
+        ? const <String>[] // its cap is on its grey line ("In bag: 3/5.")
+        : item == null
         ? const ['No limit: craft again while you have enough', 'No limit: craft again', 'No limit']
         : [if (!top) '${g.itemEffect(item, null, plus + 1).first} at +${plus + 1}'];
     // The Wishlist (decisions-log 282, 303): while the product is wished (a type's open wish for an item, or a free line),
@@ -965,7 +977,10 @@ extension on Board {
     }
     if (equip) {
       final row = Rect.fromLTWH(right.left, (y + gap).roundToDouble(), w, act.h);
-      if (keptFor.isNotEmpty) {
+      if (pick case final PocketKind p) {
+        _assign.list = row; // the Bag's own row (bag.dart): into the pocket bar or out of it
+        _pocketRow(c, g, p, row, act);
+      } else if (keptFor.isNotEmpty) {
         _smithyKept(c, keptFor, row, fs);
       } else {
         item == null ? _equipRow(c, g, pick, row, act) : _giveTypeRow(c, g, item, plus, row, act);
@@ -1020,6 +1035,14 @@ extension on Board {
     final e = g.townRules.enhance, steps = [for (final (i, m) in e.stone.indexed) if (m == stone) '+${i + 1}'];
     final to = steps.length < 2 ? steps.join() : '${steps.take(steps.length - 1).join(', ')} or ${steps.last}';
     return (steps.isEmpty ? '${Words.enhance} takes it.' : 'One for each ${Words.enhance} step to $to.', '${Words.madeAtSmithy}: no monster drops it.');
+  }
+
+  /// A pocket item's lines on the Items tab's Pocket section (decisions-log 332): what it does ([pocketEffectLines]); in
+  /// grey when it works, its cooldown and how many the Bag holds of the most ([Pockets.pocketInfo]).
+  (String, String) _pocketLines(Game g, PocketKind kind) {
+    final (_, lines) = g.pocketInfo(kind);
+    final effects = pocketEffectLines(g.pocketRule(kind)).length;
+    return (lines.take(effects).join(' '), lines.skip(effects).join(' '));
   }
 
   /// An item's lines on the Enhance tab (decisions-log 255; forge-design §12): what one does at +[plus] and, enhanced, at
@@ -1082,6 +1105,7 @@ extension on Board {
   CraftRefusal? _smithyWhyNot(Game g, Enum kind) => switch (kind) {
         final Item item => g.whyNotCraftItem(item),
         final Mat stone => g.whyNotCraftStone(stone),
+        final PocketKind p => g.whyNotCraftPocket(p),
         _ => g.whyNotCraft(kind as Relic),
       };
 
@@ -1090,7 +1114,13 @@ extension on Board {
   /// ("Need 2 more Iron Scrap", "Need 1 Leather Cap"). A press crafts it ([_craftTap]) or says why again.
   void _craftButton(Canvas c, Game g, Enum kind, Rect r, double ts) {
     final gold =
-        switch (kind) { final Item item => g.itemRecipe(item)?.gold, final Mat stone => g.stoneRecipe(stone)?.gold, _ => g.craftRecipe(kind as Relic)?.gold } ?? 0;
+        switch (kind) {
+          final Item item => g.itemRecipe(item)?.gold,
+          final Mat stone => g.stoneRecipe(stone)?.gold,
+          final PocketKind p => g.pocketPrice(p),
+          _ => g.craftRecipe(kind as Relic)?.gold,
+        } ??
+        0;
     final why = _smithyWhyNot(g, kind), fs = math.max(10.0, 14 * ts), room = r.width - 12 * ts;
     final label = why == null
         ? _fitFirst(['${Words.craft} (${thousands(gold)} gold)', '${Words.craft} (${shortPrice(gold)})', Words.craft], fs, room)
@@ -1106,7 +1136,12 @@ extension on Board {
   /// says so ([craftedLine]: "Sweep crafted!", "Steel Sword crafted!"). Refused: the error and why ([CraftRefusal.text]).
   void _craftTap(Enum kind) {
     final g = state;
-    bool make() => switch (kind) { final Item item => g.craftItem(item), final Mat stone => g.craftStone(stone), _ => g.craft(kind as Relic) };
+    bool make() => switch (kind) {
+          final Item item => g.craftItem(item),
+          final Mat stone => g.craftStone(stone),
+          final PocketKind p => g.craftPocket(p),
+          _ => g.craft(kind as Relic),
+        };
     if (_smithyWhyNot(g, kind) case final why?) {
       make(); // the error
       return showMessage(why.text);

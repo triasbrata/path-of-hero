@@ -186,6 +186,7 @@ extension on Board {
     _slots.clear();
     _relicSlots.clear();
     _matSlots.clear();
+    _pocketCells.clear();
     _plateTaps.clear();
     _tip.rows.clear();
     _tip.hints.clear();

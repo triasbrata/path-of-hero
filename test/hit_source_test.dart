@@ -139,6 +139,8 @@ void main() {
       // A small relic's own blow: Sweep's on the monster next to the target (relics.dart, decisions-log 227); never a
       // normal hit, so it never sweeps or poisons again.
       'relics.dart: next Hit.relic',
+      // A pocket item's blow on every monster on the field: the Fire Bomb's (pocket.dart, decisions-log 332), from no one.
+      'pocket.dart: m Hit.pocket',
     ]));
     expect([for (final c in calls('Shot')) c.args[3]], unorderedEquals(['Hit.normal', 'Hit.skill', 'Hit.skill', 'Hit.skill']),
         reason: "a fighter's shot; Arrow Rain's, Arcane Blast's and a monster's Volley are skills' (Shot.special: always)");

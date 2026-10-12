@@ -160,7 +160,8 @@ extension _OmenLook on Board {
     final top = aside
         ? [_meterBottom, if (_troops.open) _troops.list.bottom, if (underChip) chip.bottom].reduce(math.max) + 4
         : [_meterAt.bottom, _map.at.bottom, if (underChip) chip.bottom].reduce(math.max) + 6;
-    final at = row.at = Rect.fromLTWH(left, top.roundToDouble(), w, h);
+    // Under the meter, left of the pocket bar where it would come down beside it (pocket_look.dart).
+    final at = row.at = Rect.fromLTWH(aside ? left : (_stackRight(top, h) - w).roundToDouble(), top.roundToDouble(), w, h);
     _panel(c, at);
     var x = at.left + pad;
     for (final kind in kinds) {

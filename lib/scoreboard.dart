@@ -127,6 +127,7 @@ extension on Board {
     _slots.clear();
     _relicSlots.clear();
     _matSlots.clear();
+    _pocketCells.clear();
     _tip.rows.clear();
     c.drawRect(Offset.zero & Size(size.x, size.y), Paint()..color = Colors.black.withValues(alpha: 0.45));
     if (s.naming != null) return _namePanel(c);

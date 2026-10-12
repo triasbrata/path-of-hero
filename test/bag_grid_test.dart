@@ -402,9 +402,10 @@ void main() {
         expect(b.bagCategory, cat);
         expect(kindsOf(b), [for (final k in allOrder(g)) if (test(k)) k], reason: '$cat');
       }
-      // The five chips in one row over the grid, apart, a finger's height, inside the left page.
-      expect(b.bagChip(BagCategory.materials), isNot(Rect.zero));
-      final chips = [for (final cat in BagCategory.values) b.bagChip(cat)], left = b.bagDetail('page').left;
+      // The five chips in one row over the grid, apart, a finger's height, inside the left page (Pocket only while a pocket
+      // item is held, decisions-log 332: none here).
+      expect((b.bagChip(BagCategory.materials) != Rect.zero, b.bagChip(BagCategory.pocket)), (true, Rect.zero));
+      final chips = [for (final cat in BagCategory.values) if (cat != BagCategory.pocket) b.bagChip(cat)], left = b.bagDetail('page').left;
       for (final (i, r) in chips.indexed) {
         expect((r.height >= 20, r.top, r.bottom <= b.bagCells.first.$2.top, r.right <= left), (true, chips.first.top, true, true), reason: '$at chip $i');
         expect([r.left, r.top, r.right, r.bottom].every((v) => v == v.roundToDouble()), isTrue, reason: '$at chip $i: $r as drawn');

@@ -20,7 +20,8 @@ part of 'game.dart';
 /// crafted relics' [relics] numbers (decisions-log 227), and the Smithy's [recipes] ([Craft]), the relic [tiers]' prices
 /// and the [shop]'s item prices ([Store], decisions-log 233); the forge's (decisions-log 245, in every
 /// game with the Towns since the forge-off build went, decisions-log 296): the [items]' recipes and effects, the relic recipes that change with it ([forgeChanges]) and the [combos]; the
-/// Tavern's boosts ([tavern], decisions-log 266). [parse] skips any block it doesn't know.
+/// Tavern's boosts ([tavern], decisions-log 266); the market ([market], decisions-log 326); the pocket items ([pocket],
+/// decisions-log 332). [parse] skips any block it doesn't know.
 class TownRules {
   /// The format the file is written in ([toJson]). 2: the materials, recipes and prices; 3 (decisions-log 245): the
   /// forge's `items`, `combos`, `awaken` and `enhance`, and each relic's recipe in its `relics` entry (with what the
@@ -48,6 +49,7 @@ class TownRules {
     this.enhance = const EnhanceRules(),
     this.tavern = const TavernRules(),
     this.market = const MarketRules(),
+    this.pocket = const PocketRules(),
     this.skipped = const [],
   });
 
@@ -104,6 +106,9 @@ class TownRules {
 
   /// The market for forged goods (decisions-log 326; the file's `market`, lib/market.dart).
   final MarketRules market;
+
+  /// The pocket items (decisions-log 332; the file's `pocket`, lib/pocket.dart).
+  final PocketRules pocket;
 
   /// What [parse] left out of the file, one line each (a name it doesn't know, a number out of range): main.dart
   /// prints them. Not in [toJson].
@@ -208,6 +213,7 @@ class TownRules {
       enhance: EnhanceRules.fromJson(block(j, 'enhance'), skipped),
       tavern: TavernRules.fromJson(block(j, 'tavern'), skipped),
       market: MarketRules.fromJson(block(j, 'market'), skipped),
+      pocket: PocketRules.fromJson(block(j, 'pocket'), skipped),
       skipped: skipped,
     );
   }
@@ -298,6 +304,7 @@ class TownRules {
         'enhance': enhance.toJson(),
         'tavern': tavern.toJson(),
         'market': market.toJson(),
+        'pocket': pocket.toJson(),
       };
 }
 
@@ -1247,12 +1254,12 @@ extension Materials on Game {
 /// Why the Smithy won't craft a relic ([CraftRefusal.why]), in the order [Craft.whyNotCraft] asks: the game is over, not
 /// in a Town, no recipe (not a small relic), a material short, an item short, the gold short. Enhance's (decisions-log
 /// 255, enhance.dart): not open yet ([closed], before town.json `enhance.from`) and an item already at the most steps
-/// ([top]).
-enum CraftWhy { over, town, recipe, material, item, gold, closed, top }
+/// ([top]). A pocket item's (decisions-log 332, pocket.dart): the Bag holds the most of it ([full]).
+enum CraftWhy { over, town, recipe, material, item, gold, closed, top, full }
 
 /// Why [Craft.whyNotCraft] refused: [why]; for a material or an item short, which one ([short]), how many are held
 /// ([have]) and how many the recipe takes ([need]); for [CraftWhy.closed] the wave it opens after, for [CraftWhy.top]
-/// the most steps, in [need].
+/// the most steps, in [need]; for [CraftWhy.full] how many are held and the most, in [have] and [need].
 class CraftRefusal {
   const CraftRefusal(this.why, {this.short, this.have = 0, this.need = 0});
 
@@ -1261,7 +1268,7 @@ class CraftRefusal {
   final int have, need;
 
   /// How the Smithy says it: "Only in a Town", "Need 2 more Wolf Claw" (some held), "Need 1 Bow" (none held), "Not
-  /// enough gold"; Enhance's "Opens after wave 30" and "Max: +5".
+  /// enough gold"; Enhance's "Opens after wave 30" and "Max: +5"; a pocket item's "Full: 5/5".
   String get text => switch (why) {
         CraftWhy.over => Words.gameOver,
         CraftWhy.town => Words.onlyInTown,
@@ -1269,6 +1276,7 @@ class CraftRefusal {
         CraftWhy.gold => Words.notEnoughGold,
         CraftWhy.closed => 'Opens after wave $need',
         CraftWhy.top => 'Max: +$need',
+        CraftWhy.full => 'Full: $have/$need',
         CraftWhy.material || CraftWhy.item =>
           'Need ${need - have} ${have > 0 ? 'more ' : ''}${switch (short) { final Mat m => m.label, final Item i => itemNames[i]!, _ => '' }}',
       };

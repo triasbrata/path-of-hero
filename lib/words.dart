@@ -99,6 +99,14 @@ abstract final class Words {
 
   /// The Town's Shop (decisions-log 230): what the Bag's facing page says under a kind it can't sell.
   static const soldInTown = 'Sold at the $shop, in a $town.';
+
+  /// The pocket items (decisions-log 332, pocket.dart): the Bag's chip and the Smithy's section, the Bag page's rows that
+  /// put one in the bar or take it out, and why a slot can't be used ([Pockets.whyNotUsePocket]: "Ready in 12 s").
+  static const pocket = 'Pocket', putInPocket = 'Put in pocket', takeOut = 'Take out', inPocket = 'In pocket',
+      pocketEmpty = 'Empty: put one in from the $bag', noneLeft = 'None left: craft more at the $smithy',
+      onlyInWave = 'Only in a wave', notInTown = 'Not in a $town', paused = 'Paused', readyIn = 'Ready in',
+      noOneHurt = 'No one is hurt', noOneNeedsMp = 'No one needs MP', noMonster = 'No monster on the field',
+      pocketFull = 'Pocket full: take one out first', inSlot = 'In slot', intoSlot = 'Into slot';
   static const materialNames = {
     'slimeGel': 'Slime Gel', 'batWing': 'Bat Wing', 'boneShard': 'Bone Shard', 'orcTooth': 'Orc Tooth', //
     'boneArrow': 'Bone Arrow', 'wolfClaw': 'Wolf Claw', 'rustyPlate': 'Rusty Plate', 'leatherStrap': 'Leather Strap',

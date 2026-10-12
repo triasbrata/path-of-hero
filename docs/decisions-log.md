@@ -11835,3 +11835,61 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        the owner's wave-89 save) is byte-identical to 327's golden: that save's next Town comes at wave 94 at the
        earliest, so no Tavern rolls and no boost runs in it; the golden stands. Balance (more boosted waves a Town, the
        gold they take) is measured after the merge, by replaying saved waves.
+332. **Pocket items: eight consumables made at the Smithy, used at will from a four-slot bar at the field's right edge,
+     each on the whole army or on every monster, with its own cooldown** (the owner, 2026-10-12: "aku mau tambahkan user
+     pocket item, dimana item ini bisa di pakai by kemauan user, misal botol heal untuk melakukan heal atau botol mana
+     atau bisa juga item booster lain, yang nge boost troops untuk beberapa detik atau menit. dan di dapatkan dari forge
+     juga tapi itemnya dibuat butuh banyak untuk 1 item", pocket items the player uses when they like: a heal bottle, a
+     mana bottle, or boosters for some seconds or minutes; made at the forge, many materials for one; then "Ke semua
+     troop" (on every troop), "4 slot + cooldown", and besides heal, mana, attack/speed and defence "item lain lagi yang
+     bisa membuat permainan semakin dynamic", more kinds that make the game more dynamic). Why: nothing the player held
+     could turn a wave going wrong; the Tavern's boosts (266) last whole waves and are bought before them. By pocket-items
+     (lib/pocket.dart, lib/pocket_look.dart; loot-items-relics.md "Pocket items", ui-hud.md "The pocket bar").
+     - **The owner's answers to the design** (mockups at four sizes first): "Botol juga di jeda wave" (the bottles work
+       between waves too; the rest only in a wave); "Kolom 1x4 tepi kanan" (a 1×4 column at the right edge, over the
+       2×2 block proposed); on the kinds "ini aku belum tau sih" (not sure yet): the eight proposed are built, every
+       number and recipe in town.json `pocket`, so one is retuned or dropped there; on the costs "Cukup (Recommended)"
+       (as proposed).
+     - **The kinds:** Heal Bottle (every troop 35% of its HP, through the heal funnel) and Mana Bottle (50% of its MP),
+       30 s, 5 held at most; Rage Tonic (damage ×1.25, attack speed ×1.15) and Iron Draught (damage taken ×0.70) for 15 s,
+       60 s; Frost Bomb (every monster on the field walks and attacks 40% slower for 6 s, bosses 20%), Fire Bomb (8% of
+       its HP as a blow, bosses 2%) and Holy Water (every troop's bad effects end, none takes hold for 5 s), 45 s, 3 at
+       most; Pocket Watch (every troop's skills ready now, MP still paid), 90 s, 2 at most. The design's Hourglass is the
+       Pocket Watch: the icon pack has a pocket watch and no hourglass. The boosts multiply into the Tavern's
+       `_boostStats` under its caps (as agreed with 331), so the two never pass ×1.8 damage or ×0.6 damage taken; a second
+       use renews one, never stacks.
+     - **Cooldowns** are each kind's own on the game clock and run on through a wave's end and between waves (a bottle
+       used as a wave ends isn't ready at once at the next start); the boosts and the ward end with the wave; none of the
+       three is saved (a save is between waves). A use is refused where it would do nothing (no one hurt, no one short of
+       MP, no monster on the field), so a tap never wastes one.
+     - **The costs** (as proposed): 13 to 16 materials each, a Rare one for the stronger kinds, a Trophy for the Pocket
+       Watch; gold k × the Tavern's purse of the wave (`purseAt`, 318's merged), rounded as the Tavern's, at least 50:
+       every kind 50 to wave 10, a bottle 650 at wave 50 and 5,200 at 86, a booster 1,000 and 8,300, the Pocket Watch
+       1,500 and 12,000. The Shop buys one back at half its worth (its materials' sell prices and its gold), never at
+       326's market price and never sold there: no craft-and-sell loop.
+     - **The bar:** four slots of the spawn bar's size in a column right-aligned with the wave meter, over the step, in a
+       wave and between waves (beside the open book), once a slot holds a kind; a tap (on tap up) or keys 1 to 4 use one;
+       its count, its cooldown as the slot's own greyed copy swept clockwise, its tooltip with the key ("Key: 2"; the key
+       on the slot was tried in the mockups and unreadable). A kind crafted for the first time goes into the first empty
+       slot; the Bag's Pocket chip and the Smithy's page put one in or take it out. The open battle log stands over it and
+       takes its taps. The running boosts are chips after the Tavern's ("12s").
+     - **915×412** (the owner: make it fit where the Shadows' chips sat under its top with the map open): what hangs under
+       the wave meter (the Shadows' chips, the Town chip, the boosts' chips, the boss bars) right-aligns 6 px left of the
+       column where it would come down beside it, rather than the column wrapping or its slots shrinking (they stay the
+       tap rule's 44); and the room round the slots there is the panel's rim, 6 px for 10, so the column stands beside the
+       open book, not on its cover. Shots at 1600×947, 1266×713, 1164×777 and 915×412: in a wave, the map open, a tooltip,
+       the log open, between waves, the Bag, the Smithy.
+     - **Made** at the Smithy's Items tab, a Pocket section after Grade III (the strip has no room for a fifth tab at
+       915×412); there the Items board takes a third page.
+     - **Icons:** `pocket_<kind>.png`, eight 32×32 icons mapped from the Cute Fantasy Icons pack's Potions and Tools
+       sheets into the game vault (assets.md; on the release's allowlist).
+     - **Telemetry and save:** the events `pocketUsed` and `pocketCrafted`, a wave's `pocket` and its start's
+       (`eventVersion` and `telemetryVersion` 16); the save's `pocket` `{slots, stock}` only while any (additive, `v`
+       stays 3). The auto-player and the probes' policies never use one.
+     - **Checked:** test/pocket_test.dart (the rules), test/pocket_ui_test.dart (the bar at four sizes, its taps, keys,
+       tooltips, the bombs' bursts, the log over it, the Bag's row, the Smithy's section), test/hud_sweep_test.dart (the
+       bar among the HUD's pieces at every window size), the Items board's pages and the Bag's chips in
+       test/forge_smithy_ui_test.dart, test/bag_grid_test.dart and test/shop_tabs_ui_test.dart. The w89 identity dump
+       (waves 90 and 91 of the owner's wave-89 save) is byte-identical to main's golden: no pocket item in that save and
+       none used. Balance (how much a pocket turns a wave, the gold it takes) is measured after the merge, by replaying
+       saved waves.

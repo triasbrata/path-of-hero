@@ -83,7 +83,7 @@ extension _BossBars on Board {
     ].reduce(math.max);
     final nameH = 7 * k, lineH = compact ? 0.0 : 6 * k;
     final h = _bossBarH(u, compact), w = (pad + (compact ? 0 : frame + 3 * k) + colW + pad).roundToDouble();
-    final panel = Rect.fromLTWH(left ?? ((_meterAt.isEmpty ? size.x - _edgeR : _meterAt.right) - w).roundToDouble(), top, w, h);
+    final panel = Rect.fromLTWH(left ?? (_stackRight(top, h) - w).roundToDouble(), top, w, h); // left of the pocket bar beside it
     _bossAt = _bossAt.isEmpty ? panel : _bossAt.expandToInclude(panel);
 
     // Dying, it breaks away: a shake, then it drops and fades.

@@ -31,6 +31,7 @@ extension on Board {
     _slots.clear();
     _relicSlots.clear();
     _matSlots.clear();
+    _pocketCells.clear();
     _welcomeAt.clear();
 
     // The scene fills the screen in both layouts: the field and the band above it take its height.

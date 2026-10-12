@@ -427,10 +427,11 @@ extension HeroSkills on Game {
   /// through the duration scaler, the one place a catalog rule makes effects end sooner or later ([FxEngine._effectTime]).
   /// [bad]: a monster puts it on troop [u] (its skill's), so a troop's cleanse ends it ([Cleanse.cleanse]). [omen]: a
   /// Bayangan gives it ([Effect.omen]). A pin a troop puts on a monster ([Status.impaled]) may be shrugged off (the
-  /// Bayangan Unbowed, [Omens._omenShrug]).
+  /// Bayangan Unbowed, [Omens._omenShrug]). A bad one doesn't take hold while a Holy Water's ward holds ([Pockets.pocketWarded]).
   void addEffect(Unit u, Status s, double time, {double k = 1, Unit? by, int n = 0, bool bad = false, bool omen = false}) {
     assert(!bad || u.side == Side.troop, 'a bad effect is a monster\'s on a troop: ${s.name}');
     if (bad && u.move != null && isPhantom(u)) return; // a phantom takes nothing from a monster (Phantom Rush, decisions-log 320)
+    if (bad && pocketWarded) return; // a Holy Water's ward: nothing bad takes hold on a troop (pocket.dart, decisions-log 332)
     if (effectOn(u, s) case final old? when (old.k - s.base).abs() > (k - s.base).abs()) return;
     if (s == Status.impaled && by?.side == Side.troop && _omenShrug(u)) return; // Unbowed (omen.dart)
     u.effects[s] = Effect(t + _effectTime(u, s, time, by, omen: omen), k, by: by, n: n, next: t + 1, bad: bad, omen: omen);

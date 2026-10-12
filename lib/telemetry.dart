@@ -49,7 +49,10 @@ import 'settings.dart';
 /// `margin` and `pressure`, a `townEntered` its `n` and `identity`; an item's and a small relic's `gain` is the market's.
 /// 15: a Tavern boost's length is rolled with its offer (decisions-log 331): a `boostBought`'s `waves` 2 to 4, or 0 with
 /// `untilTown`, and a wave start's `boosts` 0 for one until the next Town.
-const telemetryVersion = 15;
+/// 16: the pocket items (decisions-log 332): the events `pocketUsed` and `pocketCrafted`, a wave's `pocket` (each kind's
+/// uses since the last wave ended, between-wave bottles too), the pockets made in a wave's `crafted`, `materialsUsed` and
+/// `gold.craftSpent`, and a wave start's `pocket` (the kinds held).
+const telemetryVersion = 16;
 
 /// Where [HttpSink] posts (`--dart-define=TELEMETRY_SERVER=https://...`). None by default, so nothing is sent.
 const telemetryServer = String.fromEnvironment('TELEMETRY_SERVER');
@@ -76,6 +79,7 @@ const passedOn = {
   EventKind.stoneCrafted, EventKind.itemEnhanced, // a stone made there and an item enhanced (decisions-log 255)
   EventKind.boostBought, EventKind.tavernRerolled, // a Tavern boost bought, its offers rerolled (decisions-log 266)
   EventKind.wipe, // an army wiped mid-wave: a heart lost, the wave played again (decisions-log 322)
+  EventKind.pocketUsed, EventKind.pocketCrafted, // a pocket item used, one made at the Smithy (decisions-log 332)
 };
 
 /// Where the records go.
@@ -423,6 +427,14 @@ class TelemetryAdapter {
         w.tavernSpent += price; // in a Town, between waves only, like Asah
       case BoostSaved():
         w.boostSaved++;
+      case PocketUsed(:final pocket):
+        _count(w.pocket, pocket.name);
+      case PocketCrafted(:final pocket, :final materials, :final gold):
+        _count(w.crafted, pocket.name); // a pocket kind's name is never an item's, a relic's or a stone's
+        for (final MapEntry(key: m, value: n) in materials.entries) {
+          w.materialsUsed[m.name] = (w.materialsUsed[m.name] ?? 0) + n;
+        }
+        w.craftSpent += gold;
       case BoostEnded():
         break; // the next wave's start has the boosts still running
       case StrongFoe() || HeroMade() || Awakened() || TypeReleased() || GrailSaved() || PusakaReport() || OfferShown() || OmenGained() || OmenEased() || OmenDusk():
@@ -512,6 +524,7 @@ class TelemetryAdapter {
         // each Pusaka's steps taken.
         if (w.ukirPoints > 0) ...{'ukirItems': w.ukirItems, 'ukirPoints': w.ukirPoints, 'ukirSteps': w.ukirSteps},
         if (w.boostSaved > 0) 'boostSaved': w.boostSaved, // the leaks a Tavern boost forgave (Watchman's Brew)
+        if (w.pocket.isNotEmpty) 'pocket': w.pocket, // each pocket kind's uses since the last wave ended (pocket.dart)
         // No item or relic drops on the field (decisions-log 246, 321): always empty, kept so the record's shape stays.
         'dropped': const <String, int>{},
         'relicsDropped': const <String, int>{},
@@ -564,5 +577,6 @@ class _WaveSum {
   final storeBought = <String, int>{}, storeSold = <String, int>{}, relicsTakenOff = <String, int>{};
   final ukirItems = <String, int>{}, ukirSteps = <String, int>{};
   final crafted = <String, int>{}, materialsUsed = <String, int>{};
+  final pocket = <String, int>{};
   int ukirPoints = 0;
 }

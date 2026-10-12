@@ -40,6 +40,7 @@ part 'market.dart';
 part 'relics.dart';
 part 'enhance.dart';
 part 'tavern.dart';
+part 'pocket.dart';
 part 'wishlist.dart';
 part 'auto_replace.dart';
 part 'wipe.dart';
@@ -1865,6 +1866,9 @@ enum Hit {
 
   /// A small relic's own blow: Sweep's hit on the monster next to the target (relics.dart).
   relic,
+
+  /// A pocket item's blow on every monster on the field: the Fire Bomb's (pocket.dart, decisions-log 332), from no one.
+  pocket,
 }
 
 class Shot {
@@ -2474,6 +2478,15 @@ class Game {
   bool tavernSeen = false;
   String? tavernPolicy;
 
+  /// The pocket items (decisions-log 332, lib/pocket.dart): how many of each kind the Bag holds and the bar's slots, a
+  /// kind each or none (saved); when each kind is ready again, the pocket boosts running and until when a Holy Water's
+  /// ward holds (game time; not saved: a save is between waves).
+  final pocketStock = <PocketKind, int>{};
+  final pocketSlots = List<PocketKind?>.filled(pocketSlotCount, null);
+  final pocketReady = <PocketKind, double>{};
+  final pocketBoosts = <PocketBoost>[];
+  double pocketWardUntil = double.negativeInfinity;
+
   /// The Towns' dice ([Towns._rollTown]): one draw a roll, apart so the rest of the game rolls as it did. Not saved.
   Random townDice = Random();
 
@@ -2564,7 +2577,7 @@ class Game {
   /// [heavyBuff] ([heavyTypes]); then its type's stat Pusaka (Dragon Heart's HP and regen, Dawn Star's power,
   /// pusaka.dart); then the oath's, for the whole army ([Pusaka._oathStats]: Oath of One's, the Few's and Alliance's
   /// HP and damage ×[_oathK], decisions-log 155; the Wall's, Blood Oath's and the Vanguard's own, decisions-log 247);
-  /// then the Tavern's boosts running ([Tavern._boostStats], decisions-log 266). Its items' own numbers ([itemK]), an enhanced one's at its plus ([_itemsOn]); the spears' reach and
+  /// then the Tavern's boosts and the pocket's running ([Tavern._boostStats], decisions-log 266, 332). Its items' own numbers ([itemK]), an enhanced one's at its plus ([_itemsOn]); the spears' reach and
   /// the prisms' splash stop at their ceilings ([_ceilings]), and what the amulets add to its HP and the rings to its MP
   /// regen stays on top of the awakening's (decisions-log 251).
   Stats statsOf(String type) {
@@ -2584,7 +2597,7 @@ class Game {
     }
     if (pusaka.isNotEmpty) s = _pusakaStats(type, s); // its stat Pusaka: Dragon Heart, Dawn Star (pusaka.dart)
     if (_oathOn != null) s = _oathStats(s); // the oath's, the whole army's (pusaka.dart)
-    return boosts.isEmpty ? s : _boostStats(type, s); // the Tavern's boosts running (tavern.dart)
+    return boosts.isEmpty && pocketBoosts.isEmpty ? s : _boostStats(type, s); // the Tavern's and the pocket's boosts (tavern.dart)
   }
 
   /// [base] with every item [type] holds ([upgrades], in order), each at its own number ([itemK]). An enhanced type's
@@ -3291,6 +3304,7 @@ class Game {
         ..._townJson, // the Towns (town.dart)
         ..._marketJson, // the market's memory (market.dart): no key while it is fresh
         ..._boostsJson, // the Tavern's boosts running (tavern.dart): no key while none runs
+        ..._pocketJson, // the pocket items (pocket.dart): no key with none held and no slot set
         ..._enhanceJson, // Enhance's pluses (enhance.dart): no key with nothing enhanced
         ..._wishJson, // the Wishlist (wishlist.dart): no key with no wish
         'troops': [
@@ -3370,6 +3384,7 @@ class Game {
     for (final e in ((j['materials'] as Map?) ?? {}).entries) {
       if ((Mat.values.asNameMap()[e.key], e.value) case (final m?, final int n) when n > 0) materials[m] = n;
     }
+    _loadPocket(j); // the pocket items (pocket.dart): none in a save from before them
     // The kinds dropped so far (the forge's, town.dart): in the save's order, an unknown name skipped; a save without
     // them starts from the materials held, in [Mat] order. A stone ([craftedMats]) never drops, so never counts.
     if (j['matsSeen'] case final List seen) {
@@ -3766,7 +3781,8 @@ class Game {
         pusaka: pusakaState,
         omens: _omenState,
         materials: {for (final MapEntry(:key, :value) in materials.entries) key.name: value},
-        boosts: boosts.isEmpty ? null : {for (final b in boosts) b.kind.name: b.untilTown ? 0 : b.left})); // the Tavern's (tavern.dart)
+        boosts: boosts.isEmpty ? null : {for (final b in boosts) b.kind.name: b.untilTown ? 0 : b.left}, // the Tavern's (tavern.dart)
+        pocket: pocketStock.isEmpty ? null : {for (final MapEntry(:key, :value) in pocketStock.entries) key.name: value})); // pocket.dart
   }
 
   /// Troops are set up in the zone just ahead of the back line, one per cell; mid-battle any cell will do
@@ -5491,6 +5507,7 @@ class Game {
     _sweptGone(); // a wipe's swept monsters go once their hop is over (wipe.dart)
     _ticks++; // the near counts are counted afresh ([FxEngine.alliesNearOf])
     _tickEffects(dt); // Hero skills' effects: what is due, heals and bleeds, what ran out
+    _pocketTick(); // the pocket boosts whose time is up end (pocket.dart)
     _omenFade(dt); // Fade: the troops' shields shrink, a stunned or busy troop's too (omen.dart)
     _omenHeals(); // Trickle's spread heals land, Heal Siphon pays (omen.dart)
 
@@ -5792,6 +5809,7 @@ class Game {
       if (lastPusaka case final r?) _emit(r);
       _emit(WaveEnded(wave, t, won: true));
       _boostWaveEnd(); // the Tavern's boosts count the wave (tavern.dart)
+      _pocketWaveEnd(); // the pocket's boosts and ward end with it (pocket.dart)
       _omenEase(); // the wave's falls take Bayangan levels away (omen.dart)
       _omenTopKiller(); // the wave's top killer, Grudge's target in the next (omen.dart)
       lostWave = null; // a wave the army was wiped in is won now (wipe.dart)
@@ -5847,6 +5865,7 @@ class Game {
       _watchGrail(end: true);
       _emit(WaveEnded(wave, t, won: false));
       _boostWaveEnd();
+      _pocketWaveEnd();
     }
   }
 }

@@ -34,7 +34,8 @@ extension on Board {
       _omenRow.at.contains(p) || // the Shadows' chips (omen_look.dart)
       _bossAt.contains(p) || // #74: panels over the field's edge
       _offViewAt.contains(p) ||
-      _onBar(p); // the spawn bar's cards along the field's bottom (spawn_bar.dart)
+      _onBar(p) || // the spawn bar's cards along the field's bottom (spawn_bar.dart)
+      (_pocketLive && _pocket.at.contains(p)); // the pocket bar at its right edge (pocket_look.dart)
 
   /// The living unit, troop or monster, at screen point [p]: within 12 units of the middle of its body (7 above
   /// its feet), the nearest; none where the field is [_covered].

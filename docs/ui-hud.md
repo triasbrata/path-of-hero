@@ -789,6 +789,55 @@ the field's own ground, whose top is under the lowest anything of the battle is 
   words and where). Shots: test/probe_hotbar_shots.dart (`SIZES`, `OUT`), test/probe_spawn_bar_shots.dart,
   test/probe_step_seam_shots.dart (the step's slopes).
 
+## The pocket bar (`lib/pocket_look.dart`, decisions-log 332)
+
+The pocket items (loot-items-relics.md "Pocket items") on the battle field, where the owner put them: "Kolom 1x4 tepi
+kanan" (a 1×4 column at the right edge). Existing art only: the spawn bar's hotbar, the pocket items' icons.
+
+- **Where** (`_pocketPlace`, early in `_overField`, so what hangs under the wave meter is placed after it): four slots in
+  a column, each the spawn bar's slot (`_hotGeom().s`: 56 at 1600×947, 44 at 1266×713 and 915×412, 46 at 1164×777),
+  right-aligned with the wave meter (`_edgeR`), its bottom 2 meter px over the step's top. The room round and between
+  the slots is the hotbar's 10 px, less where the book leaves less on its right (the 60 book px `_bookFit` keeps there):
+  at one book px a pixel (915×412) 6, the panel's rim, so the column stands beside the open book, not on it. Measured:
+  1514..1590 × 569..843 at 1600×947, 1192..1256 × 398..624 at 1266×713, 1088..1154 × 451..685 at 1164×777, 849..905 ×
+  123..329 at 915×412 (the book's right 849).
+- **When** (`_pocketShown`): on the battle field where the spawn bar shows (not in a Town, on the welcome screen or after
+  the game), in a wave and between waves (the bottles work then; the owner: "Botol juga di jeda wave"), once a slot holds
+  a kind: until the first one is crafted the field's right edge stays clear. The open battle log stands over it: then
+  it is neither drawn nor tapped (`_pocketLive`), its place kept, so nothing moves as the log opens.
+- **Look:** the hotbar's panel (ui_hotbar.png's, 9-sliced at 2 screen px a sprite px) stood upright, in it the hotbar's
+  inset slots. In a slot its kind's icon (`pocket_<kind>.png`, assets.md) at a whole multiple of its 16-px art (32 px in
+  a 44 slot), faded (`_ghost`) with none left; how many the Bag holds in the Bag's dark capsule astride its top edge at
+  the right (the spawn bar's count; red at 0). Lit (`_lightTagPaint`) under the mouse and while its kind's boost runs,
+  its face a sprite px down while pressed; greyed (`_greyTagPaint`) between waves for a kind that works only in a wave.
+  Its cooldown is the slot's own greyed copy over it, clipped to the share still to run clockwise from the top (a clip
+  of the sprite, no shape drawn), with its seconds left in the middle (white, outlined). An empty slot: the inset slot
+  alone. No key on the slot (the mockups tried it: unreadable under the icon); the tooltip says it.
+- **Use:** a tap on a slot (on tap up, on the slot the press went down on, as the spawn bar's cards; `_pocketTap`) or
+  keys 1 to 4 (the number row or the keypad, `_pocketKey`; not under a guide card, a splash or the chest's popup) uses
+  one (`Pockets.usePocket`). Refused, the error sound and why in the message window ("Only in a wave", "No one is hurt",
+  "No monster on the field", "Empty: put one in from the Bag", "None left: craft more at the Smithy"), but for its
+  cooldown (the slot counts it down) and the pause: the sound alone.
+- **Tooltip** (`_Hint.pocket`, the loot tooltips' frame with the kind's icon; `Pockets.pocketSlotTip`): its name, what it
+  does (green), "Ready in 12 s" or "None left: craft more at the Smithy" while so, "In a wave or between waves. Cooldown
+  30 s." ("Only in a wave. Cooldown 60 s."), "In bag: 3/5.", and with a mouse "Key: 2". An empty slot: "Pocket 3",
+  "Empty: put one in from the Bag", the Bag's pack icon. A pocket item's Bag cell has the same lines but the key
+  (`pocketInfo`).
+- **Its boosts' chips** ("The Tavern in battle"): a pocket boost running (Rage Tonic, Iron Draught) is a chip after the
+  Tavern's, its icon and its seconds left ("12s", the chips as wide as "88s" so they don't twitch), its tooltip
+  (`_Hint.pocketBoost`, `pocketBoostTip`) "Rage Tonic: 12 s left" and what it does; `Board.pocketChips`.
+- **What hangs under the wave meter keeps left of it** (`_stackRight`): the Shadows' chips, the Town chip, the boosts'
+  chips and the boss bars keep right-aligned with the meter, but one that would come down beside the column (its
+  bottom within 6 px of the column's top, or lower) right-aligns 6 px left of it. Only 915×412 needs it: with the map
+  open the Town chip is at 733..843 and a boost's chip 801..843, the Shadows' chips end at 116 over the column's 123
+  (test/pocket_ui_test.dart). Monsters coming in at the right edge pass under the column (the owner's pick of the right
+  edge).
+- **Covered:** a press on it pins no plate and gives a troop no loot (`_covered`); the drop popup keeps off it
+  (`_dropPlace`); the cursor is the hand over a slot. The HUD sweep (test/hud_sweep_test.dart, `pieces`' 'pocket', a
+  Heal Bottle in it) finds it over no other piece at any window size from 900×400 to 2600×1500, desktop and touch.
+- **For tests:** `Board.pocketBar` (Rect.zero: not placed), `pocketSlots`, `pocketChips`. Shots:
+  test/probe_pocket_shots.dart.
+
 ## The Pusaka in battle (`lib/pusaka_look.dart`)
 
 P2 "Bukti" (decisions-log 149; the design <agents>/reports/artefact-roguelike-design.md §3.8, §6 P2). The
@@ -1229,7 +1278,8 @@ existing art only.
   apart. Under the Town chip when one is marked, else where it would go (`_underMeter`: 6 px under the wave meter,
   under the open map, the Shadows' chips and the "Chest!" chip in their columns), in rows
   right-aligned with the meter, as many a row as its width takes. In a Town too (a boost bought there shows at once);
-  none at game over. The boss bars, the battle log's panel and the units' plates keep under them (`_boostRowAt`).
+  none at game over. After them the pocket boosts running, each its icon and "12s" ("The pocket bar", decisions-log
+  332). The boss bars, the battle log's panel and the units' plates keep under them (`_boostRowAt`).
   `Board.boostChips` for tests.
 - **Tooltip** (`_Hint.boost`, the loot tooltips' frame with the boost's icon; `Tavern.boostTip`): "Feast: 2 waves left"
   ("1 wave left"; one until the next Town "Feast: until next Town", and once that Town is marked a first line "Town
@@ -1698,6 +1748,14 @@ forge's strip and its Items and Enhance tabs follow them.
     troops** (`BagAction.giveTroops`): a tap turns the book to the Bag with the item picked and its types listed, where
     a full Cap or Ring swaps out its lowest (decisions-log 249); none in the Bag, "Craft one first". A wished item's
     Give row: the Wishlist's, below.
+  - **Pocket** (decisions-log 332; loot-items-relics.md "Pocket items"): after Grade III its own section under
+    "Pocket" (`Words.pocket`), the eight pocket items in `PocketKind` order, marked as the items (the ▲ while
+    `canCraftPocket`, the count from 1, the icon at 40% while it can't); it pages with the grades (at 915×412 the board's
+    third page; `Board.smithyPocketCells`, its heading `smithyAt('pocket')`). A pick's facing page (`_SmithyView.pocket`,
+    shown before the item): its heading and count, what it does, in grey when it works, its cooldown and "In bag: 3/5."
+    (`_pocketLines`), its Recipe (`pocketCraftRows`: the materials and the gold), Craft (`craftPocket`, "Craft (50
+    gold)", "Heal Bottle crafted!"; refused "Full: 3/3" at its cap, "Need 1 more Bat Wing"), no "No limit" line, and in
+    the Give row's place the Bag's pocket row ("Take out" / "Put in pocket", "The Bag's chips" above).
   - **The Wishlist** (decisions-log 282; the rules: loot-items-relics.md "The Wishlist"; lib/wishlist_look.dart): an
     item some type wishes for carries ui_icons.png's gold star ((48, 0), its 14×14 at (1, 1); the Bag cell's `wished`
     mark) at its cell's top left, the corner the Smithy's boards leave free (no NEW, no "+"), k−1 px in from the slot's
@@ -1975,7 +2033,7 @@ outside a Town.
   segmented paper strip (`_chips`, the Bag's and the Smithy's look: light controls, no bevels), the tab on lit. It opens
   on Buy each time the book turns to it (`_ShopView.leave`). A tab tap puts the pick back; the sell basket stays. The
   left page holds the tab's board, the right page its facing page. The pick is `_storePick`, one for both tabs. The
-  field's Bag keeps its own chips (All, Items, Relics, Materials, Artifacts).
+  field's Bag keeps its own chips (All, Items, Relics, Materials, Pocket while one is held, Artifacts).
 - **Buy** (the owner: "untuk buy bisa dibuat terpisah antara item dan relic, misal item [][][] relic [][][]"; and "uinya
   shop ketika buy mirip seperti smithy materials cuma text materialsnya di sejajarkan dengan posisi box yang paling kiri
   biar paddingnya tetap sama"): a section per kind of goods the shelf has some of, top to bottom (`shopBuySections`,
@@ -2769,7 +2827,11 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   mechanic's from `lib/words.dart`).
   - **Layout** (`_bagGrid`): "Bag" (`Words.bag`, 22·ts bold) at the top; under it (`_underTitle`), the category chips
     (`_bagChips`, max(20, 24·ts) tall): **All**, **Items**, **Relics**, **Materials** ("The Bag's
-    Materials" below; "Mats", `Words.materialsShort`, where the words don't all fit) and, once the store is open (as
+    Materials" below; "Mats", `Words.materialsShort`, where the words don't all fit), **Pocket** while the Bag holds a
+    pocket item (decisions-log 332: its cells the kinds held; a pick's facing page what it does, in grey "In a wave or
+    between waves. Cooldown 30 s.", and one row, `_pocketRow`, the whole row its tap: "Take out" ("In slot 2") or "Put
+    in pocket" ("Into slot 3", the first empty one), greyed "Pocket full: take one out first" with the four slots full;
+    a pocket item goes on no troop, so it is picked but never dragged) and, once the store is open (as
     shipped from wave 1 won) or any Pusaka is owned, **Artifacts**; only one on at a time, kept for the session (not saved). A light segmented control (the owner's
     button rule, decisions-log 198 "Bag chips"; no ui_buttons bevel): one paper strip across the page's writing, the
     Bag slot's card (`_framePlain`, `_bagSlot` at the book's k), cut into a segment per category with no gap between

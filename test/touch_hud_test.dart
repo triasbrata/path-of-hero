@@ -50,7 +50,8 @@ Future<T> on<T>(TargetPlatform platform, Future<T> Function() body) async {
 }
 
 /// The HUD's pieces as drawn this frame, by name (Rect.zero: not drawn): the hearts-and-gold panel as its two parts, the
-/// Start/Pause toggle whatever it does (decisions-log 220), the spawn bar (decisions-log 283).
+/// Start/Pause toggle whatever it does (decisions-log 220), the spawn bar (decisions-log 283), the pocket bar while a slot
+/// holds a kind (decisions-log 332).
 Map<String, Rect> pieces(Board b) => {
       'counter': b.troopCounter,
       'hearts': b.livesBar,
@@ -63,6 +64,7 @@ Map<String, Rect> pieces(Board b) => {
       'log': b.logButton,
       // the spawn bar's hotbar, its arrows, +Room and Auto Buy, as one (decisions-log 283, 287)
       'bar': [b.spawnBarList, b.capacityButton, b.autoReplaceButton].where((r) => r != Rect.zero).fold(Rect.zero, (a, r) => a == Rect.zero ? r : a.expandToInclude(r)),
+      'pocket': b.pocketBar,
     };
 
 /// A fresh game on a [size] screen, between waves with the book open (or in a wave), drawn a while.

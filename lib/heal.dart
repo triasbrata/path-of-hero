@@ -53,6 +53,9 @@ enum HealSrc {
 
   /// Iron Will ([Relic.lastStand], relics.dart): once a wave, a share of its max HP when a blow leaves it low.
   lastStand,
+
+  /// A pocket item's heal on every troop: the Heal Bottle's (pocket.dart, decisions-log 332), in a wave or between waves.
+  pocket,
 }
 
 /// What a heal is to Wound: one in a wave (Wound cuts it), between waves (the rest, and the after-wave heal even

@@ -26,7 +26,8 @@ part of 'game.dart';
 /// (tests only) sends none. 13: an army wiped mid-wave no longer ends the game ([Wiped]; decisions-log 322). 14: the
 /// Towns' market and identities ([StoreSold] margin and pressure, [TownEntered] n and identity; decisions-log 326). 15: a
 /// Tavern boost's length is its offer's ([BoostBought.waves] 2 to 4, or 0 with [BoostBought.untilTown]; decisions-log 331).
-const eventVersion = 15;
+/// 16: the pocket items ([PocketUsed], [PocketCrafted], [WaveStarted.pocket]; decisions-log 332).
+const eventVersion = 16;
 
 /// How many events [Game.log] keeps, the oldest going first.
 const logSize = 200;
@@ -50,6 +51,7 @@ enum EventKind {
   stoneCrafted, itemEnhanced, // Enhance (decisions-log 255)
   boostBought, boostEnded, boostSaved, tavernRerolled, // the Tavern (decisions-log 266)
   wipe, // an army wiped mid-wave: a heart lost, the wave played again (decisions-log 322)
+  pocketUsed, pocketCrafted, // the pocket items (decisions-log 332)
 }
 
 /// Something that happened, in wave [wave] at game time [t].
@@ -549,6 +551,52 @@ final class BoostEnded extends GameEvent {
   Map<String, Object?> get data => {'boost': boost.name, 'type': ?type};
 }
 
+/// A pocket item was used ([Pockets.usePocket], decisions-log 332): its kind ([pocket]), the bar's [slot], whether in a wave
+/// ([inWave]; a bottle works between waves too), the troops alive and the monsters on the field it acted on ([troops],
+/// [foes]: 0 for a kind that acts on none), the HP and MP it gave ([healed], [mana]), the bad effects it ended
+/// ([cleansed]) and the monsters it killed ([killed]).
+final class PocketUsed extends GameEvent {
+  PocketUsed(super.wave, super.t,
+      {required this.pocket,
+      required this.slot,
+      required this.inWave,
+      this.troops = 0,
+      this.foes = 0,
+      this.healed = 0,
+      this.mana = 0,
+      this.cleansed = 0,
+      this.killed = 0});
+
+  final PocketKind pocket;
+  final int slot, troops, foes, healed, mana, cleansed, killed;
+  final bool inWave;
+
+  @override
+  EventKind get kind => EventKind.pocketUsed;
+
+  @override
+  Map<String, Object?> get data => {
+        'pocket': pocket.name, 'slot': slot, 'inWave': inWave, 'troops': troops, 'foes': foes, //
+        'healed': healed, 'mana': mana, 'cleansed': cleansed, 'killed': killed,
+      };
+}
+
+/// A pocket item was made at a Town's Smithy ([Pockets.craftPocket], decisions-log 332): its kind ([pocket]), the
+/// [materials] and the [gold] it took.
+final class PocketCrafted extends GameEvent {
+  PocketCrafted(super.wave, super.t, {required this.pocket, required this.materials, required this.gold});
+
+  final PocketKind pocket;
+  final Map<Mat, int> materials;
+  final int gold;
+
+  @override
+  EventKind get kind => EventKind.pocketCrafted;
+
+  @override
+  Map<String, Object?> get data => {'pocket': pocket.name, 'materials': _matJson(materials), 'gold': gold};
+}
+
 /// A Tavern boost forgave a monster crossing the back line: no life lost ([Tavern._boostLeak]; Watchman's Brew).
 final class BoostSaved extends GameEvent {
   BoostSaved(super.wave, super.t, {required this.boost});
@@ -696,7 +744,7 @@ final class WaveStarted extends TraceEvent {
   WaveStarted(super.wave, super.t,
       {required this.army, required this.levels, required this.heroes, required this.gold, required this.capacity,
       required this.lives, required this.bag, required this.relics, this.tide = const (hp: 1.0, dmg: 1.0, gap: Game.spawnGap, over: 0), this.pusaka = const {},
-      this.omens, this.materials, this.boosts});
+      this.omens, this.materials, this.boosts, this.pocket});
 
   final Map<String, int> army, levels, bag, relics;
   final Map<String, Map<String, Object>> pusaka;
@@ -711,6 +759,9 @@ final class WaveStarted extends TraceEvent {
   /// The Tavern's boosts running at the start (tavern.dart, each kind's waves left, 0 for one until the next Town); null
   /// while none runs (no key).
   final Map<String, int>? boosts;
+
+  /// The pocket items the Bag holds at the start (pocket.dart, by kind); null while it holds none (no key).
+  final Map<String, int>? pocket;
   final List<(String, String?)> heroes;
   final int gold, capacity, lives;
 
@@ -734,6 +785,7 @@ final class WaveStarted extends TraceEvent {
         'omens': ?omens,
         'materials': ?materials,
         'boosts': ?boosts,
+        'pocket': ?pocket,
       };
 }
 
@@ -859,11 +911,11 @@ final class StoreBought extends TraceEvent {
   Map<String, Object?> get data => {..._lootJson(loot), 'cost': cost};
 }
 
-/// [n] [loot] (an [Item], a [Relic] or a material, [Mat]) sold from the bag to the store for [gain] in
-/// all.
+/// [n] [loot] (an [Item], a [Relic], a material, [Mat], or a pocket item, [PocketKind]) sold from the bag to the store for
+/// [gain] in all.
 final class StoreSold extends TraceEvent {
   StoreSold(super.wave, super.t, {required this.loot, required this.n, required this.gain, this.plus = 0, this.margin, this.pressure})
-      : assert(loot is Item || loot is Relic || loot is Mat);
+      : assert(loot is Item || loot is Relic || loot is Mat || loot is PocketKind);
 
   final Enum loot;
   final int n, gain;
@@ -892,8 +944,12 @@ final class StoreSold extends TraceEvent {
 
 /// A store event's loot: `item` or `relic` by name, the other null (as a field drop's event had it, decisions-log 321); a material sold (the Towns'
 /// Shop, decisions-log 230) both null and its name under `material`.
-Map<String, Object?> _lootJson(Enum loot) =>
-    {'item': loot is Item ? loot.name : null, 'relic': loot is Relic ? loot.name : null, if (loot is Mat) 'material': loot.name};
+Map<String, Object?> _lootJson(Enum loot) => {
+      'item': loot is Item ? loot.name : null,
+      'relic': loot is Relic ? loot.name : null,
+      if (loot is Mat) 'material': loot.name,
+      if (loot is PocketKind) 'pocket': loot.name, // decisions-log 332
+    };
 
 /// Troop [type] was sent home (Lepas jenis, [Game.releaseType], decisions-log 141): [troops] of it went home for
 /// [refund] gold in all.

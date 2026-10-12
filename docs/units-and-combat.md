@@ -1298,7 +1298,8 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
   splash past its target, God's Thunder's leap, Shatter Shard's burst), `hitBack` (worn thorns, a reflect, Parry's
   answer, a Bayangan's Thorns, Riposte's), `bleed` (a bleed's tick, Bleeding Edge's and the Venom relic's too) or
   `relic` (a small relic's own blow: the Sweep relic's on the monster next to the target, decisions-log 227; never a
-  normal hit, so nothing that answers one runs on it). A shot carries its own
+  normal hit, so nothing that answers one runs on it) or `pocket` (the Fire Bomb's, decisions-log 332: a blow from no
+  one on every monster on the field, through its defence; nothing answers it, and a kill pays as any). A shot carries its own
   (`Shot.src`; a `Shot.special` is a skill's), the holy blow `_holyHurt` passes its caller's on, and a linked ally's
   share keeps the blow's; Wrath Psalm's holy light on the monsters next to the troop healed is a `smite` too (batch
   G-3). The Bayangan read it (Scatter, Spell Ward, Thornproof, Holy Ward); the Oath of Spells needs none, its cost
@@ -1426,7 +1427,8 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
   `lifeline`, its `regen` (every tick, between waves too; Dragon Heart's and Living Moss's share of it too), a worn
   `fang`, a Pusaka's heal (`pusaka`: Blood Fang, Mourning Bell, Wolf Feast, Hidden Flask, Halo Lantern, Hearth,
   Heartbeat, Bright Spring, Vampire Kiss), the after-wave heal (`queue`: all its HP back), the Grail's save (`grail`: from nothing
-  to its share) and the Iron Will relic's once-a-wave heal (`lastStand`, decisions-log 227: in a wave). It adds the
+  to its share), the Iron Will relic's once-a-wave heal (`lastStand`, decisions-log 227: in a wave) and a Heal Bottle's
+  (`pocket`, decisions-log 332: 35% of max HP, in a wave or between waves). It adds the
   heal, never past full HP, and returns the heal past full (the catalog's `healPastFull`).
   First a Mercy Lily on the troop's type (`_fxLily`, batch E-3P) makes a heal it gets while under 40% of its max HP
   (before the heal) × its k, but the Grail's save and the after-wave heal; then a worn Holy Charm (`charmK`,
@@ -1484,6 +1486,9 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
     troop or the troop itself put on it stays, and so does Slime Tide's puddle: it slows the troop again while it stands
     in it. A shove is over at once, so there is nothing to end. `badOn(u)` counts what a cleanse would end. Returns how
     many ended.
+  - **The Holy Water** (a pocket item, decisions-log 332; loot-items-relics.md "Pocket items"): `cleanse(u)` on every
+    living troop, then for 5 s (`Game.pocketWarded`, `pocketWardUntil`) no bad effect (`addEffect`'s `bad` ones) and no
+    monster's stun (`stunTroop`) takes hold on any troop; the ward ends with the wave.
   - **`Status.noHeal`** on a monster: every heal it gets lands as 0 (`_healMonster`, `noHealOn`; under Grave Seal's
     seal the HP each heal would have given counts for it, `_fxSealed`), and a skeleton under it doesn't reassemble: its
     killing blow is its last (Grave Seal's blow puts it on before Reassemble asks, so the seal stops the rising). Laid
@@ -1519,7 +1524,8 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
 
 An oath (a Legenda Sumpah, loot-items-relics.md "Legenda") works on the whole army. Most change only the stats
 (`_oathStats`, in `statsOf` after the Pusaka: Oath of One, Alliance, Oath of the Few, the Wall, the Vanguard, Blood's
-attack; only the Tavern's boosts come after it, `_boostStats`, loot-items-relics.md "Towns: the Tavern"); four
+attack; only the Tavern's boosts and the pocket items' come after it, `_boostStats`, loot-items-relics.md "Towns: the
+Tavern" and "Pocket items"); four
 reach into a fight, each a factor of exactly 1 with no oath:
 
 - **Blood Oath's heal cut** (`_oathHealK` `bloodOathK.healIn` 0.5): first in the heal funnel, on an `inWave` heal only
@@ -2271,7 +2277,8 @@ arm in each switch; Reassemble is passive. The numbers are `maulK`, `curseOfFrai
   rises again leaves the list, its body gone.
 - **New statuses** (hero_skills.dart):
   - `Status.swift`: a monster's walking speed ×k (Howl, Second Wind), apart from the troops' slows on it.
-  - `Status.daze`: a troop's pause between attacks ×k (Screech), apart from its own haste.
+  - `Status.daze`: a troop's pause between attacks ×k (Screech), apart from its own haste; a monster's too, with the
+    Frost Bomb's slow (×1/0.6, a boss ×1/0.8, for 6 s; a pocket item, decisions-log 332).
   - `Status.soulRend`: each blow the monster lands takes k MP from the troop.
 
   A monster's line shot (Grave Wave) is a skill's blow: `_sweep` caps it with `monsterSkillCapOf`.

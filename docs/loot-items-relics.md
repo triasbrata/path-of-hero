@@ -2245,6 +2245,84 @@ again brings its price down, so the player sells a mix, and the price comes back
   recovery, the materials, the words, the save and an old save's count, town.json's block), test/town_identity_test.dart
   (each identity on screen).
 
+## Pocket items (decisions-log 332)
+
+The owner, 2026-10-12: "aku mau tambahkan user pocket item, dimana item ini bisa di pakai by kemauan user, misal botol
+heal untuk melakukan heal atau botol mana atau bisa juga item booster lain, yang nge boost troops untuk beberapa detik
+atau menit. dan di dapatkan dari forge juga tapi itemnya dibuat butuh banyak untuk 1 item" (pocket items the player
+uses at will: a heal bottle, a mana bottle, boosters for some seconds or minutes; made at the forge, many materials for
+one), for every troop ("Ke semua troop"), in four slots with a cooldown ("4 slot + cooldown"), and besides heal, mana,
+attack/speed and defence "item lain lagi yang bisa membuat permainan semakin dynamic" (more that make the game more
+dynamic). The rules are lib/pocket.dart's `extension Pockets on Game`, the numbers town.json `pocket` (`TownRules.pocket`,
+`PocketRules`); the bar on the battle HUD is ui-hud.md's "The pocket bar", the Smithy's Pocket section and the Bag's rows
+ui-hud.md's "The Smithy" and "Bag chips".
+
+- **The kinds** (`PocketKind`, `pocketNames`; town.json `pocket.kinds.<kind>`). "Every troop" is every living troop at
+  the use (a boost also covers a troop bought while it runs); "every monster" every one alive that has come onto the
+  field (`Unit.entered`); a boss and a mini boss take the "bosses" share.
+
+  | Kind | Name | What it does | Lasts | Cooldown | Cap | Between waves | Materials |
+  |---|---|---|---|---|---|---|---|
+  | `healBottle` | Heal Bottle | every troop heals 35% of its max HP (the heal funnel, `HealSrc.pocket`) | at once | 30 s | 5 | yes | Slime Gel 8, Teal Cloth 4, Bat Wing 4 |
+  | `manaBottle` | Mana Bottle | every troop gets 50% of its max MP | at once | 30 s | 5 | yes | Teal Cloth 6, Bat Wing 6, Bat Fang 1 |
+  | `rageTonic` | Rage Tonic | every troop: damage ×1.25, attack speed ×1.15 | 15 s | 60 s | 3 | no | Orc Tooth 8, Wolf Claw 4, Orc Heart 1 |
+  | `ironDraught` | Iron Draught | every troop: damage taken ×0.70 | 15 s | 60 s | 3 | no | Bone Shard 8, Rusty Plate 4, Iron Tusk 1 |
+  | `frostBomb` | Frost Bomb | every monster walks and attacks 40% slower (bosses 20%) | 6 s | 45 s | 3 | no | Bone Arrow 6, Bat Wing 6, Bone Bow 1 |
+  | `fireBomb` | Fire Bomb | every monster loses 8% of its max HP (bosses 2%) | at once | 45 s | 3 | no | Orc Ear 6, Leather Strap 6, Warg Fang 1 |
+  | `holyWater` | Holy Water | every troop's bad effects end, and none takes hold for 5 s | 5 s | 45 s | 3 | no | Teal Cloth 8, Big Bone 4, Teal Gem 1 |
+  | `pocketWatch` | Pocket Watch | every troop's skills are ready now (their MP still pays) | at once | 90 s | 2 | no | Bear Fur 6, Iron Scrap 6, Evil Eye 1 |
+
+  The text the game shows is `pocketEffectLines` ("Every troop heals 35% of its HP.", "Every troop for 15 s: +25%
+  damage, +15% attack speed.", "Every monster walks and attacks 40% slower for 6 s (bosses 20%).", "Every monster loses
+  8% of its HP (bosses 2%).", "Ends every troop's bad effects; none take hold for 5 s.", "Every troop's skills are ready
+  now (MP still pays)."), read from the rule, so a changed number changes it. A kind is the sum of its rule's keys
+  (`heal`, `mp`, `cleanse`, `ready`, `dmg`, `rate`, `taken`, `slow` / `bossSlow`, `hit` / `bossHit`, `time`), so one is
+  retuned, swapped or dropped in town.json and `PocketKind` alone; its icon is `pocket_<kind>.png` (assets.md).
+- **Using one** (`Pockets.usePocket`; the bar's slot, a tap or keys 1 to 4): refused (`whyNotUsePocket`, in this order;
+  `pocketWhyText` its words) at game over, paused, in a Town, on an empty slot, with none left ("None left: craft more
+  at the Smithy"), between waves for all but the two bottles (`between`; the owner, "Botol juga di jeda wave": "Only in
+  a wave"), while its kind's cooldown runs ("Ready in 12 s"), and where it would do nothing: a heal with every troop at
+  full HP ("No one is hurt"), MP with none short ("No one needs MP"), a bomb with no monster on the field ("No monster on
+  the field"); a cleanse, a boost and the Pocket Watch always act. Used: its effects in the rule's order, one fewer in the
+  Bag, its kind's cooldown started (`pocketReady`: each kind its own, on the game clock, running on through a wave's end
+  and between waves; never saved), the kind's burst on everyone it touched (`pocketFx`, the field's own: the heal's, the
+  upgrade's, the smite's holy one, and on the monsters the wizard's ice star's and fireball's hits), `Sfx.magic` (a bomb) or `Sfx.clear`, the battle log's line ("Used Heal Bottle (+1,240 HP)",
+  "Used Fire Bomb (3 monsters, 1 killed)") and `PocketUsed`.
+- **The boosts** (Rage Tonic, Iron Draught; `Game.pocketBoosts`, each its kind and the game time it ends): multiplied into
+  the Tavern's `_boostStats` (the last step of `statsOf`) with the Tavern's boosts, before their caps (`BoostMost`:
+  damage and attack speed ×1.8 at the most, damage taken ×0.6 at the least), so a Tavern boost and a pocket one never pass
+  them; the troops refit at once. A second use while one runs starts its 15 s again, never stacks. They end at their time
+  (`_pocketTick`) and at the wave's end, won, wiped or lost (`_pocketWaveEnd`), with the Holy Water's ward.
+- **On the monsters:** the Frost Bomb puts `Status.slow` (×0.6, bosses ×0.8) on the walk and `Status.daze` (×1/0.6) on
+  the pause between attacks for 6 s; the Fire Bomb's blow is `_hurt` with `Hit.pocket` (units-and-combat.md), so a kill
+  pays its gold and drops as any kill. **On the troops:** the Holy Water ends each troop's bad effects
+  (`Cleanse.cleanse`) and for 5 s (`pocketWardUntil`) no bad effect (`addEffect` with `bad`) nor a stun (`stunTroop`)
+  takes hold; the Pocket Watch clears every troop's skill clocks (`skillAt`, `awakenSkillAt`, `heroSkillAt`).
+- **The bar** (`Game.pocketSlots`, `pocketSlotCount` 4; the Bag's stock `Game.pocketStock`): a slot holds a kind, its
+  count the Bag's; a kind is in one slot at most (put in another, it moves). One crafted while the Bag held none goes
+  into the first empty slot by itself, unless it is in the bar already (one taken out while some are held stays out).
+  The last one used leaves its kind in the slot, its count 0, until it is taken out (`takeOutOfPocket`) or another is put
+  in its place (`putInPocket`): the Bag's row and the Smithy's do both.
+- **Crafting** (`Pockets.craftPocket`; the Smithy's Items tab, its Pocket section after Grade III): in a Town only, its
+  materials and gold, k × the Tavern's purse of the wave (`TavernRules.purseAt`, rounded as the Tavern's prices, at
+  least `pocket.least` 50; k 0.05 for the bottles, 0.08 for the boosters and bombs and the Holy Water, 0.12 for the
+  Pocket Watch): 50 gold every kind to wave 10; at waves 20 / 30 / 50 / 70 / 86 a bottle 50 / 150 / 650 / 2,100 /
+  5,200, a booster 100 / 250 / 1,000 / 3,350 / 8,300, the Pocket Watch 150 / 400 / 1,500 / 5,050 / 12,000. Refused at
+  its cap ("Full: 3/3", `CraftWhy.full`), a material or the gold short, outside a Town (`whyNotCraftPocket`).
+  `PocketCrafted`.
+- **Selling** (the Town's Shop's Sell, as anything in the Bag; `Store.sellPrice` → `pocketSellPrice`): `pocket.sell` 0.5
+  of its worth now, its materials at their sell prices and its gold (a Heal Bottle 145 at wave 10, 695 at 60): always a
+  loss against the materials sold alone, so no craft-and-sell loop. Never at the market's price (not marketed: no Hot or
+  Flooded, no pressure; "Towns: the market"); the Shop never sells one.
+- **Never** by the auto-player or a probe's policy (none uses them); no Tavern boost, relic or Pusaka changes them.
+- **Events** (telemetry.md): `pocketUsed`, `pocketCrafted`, a wave's `pocket` (uses) and its start's `pocket` (held),
+  the pocket items made in its `crafted` (`eventVersion` and `telemetryVersion` 16).
+- **Saved** ("Saved" below): `pocket`.
+- **Tests:** test/pocket_test.dart (town.json's block, the effect lines, the prices from `purseAt`, crafting and its cap,
+  the bar, every refusal, every kind's use, the boosts' caps with the Tavern's, the save and an odd save, the Shop's
+  price, the telemetry), test/pocket_ui_test.dart (the bar at four sizes, its taps and keys, tooltips, the log over it,
+  the Bag's row, the Smithy's section), test/probe_pocket_shots.dart (shots).
+
 ## The store ("Toko", on screen "Shop", #63)
 
 The owner: "tambahkan fitur untuk beli di dalam store dengan menggunakan gold yang didapat dalam permainan;

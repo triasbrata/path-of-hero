@@ -196,7 +196,7 @@ extension HeroMoves on Game {
   /// for [time] s, at most [troopStunK].most, a Hero [troopStunK].hero of that. Then it can't be stunned again
   /// for [troopStunK].immune s ([Unit.stunImmuneUntil]); meanwhile a stun does nothing. Whether it took.
   bool stunTroop(Unit o, double time) {
-    if (!o.alive || time <= 0 || t < o.stunImmuneUntil || (o.move != null && isPhantom(o))) return false; // a phantom: decisions-log 320
+    if (!o.alive || time <= 0 || t < o.stunImmuneUntil || (o.move != null && isPhantom(o)) || pocketWarded) return false; // a phantom: decisions-log 320; a Holy Water's ward (pocket.dart)
     o.stunUntil = max(o.stunUntil, t + min(time, troopStunK.most) * (o.hero ? troopStunK.hero : 1));
     o.stunImmuneUntil = o.stunUntil + troopStunK.immune;
     return true;

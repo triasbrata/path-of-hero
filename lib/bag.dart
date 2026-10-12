@@ -51,9 +51,10 @@ bool _canHold(Game g, Enum loot, [int plus = 0]) => switch (loot) {
     };
 
 /// The Bag's category chips (decisions-log 187), in their order on the page: Materials since the Towns (decisions-log
-/// 221); Artifacts only while the Shop is open or a Pusaka is owned ([Board._artifactsShown]).
+/// 221); Pocket while the Bag holds a pocket item (decisions-log 332); Artifacts only while the Shop is open or a Pusaka
+/// is owned ([Board._artifactsShown]).
 /// The Town's Shop's Buy names its sections by them ([shopBuySections], decisions-log 269).
-enum BagCategory { all, items, relics, materials, artifacts }
+enum BagCategory { all, items, relics, materials, pocket, artifacts }
 
 /// The chips' words (English, ui-hud.md "In-game text"; the mechanic's word from [Words]).
 const bagCategoryNames = {
@@ -61,13 +62,15 @@ const bagCategoryNames = {
   BagCategory.items: 'Items',
   BagCategory.relics: 'Relics',
   BagCategory.materials: Words.materials,
+  BagCategory.pocket: Words.pocket,
   BagCategory.artifacts: '${Words.artifact}s',
 };
 
 /// The kinds of [category] that have a cell in the Bag, in its fixed order (decisions-log 187): the items with some in
 /// the bag in [Item] order (every item: [Relics.itemsInPlay], decisions-log 245), then the small relics in [Relic] order
 /// (every small relic: [Relics.relicsInPlay], decisions-log 227), then the Towns' materials held in [Mat] order
-/// (decisions-log 221: Common, Rare, Trophy, then the forge's stones, [Materials.matsInPlay]), then every Pusaka owned (bound, in
+/// (decisions-log 221: Common, Rare, Trophy, then the forge's stones, [Materials.matsInPlay]), then the pocket items held in
+/// [PocketKind] order (decisions-log 332), then every Pusaka owned (bound, in
 /// the Gudang, an oath), the rarest first and in [Relic.values] order within a rarity. Nothing but owning moves a cell:
 /// counts, binding, stars and the Gudang never reorder them.
 List<Enum> bagKinds(Game g, BagCategory category) {
@@ -82,6 +85,9 @@ List<Enum> bagKinds(Game g, BagCategory category) {
     if (all || category == BagCategory.materials)
       for (final m in g.matsInPlay)
         if ((g.materials[m] ?? 0) > 0) m,
+    if (all || category == BagCategory.pocket)
+      for (final p in PocketKind.values)
+        if (g.pocketHeld(p) > 0) p,
     if (all || category == BagCategory.artifacts)
       for (final rarity in Rarity.values.reversed)
         for (final r in Relic.values)
@@ -290,7 +296,8 @@ enum BagAction {
   carve,
   melt,
   smithy,
-  buy;
+  buy,
+  pocket;
 
   /// Whether its row opens a chooser.
   bool get chooses => const {giveTroops, giveArtifact, equip, takeOff, types, melt}.contains(this);
@@ -426,6 +433,7 @@ extension on Board {
     _text(c, Words.bag, Offset(left.center.dx, _titleY(left, ts)), size: 22 * ts, color: ink, anchor: Anchor.center, bold: true);
     final area = Rect.fromLTRB(left.left, _underTitle(left, ts), left.right, left.bottom);
     if (b.category == BagCategory.artifacts && !_artifactsShown(g)) b.category = BagCategory.all;
+    if (b.category == BagCategory.pocket && g.pocketStock.isEmpty) b.category = BagCategory.all; // the last one used
     final held = _pick;
     if (held != null && _canHold(g, held.kind, held.plus) && !_gridLoot(g, b, b.category).contains(held)) b.category = BagCategory.all;
     final below = _bagChips(c, g, area, ts, ps) + math.max(4.0, 5.5 * ts);
@@ -641,6 +649,7 @@ extension on Board {
       BagCategory.items,
       BagCategory.relics,
       BagCategory.materials,
+      if (g.pocketStock.isNotEmpty) BagCategory.pocket, // while the Bag holds a pocket item (decisions-log 332)
       if (_artifactsShown(g)) BagCategory.artifacts,
     ];
     final names = [for (final cat in cats) bagCategoryNames[cat]!];
@@ -811,7 +820,13 @@ extension on Board {
         paint: held ? _bagPickPaint : (relic != null && relic.pusaka ? _bagRarityPaints[relic.rarity] : null));
     // What a Smithy board makes: a relic or an item (the Items tab's), on the Enhance board a stone.
     final fs = math.max(10.0, 11 * ts), mark = k < 2 ? 14.0 : 18.0, made = b.smithy && (b.enhance ? kind is Mat : kind is! Mat);
-    final craftable = made && switch (kind) { final Item item => g.canCraftItem(item), final Mat stone => g.canCraftStone(stone), _ => g.canCraft(relic!) };
+    final craftable = made &&
+        switch (kind) {
+          final Item item => g.canCraftItem(item),
+          final Mat stone => g.canCraftStone(stone),
+          final PocketKind p => g.canCraftPocket(p),
+          _ => g.canCraft(relic!),
+        };
     final faded = made && !craftable;
     _icon(c, kind, _whole(bagCellSize(k, small: b.small).icon.shift(r.topLeft + Offset(0, sink))), faded ? _smithyFaded : null, plus);
 
@@ -912,6 +927,8 @@ extension on Board {
         _relicSlots.add((r, relic));
       case final Mat m:
         _matSlots.add((r, m));
+      case final PocketKind p:
+        _pocketCells.add((r, p));
     }
   }
 
@@ -937,6 +954,7 @@ extension on Board {
       BagCategory.items => ['No items yet.'],
       BagCategory.relics => ['No relics in the bag.', if (worn > 0) '$worn worn by troops.'],
       BagCategory.materials => ['No ${Words.materials.toLowerCase()} yet.', 'Monsters drop them.'],
+      BagCategory.pocket => ['No ${Words.pocket.toLowerCase()} items yet.', 'The ${Words.smithy} makes them in a ${Words.town}.'],
       BagCategory.artifacts => [
           'No ${Words.artifact}s yet.',
           '${Words.bossChest}s give them.',
@@ -991,6 +1009,7 @@ extension on Board {
         for (final (r, i, plus) in _slots) (r, (kind: i, plus: plus)),
         for (final (r, x) in _relicSlots) (r, (kind: x, plus: 0)),
         for (final (r, m) in _matSlots) (r, (kind: m, plus: 0)),
+        for (final (r, p) in _pocketCells) (r, (kind: p, plus: 0)),
       ];
 
   /// The Bag cell under [p] this frame (null: none).
@@ -1032,7 +1051,10 @@ extension on Board {
           // The board turns to it (a wish picked in the Wishlist block, decisions-log 300).
           _smithy
             ..item = item
+            ..pocket = null
             ..toItem = true;
+        case final PocketKind p:
+          _smithy.pocket = p; // the Items board's Pocket section (decisions-log 332)
       }
       return;
     }
@@ -1078,7 +1100,13 @@ extension on Board {
   // one has a cell in the Bag's grid (decisions-log 187); its facing page binds, moves or unbinds it.
 
   /// [kind]'s name as the book says it: an item's, a relic's (a Pusaka's), a material's.
-  String _lootName(Enum kind) => switch (kind) { final Relic r => relicNames[r]!, final Item i => itemNames[i]!, final Mat m => m.label, _ => kind.name };
+  String _lootName(Enum kind) => switch (kind) {
+        final Relic r => relicNames[r]!,
+        final Item i => itemNames[i]!,
+        final Mat m => m.label,
+        final PocketKind p => pocketNames[p]!,
+        _ => kind.name,
+      };
 
   /// [kind]'s Buy row on the Town's Shop page ([BagAction.buy], decisions-log 230): the coin stack, "Buy", its light tag
   /// "Buy 20k" ([Store.buy] at [Store.buyPrice]; a tap buys one: the coin and the heading's count tell it, as the Sell
@@ -1483,6 +1511,7 @@ extension on Board {
       Item() when plus > 0 => const [BagAction.giveTroops],
       Item() => const [BagAction.giveTroops, BagAction.giveArtifact],
       Mat() => const [BagAction.smithy],
+      PocketKind() => const [BagAction.pocket], // into the pocket bar or out of it (decisions-log 332)
       final Relic r when !r.pusaka => [BagAction.equip, if (g.relicsHeld(r) > 0) BagAction.takeOff],
       Relic(oath: true) => const [BagAction.types, BagAction.sharpen, BagAction.carve],
       final Relic r when g.pusaka[r]?.type != null => const [BagAction.types, BagAction.toVault, BagAction.sharpen, BagAction.carve],
@@ -1504,6 +1533,7 @@ extension on Board {
       Item() => true,
       final Relic r when !r.pusaka => true,
       final Relic r => !r.oath && g.pusaka[r]?.type == null,
+      PocketKind() => true,
       _ => false,
     };
     return sold ? Words.soldInTown : null;
@@ -1523,6 +1553,7 @@ extension on Board {
         BagAction.melt => Words.melt,
         BagAction.smithy => 'Craft at the ${Words.smithy}',
         BagAction.buy => Words.buy,
+        BagAction.pocket => g.pocketSlots.contains(loot) ? Words.takeOut : Words.putInPocket,
       };
 
   /// An action row's measures ([_ActLook]) at the page's text scale [ts] and pixel scale [ps].
@@ -1559,6 +1590,8 @@ extension on Board {
           _buyRow(c, g, loot, r, m);
         case BagAction.smithy:
           _smithyRow(c, g, loot as Mat, r, m);
+        case BagAction.pocket:
+          _pocketRow(c, g, loot as PocketKind, r, m);
         case BagAction.giveTroops when plus == 0 && !_shopShown && _keptFor(g, loot).isNotEmpty:
           // Kept for a craft (decisions-log 323): no Give to troops, as on its Smithy page; a recipe takes the +0 ones.
           final said = _keptLine(_keptFor(g, loot), m.lineFs, r.width - 2 * m.inset);
@@ -1721,6 +1754,26 @@ extension on Board {
     if (away) return _assign.taps.add((at, () => showMessage(Words.onlyInTown)));
     final first = keys.map((k) => Relic.values.asNameMap()[k]).nonNulls.firstOrNull;
     _assign.rows.add((at, BagAction.smithy, true, () => _openSmithy(first)));
+  }
+
+  /// A pocket item's row ([BagAction.pocket], decisions-log 332): its icon, and in the bar "Take out" and "In slot 2", a
+  /// tap taking it out ([Pockets.takeOutOfPocket]; it stays in the Bag); else "Put in pocket" and "Into slot 3", a tap
+  /// putting it in the bar's first empty slot ([Pockets.putInPocket]). The whole row is the tap (lit under the mouse).
+  /// With the four slots full it is greyed, "Pocket full: take one out first", and a tap says so.
+  void _pocketRow(Canvas c, Game g, PocketKind kind, Rect r, _ActLook m) {
+    final at = g.pocketSlots.indexOf(kind), free = g.pocketSlots.indexOf(null), ok = at >= 0 || free >= 0;
+    final (:x, :y1, :y2) = _actCard(c, BagAction.pocket, r, m, ok, (box, paint) => _icon(c, kind, box, paint), lit: true);
+    final end = r.right - m.inset;
+    _actTitle(c, BagAction.pocket, _actTitleOf(g, kind, BagAction.pocket), x, y1, end, m, ok, cut: true);
+    _actLine(c, BagAction.pocket, ok ? null : Words.pocketFull, at >= 0 ? '${Words.inSlot} ${at + 1}' : '${Words.intoSlot} ${free + 1}', x, y2, end, m);
+    final hit = r.intersect(_assign.list);
+    _assign.rows.add((hit, BagAction.pocket, ok, () {
+      if (at >= 0) {
+        g.takeOutOfPocket(kind);
+      } else if (!g.putInPocket(kind)) {
+        showMessage(Words.pocketFull);
+      }
+    }));
   }
 
   /// A light tag ([_tag], [_TagLook]; decisions-log 198 and 202: a row's buttons are light, never ui_buttons' bevels) on
@@ -1914,7 +1967,7 @@ extension on Board {
     final count = pusaka ? '$_starGlyph${g.pusaka[loot]?.stars ?? 0}' : 'x${loot is Item ? g.bagOf(loot, plus) : g.inBag(loot)}';
     final tail = pusaka ? ukirMark(g.pusaka[loot]?.ukir ?? 0) : null;
     final countAt = _capsule(c, count, math.max(10.0, 11 * ts), Offset(area.right, cy), anchor: Anchor.centerRight, tail: tail);
-    final name = switch (loot) { final Relic r => relicNames[r]!, final Item i => itemNames[i]!, final Mat m => m.label, _ => '' };
+    final name = switch (loot) { final Relic r => relicNames[r]!, final Item i => itemNames[i]!, final Mat m => m.label, final PocketKind p => pocketNames[p]!, _ => '' };
     final nameX = icon.right + 6 * ts, nameFs = 20 * ts, end = countAt.left - 6 * ts;
     // The plus after the name, whole: the name gives way first.
     final up = plus > 0 ? ' +$plus' : '', upW = _textWidth(up, nameFs), shown = _fit(name, nameFs, end - nameX - upW);
@@ -1978,6 +2031,16 @@ extension on Board {
       }
       _assign.texts['use'] = use.join('\n');
       y += use.length * lineH;
+    } else if (loot is PocketKind) {
+      // When it works and its cooldown, in grey (decisions-log 332): "In a wave or between waves. Cooldown 30 s."
+      const grey = Color(0xFF9E9080);
+      final (_, info) = g.pocketInfo(loot);
+      final when = _wrap(info[info.length - 2], fs, area.width, 2);
+      for (final (i, line) in when.indexed) {
+        _text(c, line, Offset(area.left, y + (i + 0.5) * lineH), size: fs, color: grey);
+      }
+      _assign.texts['use'] = when.join('\n');
+      y += when.length * lineH;
     }
     return y;
   }
@@ -1992,6 +2055,7 @@ extension on Board {
         Relic(pusaka: true) => '${firstSentence(g.relicEffect(loot))}.${tail ? ' $pusakaLine.' : ''}',
         final Relic r => '${g.relicEffect(r).first}. ${g.relicBestLine(r)}.${tail ? ' $relicSlotsLine.' : ''}',
         final Mat m => g.matSource(m),
+        final PocketKind p => pocketEffectLines(g.pocketRule(p)).join(' '),
         _ => '',
       };
 

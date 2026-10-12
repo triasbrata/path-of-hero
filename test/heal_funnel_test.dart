@@ -213,6 +213,20 @@ final Map<HealSrc, Scene Function()> sites = {
     tickUntil(g, () => k.hp == k.maxHp, victoryTime + 2);
     return (g, heard, k);
   },
+  HealSrc.pocket: () {
+    // A Heal Bottle (pocket.dart, decisions-log 332): every troop, here in a wave.
+    final g = plain(), heard = listen(g);
+    final s = idle(g, 'soldier', 2, 3)..busyUntil = hold;
+    g
+      ..startWave()
+      ..queue.clear();
+    foeAt(g, 'orc', s.pos + const Point(60, 0));
+    s.hp = s.maxHp * 0.5;
+    g.pocketStock[PocketKind.healBottle] = 1;
+    expect(g.putInPocket(PocketKind.healBottle, 0), isTrue);
+    expect(g.usePocket(0), isTrue);
+    return (g, heard, s);
+  },
   HealSrc.lastStand: () {
     // Iron Will (relics.dart, decisions-log 227): a blow leaves its holder under its line; once a wave.
     final g = plain(), heard = listen(g);

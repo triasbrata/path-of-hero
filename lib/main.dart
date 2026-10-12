@@ -82,6 +82,7 @@ part 'fps_readout.dart';
 part 'body_look.dart';
 part 'pixel_shapes.dart';
 part 'wizard_fx.dart';
+part 'pocket_look.dart';
 
 /// The player's volumes (settings.json), set on the book's Settings page; a new game keeps them.
 final _settings = loadSettings();
@@ -543,7 +544,7 @@ class TdGame extends FlameGame with KeyboardEvents, ScrollDetector {
 
   @override
   KeyEventResult onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) =>
-      event is KeyDownEvent && board._pauseKey(event.logicalKey) ? KeyEventResult.handled : KeyEventResult.ignored;
+      event is KeyDownEvent && (board._pauseKey(event.logicalKey) || board._pocketKey(event.logicalKey)) ? KeyEventResult.handled : KeyEventResult.ignored;
 
   @override
   Future<void> onLoad() async {
@@ -565,6 +566,7 @@ class TdGame extends FlameGame with KeyboardEvents, ScrollDetector {
       'fx_upgrade.png',
       for (final i in Item.values) 'item_${i.name}.png',
       for (final m in Mat.values) 'mat_${m.name}.png', // the Towns' materials (town.dart)
+      for (final k in PocketKind.values) 'pocket_${k.name}.png', // the pocket items (pocket.dart)
       // Every relic's and every Shadow's icon sheet (pusaka_catalog.dart's [relicIcon], omen.dart's [OmenKind.icon]:
       // Off Beat's War Drum, no relic's icon since the Artifacts' atlas; ui_icons.png is below).
       for (final sheet in {for (final r in Relic.values) relicIcon(r).sheet, for (final k in OmenKind.values) ?k.icon?.sheet})
@@ -706,6 +708,7 @@ class Board extends PositionComponent
   final _detail = _Detail(); // the Army page's right page: the picked type's sections and buttons (troop_detail.dart)
   final _wish = _WishView(); // the Army detail's Wishlist: whose picker is open (wishlist_look.dart, decisions-log 282)
   final _bar = _SpawnBar(); // the spawn bar at the bottom of the battle screen: its scroll and cards (spawn_bar.dart)
+  final _pocket = _PocketBar(); // the pocket bar at the field's right edge: its slots (pocket_look.dart)
   final _log = _BattleLog(); // the battle log (battle_log.dart)
   final _assign = _AssignList(); // the Tas page's list: who takes the picked loot, its filter and scroll (bag.dart)
   final _bag = _BagGrid(); // the Bag's grid: its category, page, NEW marks and cells (bag.dart)
@@ -783,6 +786,7 @@ class Board extends PositionComponent
   final _slots = <(Rect, Item, int)>[]; // the Bag's item cells this frame and each one's plus (0; an enhanced stack's 1 to 5)
   final _relicSlots = <(Rect, Relic)>[];
   final _matSlots = <(Rect, Mat)>[]; // the Bag's material cells this frame (bag.dart; the Towns, town.dart)
+  final _pocketCells = <(Rect, PocketKind)>[]; // and its pocket items' (bag.dart; decisions-log 332)
   final _capsuleBars = <Rect>[]; // each list's scroll bar drawn this frame, its track (bag.dart's [_capsuleBar])
   bool _bagShown = false; // the book drew the Tas page this frame ([bagOpen])
   final _bursts = <(Offset, String, double)>[]; // where, which effect, started at
@@ -973,7 +977,9 @@ class Board extends PositionComponent
   SmithyTab get smithyTab => _smithy.tab;
   set smithyTab(SmithyTab tab) => _smithy.tab = tab; // a test's start on a tab (a player taps its segment, 'tab:<name>')
   Item? get smithyItem => _smithy.item;
-  List<(Item, Rect)> get smithyItemCells => [for (final (cell, r) in _smithy.items.cells) (cell.kind as Item, r)];
+  List<(Item, Rect)> get smithyItemCells => [for (final (cell, r) in _smithy.items.cells) if (cell.kind case final Item i) (i, r)];
+  List<(PocketKind, Rect)> get smithyPocketCells => [for (final (cell, r) in _smithy.items.cells) if (cell.kind case final PocketKind p) (p, r)];
+  PocketKind? get smithyPocket => _smithy.pocket;
   BagMarks? smithyItemMarks(Item item) => _smithy.items.marks[(kind: item, plus: 0)];
   int get smithyItemPage => _smithy.items.page;
   int get smithyItemPages => _smithy.items.pageCount;
@@ -1065,6 +1071,12 @@ class Board extends PositionComponent
   Rect get autoReplaceButton => _bar.auto;
   Rect get spawnBarRoomFace => _bar.roomFace; // +Room's button as drawn ([capacityButton] is its press area)
   List<(String, Rect)> get spawnBarRoomWords => [..._bar.roomWords]; // its words and where
+
+  /// The pocket bar (decisions-log 332, pocket_look.dart) as placed this frame: its panel (Rect.zero: not shown), its four
+  /// slots, and the running pocket boosts' chips under the wave meter. For tests.
+  Rect get pocketBar => _pocket.at;
+  List<Rect> get pocketSlots => [..._pocket.cells];
+  List<Rect> get pocketChips => [..._pocket.chips];
 
   /// Where the Army page's cell for troop [type] is this frame (Rect.zero: not shown, e.g. on another page of the
   /// grid), what its cell says after the name ("x5/5" and its ink, troop_row.dart), the type its right page shows
@@ -1759,6 +1771,7 @@ class Board extends PositionComponent
     final p = event.localPosition.toOffset();
     _town.press = null; // a new press: the last one's Town tap is gone (town_scene.dart)
     _bar.down = null; // and the spawn bar's card it went down on (spawn_bar.dart)
+    _pocket.down = null; // and the pocket bar's slot (pocket_look.dart)
     _clicks.add((p, _clock));
     _press = (at: p, down: _clock, up: null);
     _grid.down = _bagLootAt(p); // the Bag cell (or the Town's Shop's) under it, for its tap up (bag.dart)
@@ -1780,6 +1793,7 @@ class Board extends PositionComponent
       return; // it opened or folded the troop counter's list, or hit it
     }
     _bar.down = _barShown ? _barCardAt(p) : null; // a card of the spawn bar: its tap up buys (spawn_bar.dart)
+    _pocket.down = _log.tapped ? null : _pocketSlotAt(p); // a pocket slot not under the open log: its tap up uses it (pocket_look.dart)
     for (final (rect, fn) in _hits) {
       if (rect.contains(p)) {
         Sounds.play(Sfx.click); // every button, tab and book row that acts on a press
@@ -1802,6 +1816,7 @@ class Board extends PositionComponent
     if (_foeSplash.tapped) return; // or it closed a foe skill's splash (foe_splash.dart)
     final p = event.localPosition.toOffset();
     if (!_welcomeTap && !_herald.tapped && !_msg.tapped && _barTap(p)) return; // the spawn bar: a card buys one (spawn_bar.dart)
+    if (!_welcomeTap && !_herald.tapped && !_msg.tapped && !_log.tapped && _pocketTap(p)) return; // the pocket bar: a slot uses one (pocket_look.dart)
     if (_plateTap(p)) return; // a Lepas on the pinned plate: that relic comes off, and the pin stays (plates.dart)
     if (_handTap(p)) return; // loot in hand given to the troop under it, and nothing pinned (drop_popup.dart)
     // On a unit it pins its plate, anywhere else it unpins (plates.dart); not the tap that closed a new Hero's
@@ -1891,7 +1906,7 @@ class Board extends PositionComponent
       }
     }
     // Anywhere else, with loot in hand, the drag carries it (not a troop to a new spot); a material never goes on one.
-    if (_picked case final loot? when !state.over && loot is! Mat) {
+    if (_picked case final loot? when !state.over && loot is! Mat && loot is! PocketKind) {
       _itemDrag = loot is Item ? loot : null;
       _relicDrag = loot is Relic ? loot : null;
       _dragPlus = _pickPlus;
@@ -1969,11 +1984,13 @@ class Board extends PositionComponent
 
   ui.Image _img(String n) => game.images.fromCache(n);
 
-  /// An [Item], [Relic] or [Mat] icon: a relic's is its [relicIcon], a cell of a sheet (a store artefact's a ui_icons.png
-  /// icon), tinted as it says unless [paint] is given; a material's its `mat_<name>.png`. An item at +[plus] (an enhanced
-  /// one, decisions-log 255) in its level's colour ([_plusPaint]), as faded as [paint] is.
+  /// An [Item], [Relic], [Mat] or [PocketKind] icon: a relic's is its [relicIcon], a cell of a sheet (a store artefact's a
+  /// ui_icons.png icon), tinted as it says unless [paint] is given; a material's its `mat_<name>.png`, a pocket item's its
+  /// `pocket_<name>.png`. An item at +[plus] (an enhanced one, decisions-log 255) in its level's colour ([_plusPaint]), as
+  /// faded as [paint] is.
   void _icon(Canvas c, Enum loot, Rect to, [Paint? paint, int plus = 0]) {
     if (loot is Mat) return c.drawImageRect(_img('mat_${loot.name}.png'), const Rect.fromLTWH(0, 0, 32, 32), to, paint ?? _px);
+    if (loot is PocketKind) return c.drawImageRect(_img('pocket_${loot.name}.png'), const Rect.fromLTWH(0, 0, 32, 32), to, paint ?? _px);
     if (loot is Relic) {
       final icon = relicIcon(loot), src = Rect.fromLTWH(icon.x.toDouble(), icon.y.toDouble(), icon.size.toDouble(), icon.size.toDouble());
       c.drawImageRect(_img(icon.sheet), src, to, paint ?? switch (icon.tint) { null => _px, final tint => _iconTints[tint] ??= _tintedPaint(Color(tint)) });
@@ -2189,6 +2206,7 @@ class Board extends PositionComponent
     _tideLabel = _townMeterText = '';
     if (!g.over) _waveMeter(c, g); // the top right (wave_meter.dart)
     _miniMap(c, g); // under it while open (mini_map.dart)
+    _pocketPlace(g); // the pocket bar's place at the right edge, which what hangs under them keeps clear of (pocket_look.dart)
     _omenChips(c, g); // the Shadows' chips under them (omen_look.dart)
     if (!_asideLeft) _townChip(c, g); // the Town chip under those (town_look.dart; with the book showing, after it)
     if (!_asideLeft) _boostChips(c, g); // the boosts' chips under it (tavern_look.dart; likewise)
@@ -2224,8 +2242,8 @@ class Board extends PositionComponent
     }
     final p = dragAt?.toOffset() ?? _mouse;
     if (p == null) return;
-    final over = [..._hits.map((h) => h.$1), ..._cards.map((h) => h.$1), ..._slots.map((h) => h.$1), ..._relicSlots.map((h) => h.$1), ..._matSlots.map((h) => h.$1),
-      ..._assign.rows.map((h) => h.$1), ..._assign.taps.map((h) => h.$1), ..._plateTaps.map((h) => h.$1), ..._bar.cards.map((h) => h.$1), if (_cards.isNotEmpty) _release.confirm,
+    final over = [..._hits.map((h) => h.$1), ..._cards.map((h) => h.$1), ..._slots.map((h) => h.$1), ..._relicSlots.map((h) => h.$1), ..._matSlots.map((h) => h.$1), ..._pocketCells.map((h) => h.$1),
+      ..._assign.rows.map((h) => h.$1), ..._assign.taps.map((h) => h.$1), ..._plateTaps.map((h) => h.$1), ..._bar.cards.map((h) => h.$1), if (_pocketLive) ..._pocket.cells, if (_cards.isNotEmpty) _release.confirm,
       if (welcome == null) ...[_troops.button, _map.button, ..._townTaps]];
     final hand = dragAt != null || over.any((r) => r.contains(p)) || (welcome == null && _unitAt(p) != null), // a unit: a tap pins its plate
         frame = cursorFrame(_press, _clock);
@@ -2681,6 +2699,7 @@ class Board extends PositionComponent
     _slots.clear();
     _relicSlots.clear();
     _matSlots.clear();
+    _pocketCells.clear();
     _capsuleBars.clear();
     _bagShown = false;
     _tip.rows.clear();
@@ -2709,6 +2728,7 @@ class Board extends PositionComponent
       _townChip(c, g);
       _boostChips(c, g);
     }
+    _pocketBar(c, g); // the pocket bar at the field's right edge, under the open log (pocket_look.dart)
     // The top left: the troop counter, always, the hearts and the gold on one panel, the book button in a wave
     // (troop_counter.dart, hud_row.dart); the top right: x2 and Auto left of the wave meter (hud_row.dart); the top
     // centre: the Start/Pause toggle (start_button.dart).

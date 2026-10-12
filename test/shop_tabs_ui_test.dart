@@ -528,9 +528,10 @@ void main() {
     await frames(tester);
     expect(b.shopBasket, {(kind: Item.shield, plus: 0): 5});
 
-    // Leaving the Shop: the basket empties, the Shop opens on Buy. The Town's Bag keeps all its chips.
+    // Leaving the Shop: the basket empties, the Shop opens on Buy. The Town's Bag keeps all its chips (Pocket only while
+    // a pocket item is held, decisions-log 332: none here).
     await turnTo(tester, b, 'bag');
-    expect([for (final c in BagCategory.values) b.bagChip(c) != Rect.zero], [true, true, true, true, true]);
+    expect([for (final c in BagCategory.values) b.bagChip(c) != Rect.zero], [true, true, true, true, false, true]);
     await turnTo(tester, b, 'store');
     expect([b.shopTab, b.shopBasket], [ShopTab.buy, isEmpty]);
 

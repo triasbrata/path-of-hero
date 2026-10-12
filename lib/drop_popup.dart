@@ -124,7 +124,8 @@ extension on Board {
     final ghost = d.ghost = Rect.fromCenter(center: at, width: g, height: g);
     final countAt = Offset(ghost.right - g * 0.1, ghost.bottom - 10), countW = _textWidth(count, _countSize);
     final pointer = ghost.expandToInclude(Rect.fromLTWH(countAt.dx, countAt.dy - 12, countW + 4, 24)).inflate(2);
-    if (_dropTarget(p) case final u?) {
+    // Over a troop the popup says what it would do: an item or a relic only (a material or a pocket item goes on none).
+    if (_dropTarget(p) case final u? when loot is Item || loot is Relic) {
       final (icon, title, lines) = _dropWords(loot, u, plus);
       _dropBox(c, icon, title, lines, _unitRect(u).expandToInclude(pointer), plus);
       d
@@ -262,7 +263,7 @@ extension on Board {
     ];
     final keep = [
       _bookArea, _log.button, if (_log.open) _log.panel, _bossAt, _meterAt, _map.at, _troops.button, _troops.list, //
-      _offViewAt, _toggleAt, _speedAt, _autoAt, _chest.chip,
+      _offViewAt, _toggleAt, _speedAt, _autoAt, _chest.chip, _pocket.at,
     ];
     double area(Rect a, Rect b) {
       final i = a.intersect(b);

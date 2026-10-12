@@ -90,7 +90,7 @@ extension Store on Game {
   /// and no item or small relic (they never drop); the Artifact shelf is unchanged, and the Shop still buys everything.
   bool _notSold(Enum kind) => switch (kind) {
         final Mat m => !matsSeen.contains(m),
-        Item() || Relic(pusaka: false) => true,
+        Item() || Relic(pusaka: false) || PocketKind() => true, // a pocket item: the Smithy's alone (decisions-log 332)
         _ => false,
       };
 
@@ -122,6 +122,7 @@ extension Store on Game {
   /// ([Materials.shopMatPrice]).
   int basePrice(Enum kind) => switch (kind) {
         final Mat m => shopMatPrice(m),
+        final PocketKind p => pocketSellPrice(p), // never sold here: its sale's price (pocket.dart)
         Relic(store: true) => artefactPrice[kind]!,
         Relic(rarity: Rarity.legenda) => legendaPrice, // the chest's Legenda, never sold here (pusaka.dart)
         Relic(rarity: Rarity.epik, pusaka: true) => epikPrice, // the chest's new Epik (owner: its own price), sold to it, never bought (draft.dart)
@@ -149,9 +150,11 @@ extension Store on Game {
   /// ([MatInfo.sell], town.json `materials`). An item and a small relic, the Smithy's goods, sell at the market's price
   /// for the next piece ([Market.marketPrice], decisions-log 326: 1.3x-4x their cost by grade and the Town's demand,
   /// lower the more of that exact product was sold); until then a small relic sold for half its craft gold and every
-  /// item for a flat 1,000 (the [TownShop]'s share of its price).
+  /// item for a flat 1,000 (the [TownShop]'s share of its price). A pocket item ([PocketKind], decisions-log 332) half its
+  /// worth ([Pockets.pocketSellPrice]), outside the market.
   int sellPrice(Enum kind) => switch (kind) {
         Mat() => townRules.materials[kind]?.sell ?? 0,
+        final PocketKind p => pocketSellPrice(p),
         Item() || Relic(pusaka: false) => marketPrice(kind),
         _ => (basePrice(kind) * sellShare).round(),
       };
@@ -166,6 +169,7 @@ extension Store on Game {
         Relic(pusaka: true) => pusaka[kind]?.type == null && pusaka.containsKey(kind) ? 1 : 0,
         Relic() => relicBag[kind] ?? 0,
         Mat() => materials[kind] ?? 0,
+        final PocketKind p => pocketHeld(p),
         _ => inventory[kind as Item] ?? 0,
       };
 
@@ -187,6 +191,13 @@ extension Store on Game {
       }
     } else if (kind is Relic) {
       relicBag[kind] = inBag(kind) + n;
+    } else if (kind is PocketKind) {
+      final left = inBag(kind) + n;
+      if (left > 0) {
+        pocketStock[kind] = left;
+      } else {
+        pocketStock.remove(kind); // its slot keeps the kind (pocket.dart)
+      }
     } else {
       inventory[kind as Item] = inBag(kind) + n;
     }

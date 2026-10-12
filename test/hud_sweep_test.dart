@@ -11,7 +11,8 @@ import 'touch_hud_test.dart' show boot, frames, on, pieces;
 // at its widest (decisions-log 220): five digits of gold, the tide's badge and 3-digit counts on the wave meter, Auto
 // on (Start keeps room for its seconds); and x2, Auto and the meter stay where they were between waves, the Start/Pause
 // toggle's middle too. In a Town (decisions-log 216) the toggle's Start is "Leave town", wider than "Start 5", with no
-// countdown even with Auto on (decisions-log 328): no overlap there either.
+// countdown even with Auto on (decisions-log 328): no overlap there either. A Heal Bottle in the pocket bar, so the bar
+// (decisions-log 332) is among the pieces between waves and in a wave.
 
 void main() {
   for (final platform in [TargetPlatform.macOS, TargetPlatform.android]) {
@@ -31,6 +32,7 @@ void main() {
                 ..gold = 99999 // five digits: the widest the row is measured with
                 ..wave = 99 // the tide's badge, and 3-digit counts
                 ..townAt = state == 'town' ? 100 : null; // a Town only for the Town's state, no chip on the field
+              g.pocketSlots[0] = PocketKind.healBottle; // the pocket bar shows (none in a Town)
               if (wave) g.startWave();
               if (state == 'town') expect(g.enterTown(), isTrue);
               await frames(tester, 3);

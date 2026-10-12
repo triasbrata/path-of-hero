@@ -99,8 +99,23 @@ String logLine(GameEvent e) => switch (e) {
             '(${boostLengthWords(waves, untilTown: untilTown, inLine: true)})',
       BoostEnded(:final boost) => '${boostNames[boost]} ended',
       BoostSaved(:final boost) => '${boostNames[boost]}: no life lost',
+      PocketUsed() => pocketUsedLine(e), // pocket.dart
+      PocketCrafted(:final pocket, :final gold) => 'Crafted ${pocketNames[pocket]} (${thousands(gold)} gold)',
       TraceEvent() => '', // the telemetry's only: never in the log
     };
+
+/// A pocket item's use in the log (decisions-log 332): "Used Heal Bottle (+1,240 HP)", "Used Fire Bomb (12 monsters, 3
+/// killed)", "Used Holy Water (4 ended)", "Used Rage Tonic".
+String pocketUsedLine(PocketUsed e) {
+  final said = [
+    if (e.healed > 0) '+${thousands(e.healed)} HP',
+    if (e.mana > 0) '+${thousands(e.mana)} MP',
+    if (e.cleansed > 0) '${e.cleansed} ended',
+    if (e.foes > 0) '${e.foes} ${e.foes == 1 ? 'monster' : 'monsters'}',
+    if (e.killed > 0) '${e.killed} killed',
+  ];
+  return 'Used ${pocketNames[e.pocket]}${said.isEmpty ? '' : ' (${said.join(', ')})'}';
+}
 
 /// Where a Sharpen's or a Melt's Pusaka is: "in Vault", or "on Templar".
 String _whereAt(String? type) => type == null ? 'in ${Words.vault}' : 'on ${troopTypeNames[type] ?? type}';
@@ -312,6 +327,7 @@ extension on Board {
         ItemEnhanced(:final item) => _icon(c, item, to), // the item enhanced (decisions-log 255)
         BoostBought(:final boost, :final type) || BoostEnded(:final boost, :final type) => _boostIcon(c, boost, type, to), // its own (tavern_page.dart)
         BoostSaved(:final boost) => _boostIcon(c, boost, null, to),
+        PocketUsed(:final pocket) || PocketCrafted(:final pocket) => _icon(c, pocket, to), // its own (pocket.dart)
         TraceEvent() => null, // never in the log
       };
 

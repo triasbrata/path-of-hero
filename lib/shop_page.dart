@@ -55,6 +55,7 @@ List<Enum> shopBuyKinds(Game g, BagCategory section) => switch (section) {
       BagCategory.relics => [for (final r in g.relicsInPlay) if (onShopShelf(g, r)) r],
       BagCategory.artifacts => [for (final k in storeGoods) if (k is Relic && k.pusaka && onShopShelf(g, k)) k],
       BagCategory.materials => [for (final m in g.matsSeen) if (onShopShelf(g, m)) m],
+      BagCategory.pocket => const [], // the Smithy makes them (decisions-log 332)
       BagCategory.all => [for (final s in shopBuyOrder) ...shopBuyKinds(g, s)],
     };
 
