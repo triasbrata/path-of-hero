@@ -442,18 +442,16 @@ extension on Board {
   /// The rings of the effects on [u] ([_effectRings]) at its feet, one inside another, pulsing like a guard's:
   /// all of a monster's, and a troop's that have no icon over it ([_effectMarks]), which are what the monsters'
   /// skills leave on it (#59: slowed, weakened, marked, taunted, bleeding); and inside them the Bayangan Spree's red
-  /// ([_monsterPop]) on a monster that has killed a troop under it (omen.dart).
+  /// ([_monsterPop]) on a monster that has killed a troop under it (omen.dart). In the sprites' pixels, from the
+  /// outside in at [_effectRingSizes] (pixel_shapes.dart, decisions-log 325).
   void _statusRings(Canvas c, Game g, Unit u, Offset ground) {
     final barrier = u.shield > 0; // a slot's Barrier (omen_look.dart) shows Unholy Ward's teal soak ring
     final enraged = g.omenEnraged(u); // the Bayangan Enrage (omen.dart) shows War Shout's amber might ring
     final spree = u.troopKills > 0 && g.omenK(OmenKind.spree) > 0; // the Bayangan Spree (omen.dart): its kills' red ring
     if ((u.effects.isEmpty && !barrier && !enraged && !spree) || !u.alive) return;
     var i = 0;
-    Rect ringAt(int i) => Rect.fromCenter(center: ground - const Offset(0, 1), width: 18.0 - 3 * i, height: 8.0 - 1.2 * i);
-    Paint paintOf(Color color, int i) => Paint()
-      ..color = color.withValues(alpha: 0.6 + 0.25 * math.sin(_fieldClock * 6 + u.id + i))
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+    ({int w, int h}) ringAt(int i) => _effectRingSizes[math.min(i, _effectRingSizes.length - 1)];
+    Paint paintOf(Color color, int i) => _pixelPaint(color, 0.6 + 0.25 * math.sin(_fieldClock * 6 + u.id + i));
     for (final MapEntry(key: s, value: color) in _effectRings.entries) {
       final own = (barrier && s == Status.absorb) || (enraged && s == Status.might);
       if (!(g.under(u, s) || own) || (u.side == Side.troop && _effectMarks.containsKey(s))) continue;
@@ -462,21 +460,19 @@ extension on Board {
       if (s == Status.impaled) {
         _impaleRing(c, g, u, ring, ground, paint); // Impale's pin: dashed, the lance through the foe
       } else {
-        c.drawOval(ring, paint);
+        _pixelRingAt(c, ground, ring, paint);
       }
       i++;
     }
-    if (spree) c.drawOval(ringAt(i), paintOf(_monsterPop, i));
+    if (spree) _pixelRingAt(c, ground, ringAt(i), paintOf(_monsterPop, i));
   }
 
-  /// Impale's pin on monster [u] ([Status.impaled]): its ring in [paint] dashed, ten dashes round [ring], turning
-  /// slowly; and the lance stuck slanting through its body, its butt low on the lancer's side and its chartreuse
+  /// Impale's pin on monster [u] ([Status.impaled]): its [ring] in [paint] dashed, [ringDashes] dashes round it, turning
+  /// slowly ([_dashedRingAt]); and the lance stuck slanting through its body, its butt low on the lancer's side and its chartreuse
   /// head high on the other, drawn under the body so that the body hides the middle of it. A hold another troop type put
   /// on (Ice Grip's, pusaka_engine.dart) shows the ring alone.
-  void _impaleRing(Canvas c, Game g, Unit u, Rect ring, Offset ground, Paint paint) {
-    for (var k = 0; k < 10; k++) {
-      c.drawArc(ring, k * math.pi / 5 + _fieldClock * 0.8, math.pi / 10, false, paint);
-    }
+  void _impaleRing(Canvas c, Game g, Unit u, ({int w, int h}) ring, Offset ground, Paint paint) {
+    _dashedRingAt(c, ground, ring, _fieldClock, paint);
     final by = g.effectOn(u, Status.impaled)?.by;
     if (by != null && by.type != 'lancer') return; // no lance: a hold, not Impale's pin
     final back = (by?.pos.x ?? u.pos.x - 1) < u.pos.x ? -1.0 : 1.0;
@@ -612,16 +608,14 @@ extension on Board {
     }
   }
 
-  /// A guarded unit's ring at its feet, pulsing, fading out over its last half second.
+  /// A guarded unit's ring at its feet ([_guardRingSize], in the sprites' pixels: pixel_shapes.dart), pulsing, fading out
+  /// over its last half second.
   void _guardRing(Canvas c, Game g, Unit u, Offset ground) {
     final left = u.guardUntil - g.t;
     if (left <= 0 || !u.alive) return;
     final a = math.min(1.0, left / 0.5) * (0.55 + 0.25 * math.sin(_fieldClock * 6 + u.id));
     final color = _ringColors[u.guardLook] ?? _troopPop; // pale blue, or its skill's ([Unit.guardLook]: #59, #81)
-    c.drawOval(Rect.fromCenter(center: ground - const Offset(0, 1), width: 16, height: 7), Paint()
-      ..color = color.withValues(alpha: a)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2);
+    _pixelRingAt(c, ground, _guardRingSize, _pixelPaint(color, a));
   }
 
   /// The skills' names over their casters' bars, rising and fading (screen space, over the field). A name
