@@ -83,6 +83,7 @@ app.*.map.json
 /assets/images/town_mark.png
 /assets/images/town_mug.png
 /assets/images/mat_*.png
+/assets/images/pocket_*.png
 /assets/images/town_bg_*.png
 /assets/images/town_castle.png
 /assets/images/town_ground.png

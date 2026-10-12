@@ -53,6 +53,7 @@ LICENSED = [
     ("assets/images/town_mark.png", "icon"),
     ("assets/images/town_mug.png", "icon"),
     ("assets/images/mat_*.png", "icon"),
+    ("assets/images/pocket_*.png", "icon"),
     ("assets/images/town_bg_*.png", "town"),
     ("assets/images/town_castle.png", "town"),
     ("assets/images/town_ground.png", "town"),

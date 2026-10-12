@@ -221,6 +221,16 @@ LOOT = {
     # The forge's Enhance stones (decisions-log 245): made at the Smithy, never dropped
     "mat_mithril": ("Resources", 146),  # a cyan ingot: Mithril
     "mat_starmetal": ("Resources", 149),  # a violet ingot: Starmetal
+    # The pocket items (lib/pocket.dart, decisions-log 332; the Potions and Tools sheets mapped first with
+    # tool/sprite_map.py, each single its whole 32 px cell): the bottles a pair in red and blue, the bombs a burst flask
+    "pocket_healBottle": ("Potions", 77),  # a round flask of red potion, corked
+    "pocket_manaBottle": ("Potions", 155),  # a round flask of blue potion, corked
+    "pocket_rageTonic": ("Potions", 99),  # a cone flask of orange tonic
+    "pocket_ironDraught": ("Potions", 256),  # a square jar of dark grey draught
+    "pocket_frostBomb": ("Potions", 141),  # a spiked flask of blue
+    "pocket_fireBomb": ("Potions", 89),  # a spiked flask of orange fire
+    "pocket_holyWater": ("Potions", 51),  # a clear flask of water, corked
+    "pocket_pocketWatch": ("Tools", 334),  # a gold pocket watch
 }
 # The Artifacts' (Pusaka) icons: one atlas, assets/images/artifact_icons.png, a 32 px cell each (the pack's 32 px
 # icons, as LOOT), ARTIFACT_COLS a row, in this order: the catalog's 30 Langka, 30 Epik, 30 Legenda (kind = the

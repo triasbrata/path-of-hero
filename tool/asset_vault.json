@@ -219,7 +219,7 @@
       {"path": "assets/images/ui_ribbons.png", "bytes": 2124, "sha256": "b61b3af4e01b3c8462efda6ad14686db3385440dc1dcd66902bae5a943da6f60", "needed_by_build": true},
       {"path": "assets/images/ui_tooltip.png", "bytes": 268, "sha256": "ea81392b412ad599edf3e9ddcc7b10090f8d59f82203f9e395e01cf30678c68f", "needed_by_build": true}
     ]},
-    {"name": "game-icons", "group": "game", "pack": "Cute Fantasy Icons Premium (Kenmi)", "licence": "Paid (Kenmi). Commercial and non-commercial projects, may be modified. No redistributing or reselling, even modified.", "needed_by_build": true, "match": ["assets/images/item_*", "assets/images/relic_*", "assets/images/artifact_icons.png", "assets/images/mat_*", "assets/images/town_mark.png", "assets/images/town_mug.png"], "tar": {"sha256": "6ce52c7de04fa91c4b8a809a2947d37019fadbf3e0b198a8f21ebddedab7de1d", "bytes": 122880}, "parts": [{"path": "assets-vault/game-icons.tar.gz.enc", "bytes": 46272, "sha256": "dc3904d5fd71a332fe3e30b0bb542489683d196fc456d27464f9dfc3144bd9a4"}], "files": [
+    {"name": "game-icons", "group": "game", "pack": "Cute Fantasy Icons Premium (Kenmi)", "licence": "Paid (Kenmi). Commercial and non-commercial projects, may be modified. No redistributing or reselling, even modified.", "needed_by_build": true, "match": ["assets/images/item_*", "assets/images/relic_*", "assets/images/artifact_icons.png", "assets/images/mat_*", "assets/images/town_mark.png", "assets/images/town_mug.png", "assets/images/pocket_*"], "tar": {"sha256": "30fce08926cb0dd70444d8293f282b42a5c1025ceaad03b5f8db196e9de6062b", "bytes": 133120}, "parts": [{"path": "assets-vault/game-icons.tar.gz.enc", "bytes": 49552, "sha256": "7027fda20a858d17809566994caa713e8add68aba53c14175aa7feb1d8ef8530"}], "files": [
       {"path": "assets/images/artifact_icons.png", "bytes": 12310, "sha256": "96a065649762f50e079d1b8cda1cd728fde0715d3961640fa2beb893ba806fdf", "needed_by_build": true},
       {"path": "assets/images/item_amulet.png", "bytes": 318, "sha256": "88ee0624f0fa78f2b07e2d9d34743eb27da269caad927afd344ae03e44878c49", "needed_by_build": true},
       {"path": "assets/images/item_arcanePrism.png", "bytes": 355, "sha256": "f0cf646f9b4f077e091905281e9418a3a94b6e5d50707dd679bfff52e9d48da3", "needed_by_build": true},
@@ -295,6 +295,14 @@
       {"path": "assets/images/mat_wargFang.png", "bytes": 475, "sha256": "48823bf18f147ebd278df4b17de87356f9148d16be89352c5bc1b692c423ad39", "needed_by_build": true},
       {"path": "assets/images/mat_wolfClaw.png", "bytes": 279, "sha256": "e0d3d1f4664c45ee9ca3ff96958d5b22e151211d74c874adc96a1d027e09add8", "needed_by_build": true},
       {"path": "assets/images/mat_wolfFang.png", "bytes": 325, "sha256": "d3e86691a2489dfbfaaf83bd0596a16ec140c3c958e2febe063a302d5e94856a", "needed_by_build": true},
+      {"path": "assets/images/pocket_fireBomb.png", "bytes": 450, "sha256": "d785023b508df8dd3b71fde93f1b3a0f3710530faf6fd0661a0019fc84aa1b25", "needed_by_build": true},
+      {"path": "assets/images/pocket_frostBomb.png", "bytes": 450, "sha256": "a491cb7dc8bc19524a9acc962cdce95b1204a690ba5739e8f3252e7181687b77", "needed_by_build": true},
+      {"path": "assets/images/pocket_healBottle.png", "bytes": 449, "sha256": "176a8218da5e0551da6206139e52b2374e2b754611fe4b494cb0490cdb1234af", "needed_by_build": true},
+      {"path": "assets/images/pocket_holyWater.png", "bytes": 403, "sha256": "1442941dab9369b7e11215f5e479ff5340b9ee0afb49d22d66c180fa50613c0b", "needed_by_build": true},
+      {"path": "assets/images/pocket_ironDraught.png", "bytes": 438, "sha256": "14059c3fe4b3710cd605b73bdd62ae614f2f2e8ac52847bf1b76287d0a53e72a", "needed_by_build": true},
+      {"path": "assets/images/pocket_manaBottle.png", "bytes": 451, "sha256": "944bb5b0addf1b67504b632af1a0ad87d2de80d9c87fe1d65405c6315f1cf46b", "needed_by_build": true},
+      {"path": "assets/images/pocket_pocketWatch.png", "bytes": 489, "sha256": "072ffac3aa8b10c3642756af4dc6e11a108c2169b5d47d3db91f16042c9ab4f5", "needed_by_build": true},
+      {"path": "assets/images/pocket_rageTonic.png", "bytes": 445, "sha256": "cb1c32ba8e791e5920664800dc367712a09a644e44d316975cde11e48cd17936", "needed_by_build": true},
       {"path": "assets/images/relic_afterglow.png", "bytes": 362, "sha256": "1f4e8abe09c4262838214ac1cd6918493fa71fbbb3b5f5bf283fbc80b80d5213", "needed_by_build": true},
       {"path": "assets/images/relic_alliance.png", "bytes": 328, "sha256": "e454bca4b2db967dd0b02b7dabf34a640b99c4bfd501d3df26f95b4fc861dffd", "needed_by_build": true},
       {"path": "assets/images/relic_ambush.png", "bytes": 317, "sha256": "36fe56b276c0dbb6a75e7ae49d7e020a40a5703fd11d8f7102140d08e38a90d0", "needed_by_build": true},

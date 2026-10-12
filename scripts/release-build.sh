@@ -55,6 +55,7 @@ ALLOWED_ASSETS=(
   'assets/images/fx_upgrade.png'
   'assets/images/item_*.png'
   'assets/images/mat_*.png'
+  'assets/images/pocket_*.png'
   'assets/images/relic_*.png'
   'assets/images/tiny_*.png'
   'assets/images/town_autumn_*.png'
