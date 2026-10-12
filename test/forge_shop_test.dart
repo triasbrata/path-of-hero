@@ -75,12 +75,14 @@ void main() {
   });
 
   test("the prices: 2.5x the material's sell price rounded up to 5 (Slime Gel 25, Wolf Claw 65, Evil Eye 750, Soul Orb "
-      '1500, Lich Orb 2000), the same after a buy; an item, a small relic or a material not seen is "Not for sale"', () {
+      "1500, Lich Orb 2000), the market's 10% more for each bought (a Trophy 25%; decisions-log 326); an item, a small "
+      'relic or a material not seen is "Not for sale"', () {
     final g = forgeShopGame();
     expect({for (final m in seen) m: g.buyPrice(m)},
         {Mat.wolfClaw: 65, Mat.slimeGel: 25, Mat.lichOrb: 2000, Mat.evilEye: 750, Mat.soulOrb: 1500});
     for (final m in seen) {
-      expect((g.buyPrice(m), g.basePrice(m), g.buyPrice(m, 3)), (g.shopMatPrice(m), g.shopMatPrice(m), g.shopMatPrice(m)), reason: '$m');
+      final after3 = ((g.shopMatPrice(m) * g.matFactor(m, 3)) / 5 - 1e-9).ceil() * 5;
+      expect((g.buyPrice(m), g.basePrice(m), g.buyPrice(m, 3)), (g.shopMatPrice(m), g.shopMatPrice(m), after3), reason: '$m');
       expect(g.whyNotBuy(m), isNull, reason: '$m');
     }
     expect(storeRefusalNames[StoreRefusal.notSold], 'Not for sale');
@@ -94,13 +96,14 @@ void main() {
     expect([g.inventory, g.relicBag, g.materials, g.storeBought], [bag, relics, mats, isEmpty]);
     expect(g.sfx.where((s) => s == Sfx.error), hasLength(3));
 
-    // A patched rise (town.json shop.matRise) adds its share a buy, counted as the store's other goods.
+    // A patched rise (town.json shop.matRise) adds its share a buy, counted as the store's other goods, and the market's
+    // 10% goes on it (30 x 1.1, up to 35).
     g.townRules = TownRules.patch({
       'shop': {'matRise': 0.1},
     });
-    expect([g.buyPrice(Mat.slimeGel), g.buyPrice(Mat.slimeGel, 1)], [25, 30]);
+    expect([g.buyPrice(Mat.slimeGel), g.buyPrice(Mat.slimeGel, 1)], [25, 35]);
     expect(g.buy(Mat.slimeGel), isTrue);
-    expect((g.buyPrice(Mat.slimeGel), g.gold), (30, gold - 25));
+    expect((g.buyPrice(Mat.slimeGel), g.gold), (35, gold - 25));
   });
 
   test('buying a material: its price in gold, one more in the Bag (a first one too), the coin; never added to matsSeen; '
@@ -136,7 +139,7 @@ void main() {
     expect(back.storeBought, {Mat.wolfClaw: 1, Mat.slimeGel: 1, Mat.soulOrb: 1});
   });
 
-  test('the Shop still buys everything at today\'s prices: an item and a small relic at half their worth, a material at '
+  test('the Shop buys everything: an item and a small relic at the market\'s price (decisions-log 326), a material at '
       'its sell price, a Vault Artifact; and opens from town.json\'s shop.from (1 as shipped: every Town, decisions-log '
       '253)', () {
     final on = forgeShopGame();
@@ -144,7 +147,8 @@ void main() {
     for (final kind in [Item.sword, relic, Mat.wolfClaw, Mat.skull, Relic.titanBane]) {
       expect(on.whyNotSell(kind), isNull, reason: '$kind');
     }
-    expect((on.sellPrice(Item.sword), on.sellPrice(Mat.wolfClaw), on.sellPrice(Mat.skull)), (1000, 25, 60));
+    expect((on.sellPrice(Item.sword), on.sellPrice(relic), on.sellPrice(Mat.wolfClaw), on.sellPrice(Mat.skull)),
+        (206, on.marketPrice(relic), 25, 60), reason: 'a Sword in the first Town: 20 x 1.3 + 60 x 3.0');
     final gold = on.gold, worth = [Item.sword, relic, Mat.wolfClaw, Relic.titanBane].fold(0, (n, k) => n + on.sellPrice(k));
     expect([on.sell(Item.sword), on.sell(relic), on.sell(Mat.wolfClaw), on.sell(Relic.titanBane)], [1, 1, 1, 1]);
     expect(on.gold, gold + worth);

@@ -84,9 +84,9 @@ const ground = 262;
 /// The clouds' first copy's left now, as an offset into a repeat (screen px, 0 up to its width).
 double cloudsAt(Board b) => -b.townClouds.first.left;
 
-/// The pieces standing on the street (town_scene.dart's `_TownLayout.pieces`).
-const pieces = ['tent', 'campfire', 'crates2', 'fruitTable', 'barrels', 'basket', 'pine', 'clothesLine', 'furnace',
-  'sawmill', 'ore', 'logPile', 'stumpAxe'];
+/// The pieces standing on the street (town_scene.dart's `_TownLayout.pieces`; the first Town's yard, Millbrook's).
+const pieces = ['tent', 'campfire', 'crates2', 'fruitTable', 'barrels', 'basket', 'flowerTree', 'wheat', 'wheat2', 'sack',
+  'sheaf', 'furnace', 'sawmill', 'ore', 'logPile', 'stumpAxe'];
 
 void main() {
   test("town_ground.png is opaque, its top row the strip's edge and its last row one colour, the earth's", () async {

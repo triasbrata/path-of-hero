@@ -33,6 +33,7 @@ import colorsys
 import hashlib
 import json
 import math
+import re
 import shutil
 import subprocess
 import sys
@@ -375,7 +376,8 @@ def pines(img, w, h, top, base, spacing, colour, seed, slope=2.2):
 
 
 def town(e):
-    w, h, name = e["width"], e["height"], Path(e["path"]).stem
+    # The Towns' seasons (town_autumn_bg_1, town_winter_castle, town_ground_autumn ...) are drawn as the Normal set's.
+    w, h, name = e["width"], e["height"], re.sub(r"_(autumn|winter)", "", Path(e["path"]).stem)
     img = Img(w, h)
     if name == "town_bg_5":  # the sky, opaque
         for y in range(h):

@@ -93,7 +93,7 @@ List<int> slots(Game g, int waves) {
 /// The file's version and its `schedule` block (the materials' blocks: town_materials_test.dart).
 const defaults = {
   'version': 3,
-  'schedule': {'chanceStart': 0.20, 'chanceStep': 0.05, 'chanceCap': 1.0, 'minGap': 5, 'firstTownAfter': 2, 'autoLeave': 5.0},
+  'schedule': {'chanceStart': 0.20, 'chanceStep': 0.05, 'chanceCap': 1.0, 'minGap': 5, 'firstTownAfter': 2},
 };
 
 void main() {
@@ -104,20 +104,22 @@ void main() {
   });
 
   test('the file: another version, not JSON, a number out of range or of the wrong kind keep their defaults; a patch '
-      'puts numbers in', () {
+      "puts numbers in; an older file's autoLeave is read as nothing (decisions-log 328)", () {
     expect(schedule(TownRules.parse('{"version": 1, "schedule": {"minGap": 9}}')), defaults);
     expect(schedule(TownRules.parse('not json')), defaults);
     expect(schedule(TownRules.parse('{"version": 2}')), defaults);
     final odd = TownRules.parse('{"version": 2, "materials": {}, "schedule": {"chanceStart": 1.5, "chanceStep": 0.1, '
             '"chanceCap": 0.5, "minGap": 0, "firstTownAfter": -1, "autoLeave": "soon"}}')
         .schedule;
-    expect((odd.chanceStart, odd.chanceStep, odd.chanceCap, odd.minGap, odd.firstTownAfter, odd.autoLeave), (0.2, 0.1, 0.5, 5, 2, 5.0));
+    expect((odd.chanceStart, odd.chanceStep, odd.chanceCap, odd.minGap, odd.firstTownAfter), (0.2, 0.1, 0.5, 5, 2));
+    expect(TownSchedule.fromJson({'autoLeave': 5.0}).toJson(), const TownSchedule().toJson(), reason: 'no autoLeave');
+    expect(const TownSchedule().toJson().containsKey('autoLeave'), isFalse);
     final under = TownRules.parse('{"version": 2, "schedule": {"chanceStart": 0.6, "chanceCap": 0.5}}').schedule;
     expect((under.chanceStart, under.chanceCap), (0.2, 1.0), reason: 'a cap under the start: both defaults');
     final p = TownRules.patch({
       'schedule': {'chanceStep': 0.5, 'minGap': 3},
     }).schedule;
-    expect((p.chanceStart, p.chanceStep, p.chanceCap, p.minGap, p.firstTownAfter, p.autoLeave), (0.2, 0.5, 1.0, 3, 2, 5.0));
+    expect((p.chanceStart, p.chanceStep, p.chanceCap, p.minGap, p.firstTownAfter), (0.2, 0.5, 1.0, 3, 2));
   });
 
   test('the roll: blocked (no draw, the chance stays) until wave 5, then 20% and +5% a miss', () {
@@ -207,7 +209,10 @@ void main() {
     expect((g.inTown, g.townAt, g.townLast, g.townDue, g.canStartWave), (false, null, 7, false, true));
     final log = g.log.entries;
     final entered = log.whereType<TownEntered>().single, left = log.whereType<TownLeft>().single;
-    expect(entered.toJson(), {'v': eventVersion, 'kind': 'townEntered', 'wave': 6, 't': entered.t, 'slot': 7, 'gold': gold, 'auto': true});
+    expect(entered.toJson(), {
+      'v': eventVersion, 'kind': 'townEntered', 'wave': 6, 't': entered.t, 'slot': 7, 'gold': gold, 'auto': true, //
+      'n': 1, 'identity': 'millbrook',
+    });
     // With the Tavern on (as shipped, decisions-log 268) the visit's `tavern` too: its three offers, nothing bought.
     final leftJson = left.toJson(), tavern = leftJson.remove('tavern') as Map;
     expect(leftJson,
@@ -217,7 +222,7 @@ void main() {
     expect(tavern['bought'], isEmpty);
     expect((tavern['rerolls'], tavern['spent']), (0, 0));
     expect([for (final e in log) if (e is TownMarked || e is TownEntered || e is TownLeft) logLine(e)],
-        ['${Words.townAfter} 6', Words.town, 'Left town']);
+        ['${Words.townAfter} 6', '${Words.town}: Millbrook', 'Left town'], reason: 'the Town gone into by its identity (decisions-log 326)');
     expect(logLine(log.whereType<TownMarked>().single), 'Town after wave 6');
     g.startWave();
     expect(g.wave, 7);
@@ -235,7 +240,7 @@ void main() {
     expect((left.auto, g.log.entries.whereType<TownEntered>().single.auto), (true, true));
   });
 
-  test('the save: `town` {chance, last, at, in}; a save in the Town reopens in it; a passed '
+  test('the save: `town` {chance, last, at, in, n}; a save in the Town reopens in it; a passed '
       "mark and a stray `in` are dropped; a save without the key counts a Town before its own wave", () {
     final g = towns(dice: _Dice([0.99, 0.99, 0.1, 0.5]));
     for (var w = 1; w <= 7; w++) {
@@ -250,7 +255,8 @@ void main() {
     g.enterTown();
     final inside = save(g);
     // The Tavern's visit rides along (on as shipped; its own save: tavern_test.dart).
-    expect({...inside['town'] as Map}..removeWhere((k, _) => '$k'.startsWith('tavern')), {'chance': 0.2, 'last': 2, 'at': 9, 'in': true});
+    expect({...inside['town'] as Map}..removeWhere((k, _) => '$k'.startsWith('tavern')),
+        {'chance': 0.2, 'last': 2, 'at': 9, 'in': true, 'n': 1}, reason: 'n: the Towns gone into (decisions-log 326)');
     expect((inside['town'] as Map).containsKey('tavern'), isTrue, reason: "the visit's offers");
     final back = load(inside);
     expect((back.inTown, back.townDue, back.canStartWave), (true, true, false));
@@ -357,21 +363,30 @@ void main() {
         reason: 'the roll goes into the wave record only');
   });
 
-  test("the chip's tooltip: the wave after which the Town comes, the Smithy, the Tavern (decisions-log 268), and the "
-      'Shop once it is open (in every Town as shipped, decisions-log 253)', () {
+  test("the chip's tooltip: the wave after which the Town comes and which Town it is (decisions-log 326), the Smithy, "
+      'the Tavern (decisions-log 268), and the Shop once it is open (in every Town as shipped, decisions-log 253) with '
+      'what the Town pays well for', () {
     final g = towns()
       ..wave = 10
       ..townAt = 12;
-    expect(g.townTip.$1, 'Town after wave 11');
-    expect(g.townTip.$2, ['Smithy: craft items and relics', 'Tavern: buy boosts', 'Shop: buy and sell'], reason: 'the forge on: items too');
+    const millbrook = 'Pays well for Boots, Potion, Gloves and Prayer Beads.';
+    expect(g.townTip.$1, 'Town after wave 11: Millbrook, a farming village');
+    expect(g.townTip.$2, ['Smithy: craft items and relics', 'Tavern: buy boosts', 'Shop: buy and sell', millbrook],
+        reason: 'the forge on: items too');
     g.townRules = TownRules.patch({
       'shop': {'from': 15},
     });
     expect(g.townTip.$2, ['Smithy: craft items and relics', 'Tavern: buy boosts'], reason: 'a later shop.from: no Shop before it');
     g
       ..wave = 14
-      ..townAt = 16;
-    expect(g.townTip.$1, 'Town after wave 15');
-    expect(g.townTip.$2, ['Smithy: craft items and relics', 'Tavern: buy boosts', 'Shop: buy and sell']);
+      ..townAt = 16
+      ..townCount = 3;
+    expect(g.townTip.$1, 'Town after wave 15: Ironvale, a mining town');
+    expect(g.townTip.$2, [
+      'Smithy: craft items and relics',
+      'Tavern: buy boosts',
+      'Shop: buy and sell',
+      'Pays well for Shield, Leather Cap, Gloves and Amulet.',
+    ]);
   });
 }

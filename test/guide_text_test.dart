@@ -128,7 +128,7 @@ void main() {
       capacityStart, capacityStep, armyMaxBoard, ...typeCapBoard.values, autoStartDelay.round(),
       heroEvery, pct(auraBoost - 1), miniBossEvery, necroHealerFrom, bossEvery, bossDrops, draftCards, escortFrom,
       asahRelics, leburStars, pct(priceRise), pct(tempaHp), pct(tempaDmg), tempaFrom, guideEn.intro.length,
-      loadedTownRules.schedule.autoLeave.round(), loadedTownRules.tavern.waves,
+      loadedTownRules.tavern.waves,
     ];
     for (final line in [for (final guide in _both.values) ..._allText(guide)]) {
       for (final m in RegExp(r'\d+').allMatches(line.replaceAll(_quoted, ''))) {
@@ -162,8 +162,8 @@ void main() {
     expect(lines('K22'), 'New: spare items make an Artifact / a bit stronger. / "Bag": tap it, then "${Words.carve}". / '
         'Or pick an item: "${Words.give}".');
     expect(guideEn.topics.firstWhere((t) => t.title == '${Words.town}s').lines.join(' / '),
-        'The wave meter shows / when the next ${Words.town} comes. / There, "Auto Wave" leaves / '
-        'after ${loadedTownRules.schedule.autoLeave.round()} seconds. / Tap the tent for "${Words.army}". / '
+        'The wave meter shows / when the next ${Words.town} comes. / There, "Auto Wave" waits / '
+        'until you tap "${Words.leaveTown}". / Tap the tent for "${Words.army}". / '
         'The "${Words.tavern}" sells boosts / for the next ${loadedTownRules.tavern.waves} waves. / '
         'A "${Words.wishlist}" marks items to make, / set in "${Words.smithy}" or "${Words.army}".');
     final late = guideEn.topics.firstWhere((t) => t.title == 'Late game').lines.join(' ');

@@ -18,8 +18,8 @@ part of 'main.dart';
 // waits". Start still starts.
 //
 // In a Town (decisions-log 216, town_look.dart) its Start says "Leave town" ([Words.leaveTown]) and leaves it, through
-// town_look.dart's hooks ([_startShows], [_startWord], [_startMost], [_leaveTown]); Auto counts down on it there too
-// ("Leave town 5" …). Paused in a Town it resumes, as anywhere.
+// town_look.dart's hooks ([_startShows], [_startWord], [_startMost], [_leaveTown]); no countdown runs there, Auto or not
+// (decisions-log 328): Auto Wave counts down once the Town is left. Paused in a Town it resumes, as anywhere.
 
 /// ui_icons.png's big white arrow pointing right, the play sign: its visible pixels are 7x12 from (5, 2).
 const _startIcon = Offset(144, 176);
@@ -81,7 +81,7 @@ extension on Board {
     final font = (h * 0.42).clamp(14.0, 28.0), inset = 4 * k + 6;
     // Start keeps room for Auto's seconds while Auto is on, so it doesn't change width as they come and go; Pause and
     // Resume are square.
-    final word = _startWord(g), most = '$word ${_startMost(g)}';
+    final word = _startWord(g), most = _startMost(g);
     double startW(String label) => (inset + 7 * ik + 6 + _textWidth(label, font) + inset).roundToDouble();
     final w = mode == _Toggle.start ? startW(autoStart.on ? most : word) : math.max(h, 36.0);
     // Centred between the screen's safe insets, in the band; where the screen is too narrow for its widest look there (a

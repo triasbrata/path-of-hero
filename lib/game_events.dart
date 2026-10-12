@@ -24,7 +24,7 @@ part of 'game.dart';
 /// (decisions-log 268): the Tavern's (its own switch is gone, decisions-log 296). 12: the Bayangan switched on
 /// (decisions-log 319): their events and fields (8's, [OmenDusk]) reach every player's records; `--dart-define=OMENS=false`
 /// (tests only) sends none. 13: an army wiped mid-wave no longer ends the game ([Wiped]; decisions-log 322).
-const eventVersion = 13;
+const eventVersion = 14;
 
 /// How many events [Game.log] keeps, the oldest going first.
 const logSize = 200;
@@ -459,22 +459,27 @@ final class TownMarked extends GameEvent {
 
 /// The player went into the Town of [slot] ([Towns.enterTown]) with [gold]; [auto]: Auto was on.
 final class TownEntered extends GameEvent {
-  TownEntered(super.wave, super.t, {required this.slot, required this.gold, this.auto = false});
+  TownEntered(super.wave, super.t, {required this.slot, required this.gold, this.auto = false, this.n = 0, this.identity = ''});
 
   final int slot, gold;
   final bool auto;
+
+  /// The Town's number in the run and its identity's key (decisions-log 326, market.dart; `eventVersion` 14).
+  final int n;
+  final String identity;
 
   @override
   EventKind get kind => EventKind.townEntered;
 
   @override
-  Map<String, Object?> get data => {'slot': slot, 'gold': gold, 'auto': auto};
+  Map<String, Object?> get data => {'slot': slot, 'gold': gold, 'auto': auto, 'n': n, 'identity': identity};
 }
 
-/// The player left the Town of [slot] ([Towns.leaveTown]) after [secs] game seconds in it; [auto]: Auto left it. The
-/// relics crafted there ([crafts], by kind) and the gold they took ([craftSpent]; [Craft.craft], decisions-log 233). The
-/// Tavern's visit ([tavern]: the kinds of its last roll, the kinds bought, the rerolls, the gold spent; tavern.dart,
-/// decisions-log 266), null without the Tavern (no key).
+/// The player left the Town of [slot] ([Towns.leaveTown]) after [secs] game seconds in it; [auto]: a probe's policy left
+/// it (the player leaves by hand: Auto stopped leaving Towns in decisions-log 328). The relics crafted there ([crafts],
+/// by kind) and the gold they took ([craftSpent]; [Craft.craft], decisions-log 233). The Tavern's visit ([tavern]: the
+/// kinds of its last roll, the kinds bought, the rerolls, the gold spent; tavern.dart, decisions-log 266), null without
+/// the Tavern (no key).
 final class TownLeft extends GameEvent {
   TownLeft(super.wave, super.t,
       {required this.slot, required this.secs, this.auto = false, this.crafts = const {}, this.craftSpent = 0, this.tavern});
@@ -844,7 +849,7 @@ final class StoreBought extends TraceEvent {
 /// [n] [loot] (an [Item], a [Relic] or a material, [Mat]) sold from the bag to the store for [gain] in
 /// all.
 final class StoreSold extends TraceEvent {
-  StoreSold(super.wave, super.t, {required this.loot, required this.n, required this.gain, this.plus = 0})
+  StoreSold(super.wave, super.t, {required this.loot, required this.n, required this.gain, this.plus = 0, this.margin, this.pressure})
       : assert(loot is Item || loot is Relic || loot is Mat);
 
   final Enum loot;
@@ -853,11 +858,23 @@ final class StoreSold extends TraceEvent {
   /// An enhanced item's plus (decisions-log 255), in the data only above 0.
   final int plus;
 
+  /// The market's margin for the first piece and the product's pressure before the sale (decisions-log 326,
+  /// market.dart; `eventVersion` 14): only for the Smithy's goods (an item, a small relic).
+  final double? margin;
+  final int? pressure;
+
   @override
   EventKind get kind => EventKind.storeSold;
 
   @override
-  Map<String, Object?> get data => {..._lootJson(loot), if (plus > 0) 'plus': plus, 'n': n, 'gain': gain};
+  Map<String, Object?> get data => {
+        ..._lootJson(loot),
+        if (plus > 0) 'plus': plus,
+        'n': n,
+        'gain': gain,
+        if (margin case final m?) 'margin': (m * 100).round() / 100,
+        'pressure': ?pressure,
+      };
 }
 
 /// A store event's loot: `item` or `relic` by name, the other null (as a field drop's event had it, decisions-log 321); a material sold (the Towns'

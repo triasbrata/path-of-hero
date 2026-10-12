@@ -5,7 +5,7 @@
 const autoStartDelay = 5.0;
 
 /// While [on], a won wave starts a countdown of [autoStartDelay] seconds, and at 0 the next wave starts as
-/// if Start were pressed. Only a win starts one, or a wave lost to a wipe (played again, wipe.dart): never before the
+/// if Start were pressed. Only a win starts one, a wave lost to a wipe (played again, wipe.dart) or a Town left: never before the
 /// first wave or right after a save is loaded. It stands still while held (paused, the Hero splash), and stops when turned off or when the
 /// wave starts some other way (Start pressed early) or the game ends.
 class AutoStart {
@@ -14,7 +14,7 @@ class AutoStart {
   bool on;
   double? left; // seconds left of the countdown; null while none runs
 
-  /// A wave was just won, or lost to a wipe.
+  /// A wave was just won, or lost to a wipe; or a Town was left (decisions-log 328: none counts down in a Town).
   void won() {
     if (on) left = autoStartDelay;
   }

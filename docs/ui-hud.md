@@ -110,7 +110,7 @@ the owner's ask (decisions-log 172, "Guide" below).
     allows 4. Before the cap a desktop window of 1164×777 had k 4
     and Start lay over pause, Auto over the wave meter and, in a wave, over the book button; so did 900×600–750 (k 3)
     and 900–1300 px wide at 800 px tall and more (k 4). test/hud_sweep_test.dart lays the HUD out at every window from
-    900×400 to 2600×1500 (step 50), between waves, in a wave and in a Town ("Leave town 5", wider than "Start 5"), and
+    900×400 to 2600×1500 (step 50), between waves, in a wave and in a Town ("Leave town", wider than "Start 5"), and
     asserts no two pieces overlap, that x2, Auto and the meter don't move and the toggle's middle doesn't as a wave
     starts, and, from k 3, every button is 40 px each way. What k sizes follows: the top band, the toggle and Auto
     (`_startH`), the wave meter,
@@ -244,8 +244,8 @@ the owner's ask (decisions-log 172, "Guide" below).
   "wave level di pindahkan ke dalam wave meter", #80), a bar that fills as the wave's monsters come on,
   "spawned/total" (`Game.waveSpawned` / `Game.waveTotal`: the wave's queue, mini boss, boss and queued
   escorts included; the boss's raised skeletons not) and a caret. Between waves the bar is empty and there
-  is no count (the coming wave's size isn't known until it starts). In a Town it shows "In town" instead ("Towns on the
-  HUD" below).
+  is no count (the coming wave's size isn't known until it starts). In a Town it shows the Town's name, "In Millbrook",
+  instead ("Towns on the HUD" below).
 - **The tide** (#92, units-and-combat.md "The tide"): from the tide's first wave (the wave shown ≥
   `Game.shownTideFrom`: `tideStart`, earlier for an army over the cap, "Beban", decisions-log 162) the crowd's extra HP
   follows the number, "+35%" on wave 65 (`tidePercent`, whole percent; "+0%" on the first wave; the owner's 48 over 32
@@ -417,7 +417,7 @@ pause button (#93, which stood in the top left row), in the same place in every 
     Auto of its own (decisions-log 283, "Spawn bar"), which now says "Auto Buy" (`Words.autoBuy`). Only the shown words
     changed: `Settings.autoStart`, the save and the telemetry keep their keys, and the look, the countdown, the hold and
     the lit state are as before. Every place it fits: 1600×947, 1266×713, 1164×777 and 915×412, with the countdown, the
-    hold line, in a wave and in a Town's "Leave town 5" (test/auto_names_test.dart). So it can be turned on
+    hold line, in a wave and in a Town's "Leave town" (test/auto_names_test.dart). So it can be turned on
   mid-wave, and it never moves: the wave meter keeps room for the coming wave's count between waves ("Wave meter").
   Not after a game over. Settings.json keeps it (`Settings.autoStart`, per device like the volumes; off by default).
   `Board.autoButton` is where it is.
@@ -1165,24 +1165,33 @@ drawn in a Town, its book and its taps are "Town" below.
   `Game.enterTown` and saves (a reload reopens the Town); never under the welcome screen. The book turns to the Smithy, and
   the scene fades in ("Town"). A save made in a Town comes back in it, and isn't gone into again.
 - **"Leave town":** in a Town the Start/Pause toggle's Start is "Leave town" (`Words.leaveTown`): the same green
-  button, place, height and blink as Start, as wide as its words (with Auto on, room for "Leave town 5"). A press leaves
+  button, place, height and blink as Start, as wide as its words (never a countdown's seconds there). A press leaves
   (`Game.leaveTown`) and saves; it starts no wave, the scene fades back to the field, and the button is Start again
   (paused in a Town it is Resume, as anywhere). The button reads it through town_look.dart's hooks (`_startShows`,
   `_startWord`, `_startMost`, the press `_leaveTown`), so whatever draws Start reads the same.
-- **Auto in a Town:** with Auto on, going in starts the countdown at `TownSchedule.autoLeave` (5 s): "Leave town 5" … "1"
-  on the button. It holds as Start's does (paused, a splash or card, a chest due). Any press in the Town but on "Leave
-  town", Auto, x2 or pause (a sign, a place, a tab, the book, the scene) stops it for the visit (`_townPress`): Leave by
-  hand then. So does the wheel or a trackpad's swipe panning the scene ("The player's pan", "Town"). At 0 it leaves, and Start's countdown is left at 0: the wave starts once the fade back to the field is over
-  (one wait, not 5 s + 5 s), unless the field's Auto hold (`Game.autoHeld`, "Start/Pause toggle") waits for the army.
+- **Auto in a Town** (decisions-log 328; the owner, 2026-10-12: "disable auto start kalau sampai kota"): no countdown runs
+  in a Town, whatever Auto is: the button reads just "Leave town", and the Town stays until the player presses it
+  (`_townTick` stops any countdown there). Auto Wave itself stays as it was set (it can be turned on or off in the Town
+  too). Left by hand with Auto on, its countdown starts as after a win (`AutoStart.won`, `autoStartDelay` 5 s: "Start
+  5" … "1"), holding through the fade back to the field and for whatever holds it on the field (the book on the Bag or
+  Settings, the Auto hold `Game.autoHeld`: "Start/Pause toggle"), then the wave starts. (Before, Auto left a Town after town.json's `autoLeave` 5 s unless a press there
+  stopped it; the key is gone, an older file's read as nothing.)
 - **The wave meter in a Town** (the owner, 2026-10-04: "ketika di town wave metternya di ganti contentnya jadi semacam
   'in town' dan icon swordnya juga di ganti … intinya mau kasi tau ke user kalau ini lagi mode aman";
   `Board._inTownMeter`): the same panel at the same size (the tide badge's room kept, so the Town chip's place, the map
   and the boss bars don't move) shows a beer mug where the crossed swords are (`town_mug.png`, Kenmi's Cute Fantasy Icons
-  Premium Food 3, its 16 px art at one screen px a pixel, as the swords), "In town" (`Words.inTown`) in the battle log's
+  Premium Food 3, its 16 px art at one screen px a pixel, as the swords), the Town's name, "In Millbrook" (`Words.inPlace`
+  and its identity's name, decisions-log 326; "In town", `Words.inTown`, where that wouldn't fit), in the battle log's
   won green (0xFF9BE37A) where the wave's number is, and the coming wave at the right, before the caret: "next wave 7"
   (`Words.nextWave`, cream 0xFFFFF1D6; only "7" where that wouldn't fit). No bar, count or tide badge, and no tide
   tooltip; a press still drops the minimap. Once the Town is left it is the wave meter again. `Board.townMeterText`
-  ("In town · next wave 7"; '' out of a Town) for tests.
+  ("In Millbrook · next wave 7"; '' out of a Town) for tests.
+- **The Town's name as it comes up** (decisions-log 326; `Board._townArrival`, town_look.dart): ui_ribbons.png's flat
+  ribbon (the signs' `_ribbonTitle`) at 1.5 times the scene's scale (at the least the signs': as big as they are on a
+  phone), under the HUD's band over the middle of the scene's room (left of the book when it is open), the identity's
+  name on it ("Millbrook") and under it "Town 1 · Farming village" in cream with a dark outline; from the fade's middle
+  for 3 s (`_townArrivalFor`), its last 0.5 s fading out. None for a game loaded in a Town, nor as it is left.
+  `Board.townArrival` (its rect; Rect.zero when none) for tests.
 - **The background save** (dev-workflow.md "App identity"): between waves now includes a due Town and the Town itself.
 
 ### The Town chip
@@ -1198,12 +1207,14 @@ drawn in a Town, its book and its taps are "Town" below.
   "Chest!" chip where it shares their columns. While the book shows the map and the Shadows' chips go to
   the left, and the chip stays under the meter, in the sky over the book's top right, clear of its tabs. The boss bars,
   the battle log's panel and the units' plates keep under it. `Board.townChip` and `Board.townChipLabel` for tests.
-- **Tooltip** (`_Hint.town`, the loot tooltips' frame with the hammer): "Town after wave 11", "Smithy: craft items and
+- **Tooltip** (`_Hint.town`, the loot tooltips' frame with the hammer): "Town after wave 11: Millbrook, a farming
+  village" (the coming Town's identity, decisions-log 326), "Smithy: craft items and
   relics" (decisions-log 272), "Tavern: buy boosts" (decisions-log 268), and
   for a Town after wave `shopFrom` (the Shop open there; as shipped every Town, town.json's `shop.from` 1) "Shop: buy and
-  sell" (`Game.townTip`).
-- **The battle log** (Other chip): "Town after wave 11" when marked, "Town" when gone into, "Left town", each with the
-  hammer.
+  sell" and what it pays well for, "Pays well for Boots, Potion, Gloves and Prayer Beads." (`Game.townTip`,
+  `TownIdentity.wantsLine`).
+- **The battle log** (Other chip): "Town after wave 11" when marked, "Town: Millbrook" when gone into (its identity,
+  decisions-log 326; "Town" for an event without one), "Left town", each with the hammer.
 
 ### The Tavern in battle (`lib/tavern_look.dart`, decisions-log 268)
 
@@ -1301,6 +1312,13 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
   - Back to front: the Normal BG layers `town_bg_5` (the sky, parallax 0), the clouds, `_4` (0.15), `town_castle.png`
     (0.2, one, not a row), `_3` (0.35), `_2` (0.6), `_1` (1.0: the near pines and the ground), each 1024×346 world px
     tiling sideways; over their top layer 5's top row stretched up; from the street down the ground (below).
+  - The Town's identity (decisions-log 326; loot-items-relics.md "Towns: the market"; `Game.sceneIdentity`, the Town last
+    gone into, so the scene keeps its look as it fades out) picks its season's set (`townSeasonArt`): summer the Normal
+    BG above (Millbrook, Willowmere), autumn the pack's Autumn BG (`town_autumn_bg_1..5`, `town_autumn_castle`: an amber
+    sky and autumn grass; Ironvale, Ambergate), winter its Winter BG (`town_winter_*`: snowy pines and mountains, a white
+    castle; Frostgate, Highspire), each laid out and moving as the Normal one, and its street (`town_ground_autumn`,
+    `town_ground_winter`: Floor Tiles2's same cell in its autumn and snowy bands). Its yard is its own (below). The
+    houses, the tent, the Smithy's and the Shop's pieces stay the same in every Town.
   - The clouds (decisions-log 274; the owner, 2026-10-08: "pada scene town tambahkan awan"): the field's
     `battle_clouds.png` (3072×130 px, side by side) at k screen px a px like the layers, its row 0 4 px over the layers'
     (as on the field), panning at 0.07 of the street (the field's `_cloudK`) and drifting left 6 world px a second on
@@ -1318,7 +1336,7 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
     - the earth under it: the tile's last row (one colour, 19,17,22, the block's fill) stretched to the screen's bottom
 
     Every building and what stands at it (the houses' porches, the tent, the campfire, the Smithy's pieces, the Shop's
-    stalls, the pine, the clothes line) stands right on the strip, its bottom on the lane, and nothing is drawn over
+    stalls, the yard's pieces) stands right on the strip, its bottom on the lane, and nothing is drawn over
     their feet; the smith stands on his house's floor, the porch's top. The taps, the signs and the anchors are taken from
     what is drawn. Until decisions-log 279 (274's ground) the buildings stood 4 world px over the street with Tall
     Grass's strip (`town_grass.png`) over their feet, and under it 2.5 world px of town_bg_1's full green, Floor
@@ -1348,7 +1366,7 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
       animated like the furnace; 60), its art 3 clear of the house's left eave tip (its door further in);
     - on its right, against its right wall, the furnace (row 0, its art columns 10-53 of its 64; 6 frames of 64×64 at
       8 fps, the field's clock: it stops while paused), its art 34 world px past the house, and the blue ore rock
-      (53×38) 2 past the furnace's art, short of the yard's pine;
+      (53×38) 2 past the furnace's art, short of the yard's first piece;
     - its door and its sign clear. Until decisions-log 271 the work yard stood past the furnace as the room allowed
       (the ore by the furnace, then the sawmill, the log pile and the stump), none of it at the desk or the tablet;
       until decisions-log 253 the sawmill stood before its window and the furnace before its right wall.
@@ -1357,10 +1375,15 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
     room for the table and the stacked crates only), the cauldron on the right block.
   - The Shop: the smallest house (n −1, one storey) with its stalls before its window and right wall, the door clear:
     the apple basket, the fruit-and-bread table, barrels and the stacked crates.
-  - The yard (156 world px) between the Smithy and the Tavern: the olive pine (`town_pine.png`: Pine
-    Trees.png's olive pine, its cone and first tier over a tall trunk, assets.md) at its left and the clothes line
-    right of it, side by side, so the pine's first tier shows whole (decisions-log 253; until then the line hung
-    before the pine and its cloths hid most of that tier).
+  - The yard (156 world px) between the Smithy and the Tavern, behind the houses: the identity's pieces side by side
+    (`_townYards`, from `town_yards.png`, assets.md; decisions-log 326), left to right: Millbrook the flowering tree,
+    two wheat sheaves standing, a sack and a sheaf; Willowmere a boat pulled up on the bank and three potted plants,
+    under the weeping willow (216 wide, in the middle of the yard behind the rest, scenery: no place's); Ironvale a
+    birch, the gold ore rock and a lit torch; Ambergate the small market tent, the flower table, sunflowers in a vase and
+    a bowl of grapes; Frostgate a cypress, two urns on plinths either side of the angel statue and a torch; Highspire a
+    torch, a bust, the alchemy table (a skull, potions), an urn on its plinth and a tree. The torch's flame moves (6
+    frames at 8 fps, as the furnace). Until decisions-log 326 every Town's yard was the olive pine (`town_pine.png`) at
+    its left and the clothes line right of it, side by side, so the pine's first tier showed whole (decisions-log 253).
   - The signs: "Smithy", "Tavern" and "Shop" (`Words.smithy`, `Words.tavern`, `Words.shop`) on ui_ribbons.png's flat
     ribbon (`_ribbonTitle`, the Hero splash's: 64×20 at 2 screen px a sprite px at least, the words bold), centred over
     their building, its bottom 4 sprite px over the roof's ridge, kept 4 px under the HUD's band (`_meterBottom`).
@@ -1980,7 +2003,8 @@ outside a Town.
     icon, name and how many the Bag holds) and what it is, then the Buy row (`_shopActions`):
     - **Buy** (`_buyRow`, `BagAction.buy`, on the action rows' look: `_actCard`, `_actTitle`, `_actLine`, `_rowTag`): the
       coin stack, "Buy", its light tag "Buy 2000" ("Buy 20k") and the line "2,000 gold, then 2,200" (now and the next;
-      "65 gold each" where the next costs the same, the forge's materials). A tap buys one (the heading's count, the coin
+      a material "65 gold, then 75", the market's 10% a buy, decisions-log 326; "65 gold each" where the next costs the
+      same). A tap buys one (the heading's count, the coin
       and the gold tell it; no message). Refused (`whyNotBuy`) the tag is greyed, the line says why in red ("Not enough
       gold"; an Artifact owned, its tag "Buy" alone), and a tap says why.
 - **Sell** (the owner: "untuk di sold bisa langsung di gabung aja semua yang mau di jual, mirip seperti ui dari bags",
@@ -1997,6 +2021,10 @@ outside a Town.
   (decisions-log 278; until then a tap on the picked cell let it go). The grid turns to the pick's page when the pick
   changes (a line tapped) and is the player's to turn after (`_ShopView.sellTurned`): with a pick always shown, following
   it every frame would hold a paged grid (915×412) on its page.
+  The market's marks (decisions-log 326; loot-items-relics.md "Towns: the market"; `_shopSellArrows`): an item or small
+  relic the Town wants and pays 2x or more for ("hot") shows ui_icons.png's green up arrow (16, 144), one sold so much
+  its price is past half way to the floor ("flooded") the red down arrow (64, 160), at the cell's top right (an
+  enhanced stack's level keeps the top left), half the cell wide, over the slot's corner (`Board.shopArrows`).
 - **The Sell Basket** (the right page on Sell, a page of its own; the owner: "ini adalah page baru yang harus kamu buat.
   dimana user bisa melihat item apa saja yang sudah di masukkan ke dalam "basket sell" terus user bisa mengatur jumlah
   item yang dia jual pada selected item, dan user juga bisa liat total pendapatan dia dari hasil seluruh penjualan items";
@@ -2008,7 +2036,8 @@ outside a Town.
     icon, 16 px at 915×412 and 32 on the desk, an enhanced stack's in its level's colour; the name, a stack's "+3" in its
     level's ink, an Artifact's in gold; on the right how many the Bag holds, "x12", or a Pusaka's stars), then under the
     name, beside the icon, at most 3 lines: the kind line (`_shopKindLine`: an item's grade, "Grade I
-    item", grey; a small relic's tier, "Strong relic", in its tier's ink; a Vault Artifact's rarity and where, "Rare · in
+    item", grey; a small relic's tier, "Strong relic", in its tier's ink; after either the market's word, " · Hot in
+    Millbrook" in green or " · Flooded: price falling" in red, `Words.hotIn`, `Words.flooded`, decisions-log 326; a Vault Artifact's rarity and where, "Rare · in
     Vault"; a material none, what drops it says what it is), a carved Artifact's "Carve +3 is lost" in red, then what it
     does (`_detailDesc`; without its closing sentence where all of it doesn't fit, the last line cut to fit). The pick
     is the cell or line last tapped (`_storePick`); while the basket has lines and none is picked (a tab switch, its line
@@ -2016,9 +2045,10 @@ outside a Town.
     (`shopTapToAdd`), and no price row.
   - **The price row** (`_shopPriceRow`) under the detail, indented to the detail's words (the owner's "<space>"): the
     coin and what one sells for (`shopSellPrice`: `sellPriceAt` at the stack's plus, else `sellPrice`; a Vault Artifact
-    half its base price, its stars lost), "x", the stepper as light tags, "-", the count (bold), "+", then "All" at its
+    half its base price, its stars lost; a hot or flooded product's arrow before it), "x", the stepper as light tags, "-", the count (bold), "+", then "All" at its
     end (`_shopSetCount`: from 1 to what is held, `shopHeld`; "+" and "All" greyed there; "-" at 1 takes the line out of
-    the basket), and at the row's right "= 3000", the subtotal in bold, ending where the lines' subtotals end. Where it
+    the basket), and at the row's right "= 3000", the subtotal in bold (`shopSubtotal`: an item's and a small relic's
+    pieces each at their own step of the market, `marketSum`, so the subtotal is under n times the first's), ending where the lines' subtotals end. Where it
     doesn't all fit (a narrow page) the coin goes first, then the "=". The stepper reads - n + left to right (the
     owner's sketch writes "+ jumlah -"; read as the usual stepper).
   - **No divider** (decisions-log 305; the owner, 2026-10-09: "divider di sini di takeout"): the lines start under the
@@ -2028,7 +2058,7 @@ outside a Town.
   - **The lines** (`_shopLine`), one per stack in the basket in the order added, each one row on the Bag's inset paper
     slot (`_bagSlot` at the book's pixel scale; lit under the mouse; the pick's on the pick's orange card as its cell):
     the icon (16 px at 915×412, 32 on the desk), the name (its "+3" in its level's ink, an Artifact's in gold), "2 x 1500"
-    in brown (a carved Artifact's "Carve +3 is lost" in red; "x2" where the name has no room, none where even that
+    in brown (the pieces' average for the Smithy's goods, decisions-log 326; a carved Artifact's "Carve +3 is lost" in red; "x2" where the name has no room, none where even that
     doesn't fit) and the subtotal in bold at the right. A tap on a line picks it. Where they don't all fit the wheel or a
     drag scrolls them, a capsule bar on the right; a line newly picked is brought into view. The detail, the price row
     and the bar stay put.
@@ -2346,7 +2376,8 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     the room with troops, "+Room", a second Priest; decisions-log 176), its second what the boss leaves (with the forge
     on "Win it: rare materials", with it off "Win it: 2 items"; decisions-log 272);
   - `topics`: the "How to Play" page's 13 (`GuideTopic`; "Towns", decisions-log 237: K23, K24 and the wave meter's
-    warning, Auto's `autoLeave` s, "Tap the tent for "Army"." (decisions-log 301), and "The "Tavern" sells boosts / for
+    warning, "There, "Auto Wave" waits / until you tap "Leave town"." (decisions-log 328), "Tap the tent for "Army"."
+    (decisions-log 301), and "The "Tavern" sells boosts / for
     the next 2 waves." (town.json's `tavern.waves`,
     decisions-log 268), and with the forge "A "Wishlist" marks items to make, / set in "Smithy" or "Army"."
     (decisions-log 282); by grade "Items & Awaken" adds "Awaken levels take grade I, / then II, then III. /

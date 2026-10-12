@@ -35,7 +35,7 @@ events it listens to are #60's stream (lib/game_events.dart, architecture.md).
 
 ## The records
 
-Every record is one JSON object with `tv` (`telemetryVersion` 13: raise it when a field changes; 2 added the wave's
+Every record is one JSON object with `tv` (`telemetryVersion` 14: raise it when a field changes; 2 added the wave's
 `pusaka` and `gold.pusakaSpent`, decisions-log 138; 3 the boss chest's events and `gold.chestSpent` /
 `gold.chestEarned`, decisions-log 152; 4 Asah's `pusakaAsah` and `gold.asahSpent`, decisions-log 154; 5 the wave
 start's `tide.over`, decisions-log 162; 6 Tempa's `tempa` and `gold.tempaSpent`, decisions-log 163; 7 Lebur's
@@ -58,7 +58,9 @@ switched on, decisions-log 319: 8's Bayangan fields and the Dusk's `omenDusk` in
 12; none with `--dart-define=OMENS=false`); decisions-log 321 raised neither: the `towns` switch and the field drops'
 event `drop` went, but every player's game had the Towns, so none of its records changes (`dropped` and
 `relicsDropped` stay in the wave record, always `{}`); 13 an army wiped mid-wave costs a heart and the wave is played
-again, decisions-log 322: the event `wipe` and a wave record's `end` `wiped` (`eventVersion` 13), `rec`,
+again, decisions-log 322: the event `wipe` and a wave record's `end` `wiped` (`eventVersion` 13); 14 the Towns'
+market and identities, decisions-log 326: a `storeSold` of an item or a small relic carries `margin` and `pressure`, a
+`townEntered` `n` and `identity`, and an item's and a small relic's `gain` is the market's price (`eventVersion` 14), `rec`,
 `install`, `session`, `game` (the number of the game within the session, 0 before the first) and `at` (UTC,
 ISO 8601).
 
@@ -66,7 +68,7 @@ ISO 8601).
 |---|---|---|
 | `session` | once, when the adapter is made (the first game played after launch) | `app` (`APP_VERSION` define, `dev`), `platform` (`Platform.operatingSystem`), `ev` (`eventVersion`) |
 | `game` | each `attach` | `wave` (0 new, more for a loaded save), `gold`, `lives`, `score` |
-| `event` | as it happens, for `passedOn`: fell, heroMade, awakened, bought, itemUsed, relicUsed, storeBought, storeSold, relicTakenOff, typeReleased, pusakaBound, pusakaMoved, ascended, heroRecalled, offerShown, offerPicked, offerRerolled, pusakaAsah, tempa, pusakaLebur, omenGained, omenEased, omenDusk, ukirFed, ukirStep, townMarked, townEntered, townLeft, crafted, itemCrafted, stoneCrafted, itemEnhanced, boostBought, tavernRerolled, wipe | `event`: the event's `toJson()` (`v`: `eventVersion` 13 (3: the chest's events; 4: Asah's; 5: heroRecalled's `refund`; 6: Tempa's; 7: Lebur's; 8: the Bayangan's, Ukir's, an Asah's `items`; 9: the Towns'; 10: the forge's, decisions-log 272; 11: the Tavern's, decisions-log 268; 12: the Bayangan's switched on, decisions-log 319; 13: the wipe's, decisions-log 322), `kind`, `wave`, `t`, its fields) without `name`; `wipe` (the army fell mid-wave, lib/wipe.dart; its `wave` the one lost): `lives` (left), `livesLost` (2, a heart; fewer when fewer were left), `foes` (the monsters alive and queued as it fell, swept off unless the game is over) and `over` (it took the last heart: the game is over; else the wave is played again, a new `wave` record with the same number); a `fell` carries the troop's `relics` (names, back in the bag; `eventVersion` 2); `ascended` (#92 part 2, Bangkit 4-5 bought in the Toko, `Ascend.ascend`): `type`, `level` (4 or 5), `cost`; `heroRecalled` (#92 part 3, a fallen Hero called back in the Toko's Hero Gugur, `Recall.recallHero`; no `bought` for it): `type`, `stats` (its 2 attributes), `skill`, `fell` (the wave it fell in), `cost`, `refund` (`eventVersion` 5, decisions-log 167: what the troop a full army's recall sent home paid back, 0 without a swap; the troop's name stays in the battle log; `gold.recallSpent` is the `cost`, the refund not taken off); `offerPicked` (a boss chest closed, lib/draft.dart): `pick` (a Pusaka's name,
+| `event` | as it happens, for `passedOn`: fell, heroMade, awakened, bought, itemUsed, relicUsed, storeBought, storeSold, relicTakenOff, typeReleased, pusakaBound, pusakaMoved, ascended, heroRecalled, offerShown, offerPicked, offerRerolled, pusakaAsah, tempa, pusakaLebur, omenGained, omenEased, omenDusk, ukirFed, ukirStep, townMarked, townEntered, townLeft, crafted, itemCrafted, stoneCrafted, itemEnhanced, boostBought, tavernRerolled, wipe | `event`: the event's `toJson()` (`v`: `eventVersion` 14 (3: the chest's events; 4: Asah's; 5: heroRecalled's `refund`; 6: Tempa's; 7: Lebur's; 8: the Bayangan's, Ukir's, an Asah's `items`; 9: the Towns'; 10: the forge's, decisions-log 272; 11: the Tavern's, decisions-log 268; 12: the Bayangan's switched on, decisions-log 319; 13: the wipe's, decisions-log 322; 14: the market's and the Towns' identities, decisions-log 326), `kind`, `wave`, `t`, its fields) without `name`; `wipe` (the army fell mid-wave, lib/wipe.dart; its `wave` the one lost): `lives` (left), `livesLost` (2, a heart; fewer when fewer were left), `foes` (the monsters alive and queued as it fell, swept off unless the game is over) and `over` (it took the last heart: the game is over; else the wave is played again, a new `wave` record with the same number); a `fell` carries the troop's `relics` (names, back in the bag; `eventVersion` 2); `ascended` (#92 part 2, Bangkit 4-5 bought in the Toko, `Ascend.ascend`): `type`, `level` (4 or 5), `cost`; `heroRecalled` (#92 part 3, a fallen Hero called back in the Toko's Hero Gugur, `Recall.recallHero`; no `bought` for it): `type`, `stats` (its 2 attributes), `skill`, `fell` (the wave it fell in), `cost`, `refund` (`eventVersion` 5, decisions-log 167: what the troop a full army's recall sent home paid back, 0 without a swap; the troop's name stays in the battle log; `gold.recallSpent` is the `cost`, the refund not taken off); `offerPicked` (a boss chest closed, lib/draft.dart): `pick` (a Pusaka's name,
 `serpihan`, or null when passed over), `rarity`, `stars` (after the take), `type` (where it went; null: the Gudang),
 `skipped`, `gain` (Lewati's gold), `rerolls`, `chest`, `chestWave`, and while the Bayangan are on (loot-items-relics.md
 "Bayangan", decisions-log 180) `omen` (the face the taken card hid; null: none), `levels` (the kinds its levels went to,
@@ -84,7 +86,8 @@ when any: `asahItems`, none by default); `tempa` (a Tempa level bought on the Ar
 another on the Tas page, `Lebur.lebur` in lib/pusaka.dart, decisions-log 164): `fodder` (the one melted, gone now),
 `fodderStars` (its stars, lost), `relic` (the target), `stars` (after it), `type` (the target's; null: the Gudang),
 `cost`, `relics` (`{}` while `leburRelics` is 0); the Towns' (lib/town.dart, decisions-log 216): `townMarked` (a roll hit): `slot` (the Town comes before that wave), `chance` (the roll's), `rolls` (the how-many-th
-roll since the last Town, or the run's start); `townEntered`: `slot`, `gold`, `auto` (Auto was on); `townLeft`: `slot`,
+roll since the last Town, or the run's start); `townEntered`: `slot`, `gold`, `auto` (Auto was on), `n` (the how-many-th
+Town of the run) and `identity` (its key, `millbrook` .. `highspire`; decisions-log 326); `townLeft`: `slot`,
 `secs` (game seconds in the Town, two decimals), `auto` (Auto left it), `crafts` (the relics crafted there, name → count,
 `{}` for none) and `craftSpent` (their gold; decisions-log 233); `crafted` (a relic made at a Town's Smithy, lib/town.dart's
 `Craft.craft`, decisions-log 233; loot-items-relics.md "Town and Smithy: Craft"): `relic` (its save key), `materials`
@@ -94,7 +97,9 @@ grade"): `item` (its save key), `materials`, `items` (the grade below a Cap or a
 `stoneCrafted` (a forge stone made there, `Enhance.craftStone`, decisions-log 255; loot-items-relics.md "The forge:
 Enhance"): `stone` (`mithril` or `starmetal`), `materials`, `gold`; `itemEnhanced` (an item in the Bag taken a step up
 there, `Enhance.enhance`): `item`, `plus` (the step reached, 1 to 5), `stone`, `gold`. An `itemUsed` or a `storeSold` of
-an enhanced item carries its `plus` too (none for +0, so every other record is as before). The Tavern's (lib/tavern.dart,
+an enhanced item carries its `plus` too (none for +0, so every other record is as before). A `storeSold` of an item
+or a small relic carries `margin` (the market's for its first piece, two decimals) and `pressure` (the product's
+before the sale; loot-items-relics.md "Towns: the market", decisions-log 326). The Tavern's (lib/tavern.dart,
 decisions-log 266; loot-items-relics.md "Towns: the Tavern"): `boostBought` (a
 boost bought, `Tavern.buyBoost`): `boost` (its kind), `rarity` (`common`, `rare`, `epic`, `legendary`), `price`,
 `waves` (2), `type` (only a Champion's Plate's troop type), `slot` (the offer's, from 0), `effects` (what it multiplies,

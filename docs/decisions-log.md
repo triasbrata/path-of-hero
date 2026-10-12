@@ -11552,6 +11552,87 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        8 steps a dash; the halo is 4 bands of the old gradient's alpha, its pulse by whole units; the reach is a filled
        disc at the same 12%. Colours, alphas and pulses are as they were. The zones', the wind-ups', the skills' ground
        circles and reach rings, Holy Shield's dome and a new Hero's gold ring were the packs' sprites, in pixels already.
+326. **Every Town has its identity, and forged goods sell at 1.3x to 4x their cost by grade and the Town's demand, less
+     as one exact product floods, never under 1.3x, back over 2-3 Towns** (the owner, 2026-10-12: "harga item forge
+     jangan terlalu murah ini biar jadi alat untuk user mendapatkan uang juga. jadi kalau bisa harga item + forge di jual
+     user setidaknya bisa untung mulai 1.3x - 4x dari hpp item forge yang dijual, tapi kalau user terlalu abuse pasar
+     maka harga jual produk yang di smite user akan jatuh bisa sampai 5% saja keuntungannya. jadi user tidak bisa abuse
+     jual 1 item saja tapi harus variatif, dan efek ini bisa bertahan sampai 2-3 town di lewati baru balik lagi margin
+     yang di dapat user bisa sampai 4x", a forged item mustn't be too cheap, so it is a way to earn gold too: sold, an
+     item and its "+" should profit 1.3x to 4x its cost of goods, but abused, the price of what he forged falls until the
+     profit is only 5%, so he can't sell one item but must vary, and the effect lasts until 2-3 Towns have passed, then
+     the margin climbs back to 4x). His answers: what sets the margin is grade and the Town's demand, "tapi berarti
+     setiap town harus punya identitasnya gitu dan tampilannya masing masing, jadi kaya 3 town awal itu masih menghargai
+     banget item pemula, selanjutnya harga item pemula mulai turun. nanti di late gamenya yang dihargai adalah item item
+     kelas atas" (so every Town must have its own identity and look: the first 3 Towns still value beginner items highly,
+     then their prices fall, and late in the game high-class items are what is valued); the saturation counts each exact
+     product (a Sword and a Sword +2 apart, a Shield apart); and it falls "lebih longgar lagi, supaya ekonomi player
+     tidak terlalu porak poranda karna harga spawn troops di late game itu mahal sedangkan monster monsternya juga cukup
+     kuat" (looser, so the player's economy isn't wrecked: late troops cost a lot and the monsters are strong). Then he
+     changed the floor: abuse never takes the profit below 30% (1.3x the cost), not 5%; a fresh market is 1.3x-4x by
+     grade and demand, selling the same product again and again pulls it toward 1.3x and never under, it comes back
+     over 2-3 Towns, the saturation loose (about 20-30 sales to the floor), and a product already at 1.3x simply stays
+     there. On the design (mockups of three Towns and the Sell page), his answers: (1) the cost counts the parts at what
+     the Shop pays for them; (2) the early Towns keep valuing beginner items high (grade I 3.0, a wanted kind up to
+     3.9); (3) yes to the guard: the forge's and Enhance's gold earns only 1.3x, the Shop's materials get dearer as they
+     are bought, both back over 2-3 Towns; (4) six identities, two a season. And the balance pass's (318) trim: Towns 4
+     and 5's grade II 3.0 to 2.4. Why: every item sold for a flat 1,000 whatever its grade (`itemPrice` 2,000 x
+     `itemSellShare` 0.5), so a Sword bought as Shop parts (160) and 20 forge gold sold back at +820, forever, from the
+     first Town; a Royal Helm (4,670 of inputs) sold for the same 1,000. By town-market (lib/market.dart;
+     loot-items-relics.md "Towns: the market", ui-hud.md "Town", "Towns on the HUD", "The Town's Shop").
+     - **The identities** (`TownIdentity`, `identityOf`): by the Town's number in the run (`townCount`, raised as one is
+       gone into; no dice, so seeded runs play as before), two a tier taking turns: Towns 1-3 Millbrook (a farming
+       village; Boots, Potion, Gloves, Prayer Beads) and Willowmere (a riverside village; Bow, Spear, Torch, Shield),
+       summer; 4-6 Ironvale (a mining town; Shield, Cap/Helm, Gloves, Amulet) and Ambergate (a harvest market; Potion,
+       Staff, Ring, Prism), autumn; 7 on Frostgate (the royal capital; Sword, Cap/Helm, Ring, Amulet) and Highspire (a
+       temple city; Staff, Prayer Beads, Torch, Prism), winter. A Town comes about every 7.5 waves, so 1-3 are about
+       waves 8-24, 4-6 25-46, 7 on 47 and later.
+     - **Their look** (existing art only, the Town's own pack): the pack's Autumn and Winter BG sets beside the Normal one
+       (their sky, mountains, pines and castle), Floor Tiles2's autumn and snowy street, and each Town's yard (156 world
+       px between the Smithy and the Tavern, until now the pine and the clothes line): Millbrook the flowering tree, wheat,
+       a sack and a sheaf; Willowmere the weeping willow over a boat pulled up and potted plants; Ironvale a birch, the
+       gold ore and a torch; Ambergate the small market tent, the flower table, sunflowers and grapes; Frostgate a
+       cypress, urns and the angel statue, a torch; Highspire a bust, the alchemy table, an urn, a tree, a torch (15 new
+       files, ADD only, in the Town's vault; each sheet mapped first). The houses, the tent, the Smithy and the Shop are
+       the same in every Town. Its name comes up on a ribbon for 3 s ("Millbrook", "Town 1 · Farming village"), the wave
+       meter says "In Millbrook", the chip's tooltip "Town after wave 11: Millbrook, a farming village" and "Pays well
+       for Boots, Potion, Gloves and Prayer Beads.", the battle log "Town: Millbrook". The design's stall prop beside the
+       Shop's fruit table was left out: there is no room by its door without covering its barrels.
+     - **The cost (HPP):** the parts at what the Shop pays for them (`materials`' `sell`), an item it takes at its own
+       cost, each Enhance step's gold and stone (a stone's own materials and gold), and the gold. A Sword 80 (60 + 20).
+     - **The price:** round(gold x 1.3 + parts x margin): the gold only ever at the floor, since any margin over 1 on
+       it prints gold (buy the parts, forge, sell); the parts carry the Town's demand. The fresh margin by Town number
+       (town.json `market.towns`): grade I/II/III/enhanced 3.0/2.2/1.6/1.4 in Towns 1-3, 2.4/2.4/2.2/1.8 in 4,
+       2.0/2.4/2.4/1.9 in 5, 1.6/2.8/2.6/2.0 in 6, 1.3/2.0/3.0/2.2 from 7; a wanted kind x1.3; kept in 1.3-4.0; a small
+       relic reads its tier as the grade. A Sword in Millbrook 206, Boots there 182 (x3.9), a Royal Sword in Frostgate
+       774 (x3.9), +2 there 8,293; Boots in Frostgate 78, at the floor.
+     - **The flood:** each piece sold adds 1 to its exact product's pressure (an item, an item at +n, a small relic), at
+       most 24; the margin is floor + (fresh - floor) x (1 - (pressure / 24)^1.5): gentle at first (6 sales keep 87% of
+       the bonus), at the floor after 24, never under. A stack sells each piece at its own step. Each new Town takes 10
+       off every pressure: 24, 14, 4, fresh in the third Town.
+     - **The guard on the Shop's materials:** each one bought costs 10% more (a Trophy 25%), up to 24 counted, rounded
+       up to 5, with the same recovery: Slime Gel 25, 30, 30, 35. With the parts at the Shop's sell price and the gold at
+       the floor, buying parts to forge and sell pays at most about 0.8k, 3.6k and 6.3k a Town early, mid and late (the
+       design's model); there a careful seller of 30% of his drops earned about 44%, 35% and 24% of the kill gold at
+       waves 31-40, 41-50 and 51-60, then 10-13%, before Town 4-5's trim, which brings the first near the 33% the
+       balance pass watches.
+     - **The Sell page:** after the kind line " · Hot in Millbrook" (green) for a wanted kind paying 2x or more,
+       " · Flooded: price falling" (red) past half way to the floor; the UI pack's green up or red down arrow on the cell's
+       corner and before the price; the subtotal and the basket's lines each piece at its own step (a line its average).
+     - **Kept, read by nothing:** the tiers' `sellShare` and the shop's `itemSellShare`, which priced the sales until
+       now.
+     - **Saves** (additive, `v` stays 3): `market` (product key → pressure) and `town.n` (the Towns gone into); a save
+       without them starts every product fresh and guesses the count from its last Town's slot (one each 7.5 waves from
+       wave 2, and the one it is in). **Telemetry 14:** a `storeSold` of an item or small relic carries `margin` and
+       `pressure`, a `townEntered` `n` and `identity`; `eventVersion` and `telemetryVersion` 14.
+     - **The w89 identity** (test/probe_pusaka_w89_identity.dart, with 327 merged, against its e05b6e4b golden): the
+       same, byte for byte. The saved run sells nothing in the waves it plays, its Town roll is blocked there, and the
+       identities and the market draw no die, so every stat, text, tooltip, preview line and fight is as before; the
+       golden stays `<agents>/probes/shot-through/w89-on-e05b6e4b.txt`.
+     - **Checks:** test/market_test.dart, test/town_identity_test.dart, the price tests rewritten to the market's
+       prices; test/probe_market_shots.dart's shots of the six Towns and their Sell pages at 1600×947 and 915×412
+       (`<agents>/shots/town-market/`). Its balance (how much gold the market adds, early and late, the careful and the
+       owner's way) is measured after the merge, by replaying saved waves with a sell step.
 327. **A shot already fired is never lost mid-flight: it flies on to where its target went and lands there, an area
      shot hitting the monsters round that spot and a single one the unit standing on it** (the owner, 2026-10-12:
      "particle yang sudah terkirim jangan hilang di tengah jalan, biarkan tetap terkirim ke tempat posisi monsternya
@@ -11590,3 +11671,42 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        `_hurt` calls name `on`); test/probe_shot_through_shots.dart's frames at 1600×947 (`<agents>/shots/shot-through/`:
        the fireball and Arcane Blast fly on past the fall and burst at the spot, the splash taking 22 and 33 off each orc
        beside it). Balance (the splash lands more often) is measured after the merge, by replaying saved waves.
+328. **No Auto countdown in a Town: the player leaves it by hand, and Auto Wave counts down once it is left** (the owner,
+     2026-10-12: "disable auto start kalau sampai kota", disable the auto start on reaching a Town). Why: until then,
+     with Auto on, a Town was left by itself after town.json's `autoLeave` 5 s ("Leave town 5" … "1") unless a press
+     there stopped it, so the player had five seconds to start shopping or crafting before the Town went. By
+     town-market, a commit of its own on 326's branch (lib/town_look.dart `_townTick`, `_leaveTown`, `_startMost`;
+     ui-hud.md "Auto in a Town").
+     - **In a Town:** no countdown, whatever Auto is: the button reads "Leave town" alone (no seconds; as wide as its
+       words), and the Town stays until it is pressed. Auto Wave keeps its setting (it can be switched there too);
+       `TownEntered.auto` still says whether it was on.
+     - **Left by hand:** saved as before; with Auto on its countdown starts as after a win (`AutoStart.won`, 5 s: "Start
+       5" … "1"), held through the fade back to the field (0.7 s) and by what holds it on the field (the book left on
+       the Bag or Settings, `Game.autoHeld`), then the wave starts. With Auto off, Start, as before.
+     - **Gone:** `TownSchedule.autoLeave` and town.json's `"autoLeave": 5.0` (an older file's key is read as nothing);
+       `_townPress`, the press that stopped the countdown (and the wheel's and the swipe's calls of it). `TownLeft.auto`
+       stays in the events and the telemetry for `Game.townPolicy`'s probe runs (always false from the board): no save
+       or telemetry shape changes, `telemetryVersion` stays 14.
+     - **The guide's "Towns":** "There, "Auto Wave" waits / until you tap "Leave town"." in place of "There, "Auto Wave"
+       leaves / after 5 seconds."
+     - **Checks:** town_hud_test (Auto on: no seconds in the Town, 10 s on still in it and Auto still on; left by hand:
+       saved, `TownLeft.auto` false, "Start 5", the wave by Auto), town_scene_test (no press for 6.4 s, or a tab's: the
+       Town stays; after "Leave town" the fade and the 5 s before the wave), town_test (no `autoLeave`; an old key read
+       as nothing), guide_text_test and town_switch_test (the new lines), auto_names_test and hud_sweep_test (a Town
+       with Auto on, no overlap). No balance probe: the waves and fights are as before (the probes go through Towns by
+       `townPolicy`, which never used the countdown).
+330. **A Town takes no wave number: pinned by a test; the skip the owner saw is not reproduced yet** (the owner,
+     2026-10-12, playing the develop build: "harusnya kota itu tidak di hitung wave, jadi setelah wave 7 masuk kota,
+     maka ketika keluar kota adalah wave 8 bukan wave 9", a Town shouldn't count as a wave: after wave 7 he goes into a
+     Town, and on leaving it should be wave 8, not wave 9). By the rules a Town is between two waves: it is due when
+     `townAt == wave + 1` after a win, no wave starts while it is due, and leaving it changes no number (`leaveTown`
+     makes its slot `townLast`); the wave count moves only in `startWave` (+1) and in a wipe's replay (−1, decisions-log
+     322). By town-market.
+     - **Checked** with test/town_wave_count_test.dart on main (08c83b36), on the develop build (06c93d64) and on this
+       branch: wave 7 won, "Town after wave 7", the Town gone into, its meter "next wave 8", left by hand with Auto off
+       and on, after a wipe replayed wave 7 first, from a save made in the Town, and with the roll marking it by itself:
+       every time the next wave was 8 (7 for the roll's Town after wave 6). On the develop build Auto leaving the Town
+       by its own countdown (before 328) started wave 8 too. Nothing writes the wave number but `startWave`, the save's
+       load and the wipe, and the saves are made between waves only.
+     - **Open:** what the owner's run did differently (a boss chest, a card, the battle log's lines around that Town).
+       No code change; the test stays, so a fix for what he saw lands against it.

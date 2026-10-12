@@ -234,7 +234,8 @@ void main() {
       expect(lines('K24'), allOf(contains(Words.materials.toLowerCase()), contains('"${Words.smithy}"')));
       final towns = guideEn.topics.firstWhere((t) => t.title == '${Words.town}s');
       expect(towns.cards, ['K23', 'K24']);
-      expect(towns.lines, containsAllInOrder(['after ${const TownSchedule().autoLeave.round()} seconds.', 'The "${Words.tavern}" sells boosts']));
+      expect(towns.lines, containsAllInOrder(['until you tap "${Words.leaveTown}".', 'The "${Words.tavern}" sells boosts']),
+          reason: 'left by hand, Auto or not (decisions-log 328)');
     });
 
     testWidgets('K23 shows in the first Town, over it; seen, never again', (tester) async {

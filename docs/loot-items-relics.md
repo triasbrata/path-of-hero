@@ -1406,7 +1406,8 @@ the replay kit's, kept them till then): every game has the Towns. The switch-on 
 launch deletes it (architecture.md, lib/save.dart).
 
 - **The numbers:** `assets/config/town.json`, the owner's tuning file (version 2: the materials' blocks below), `schedule` block: `chanceStart` 0.20,
-  `chanceStep` 0.05, `chanceCap` 1.00, `minGap` 5, `firstTownAfter` 2, `autoLeave` 5.0 s. `main()` loads it before the
+  `chanceStep` 0.05, `chanceCap` 1.00, `minGap` 5, `firstTownAfter` 2 (an older file's `autoLeave` is read as nothing:
+  a Town is left by hand, decisions-log 328). `main()` loads it before the
   first game into `loadedTownRules` (`TownRules.parse`: a file of another `version`, or not JSON, gives every default; a
   number missing, of the wrong kind or out of its range keeps its default; a cap under the start resets both; blocks it
   doesn't know are skipped, so later steps add theirs). Each game reads its own `Game.townRules`, so a test or probe swaps
@@ -1426,10 +1427,12 @@ launch deletes it (architecture.md, lib/save.dart).
 - **The Town:** `townDue` (`townAt == wave + 1`, no wave on). While it is due no wave starts
   (`canStartWave` is false; the start button hides) until it is gone into and left: `enterTown({auto})` (`inTown`) and
   `leaveTown({auto})`, which makes its slot `townLast` and clears the mark. `townMarked` (marked and not yet gone into)
-  drives the wave meter's chip (ui-hud.md "The Town chip").
+  drives the wave meter's chip (ui-hud.md "The Town chip"). Each Town gone into counts (`townCount`, decisions-log
+  326): its number picks its identity, its look and its market ("Towns: the market" below).
 - **The scene:** the HUD goes into a due Town once nothing of the win is left on screen and draws the
   Town where the field was (ui-hud.md "Town"; the field waits as it was left); the start button says "Leave town" there
-  (ui-hud.md "Towns on the HUD"), and Auto leaves it after `autoLeave` s unless a press in the Town stopped it. The book's
+  (ui-hud.md "Towns on the HUD"), and the player leaves by hand: Auto Wave never does (decisions-log 328), its
+  countdown starting once the Town is left. The book's
   Shop is a Town's then, and its Smithy tab crafts (ui-hud.md "The Smithy"; the Smithy's rule is "Town and Smithy:
   Craft"; "The store": it deals only there, decisions-log 230).
 - **Probes:** `Game.townPolicy` 'leave' goes through a due Town (in and out at once) at the next wave's start
@@ -1440,7 +1443,8 @@ launch deletes it (architecture.md, lib/save.dart).
   rolls are new draws. No other die moves: a seeded run plays the same, wave by wave, through Towns (a probe going
   through each) and with none (rules whose every roll misses), and the queue (a mini boss every 3rd wave, the boss
   every 5th) and the Boss Chests are the same.
-- **Telemetry** (telemetry.md): `townMarked`, `townEntered`, `townLeft`, and a won wave's `town`.
+- **Telemetry** (telemetry.md): `townMarked`, `townEntered` (its `n` and `identity` since decisions-log 326), `townLeft`, and a
+  won wave's `town`.
 
 ## Town and Smithy: materials (decisions-log 221)
 
@@ -1628,9 +1632,11 @@ many as the bag can pay for (no limit a visit); every one of the 30 materials go
     it, more after each one of that kind bought (`storeBought` counts per kind: Fang 12,000, 14,400, 16,800, …;
     `TierPrices.priceAfter`; the forge's Shop sells none, decisions-log 248, so only a count from before it raises it).
     The save restores `storeBought` of the Smithy's seven too;
-  - it sells back for its tier's `sellShare`, half, of its craft gold: the table's "Sells for", 150 to 1,750;
-  - an item: the `shop` block's `itemPrice` 2,000, +`itemRise` 200 a buy, sold back for `itemSellShare` half, 1,000:
-    today's numbers;
+  - it sells back at the market's price ("Towns: the market" below, decisions-log 326; until then for its tier's
+    `sellShare`, half, of its craft gold, 150 to 1,750: `sellShare` stays in town.json, read by nothing);
+  - an item: the `shop` block's `itemPrice` 2,000, +`itemRise` 200 a buy (the forge's Shop sells none); sold back at
+    the market's price (until decisions-log 326 for `itemSellShare` half of `itemPrice`, 1,000 whatever the item:
+    kept, read by nothing);
   - an Artifact as before ("The store" below).
   Until decisions-log 321 a game without the Towns priced by the field Toko's constants (`itemPrice`, `relicPrice`).
 - **Asah** (`asahTake`, the design's decision 10: a 32,000-gold Mighty relic is never eaten while a
@@ -1930,9 +1936,11 @@ Bag's stack cells and the tint are ui-hud.md's ("The Smithy", the Bag's "Enhance
   kind's cap the type's lowest by grade, then by "+", swaps out when the new one is above it, so a higher grade always
   wins (a Leather Cap +5 never swaps out a Steel Helm). `priceWith` and `assignPreview(item, type, plus:)` try it on
   the same way. A swap adds no item, so the price stays.
-- **The Shop** (`sellPriceAt`, `whyNotSellAt`, `sellAt`): an enhanced item sells for the item's price (`sellPrice`)
-  plus half of what its steps cost: each step's gold at `shop.itemSellShare` and its stone at its own sell price, half a
-  stone's worth. A Royal Sword +1 sells for 1,000 + 250 + 770, at +5 for 14,000. A `storeSold` of one carries its `plus`.
+- **The Shop** (`sellPriceAt`, `whyNotSellAt`, `sellAt`): an enhanced item sells at the market's price for that exact
+  product ("Towns: the market" below, decisions-log 326): each step's gold and its stone (the stone's materials and
+  gold) in its cost, the enhanced column's margin; a Royal Sword +1 in the first Town 3,192, each piece of a stack at
+  its own step. Until then the item's price plus half of what its steps cost (a Royal Sword +5 14,000). A `storeSold` of
+  one carries its `plus`.
 - **Saved:** `bagPlus` and `upgradePlus` ("Saved" below).
 - **Tests:** test/forge_enhance_test.dart (each step's number and cost, the stones, +5 the most, every step works,
   the refusals, an enhanced item on a type, the swap at the cap and the Cap's chain, the Shop's price, the events, the
@@ -2151,6 +2159,61 @@ ui-hud.md's "The Tavern in battle"; the guide's K23 and its "Towns" topic name i
 - **Tests:** test/tavern_test.dart (town.json's block, the prices, the roll, the odds, buying, rerolling, the stats, the
   countdown, the gold, the leak, the save, the telemetry, the probe policy).
 
+## Towns: the market (decisions-log 326)
+
+The owner, 2026-10-12: forged goods are a way to earn gold, at 1.3x to 4x their cost; selling one product again and
+again brings its price down, so the player sells a mix, and the price comes back after 2-3 Towns. lib/market.dart.
+
+- **The Town's identity** (`TownIdentity`, `townIdentities`, `identityOf(n)`): by the Town's number in the run
+  (`Game.townCount`, raised by `enterTown`; no dice, so seeded runs play as before). Six, two a tier, the two of a tier
+  taking turns: Towns 1-3 Millbrook (a farming village: Boots, Potion, Gloves, Prayer Beads) and Willowmere (a
+  riverside village: Bow, Spear, Torch, Shield), summer; 4-6 Ironvale (a mining town: Shield, Cap/Helm, Gloves,
+  Amulet) and Ambergate (a harvest market: Potion, Staff, Ring, Prism), autumn; 7 on Frostgate (the royal capital:
+  Sword, Cap/Helm, Ring, Amulet) and Highspire (a temple city: Staff, Prayer Beads, Torch, Prism), winter. The prices
+  read `marketTown`: the Town the player is in, else the next. Its look: ui-hud.md "Town".
+- **HPP** (`costOf`, `hppOf`): what a product cost to make, its parts at what the Shop pays for them (`materials`'
+  `sell`: the owner's (R)) and its gold: an item's recipe (an item it takes at its own cost), each Enhance step's gold
+  and stone (a stone's own materials and gold, a Mithril inside a Starmetal), a small relic's recipe. A Sword: 2 Bone
+  Shards and 2 Orc Teeth (60) and 20 gold, 80.
+- **The fresh margin** (`freshMargin`): town.json `market.towns`, a row a Town number (the last row for every Town past
+  them): grade I, II, III and an enhanced item (+1 to +5); a small relic reads its tier (Basic I, Strong II, Mighty
+  III). A kind the Town wants x`want` 1.3; kept in `floor` 1.3 .. `top` 4.0.
+
+  | Town | Grade I | Grade II | Grade III | Enhanced |
+  |---|---|---|---|---|
+  | 1-3 | 3.0 | 2.2 | 1.6 | 1.4 |
+  | 4 | 2.4 | 2.4 | 2.2 | 1.8 |
+  | 5 | 2.0 | 2.4 | 2.4 | 1.9 |
+  | 6 | 1.6 | 2.8 | 2.6 | 2.0 |
+  | 7 on | 1.3 | 2.0 | 3.0 | 2.2 |
+
+  The early Towns pay well for beginner goods, the late ones for high-class goods; a beginner item in a late Town stays
+  at the floor.
+- **The price** (`marketPrice`, `sellPrice`, `sellPriceAt`): the gold at the floor and the parts at the margin,
+  round(gold x 1.3 + parts x margin), so never under 1.3x the HPP: any margin over 1 on the gold would print gold (buy the
+  parts, forge, sell). A Sword in Millbrook 206 (20 x 1.3 + 60 x 3.0), Boots there 182 (x3.9); a Royal Sword in
+  Frostgate 774 (x3.9), +2 there 8,293.
+- **Pressure** (`Game.market`: a product's key → its pressure; `marketKey`: an item's name, `<name>+<plus>` for an
+  enhanced one, `relic:<name>`, `mat:<name>` for a material bought): each piece sold adds 1, up to `most` 24. The margin
+  is floor + (fresh - floor) x (1 - (pressure / 24)^`curve` 1.5): gentle at first, the floor at 24, never under it.
+  Each exact product its own: a Sword, a Sword +2 and a Shield apart. A stack sells each piece at its own step
+  (`marketSum`).
+- **Recovery** (`enterTown`): each new Town takes `recover` 10 off every pressure (24 → 14 → 4 → gone: fresh in the
+  third Town).
+- **The materials** the Shop sells (`marketMatPrice`, `buyPrice`): `shopMatPrice` x (1 + `matRise` 0.10 x the ones
+  bought, a Trophy `trophyRise` 0.25), rounded up to 5, at most 24 counted; the same recovery. Slime Gel 25, 30, 30,
+  35; an Evil Eye 750, then 940. So buying the parts to forge and sell pays less each time.
+- **The Sell page's words** (`marketWord`): "Hot in <Town>" for a kind it wants whose fresh margin is 2 or more,
+  "Flooded: price falling" once a product is past half way to the floor; ui-hud.md "The Town's Shop".
+- **town.json `market`**: `floor`, `top`, `want`, `most`, `curve`, `recover`, `matRise`, `trophyRise`, `towns` (rows of
+  four margins; anything else keeps the default and is noted in `skipped`).
+- **Events** (telemetry.md): `storeSold` carries `margin` (the first piece's, 2 decimals) and `pressure` (before the
+  sale) for an item and a small relic; `townEntered` its `n` and `identity` (`eventVersion` 14).
+- **Saved** ("Saved" below): `market`, and the Town count in `town`.
+- **Tests:** test/market_test.dart (the identities, HPP, the prices by grade and Town, the pressure and the floor, the
+  recovery, the materials, the words, the save and an old save's count, town.json's block), test/town_identity_test.dart
+  (each identity on screen).
+
 ## The store ("Toko", on screen "Shop", #63)
 
 The owner: "tambahkan fitur untuk beli di dalam store dengan menggunakan gold yang didapat dalam permainan;
@@ -2183,8 +2246,8 @@ there. The economy they were weighed against was measured with the full-economy 
   |---|---|---|---|
   | a Pusaka (`artefactPrice`) | Grail of Immortality 24,000; Dragon Heart 30,000; Void Eye 36,000; God's Thunder 40,000; Dawn Star 40,000 | ×`artefactRise` 1.5 (bought again after selling it) | half its base, its stars gone with it |
 
-  A small relic sells back for half its craft gold and an item for the `shop` block's `itemSellShare` of its
-  `itemPrice`, 1,000 ("Town and Smithy: Craft" above, decisions-log 233). The field's Toko sold an item at `itemPrice`
+  A small relic and an item sell back at the market's price ("Towns: the market" above, decisions-log 326; until then
+  half its craft gold, and the `shop` block's `itemSellShare` of its `itemPrice`, 1,000, decisions-log 233). The field's Toko sold an item at `itemPrice`
   2,000 (+200 a buy) and a dropped relic at `relicPrice` 8,000 (+1,600); both went with the rules from before the
   Towns (decisions-log 321). The owner doubled the design's prices and raised selling from 20% to half.
   Measured income (#63, on the kill gold before #83): about 1.1k a wave at wave 15, 2–2.7k after wave 30, with
@@ -2222,8 +2285,8 @@ there. The economy they were weighed against was measured with the full-economy 
   per stack, the gold the sum of each piece's price). Awaken 4-5,
   Forge and the fallen Heroes' Recall aren't the store's deals: the Army detail buys them between any waves, in a Town
   or not (their refusals are the store's `locked` and `midWave` alone). Its prices, inside these same price functions:
-  a small relic bought back at half its craft gold, an item at town.json's `shop` numbers ("Town and Smithy: Craft"
-  above, decisions-log 233).
+  a small relic and an item bought back at the market's price ("Towns: the market" above, decisions-log 326), each
+  piece at its own step.
 - **The Pusaka** (`Relic.store`; names in English like the Hero skills, the owner's pick, in `relicNames`;
   their lines in simple English like every item's since decisions-log 168): what they do is "Pusaka" above. The optional Midas purse
   of the design (more kill gold) was left out: a gold engine in a gold sink.
@@ -2380,11 +2443,15 @@ wave's top killer type, only when there is one; an unknown type is skipped; unit
 field"), and each rolled chest's `omens` (a face a card, null for none). An unknown kind is skipped. Off, none of them is written or read. The Bayangan dice are not saved.
 
 The Towns ("Towns" above) save `town` in every game (until decisions-log 321 a game without the Towns, the tests',
-wrote none): `{chance, last, at?, in?}`, the next roll's chance, the last Town's slot, the marked slot (only while one
-is marked) and `in: true` (only while the player is in it: a save made there reopens in it). On load a mark already
-passed (`at` ≤ the wave) and an `in` without a due Town are dropped. A save without it (a file from before the Towns is
+wrote none): `{chance, last, at?, in?, n?}`, the next roll's chance, the last Town's slot, the marked slot (only while one
+is marked), `in: true` (only while the player is in it: a save made there reopens in it) and `n`, the Towns gone into
+(decisions-log 326, the identity's number; only from the first). On load a mark already
+passed (`at` ≤ the wave) and an `in` without a due Town are dropped; a save without `n` guesses it: one Town each
+`townGapGuess` 7.5 waves from `firstTownAfter` to `last`, and the one it is in. A save without it (a file from before the Towns is
 no save since decisions-log 237) counts as a Town before its own wave (`last` = its wave, at least `firstTownAfter`), so the first
-comes 5 waves on at the earliest, like a new run's. The Town dice are not saved. The Towns' materials ("Town and Smithy: materials"
+comes 5 waves on at the earliest, like a new run's. The Town dice are not saved. The market ("Towns: the market" above)
+saves `market` (product key → pressure, only when any; on load a key this build doesn't know, a pressure that isn't a
+whole number above 0 is let go, one over 24 kept at 24); a save without it starts every product fresh. The Towns' materials ("Town and Smithy: materials"
 above) save as `materials` (key → count, only when any; an unknown key skipped); the
 materials' dice are not saved. The kinds dropped so far ("The forge: drops" above) save as `matsSeen` (names in
 first-drop order) only when any. It

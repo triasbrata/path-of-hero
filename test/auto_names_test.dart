@@ -4,7 +4,8 @@
 // and says "Auto Buy" (Words.autoBuy). No string in lib/ names either "Auto" alone. At the owner's 1600x947, the desk's
 // 1266x713, the tablet's 1164x777 and the landscape phone's 915x412 each button is as wide as its words with the
 // button's margins, nothing of the top band lies over another piece (Auto Wave on: its countdown running, its hold line
-// "Army 1/6 · Auto Wave waits" showing, a wave, a Town's "Leave town 5"), and their taps do what they did. One TdGame
+// "Army 1/6 · Auto Wave waits" showing, a wave, a Town's "Leave town", no countdown there: decisions-log 328), and their
+// taps do what they did. One TdGame
 // per widget test; no wave is won here (the Board would save).
 import 'package:flame/components.dart' show TextPaint;
 import 'package:flutter/material.dart';
@@ -123,7 +124,7 @@ void main() {
       expect(overlaps(b), isEmpty, reason: '$tag: wave');
       expect((b.autoButton, b.speedButton, b.waveMeter), (auto, x2, meter), reason: '$tag: wave');
 
-      // A Town, Auto Wave on: "Leave town 5" on the toggle, no overlap.
+      // A Town, Auto Wave on: "Leave town" on the toggle (no countdown there, decisions-log 328), no overlap.
       g = b.state = Game()
         ..gold = 99999
         ..wave = 99

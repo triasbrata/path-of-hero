@@ -734,6 +734,7 @@ class Board extends PositionComponent
   final _boostChipsAt = <Rect>[]; // the boosts' chips under it this frame, in [Game.boosts]' order (tavern_look.dart)
   Rect _boostRowAt = Rect.zero; // all of them (none: Rect.zero), what the log, the boss bars and the plates keep clear of
   String _townMeterText = ''; // the wave meter's words in a Town this frame (town_look.dart; '' out of one)
+  Rect _townArrivalAt = Rect.zero; // the Town's name's ribbon this frame (town_look.dart; Rect.zero: none)
   Rect _tideAt = Rect.zero; // the wave meter while it shows the tide's badge (zero: before the tide), its tooltip's target
   String _tideLabel = '';
   Rect _replaceAt = Rect.zero; // "Replace fallen" on the Army page this frame (zero: not shown)
@@ -951,6 +952,7 @@ class Board extends PositionComponent
   Rect shopAt(String key) => _shop.at[key] ?? Rect.zero;
   String? shopText(String key) => _shop.texts[key];
   Rect shopCountAt(BagLoot loot) => _shop.sell.counts[loot] ?? Rect.zero; // a Sell cell's count capsule (none: Rect.zero)
+  Map<BagLoot, (MarketWord, Rect)> get shopArrows => {..._shop.arrows}; // the Sell grid's market arrows (decisions-log 326)
 
   /// The Smithy's pages this frame (smithy_page.dart, decisions-log 235): the relic picked (null: none yet), its board's
   /// cells in order and what [relic]'s shows ([BagMarks]: its count from 1, the ▲, faded, lit; null: no cell); where a part
@@ -1403,6 +1405,9 @@ class Board extends PositionComponent
   /// tests.
   String get townMeterText => _townMeterText;
 
+  /// The Town's name's ribbon as the Town comes up, this frame (Rect.zero: none; town_look.dart).
+  Rect get townArrival => _townArrivalAt;
+
   /// The Town scene (town_scene.dart): whether it shows instead of the field this frame; the fade's dim (0: none); the
   /// view's left edge in world px and the screen px per world px; where each piece and place was drawn this frame by
   /// name ('scene', 'street', the places 'tent', 'smithy', 'tavern', 'shop' (a building's: its cells; the Smithy's and
@@ -1696,7 +1701,7 @@ class Board extends PositionComponent
     // about to: chest_popup.dart, decisions-log 152, 281), and at 0 starts the wave as Start does.
     if (g.waveActive && g.pusakaSuggested) g.dismissPusakaNote(); // a wave begun keeps the save's Pusaka as suggested
     if (_townTick(g, dt)) {
-      // In a Town: Auto's countdown leaves it (town_look.dart), and none starts a wave here.
+      // In a Town: no countdown (decisions-log 328); it is left by hand (town_look.dart).
     } else if (!g.canStartWave) {
       autoStart.cancel();
     } else if (autoStart.tick(math.min(dt, 0.1), held: g.paused || holdAutoStart || _coach.showing || _foeSplashBusy || _page != _Page.troops || g.autoHeld || _chestHolds(g) || _townFading)) {
@@ -1761,7 +1766,6 @@ class Board extends PositionComponent
     _touch = event.deviceKind != ui.PointerDeviceKind.mouse;
     _tip.down(event);
     _welcomeTap = welcome != null;
-    if (!_welcomeTap) _townPress(p); // in a Town it stops Auto's countdown (town_scene.dart)
     _pauseDown(); // pause.dart
     if (_coachDown(p)) return; // a guide card took it: its button, or on to its next page (coach.dart)
     if (_foeSplashDown()) return; // it closed a foe skill's splash (foe_splash.dart)

@@ -4,7 +4,7 @@
 // (flutter_test_config.dart's temp dir).
 //
 // At each size (`SIZES`): the top band with Auto Wave on, between waves, its countdown running ("Start 4"); the same held
-// ("Army 1/6 · Auto Wave waits"); in a wave; in a Town ("Leave town 5"); and the spawn bar's Auto Buy off and on. Each
+// ("Army 1/6 · Auto Wave waits"); in a wave; in a Town ("Leave town", no countdown: decisions-log 328); and the spawn bar's Auto Buy off and on. Each
 // line printed gives the top band's pieces and the bar's still block, and any two top band pieces that overlap. Then
 // the landscape top band's width at k 2, 3 and 4 (as test/probe_hud_merge_width.dart), for wave_meter.dart's fit.
 import 'dart:convert';
@@ -124,7 +124,7 @@ void main() {
       await frames(tester, 40);
       await shot('$spec-d-wave');
 
-      // A Town with Auto Wave on: "Leave town 5".
+      // A Town with Auto Wave on: "Leave town", no countdown (decisions-log 328).
       g = b.state = Game(Random(1), Random(2)).boardRules()
         ..armyMax = null
         ..townDice = Random(3)
