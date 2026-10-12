@@ -151,6 +151,11 @@ class _SmithyView {
   final wishes = _BagGrid(smithy: true, category: BagCategory.items);
   ({String type, double at})? wishArmed;
   final freeMore = <Enum, int>{};
+  // The links (decisions-log 323): where a forgeable ingredient's tap came from, the last first out (each the tab and its
+  // pick then: the Items tab's item, the Relics tab's relic, none for the Wishlist tab), for the facing page's Back
+  // ([Board._smithyLink], [Board._smithyBack]); and this frame each Wishlist tab part a tap opens, where and what.
+  final trail = <({SmithyTab tab, Enum? pick})>[];
+  final links = <(Rect, Enum)>[];
   // This frame, for tests: each row on the tab's spread, its group (a type, or "free"), its product and where; each group
   // heading drawn (its group and where; a group going on to the next page has it there again).
   final wishCells = <(String, Enum, Rect)>[];
@@ -175,6 +180,7 @@ class _SmithyView {
     enhancePick = null;
     wishArmed = null;
     freeMore.clear();
+    trail.clear();
   }
 
   void clear() {
@@ -185,6 +191,7 @@ class _SmithyView {
     wishes.clear();
     wishCells.clear();
     wishHeads.clear();
+    links.clear();
     at.clear();
     texts.clear();
     rows.clear();
@@ -204,9 +211,15 @@ const _wishArmFor = 3.0;
 /// The Wishlist tab's group of free lines (decisions-log 303): its key where a type's name stands ([WishRow.type] null).
 const _wishFree = 'free';
 
-/// [row]'s key on the Wishlist tab (decisions-log 303): its group (a type, or [_wishFree]) and its product's name,
-/// "knight:sword", "free:sweep".
-String _wishKey(WishRow row) => '${row.type ?? _wishFree}:${row.kind.name}';
+/// The Wishlist tab's group of ingredient wishes (decisions-log 323; [WishRow.parents]): its key the same way.
+const _wishParts = 'parts';
+
+/// [row]'s group on the Wishlist tab: its type, [_wishFree] for a free line, [_wishParts] for an ingredient's.
+String _wishGroup(WishRow row) => row.parents.isNotEmpty ? _wishParts : row.type ?? _wishFree;
+
+/// [row]'s key on the Wishlist tab (decisions-log 303): its group ([_wishGroup]) and its product's name, "knight:sword",
+/// "free:sweep", "parts:gemRing".
+String _wishKey(WishRow row) => '${_wishGroup(row)}:${row.kind.name}';
 
 /// The Wishlist tab's sizes at text scale [ts] (decisions-log 303): its words (never under 10 px), a line, a group's
 /// heading (its sprite as tall), a row's padding inside its card and the gap under it, the gap between parts and the one
@@ -281,7 +294,8 @@ extension on Board {
     _open(_Page.smithy);
     _smithy
       ..pick = relic
-      ..toBoard = true;
+      ..toBoard = true
+      ..trail.clear();
     if (relic != null) _smithy.tab = SmithyTab.relics;
   }
 
@@ -292,7 +306,50 @@ extension on Board {
     _smithy
       ..tab = SmithyTab.items
       ..item = item
-      ..toItem = true;
+      ..toItem = true
+      ..trail.clear();
+  }
+
+  /// A tap on an ingredient the Smithy makes (decisions-log 323; the owner, 2026-10-12: "jika material dari item yang mau
+  /// di forge, adalah hasil forge ketika user click itu akan mengarah ke forge item tersebut"): a recipe row on a product's
+  /// page ([_recipeRow]) or a part on the Wishlist tab ([_wishRowDraw]). The Smithy turns to its page as picking it on its
+  /// board does (an item's on the Items tab, a relic's on the Relics tab), and the page it came from goes on the trail for
+  /// the facing page's Back ([_smithyBack]).
+  void _smithyLink(Enum kind) {
+    final v = _smithy, tab = _smithyTab(state);
+    Sounds.play(Sfx.click);
+    v.trail.add((tab: tab, pick: switch (tab) { SmithyTab.items => v.item, SmithyTab.relics => v.pick, _ => null }));
+    switch (kind) {
+      case final Item item:
+        v
+          ..tab = SmithyTab.items
+          ..item = item
+          ..toItem = true;
+      case final Relic relic:
+        v
+          ..tab = SmithyTab.relics
+          ..pick = relic
+          ..toBoard = true;
+    }
+  }
+
+  /// The facing page's Back after a link (decisions-log 323, [_smithyLink]): the tab and the pick it came from, its board
+  /// on the pick's page (the Wishlist tab on the spread it was on).
+  void _smithyBack() {
+    final v = _smithy;
+    if (v.trail.isEmpty) return;
+    final (:tab, :pick) = v.trail.removeLast();
+    v.tab = tab;
+    switch (pick) {
+      case final Item item:
+        v
+          ..item = item
+          ..toItem = true;
+      case final Relic relic:
+        v
+          ..pick = relic
+          ..toBoard = true;
+    }
   }
 
   /// The Smithy's tab shown: the player's (Enhance only while open, else Items: a save from before wave 30 come in).
@@ -350,7 +407,8 @@ extension on Board {
     if (tab != SmithyTab.enhance || state.enhanceOpen) {
       _smithy
         ..tab = tab
-        ..toBoard = true;
+        ..toBoard = true
+        ..trail.clear(); // the strip's way, not a link's: no Back
     } else {
       showMessage(enhanceLocked(state));
     }
@@ -465,7 +523,7 @@ extension on Board {
     final lays = [for (final r in rows) _wishLay(g, r, math.min(x1 - x0, rx1 - rx0), s, ps)];
     final pieces = <(String, int?, double)>[];
     for (final (i, r) in rows.indexed) {
-      final group = r.type ?? _wishFree;
+      final group = _wishGroup(r);
       if (pieces.isEmpty || pieces.last.$1 != group) pieces.add((group, null, s.group));
       pieces.add((group, i, lays[i].h + s.gap));
     }
@@ -516,11 +574,12 @@ extension on Board {
   }
 
   /// [group]'s heading on the Wishlist tab in [r] (decisions-log 303): a type's idle sprite in its awakening's outline
-  /// ([_typeIcon]) and its name, or the free lines' "For the Bag", bold; at the right the light tag Remove, which a first
-  /// tap arms ("Sure?" on the red capsule, for [_wishArmFor] s) and a second takes the group's wishes off ([_wishOffAll]).
+  /// ([_typeIcon]) and its name, or the free lines' "For the Bag", or the ingredient wishes' "Ingredients" (decisions-log
+  /// 323; no troop's sprite: they are for no troop), bold; at the right the light tag Remove, which a first tap arms
+  /// ("Sure?" on the red capsule, for [_wishArmFor] s) and a second takes the group's wishes off ([_wishOffAll]).
   void _wishGroupHead(Canvas c, Game g, String group, Rect r, _WishSizes s) {
     const ink = Color(0xFF4A2C17);
-    final v = _smithy, free = group == _wishFree;
+    final v = _smithy, free = group == _wishFree || group == _wishParts;
     final armed = v.wishArmed?.type == group && _clock - v.wishArmed!.at < _wishArmFor;
     final hit = _tag(c, r, () => _wishOffAll(group), armed ? Words.sure : Words.remove, s.fs, look: armed ? _TagLook.armed : _TagLook.link);
     var x = r.left;
@@ -528,7 +587,7 @@ extension on Board {
       _typeIcon(c, g, group, Rect.fromLTWH(r.left, r.top + 1, r.height - 2, r.height - 2));
       x += r.height - 2 + s.iconGap / 2;
     }
-    final name = _fit(free ? Words.forBag : troopTypeNames[group] ?? group, s.fs, hit.left - 4 - x);
+    final name = _fit(_wishGroupName(group), s.fs, hit.left - 4 - x);
     _text(c, name, Offset(x, r.center.dy), size: s.fs, color: ink, bold: true);
     final head = Rect.fromLTRB(r.left, r.top, hit.left, r.bottom);
     // The keys keep the group's first heading on the spread (its taps work on each).
@@ -642,19 +701,25 @@ extension on Board {
     final upTo = lay.tagsUp && lay.tags.isNotEmpty ? off.left - 3 - tagsW : off.left;
     if (lay.tagsUp) tags(upTo, line1);
     final tx = left + lay.textX, nameRoom = upTo - s.iconGap - tx, y1 = line1 + s.line / 2;
-    final name = '${_lootName(row.kind)} ×${row.need}', forType = switch (row.type) { final t? => 'for ${troopTypeNames[t] ?? t}', null => '' };
+    final name = '${_lootName(row.kind)} ×${row.need}', forType = _wishFor(row);
     final shownName = _fit(name, s.fs, nameRoom);
     _text(c, shownName, Offset(tx, y1), size: s.fs, color: ink);
     final forX = tx + _textWidth(shownName, s.fs) + s.iconGap / 2, withFor = forType.isNotEmpty && forX + _textWidth(forType, s.fs) <= tx + nameRoom;
     if (withFor) _text(c, forType, Offset(forX, y1), size: s.fs, color: grey);
 
-    // The parts under it.
+    // The parts under it; one the Smithy makes opens its page (decisions-log 323), its icon on the small slot's lit card
+    // under the mouse and while pressed.
     for (final (i, (kind, words, ok)) in lay.parts.indexed) {
       final (n, x) = lay.at[i];
       final cy = line1 + (n + 0.5) * s.line, box = _whole(Rect.fromLTWH(left + x, cy - 8, 16, 16));
+      final link = kind != null && kind is! Mat && g.canWishFree(kind);
+      if (link && _look(box.inflate(1)) != ButtonLook.normal) _bagSlot(c, box.inflate(3), 1, frame: Board._frameLit);
       kind == null ? _uiIcon(c, Board._icCoin, box) : _icon(c, kind, box);
       _text(c, words, Offset(box.right + 2, cy), size: s.fs, color: ok ? _haveInk : _blockedInk);
-      if (kind != null) _wishSlot(box.inflate(1), kind); // its tooltip
+      if (kind == null) continue;
+      _wishSlot(box.inflate(1), kind); // its tooltip
+      v.at['wishPart:$key:${kind.name}'] = box.inflate(1);
+      if (link) v.links.add((box.inflate(1), kind));
     }
     // The end of the last line: the status, then the tags that had no room up there.
     final endTop = line1 + lay.endLine * s.line, statusEnd = lay.tagsUp ? right : right - tagsW - s.iconGap;
@@ -668,8 +733,16 @@ extension on Board {
       ..texts['wishTitle:$key'] = withFor ? '$shownName $forType' : shownName
       ..texts['wishStatus:$key'] = status
       ..texts['wishParts:$key'] = [for (final (k, words, _) in lay.parts) '${k?.name ?? 'gold'} $words'].join(',')
-      ..wishCells.add((row.type ?? _wishFree, row.kind, r));
+      ..wishCells.add((_wishGroup(row), row.kind, r));
   }
+
+  /// [row]'s grey words after its name on the Wishlist tab: who or what it is for, "for Knight", an ingredient's product
+  /// (decisions-log 323; never a troop: "for Royal Ring", "for Gem Ring +1" for two), a free line's none.
+  String _wishFor(WishRow row) => switch ((row.type, row.parents)) {
+        (final t?, _) => 'for ${troopTypeNames[t] ?? t}',
+        (null, [final first, ...final more]) => 'for ${_lootName(first)}${more.isEmpty ? '' : ' +${more.length}'}',
+        _ => '',
+      };
 
   /// The Wishlist tab's small remove tag at [line]'s right (decisions-log 303; the kit's link look, [_TagLook.link]):
   /// ui_bars.png's outline capsule (the dark one under the mouse, a sprite px lower while pressed) as tall as a tag at
@@ -685,26 +758,42 @@ extension on Board {
     return hit;
   }
 
-  /// A tap on [row]'s ✕ (decisions-log 303): its wish off, a type's ([Wishlist.unwish]: "Sword: off Knight's wishlist")
-  /// or the free line ([Wishlist.unwishFree]: "Sweep: off the wishlist").
+  /// A tap on [row]'s ✕ (decisions-log 303): its wish off, a type's ([Wishlist.unwish]: "Sword: off Knight's wishlist"),
+  /// the free line ([Wishlist.unwishFree]: "Sweep: off the wishlist") or an ingredient's (decisions-log 323,
+  /// [Wishlist.unwishPart]: "Gem Ring: off the wishlist"; the wish it was for stays). A wish's own ingredient wishes go
+  /// with it.
   void _wishOff(WishRow row) {
     final g = state, name = _lootName(row.kind), list = Words.wishlist.toLowerCase();
     if (row.type case final type?) {
       g.unwish(type, row.kind as Item);
       return showMessage('$name: off ${troopTypeNames[type] ?? type}\'s $list');
     }
-    g.unwishFree(row.kind);
+    row.parents.isEmpty ? g.unwishFree(row.kind) : g.unwishPart(row.kind);
     showMessage('$name: off the $list');
   }
 
+  /// [group]'s name on the Wishlist tab: a type's, "For the Bag" or "Ingredients" (decisions-log 323).
+  String _wishGroupName(String group) => switch (group) {
+        _wishFree => Words.forBag,
+        _wishParts => Words.ingredients,
+        _ => troopTypeNames[group] ?? group,
+      };
+
   /// A tap on [group]'s Remove on the Wishlist tab (decisions-log 300, 303): the first arms it ("Sure?" for [_wishArmFor]
-  /// s), a second while armed takes all its wishes off ([Wishlist.unwishAll], the free lines' [Wishlist.unwishFreeAll]):
-  /// "Knight: wishlist cleared".
+  /// s), a second while armed takes all its wishes off ([Wishlist.unwishAll], the free lines' [Wishlist.unwishFreeAll],
+  /// the ingredients' [Wishlist.unwishParts]): "Knight: wishlist cleared".
   void _wishOffAll(String group) {
-    final v = _smithy, free = group == _wishFree, name = free ? Words.forBag : troopTypeNames[group] ?? group;
+    final v = _smithy, name = _wishGroupName(group);
     if (v.wishArmed case (type: final armed, :final at) when armed == group && _clock - at < _wishArmFor) {
       v.wishArmed = null;
-      free ? state.unwishFreeAll() : state.unwishAll(group);
+      switch (group) {
+        case _wishFree:
+          state.unwishFreeAll();
+        case _wishParts:
+          state.unwishParts();
+        default:
+          state.unwishAll(group);
+      }
       return showMessage('$name: ${Words.wishlist.toLowerCase()} cleared');
     }
     v.wishArmed = (type: group, at: _clock);
@@ -786,9 +875,14 @@ extension on Board {
     // − n + and "Add to wishlist" ([_freeLine]; not on the Wishlist tab, which adds no wish). No types' chips and no
     // "Wishlist: Knight, Archer" (the owner: "list trops dan whitelist disini di takeout aja untuk page detail item yang mau
     // di craft"): a type's wishes go on from the Army detail.
-    final wished = item == null && switch (pick) { final Item i => g.wished(i), final Relic r => g.freeWished(r), _ => false };
+    final wished = item == null && switch (pick) { final Item i => g.wished(i), final Relic r => g.freeWished(r) || g.partWished(r), _ => false };
     final chipH = math.max(20.0, (26 * ts).roundToDouble());
     final free = _smithyTab(g) != SmithyTab.wishlist && item == null && pick is! Mat && g.canWishFree(pick);
+    // Reached by a link (decisions-log 323, [_smithyLink]): Back on the Recipe line, as tall as a tag. A product an
+    // ingredient wish keeps for its parent's craft, no type's open wish asking for it: in its Give row's place the grey
+    // "Needed for Royal Ring" (the owner: no "give to troops" for it).
+    final back = item == null && v.trail.isNotEmpty, recipeH = back ? math.max(lineH, chipH) : lineH;
+    final keptFor = item == null && pick is! Mat ? _keptFor(g, pick) : const <Enum>[];
 
     // A row: its icon (the action rows' [bagHeadIcon]: 16 px on a phone, 32 on the desk), a few px over and under it.
     final icon = bagHeadIcon(ps), rowH = math.max(icon + 4, (fs * 1.4 + 12 * ts).roundToDouble());
@@ -798,7 +892,7 @@ extension on Board {
     double tall(List<String> effect, List<String> tier) =>
         (none
             ? (effect.length + tier.length) * lineH + gap + btnH
-            : (effect.length + tier.length) * lineH + gap + lineH + n * rowH + (n - 1) * rowGap + gap + btnH) +
+            : (effect.length + tier.length) * lineH + gap + recipeH + n * rowH + (n - 1) * rowGap + gap + btnH) +
         (noLimit ? lineH : 0) +
         (equip ? gap + act.h : 0) +
         (wished ? gap + lineH : 0) +
@@ -833,7 +927,7 @@ extension on Board {
     }
     y += gap;
     if (!none) {
-      _text(c, Words.recipe, Offset(right.left, y + lineH / 2), size: fs, color: ink, bold: true);
+      _text(c, Words.recipe, Offset(right.left, y + recipeH / 2), size: fs, color: ink, bold: true);
       var said = Words.recipe;
       if (item != null) {
         // The step it is for, smaller and grey after it: "Recipe  to +4".
@@ -843,10 +937,15 @@ extension on Board {
           said = '${Words.recipe} $to';
         }
       }
+      if (back) {
+        // Back to the page the link came from, at the line's right.
+        v.at['back'] = _tag(c, Rect.fromLTRB(right.left, y.roundToDouble(), x1, (y + recipeH).roundToDouble()), _smithyBack, Words.back, fs,
+            icon: _icBackSmall);
+      }
       v
-        ..at['recipe'] = Rect.fromLTWH(right.left, y, w, lineH)
+        ..at['recipe'] = Rect.fromLTWH(right.left, y, w, recipeH)
         ..texts['recipe'] = said;
-      y += lineH;
+      y += recipeH;
       for (final row in recipe) {
         _recipeRow(c, g, row, Rect.fromLTWH(right.left, y.roundToDouble(), w, rowH), icon, fs, ts);
         y += rowH + rowGap;
@@ -866,15 +965,47 @@ extension on Board {
     }
     if (equip) {
       final row = Rect.fromLTWH(right.left, (y + gap).roundToDouble(), w, act.h);
-      item == null ? _equipRow(c, g, pick, row, act) : _giveTypeRow(c, g, item, plus, row, act);
+      if (keptFor.isNotEmpty) {
+        _smithyKept(c, keptFor, row, fs);
+      } else {
+        item == null ? _equipRow(c, g, pick, row, act) : _giveTypeRow(c, g, item, plus, row, act);
+      }
     }
     _scrollEnd(c, v.facing, marks);
-    for (final key in ['recipe', 'craft', 'enhance', 'noLimit', 'next', 'equip', 'give', 'wishlist', 'wishMissing', 'freeLess', 'freeMore', 'freeAdd']) {
+    for (final key in ['recipe', 'back', 'craft', 'enhance', 'noLimit', 'next', 'equip', 'give', 'kept', 'wishlist', 'wishMissing', 'freeLess', 'freeMore', 'freeAdd']) {
       if (v.at[key] case final r?) v.at[key] = _inView(r, view);
     }
     for (final (i, r) in v.rows.indexed) {
       v.rows[i] = (kind: r.kind, at: _inView(r.at, view), count: r.count, short: r.short, from: r.from, warn: r.warn);
+      // A row of a product the Smithy makes opens its page on its tap up (decisions-log 323): a drag over the page
+      // scrolls it, never follows the link.
+      if ((r.kind, v.rows[i].at) case (final Item kind, final at) when at != Rect.zero && g.canWishFree(kind)) {
+        _assign.taps.add((at, () => _smithyLink(kind)));
+      }
     }
+  }
+
+  /// The products an ingredient wish keeps [kind] for (decisions-log 323, [Wishlist.partHeldFor]) while no type's open
+  /// wish asks for it (that one's Give is the wish's own); none: its Give row as ever. The Smithy's page and the Bag's
+  /// show "Needed for Royal Ring" in the Give row's place while there are some ([_keptLine]).
+  List<Enum> _keptFor(Game g, Enum kind) => kind is Item && g.openWishersOf(kind).isNotEmpty ? const [] : g.partHeldFor(kind);
+
+  /// What stands in a product's Give row's place while an ingredient wish keeps it for [parents]' craft (decisions-log
+  /// 323; the owner: "jangan sampai item requirement untuk forge ini malah ada cta untuk give to troops"): "Needed for
+  /// Royal Ring" ("Needed for Gem Ring, Royal Ring" for two, "Needed for Gem Ring +1" where that doesn't fit in [w]).
+  String _keptLine(List<Enum> parents, double fs, double w) {
+    final first = '${Words.neededFor} ${_lootName(parents.first)}';
+    return _fitFirst([if (parents.length > 1) ...['${Words.neededFor} ${parents.map(_lootName).join(', ')}', '$first +${parents.length - 1}'] else first], fs, w);
+  }
+
+  /// The Smithy page's [_keptLine] in [r] in grey, at the row's middle, no tap.
+  void _smithyKept(Canvas c, List<Enum> parents, Rect r, double fs) {
+    const grey = Color(0xFF9E9080);
+    final said = _keptLine(parents, fs, r.width);
+    _text(c, said, Offset(r.left, r.center.dy), size: fs, color: grey);
+    _smithy
+      ..at['kept'] = r
+      ..texts['kept'] = said;
   }
 
   /// A relic's lines on the facing page: what it does, and its tier and who it suits ("Strong relic. Best on: …").
@@ -913,10 +1044,19 @@ extension on Board {
     const ink = Color(0xFF4A2C17), grey = Color(0xFF9E9080);
     final (:kind, :have, :need) = row;
     final short = have < need, pad = math.max(3.0, (5 * ts).roundToDouble());
-    _card(c, r, Board._framePlain);
+    // An item the Smithy makes is a link to its page (decisions-log 323, [_smithyLink]): the card lit under the mouse and
+    // while pressed, and the action rows' green "›" at its right.
+    final link = kind is Item && g.canWishFree(kind);
+    _card(c, r, link && _look(r) != ButtonLook.normal ? Board._frameLit : Board._framePlain);
     final box = _whole(Rect.fromLTWH(r.left + pad, r.center.dy - icon / 2, icon, icon));
     kind == null ? _uiIcon(c, Board._icCoin, box) : _icon(c, kind, box);
-    final count = kind == null ? '${thousands(have)} / ${thousands(need)}' : '$have / $need', end = r.right - pad;
+    var end = r.right - pad;
+    if (link) {
+      final open = _whole(Rect.fromLTWH(end - _icOpen.width, r.center.dy - _icOpen.height / 2, _icOpen.width, _icOpen.height));
+      c.drawImageRect(_img('ui_icons.png'), _icOpen, open, _px);
+      end = open.left - math.max(4.0, 6 * ts);
+    }
+    final count = kind == null ? '${thousands(have)} / ${thousands(need)}' : '$have / $need';
     _text(c, count, Offset(end, r.center.dy), size: fs, color: short ? _blockedInk : _haveInk, anchor: Anchor.centerRight);
     final x = box.right + 6 * ts, room = end - _textWidth(count, fs) - 6 * ts;
     final name = _fit(switch (kind) { final Mat m => m.label, final Item i => itemNames[i]!, _ => 'Gold' }, fs, room - x);

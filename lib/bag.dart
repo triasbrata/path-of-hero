@@ -1013,8 +1013,13 @@ extension on Board {
     if (cell == null || cell != down) return;
     final (:kind, :plus) = cell;
     if (b.smithy) {
-      // The Wishlist tab's parts only tell (their tooltips; decisions-log 303): a press on their row picks its product.
-      if (_smithyTab(state) == SmithyTab.wishlist) return;
+      // The Wishlist tab's parts tell (their tooltips; decisions-log 303), and one the Smithy makes opens its page
+      // (decisions-log 323, [_smithyLink]).
+      if (_smithyTab(state) == SmithyTab.wishlist) {
+        if (_smithy.links.any((l) => l.$2 == kind && l.$1.contains(p))) _smithyLink(kind);
+        return;
+      }
+      _smithy.trail.clear(); // a pick on a board: no Back to a link's page
       if (_smithyTab(state) == SmithyTab.enhance) {
         // The Enhance board's stone or stack (the materials' grid under it picks nothing).
         if (_smithy.enhanceBoard.cells.any((c) => c.$1 == cell && c.$2.contains(p))) _smithy.enhancePick = cell;
@@ -1554,6 +1559,13 @@ extension on Board {
           _buyRow(c, g, loot, r, m);
         case BagAction.smithy:
           _smithyRow(c, g, loot as Mat, r, m);
+        case BagAction.giveTroops when plus == 0 && !_shopShown && _keptFor(g, loot).isNotEmpty:
+          // Kept for a craft (decisions-log 323): no Give to troops, as on its Smithy page; a recipe takes the +0 ones.
+          final said = _keptLine(_keptFor(g, loot), m.lineFs, r.width - 2 * m.inset);
+          _text(c, said, Offset(r.left + m.inset, r.center.dy), size: m.lineFs, color: grey);
+          a
+            ..detail['kept'] = r.intersect(list)
+            ..texts['kept'] = said;
         default:
           _chooserRow(c, g, loot, act, r, m, plus);
       }
