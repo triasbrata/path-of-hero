@@ -2529,6 +2529,11 @@ class Game {
   /// small relic, in the order put on, each with how many the Bag is to hold.
   final wishFree = <Enum, int>{};
 
+  /// The Wishlist's ingredient wishes (decisions-log 323; wishlist.dart's [WishPart]): a product the Smithy makes that a
+  /// wished product's recipe takes, put on and taken off with the wish it is for, in the order put on (a parent before
+  /// its own).
+  final wishParts = <WishPart>{};
+
   /// What a troop of [type] fights with now: its base stats with every upgrade of its type, and its HP
   /// and MP raised by [awakenHp] / [awakenMp] of the base for every awakening level, its damage (a healer's heal)
   /// times [ascendPower] for each bought past [maxAwaken], and at Bangkit 5 its HP and damage times its Tempa's

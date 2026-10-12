@@ -99,6 +99,8 @@ void main() {
       'forBag': Words.forBag,
       'noWishes': Words.noWishes,
       'addWishesFrom': Words.addWishesFrom,
+      'ingredients': Words.ingredients,
+      'neededFor': Words.neededFor,
     };
     for (final MapEntry(:key, :value) in words.entries) {
       expect(value.trim(), isNotEmpty, reason: key);
