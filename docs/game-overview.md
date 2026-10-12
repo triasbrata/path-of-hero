@@ -33,8 +33,11 @@ but the troops move freely.
    "Towns: the Tavern"); a drag, the wheel or a trackpad's swipe pans it sideways to look around; "Leave town" goes on
    to the next wave (with Auto Wave on, 5 s after coming in).
 5. **Lose.** A monster crossing the back line costs a life, half a heart: a game starts with 3 hearts
-   (6 lives). Game over at 0 lives or when every troop is dead; then the monsters cheer. The score (kills by rank, won waves, lives left) goes on the
-   scoreboard under the player's name, asked the first time ("Scoreboard", also on the welcome screen).
+   (6 lives). When the whole army falls mid-wave the wave is lost, not the game (decisions-log 322): it costs a heart,
+   the wave's monsters cheer a moment and are swept off, and the same wave is played again after a break to buy the
+   army back ("Your army fell! -1 heart. Wave N again."). Its win's gold, Hero, boss chest and Town come only when it is
+   won. Game over at 0 lives (3 hearts = 3 chances); then the monsters cheer. The score (kills by rank, won waves) goes
+   on the scoreboard under the player's name, asked the first time ("Scoreboard", also on the welcome screen).
 
 ## What the player manages
 

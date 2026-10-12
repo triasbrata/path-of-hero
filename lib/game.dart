@@ -41,6 +41,7 @@ part 'enhance.dart';
 part 'tavern.dart';
 part 'wishlist.dart';
 part 'auto_replace.dart';
+part 'wipe.dart';
 
 const tile = 16.0;
 const cols = 20, rows = 8; // one screen: cols x rows of battlefield under the backdrop
@@ -3248,6 +3249,7 @@ class Game {
         if (pusaka.isNotEmpty) 'pusaka': {for (final e in pusaka.entries) e.key.name: e.value.toJson()},
         if (notes.isNotEmpty) 'notes': [...notes], // the one-time messages shown
         'asahAt': ?asahAt, // the last Asah's wave
+        'lostWave': ?lostWave, // the wave the army was wiped in, played again next (wipe.dart)
         if (ukir.fed) 'ukir': ukir.toJson(), // the run's Ukir, once fed (pusaka.dart)
         'overFrom': ?overFrom, // Beban's first wave over the cap
         if (legendsFound.isNotEmpty) 'legendsFound': [for (final r in legendsFound) r.name], // never offered again (pusaka.dart)
@@ -3378,6 +3380,7 @@ class Game {
     }
     notes.addAll([for (final n in (j['notes'] as List?) ?? const []) n as String]);
     asahAt = j['asahAt'] as int?; // none in saves from before Asah (pusaka.dart)
+    lostWave = switch (j['lostWave']) { final int w when w == wave + 1 => w, _ => null }; // a wiped wave, next (wipe.dart)
     if (j['ukir'] case final Map u) {
       // the run's Ukir (pusaka.dart); none in saves from before it, or never fed
       ukir
@@ -3501,8 +3504,27 @@ class Game {
 
   /// Whether fewer monsters live on the field than the [spawnFloor] while the [queue] holds more: the next comes on now.
   bool get belowSpawnFloor => queue.isNotEmpty && enemies.where((u) => u.alive).length < spawnFloor;
-  bool get over => lives <= 0 || wipedOut;
-  bool wipedOut = false; // the last troop fell
+  /// The game is over: no life is left (a leak's, or the last heart an army wiped cost, wipe.dart).
+  bool get over => lives <= 0;
+
+  /// The wave just fought ended with the army wiped ([Wipe._wipe], wipe.dart): set as it falls, until the next wave
+  /// starts. Not saved ([lostWave] is).
+  bool wipedOut = false;
+
+  /// When the army was last wiped ([t]), for the UI to say so and save once; [double.negativeInfinity] in a game where
+  /// it wasn't.
+  double wipedAt = double.negativeInfinity;
+
+  /// The wave the army was wiped in, to be played again (wipe.dart): [wave] + 1 between waves, [wave] while it is
+  /// played again; null once it is won. Saved.
+  int? lostWave;
+
+  /// The monsters a wipe swept off the field, no longer in [units]: they hop for joy where they stood for [wipeCheer] s
+  /// (the UI draws them), then go ([Wipe._sweptGone]).
+  final swept = <Unit>[];
+
+  /// Phoenix Plume rises due ([HeroSkills.later]): while one is, the army isn't wiped. A wave's end drops them.
+  int _risesDue = 0;
 
   /// The wave stalled ([stallTime]): its monsters walk straight to the base, through the troops, and
   /// don't fight, summon or heal any more. Cleared when the wave ends.
@@ -3622,6 +3644,9 @@ class Game {
     _omenWave(); // the Bayangan's factor frozen beside it, Lewati's skip buff, the catch-up landing (omen.dart)
     waveSpawned = 0;
     fallen.clear();
+    wipedOut = false; // a new fight (a wave lost to a wipe is played again: wipe.dart)
+    swept.clear();
+    _risesDue = 0;
     _autoWaveStart(); // Auto takes what is left of the offer into its queue (auto_replace.dart)
     toReplace.clear(); // the offer lasts until the next wave
     graves.clear();
@@ -4654,9 +4679,11 @@ class Game {
   /// one-hit mark (Ember Brand's, [Unit.emberMark]) is spent before its defence by a direct blow of another type. A
   /// monster's blow on a troop the Bayangan Executioner bares ([Omens._omenBare], read before the blow) skips the troop's
   /// shields, blocks and cuts; a silver or gold monster the Bayangan Deathless saves ([Omens._omenDeathless]) is left at
-  /// 1 HP right after the blow, which then took only what it lost.
+  /// 1 HP right after the blow, which then took only what it lost. A phantom ([isPhantom], Phantom Rush's swordsman while
+  /// it dashes) takes nothing.
   double _hurt(Unit u, double dmg, Hit src, [Unit? by, double? cap]) {
     if (!u.alive) return 0;
+    if (u.move != null && isPhantom(u)) return 0; // Phantom Rush: no blow lands on a phantom (awaken_skills.dart, decisions-log 320)
     final bare = omensOn && u.side == Side.troop && by?.side == Side.enemy && _omenBare(u); // Executioner (omen.dart)
     if (by != null && t < by.firstStrikeAt) by.firstStrikeAt = t; // its first blow ([Unit.firstStrikeAt])
     final heap = t < u.downUntil; // a heap of bones (Reassemble): only holy damage touches it, and ends it
@@ -4789,8 +4816,7 @@ class Game {
       if (omensOn && by != null) _omenSpreeKill(by); // Spree: a silver or gold killer counts it (omen.dart)
       if (omensOn) _omenTriumph(u); // Triumph: the monsters near it attack faster (omen.dart)
       if (u.hero) _refitTroops(); // its aura ends, unless another Hero lives
-      wipedOut = !troops.any((o) => o.alive);
-      sfx.add(wipedOut ? Sfx.lose : Sfx.fall);
+      sfx.add(Sfx.fall); // the last one too: [Wipe._wipe] adds the lose
     }
     return dealt;
   }
@@ -5432,6 +5458,7 @@ class Game {
     final start = {for (final u in units) u: u.pos}; // for the right-edge limit on shoves, and the stall detector
     t += dt;
     _dt = dt;
+    _sweptGone(); // a wipe's swept monsters go once their hop is over (wipe.dart)
     _ticks++; // the near counts are counted afresh ([FxEngine.alliesNearOf])
     _tickEffects(dt); // Hero skills' effects: what is due, heals and bleeds, what ran out
     _omenFade(dt); // Fade: the troops' shields shrink, a stunned or busy troop's too (omen.dart)
@@ -5730,8 +5757,9 @@ class Game {
     if (pusaka.isNotEmpty) _oathWatch(); // a type died out or came back: Alliance's multiplier moves (pusaka.dart)
     units.removeWhere((u) => u.gone || u.dying >= deathTime);
     _watchStall(spawned);
+    if (wasActive && !wipedOut && !over && _armyDown) _wipe(); // a heart lost, the wave swept and played again (wipe.dart)
 
-    if (wasActive && !waveActive && !over) {
+    if (wasActive && !waveActive && !over && !wipedOut) {
       marching = false;
       _endEffects(); // Hero skills' effects end with the wave
       sfx.add(Sfx.clear);
@@ -5744,6 +5772,7 @@ class Game {
       _boostWaveEnd(); // the Tavern's boosts count the wave (tavern.dart)
       _omenEase(); // the wave's falls take Bayangan levels away (omen.dart)
       _omenTopKiller(); // the wave's top killer, Grudge's target in the next (omen.dart)
+      lostWave = null; // a wave the army was wiped in is won now (wipe.dart)
       lastBonus = waveBonus(wave);
       gold += lastBonus;
       score += waveScore * wave;

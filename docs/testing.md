@@ -2913,6 +2913,33 @@ The shots come from `test/probe_foe_splash_shots.dart` (a probe, not in the suit
 high elite's Curse of Frailty and an armored orc boss's Earthshaker (a moment) wind up among the monsters, each with a
 2× crop of the panel, at 1266×713 and 412×860.
 
+## test/wipe_test.dart: an army wiped costs a heart and the wave is played again (decisions-log 322)
+
+Pure Dart (lib/wipe.dart). A soldier at 1 HP beside a werebear makes the wipe (`wipe`); `winNow` wins the wave on.
+- The wipe: 2 lives gone, not over, the wave back one with `lostWave` the lost one, no monster, queue, shot or zone
+  left, the swept ones hopping then gone in summon circles after `wipeCheer`, "Replace fallen" holding the army, the
+  lose sound, the `Wiped` event (and its `wipe` kind) and one `WaveEnded(won: false)`, `wipeNote`; the next start plays
+  the same wave with as many monsters.
+- What the lost wave paid stays (gold, score, kills) and no bonus or wave score comes; its lying materials are lost; the
+  replay's win pays its bonus and score once and clears `lostWave`.
+- The last heart (2 lives, and 1): game over, the monsters stay, no lives score, the clock stands still; leaks taking
+  the last life in the tick the last troop falls are a game lost on lives (no `Wiped`); a wave begun with no troop only
+  leaks.
+- A boss wave (wave 10, a Hero's too) lost: no chest nor Hero; won on the replay: one of each.
+- Towns: one left before the lost wave isn't due again; one marked for after it is due only once the replay is won.
+- The Shadows: the catch-up lands once for the wave number (not on the replay), and Lewati's skip buff owed meets the
+  replay.
+- The save between a wipe and its replay (`lostWave`, the lives, "Replace fallen"), a `lostWave` that isn't the next
+  wave dropped.
+- A Phoenix Plume rise due holds the wipe off; the risen one falling again with none due is a wipe.
+- The auto-player loop with Auto Buy: the army bought back after each wipe, wave 1 three times, lives 4, 2, 0, over.
+
+The shots come from `test/probe_wipe_shots.dart` (a probe, not in the suite; `OUT` sets the folder, default
+`shots/wipe/`): the w89 fixture's wave 90, 12 s played, then the army held at 1 HP beside werebears that don't fall until
+it is down; at 1600×947 and 915×412 the heart's pop with the message and the monsters hopping (`pop`, with 2× crops
+of the hearts and the message), a second on (`hop`) and after the hop (`after`: the summon circles, the meter's next
+wave). The pop shot's field is crowded with the bursts of the ticks played before it.
+
 ## The packs' looks: the shot probes (decisions-log 173)
 
 The field's effects and the screen's pieces are cut from the packs' sheets (ui-hud.md); no test pins a pixel of them,

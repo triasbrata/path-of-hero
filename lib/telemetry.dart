@@ -43,7 +43,9 @@ import 'settings.dart';
 /// times as many. The forge-off build, whose records were as at 9, is gone (decisions-log 296).
 /// 11: the Tavern switched on (decisions-log 268): its fields and events (its own switch is gone, decisions-log 296).
 /// 12: the Bayangan switched on (decisions-log 319): their fields (8's, Dusk's) reach every player's records.
-const telemetryVersion = 12;
+/// 13: an army wiped mid-wave costs a heart and the wave is played again (decisions-log 322): the event `wipe`, and a
+/// wave record's `end` `wiped`.
+const telemetryVersion = 13;
 
 /// Where [HttpSink] posts (`--dart-define=TELEMETRY_SERVER=https://...`). None by default, so nothing is sent.
 const telemetryServer = String.fromEnvironment('TELEMETRY_SERVER');
@@ -69,6 +71,7 @@ const passedOn = {
   EventKind.itemCrafted, // an item crafted there (decisions-log 249)
   EventKind.stoneCrafted, EventKind.itemEnhanced, // a stone made there and an item enhanced (decisions-log 255)
   EventKind.boostBought, EventKind.tavernRerolled, // a Tavern boost bought, its offers rerolled (decisions-log 266)
+  EventKind.wipe, // an army wiped mid-wave: a heart lost, the wave played again (decisions-log 322)
 };
 
 /// Where the records go.
@@ -255,7 +258,7 @@ String installIdOf(Settings s, {File? file, Random? rng}) {
 }
 
 /// Listens to one [Game] at a time ([attach]) and writes the records to [sinks]: `session` once, `game` on
-/// each attach, `event` for the [passedOn] kinds, and `wave` when a wave ends (won, lost, or left behind by
+/// each attach, `event` for the [passedOn] kinds, and `wave` when a wave ends (won, lost, wiped, or left behind by
 /// [detach]). Each carries [telemetryVersion] (`tv`), what it is (`rec`), the [installId], the [session], the
 /// game's number within the session and the time (`at`, UTC). The sinks are flushed at each wave's end.
 class TelemetryAdapter {
@@ -371,7 +374,7 @@ class TelemetryAdapter {
       case Marched():
         w.marchedAt = e.t;
       case WaveEnded(:final won):
-        _sum(_game!, won ? 'won' : 'lost');
+        _sum(_game!, won ? 'won' : (_game!.over ? 'lost' : 'wiped')); // wiped: played again (wipe.dart)
       case OfferRerolled(:final price):
         w.chestSpent += price; // a Serpihan's reroll is free: 0
       case OfferPicked(:final gain):
@@ -422,6 +425,8 @@ class TelemetryAdapter {
         break;
       case TownMarked() || TownEntered() || TownLeft():
         break; // passed on as they happen // the spawns count the strong foes, the wave record has the Pusaka's; the others are passed on
+      case Wiped():
+        break; // passed on as it happens; the WaveEnded right after closes the record as `wiped` (or `lost`)
     }
   }
 
@@ -443,7 +448,7 @@ class TelemetryAdapter {
       double secs(double t) => ((t - s.t) * 100).round() / 100;
       final record = <String, Object?>{
         'wave': s.wave,
-        'end': end, // won, lost (the game is over) or left (a new game or a save came in mid-wave)
+        'end': end, // won, lost (the game is over), wiped (the army fell: played again) or left (a new game or a save came in mid-wave)
         'secs': secs(g.t), // time to clear
         'marched': w.marchedAt == null ? null : secs(w.marchedAt!), // when it stalled and the monsters marched
         'start': s.data, // the army, awakening levels, Heroes, gold, capacity, lives and bags it began with

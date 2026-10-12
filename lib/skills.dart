@@ -297,6 +297,11 @@ const _icSteelShield = Offset(192, 0);
 /// Phantom Rush's afterimages: the swordsman's body flat magenta.
 const _rushFilter = ColorFilter.mode(_rushMagenta, BlendMode.srcIn);
 
+/// A phantom's body ([isPhantom], decisions-log 320): its own frame at [_phantomAlpha], and over it the same frame flat
+/// magenta at [_phantomWashAlpha], the afterimages' colour, so the swordsman reads as a ghost while no blow lands on it.
+const _phantomAlpha = 0.55, _phantomWashAlpha = 0.4;
+final _phantomBody = _sheetPaint(null, _phantomAlpha), _phantomWash = _sheetPaint(_rushFilter, _phantomWashAlpha);
+
 /// Where a streak starts and ends in its sheet's 64 px frame ([Board._streak]): fx_hit_lancer.png's thrust (its first
 /// frame to its last) and fx_hit_soldier.png's slash (its third frame's).
 const _thrustRun = (Offset(3, 19), Offset(61, 46)), _rushRun = (Offset(20, 18), Offset(48, 45));
@@ -391,8 +396,10 @@ extension on Board {
     }
     g.goldPops.clear();
     _matPopsIn(g); // a material dropped (town_look.dart)
-    for (final u in g.risen) {
-      showMessage('${u.name} rises again!'); // Resurrection: the one Hero skill that speaks
+    for (final u in g.risen.where((u) => u.alive)) {
+      // Resurrection: the one Hero skill that speaks. Not for one fallen again since: its army may be wiped, whose
+      // message stands (wipe.dart).
+      showMessage('${u.name} rises again!');
     }
     g.risen.clear();
     _pops.removeWhere((p) => g.t - p.$3 >= _popTime || !p.$1.alive);

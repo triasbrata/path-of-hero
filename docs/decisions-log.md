@@ -11256,6 +11256,61 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        use it (that probe's dump with the Towns moves: its save's catch-up meets waves 90 and 91; a new golden).
      - **S5** (code-audit): `OmenKind`, the kinds' data (570 lines), moved from omen.dart to lib/omen_catalog.dart,
        unchanged.
+320. **The awakening skills' cost in troops: Phantom Rush's swordsman a phantom while it dashes, a wind-up claims its
+     target, Unbroken lands on a foe in reach** (the owner, 2026-10-12, of the balance pass's finding (318) that the
+     army loses ~13% more troops with the awakening skills than without: "Selidiki skill awakening", look into them).
+     By awaken-skills, in two phases.
+     - **Measured first** (nothing changed): paired one-wave replays of the balance pass's dumps (its careful player's
+       new games, seeds 1-6 at w21-70, and the owner's wave-58 save played forward), each state once per arm on the
+       same dice, the Shadows off as the balance pass measured; a trace of every awakening wind-up and carry. **It is
+       one skill, the swordsman's Phantom Rush**: with it alone off the army lost 0.69 ± 0.19 fewer troops a wave at
+       w41-70 (−15%; b 4.57), more than with every awakening skill off (−0.53 ± 0.18), and w21-40 −0.25 ± 0.08
+       (−33%); every one of those falls a swordsman. The rush hops the swordsman, nearly always at full HP, through
+       the monsters' front to the most wounded foe within 2.5 tiles, cut after cut for about a second, and every
+       monster there makes it its nearest troop: **15% of the rushes (352 of 2,327; 21% on the owner's save) ended
+       with the swordsman dead in the rush**, 295 of them from 75%+ HP, mostly to high elites, elites and mini bosses.
+       Its fall rate in the 3 s after its own rush was 3.9 a fight-minute, 0.5 the rest of the time. The other five
+       skills fielded (Unbroken, Spellbreaker, Lifeline, Singularity, Consecration) cost nothing measurable
+       (Singularity helps late); not the MP (nothing waiting for the awakening skill's MP: −0.19 ± 0.13) and not 299's
+       wind-up (−0.05 ± 0.16). For the rush, a smaller round (+0.53 ± 0.38), at most 2 cuts (±0) or only the foes at
+       the front (+0.21) didn't help, nor would an HP gate (they die from full HP); untouchable while it dashes:
+       −0.99 ± 0.22 (−22%); untargetable (the monsters don't pick it, areas and shots still hit): −0.68 ± 0.18.
+     - **A second defect, no falls but wasted casts**: since 299 a troop's rule is asked again on the wind-up's blow,
+       and the troops of one type raced for one target, each paying its MP and cooldown: 84% of Spellbreaker's
+       wind-ups, 85% of Lifeline's, 72% of Unbroken's and 49% of Consecration's ended with nothing. Unbroken's mostly
+       because the knight was healed back to full in the 0.3 s (its rule, 298: hurt at all).
+     - **The owner's pick for Phantom Rush**, asked between a phantom (no blow lands on it while it dashes and goes
+       home) and untargetable: "Hantu: kebal saat melompat" (a ghost, immune while it leaps). `isPhantom`
+       (awaken_skills.dart): from its first dash until it is home no blow lands on it (`_hurt`), nor a monster's
+       effect (`addEffect`'s `bad` ones) or stun (`stunTroop`), so a bleed or a stun doesn't land where the blow
+       didn't. It bends "a carried troop takes blows" for this one skill (units-and-combat.md "Forced movement" and
+       "The movers"). The board draws its body as a see-through magenta ghost the whole time it is immune: its frame
+       at 55% under the same frame in the afterimages' flat magenta at 40% (ui-hud.md "Skills").
+     - **The two plain bugs fixed with it**: an awakening skill's wind-up claims what it aims at (`TroopWind.claims`
+       and `at`: the foe, the troops Lifeline lifts, a well's foe and spot, a ground, a landing spot) and the others of
+       its type pass over it, or don't start; Unbroken lands on the blow with a foe in reach alone
+       (units-and-combat.md "Skill strips").
+     - **Measured after** (one sweep, one compile: each state once per arm on the same dice, the branch's three fixes on
+       and off by a switch in the probe's copy, whose off arm played main's waves the same; the balance pass's new games
+       seeds 1-12 w21-80, 611 states, and the owner's wave-58 saves forward): the fixes **−0.92 ± 0.10 fell a wave
+       (−27%; the swordsman's −0.81 ± 0.08, −33%)**; w21-40 −0.39 ± 0.07 (−52%), w41-60 −1.23 ± 0.17 (−38%), w61-80
+       −1.31 ± 0.34 (−15%); the owner's w58 save played on by the careful player −2.25 ± 1.06 (−14%); waves' length ±1%,
+       3 lives fewer lost. **The awakening skills now save troops**: all off, the army loses 0.81 ± 0.13 more a wave
+       (+34%; 1.26 at w41-80), where on main they cost 0.11 ± 0.13 (0.57 ± 0.14 at w41-60). The same save played the
+       owner's way doesn't move (−0.35 ± 4.89): it never awakens its swordsmen, so it has no Phantom Rush. A trace: the
+       rushes that ended with the swordsman dead went from 352 of 2,327 to none of 2,427 (w41-70; the w58 save 161 of
+       756 to none), its falls 690 → 450. The wind-ups lost: Spellbreaker 84% → 8%, Unbroken 72% → 24% (the rest: no foe
+       in reach any more), Consecration 49% → 39%, Singularity 24% → 7%. Lifeline lifts a third as often (310 → 106) and
+       loses 91%: with no second priest winding up the same lift, the others heal the claimed troop past 50% in the
+       0.3 s (296 of 340 of its fizzles); falls-neutral (Lifeline off cost nothing before either), left as is.
+     - **With the balance pass's 140 HP swordsman** (318's pick 4, weighed again in the same sweep): on main's rules it
+       saves 0.84 ± 0.09 falls a wave (−25%; the swordsman's 0.84, −33%), on top of the fixes 0.71 ± 0.09 (−28% of
+       what is left; the swordsman's 0.66, −39%), both together 1.61 ± 0.12 (−48%; the swordsman's 1.47, −59%): they
+       overlap by ~0.15 a wave, so they stack. On the owner's army (fodder swordsmen) the 140 HP saves 13.5-17.7 of
+       ~139 falls a wave with or without the fixes.
+     - **The w89 identity guard moves** (319's dump): that army fields Consecration, Singularity, Skyfall,
+       Spellbreaker and Lifeline, so the claims change who casts. Waves 90 and 91 are still won with no life lost in
+       its three plays, up to 3% shorter or longer; 8 troops fallen in all, 9 before.
 321. **The tests play the real rules: the Towns-off rules go, `Game.towns` with them** (the owner, 2026-10-12, asked
      whether the half of the logic tests that still played the rules from before the Towns (a plain `Game()`, which no
      player plays) should move to the real rules, the Towns-off rules then deleted: "Ya, setelah bug B1–B3" (yes, after
@@ -11297,6 +11352,40 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        probe_book_shadow_shots and probe_town_shop_tabs_shots gone; probe_bar_clear and probe_fx_ui_shots draw no field
        loot. The probe kits outside the repo (the auto-player, the replay kit, the QA runs) go through a due Town at once
        (`townPolicy` 'leave'; on a ref before 321 a plain `Game()` meets no Town, so it changes nothing there).
+322. **An army wiped mid-wave costs a heart and the wave is played again; the game is over when the hearts run out**
+     (the owner, 2026-10-12, asked what should happen when the whole army dies, and picked "Kalah wave: −1 hati, ulang":
+     an army wipe is no longer game over; the player loses 1 heart (2 lives), the wave's monsters are swept away and
+     the same wave is played again, so he can buy troops again; 3 hearts = 3 chances). Why: the lives never mattered.
+     The balance pass (318) counted 1,681 new-game waves that lost 17 lives, nearly all in a run's last wave, and every
+     run ended in a wipe at full hearts, because the game was over "at 0 lives or when every troop is dead". By
+     lives-rule (lib/wipe.dart; units-and-combat.md "An army wiped", ui-hud.md "An army wiped").
+     - **The wipe** is checked at the end of `tick`, after the raised joined and before the win: a troop fell this
+       wave, none is alive (one Resurrection raised in that tick counts), no Phoenix Plume rise is due, and a monster
+       still lives or is queued. The last troop and the last monster falling together is a win. A wave begun with no
+       troop is never a wipe: as before, only its leaks cost lives.
+     - **It costs** `wipeLives` 2 lives (a heart; at 1 life the half). At 0 the game is over as by leaks: the monsters
+       stay and cheer, the scoreboard. `over` is `lives <= 0` alone.
+     - **The sweep:** the living and queued monsters go with no gold, loot or score. The ones on the field hop for joy
+       2.4 s (the game-over hop), then vanish in the necromancer's summon circle (existing art; no new shape). Effects,
+       zones, shots and what was left for later end as at a wave's end. What the wave paid as it went stays (kill gold,
+       kill score, kills); its materials lying on the field are lost, since they come only with a win (else a replay
+       would pay them twice).
+     - **The replay:** `wave` goes back to the last won one, so between waves everything reads as after that win: the
+       back line, a Town due (one left before the lost wave isn't due again; one marked after it waits for its win), the
+       wave meter's next wave, "from wave 15 won". The next start rolls the same wave afresh (its number and tide, new
+       dice). Its wave bonus and score, Shadow ease, Grudge target, Hero, boss chest and Town roll come once, when it is
+       won. `lostWave` marks it: the Shadows' catch-up doesn't land twice on one wave number, and Lewati's skip buff
+       owed for it is owed again. The Tavern's boosts count the lost wave (it was fought, as a game over counted it).
+     - **Between:** "Replace fallen" lists the army (the Heroes go to Fallen Heroes as ever), Auto Buy buys it back as
+       the gold allows, Auto Wave counts down as after a win (the Auto hold waits below 75% of the cap as ever). The
+       message window says "Your army fell! -1 heart." / "Wave N again." and the heart pops. The game saves at once, so
+       quitting keeps the heart lost. The free priest is a new game's gift and doesn't come again.
+     - **Saves** (additive, `v` stays 3): `lostWave` while set (loaded only when it is the next wave). **Telemetry:**
+       the event `wipe` (`lives`, `livesLost`, `foes`, `over`) and a wave record's `end` `wiped`; `eventVersion` and
+       `telemetryVersion` 13. **The score:** the lives term (`lifeScore`) stays, but a game now always ends at 0
+       lives, so it pays nothing. The battle log adds "Army fell: -1 heart, wave N again".
+     - **What a run's end means now:** a run ends after three wipes, or fewer with leaks. The balance pass weighs where
+       runs end and how many replays they take (lives-rule's probe plan).
 323. **A forged ingredient links to its forge page, and joins the Wishlist with its parent, never for a troop** (the
      owner, 2026-10-12: "jika material dari item yang mau di forge, adalah hasil forge ketika user click itu akan
      mengarah ke forge item tersebut, begitu juga kalau user whitelist item yang item untuk forgenya ada item yang perlu

@@ -368,6 +368,12 @@ String _dec(double v) => v.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), ''
 /// A distance in tiles, as [_dec] writes it: "1 tile", "1.5 tiles" ([_count] keeps one decimal).
 String _tiles(double v) => '${_dec(v)} ${v == 1 ? 'tile' : 'tiles'}';
 
+/// Whether troop [u] is a phantom now: in Phantom Rush's dash or on its way home ([CarryLook.ghost]). No blow lands
+/// on a phantom ([Game._hurt]), nor a monster's effect or stun ([HeroSkills.addEffect]'s bad ones,
+/// [HeroMoves.stunTroop]), and the board draws it as a ghost the whole time (decisions-log 320; the owner: "Hantu: kebal
+/// saat melompat"). The one carried troop that takes no blows ("Forced movement" in docs/units-and-combat.md).
+bool isPhantom(Unit u) => u.side == Side.troop && u.move is Carry && (u.move as Carry).look == CarryLook.ghost;
+
 /// The awakening skills' rules, casts and clocks (game.dart calls in from [Game._trySkill], [Game.startWave] and
 /// [Game.useItem]).
 extension AwakenSkills on Game {
@@ -440,7 +446,8 @@ extension AwakenSkills on Game {
 
   /// Troop [u] casts its awakening skill when its type has one and has awakened, it is ready ([_awakenReady]), it
   /// has the MP and its rule holds, and (a Hero) it isn't saving up for its Hero skill. It pays the MP, pops its
-  /// name ([awakenCasts]) and is logged ([AwakenSkillCast]). Whether it cast.
+  /// name ([awakenCasts]) and is logged ([AwakenSkillCast]); winding up, it claims what it aims at ([_awakenClaim]).
+  /// Whether it cast.
   bool _tryAwakenSkill(Unit u, bool hero) {
     final a = awakenOf(u);
     if (a == null) return false;
@@ -453,9 +460,42 @@ extension AwakenSkills on Game {
       ..awakenSkillAt = t;
     awakenCasts.add((u, s, level));
     _emit(AwakenSkillCast(wave, t, name: u.name, type: u.type, skill: s, level: level));
-    _windUp(u, WindKind.awaken, troopSkillStrips[u.type], awaken: s, level: level); // its type's strip, then it lands (skill_strips.dart)
+    final (claims, at) = skillWinds ? _awakenClaim(u, s, level) : (const <Unit>[], null); // only a wind-up holds a claim
+    _windUp(u, WindKind.awaken, troopSkillStrips[u.type], awaken: s, level: level, claims: claims, at: at); // its type's strip, then it lands (skill_strips.dart)
     return true;
   }
+
+  /// What [u]'s wind-up of [s] at [level] claims (decisions-log 320): the foe it aims at (Disarm, Impale, Spellbreaker,
+  /// Singularity's centre), the troops it would lift (Lifeline), and the spot of its ground, well or leap (Consecration,
+  /// Singularity, Skyfall). Others of its type skip a claimed foe or troop, and a spot as if its ground, well or leap were
+  /// there already ([_claimed], [_claimedSpots]): with the 0.3 s wind-up (decisions-log 299) they all picked the same
+  /// one, and all but the first fizzled on their blow, MP and cooldown paid (84% of Spellbreaker's casts, 85% of
+  /// Lifeline's at w41-70). Unbroken and Phantom Rush claim nothing.
+  (List<Unit>, Point<double>?) _awakenClaim(Unit u, AwakenSkill s, int level) => switch (s) {
+        AwakenSkill.disarm => ([?_disarmTarget(u, level)], null),
+        AwakenSkill.impale => ([?_impaleTarget(u)?.$1], null),
+        AwakenSkill.spellbreaker => ([?_spellbreakerTarget(u)], null),
+        AwakenSkill.singularity => switch (_singularityCentre(u, level)) { final c? => ([c], c.pos), null => (const [], null) },
+        AwakenSkill.lifeline => (_lifelines(u, level), null),
+        AwakenSkill.consecration => (const [], u.pos),
+        AwakenSkill.skyfall => (const [], _skyfallSpot(u, level)),
+        AwakenSkill.unbroken || AwakenSkill.phantomRush => (const [], null),
+      };
+
+  /// The foes or troops another troop's wind-up of [s] claims now ([_awakenClaim]).
+  Set<Unit> _claimed(AwakenSkill s) => {
+        for (final b in troops)
+          if (b.alive && b.troopWind != null && b.troopWind!.awaken == s) ...b.troopWind!.claims,
+      };
+
+  /// The spots other troops' wind-ups of [s] claim now ([_awakenClaim]), each with its caster's level.
+  List<(Point<double>, int)> _claimedSpots(AwakenSkill s) => [
+        for (final b in troops)
+          if (b.alive && b.troopWind?.awaken == s && b.troopWind!.at != null) (b.troopWind!.at!, b.troopWind!.level),
+      ];
+
+  /// Whether troop [u] has a foe within its reach (Unbroken's first rule; alone on its blow, decisions-log 320).
+  bool _foeInReach(Unit u) => enemies.any((o) => o.alive && o.entered && o.pos.distanceTo(u.pos) <= u.stats.range);
 
   /// Whether troop [u]'s awakening skill [s] at [level] would do something now, by its rule (MP, cooldown and the
   /// march aside).
@@ -468,7 +508,7 @@ extension AwakenSkills on Game {
         AwakenSkill.consecration => _wantsConsecration(u, level),
         AwakenSkill.phantomRush => _wantsRush(u),
         AwakenSkill.skyfall => _skyfallSpot(u, level) != null,
-        AwakenSkill.lifeline => troops.any((o) => _inPeril(u, o)),
+        AwakenSkill.lifeline => _lifelines(u, level).isNotEmpty,
       };
 
   /// What [s] at [level] does, cast by [u] (the `<id>K` records hold the numbers). Every blow goes through [_hurt]
@@ -600,14 +640,14 @@ extension AwakenSkills on Game {
   /// ranked, then the most HP, then the nearest, unless one it could break stands within [impaleK].watch and its
   /// skill has been ready less than [impaleK].hold s ([readyFor]). Null: none.
   (Unit, bool)? _impaleTarget(Unit u, [double readyFor = double.infinity]) {
-    final reach = u.stats.range + impaleK.reach, taunter = u.effects.isEmpty ? null : _taunter(u);
+    final reach = u.stats.range + impaleK.reach, taunter = u.effects.isEmpty ? null : _taunter(u), taken = _claimed(AwakenSkill.impale);
     Unit? broken, pinned;
     var (bd, pd, watched) = (0.0, 0.0, false);
     for (final o in enemies) {
       if (!o.alive || !o.entered || (taunter != null && o != taunter)) continue;
       final d = o.pos.distanceTo(u.pos);
       if (d <= impaleK.watch && monsterSkills && monsterSkillsOf(o).any((s) => _breakable(o, s))) watched = true;
-      if (d > reach) continue;
+      if (d > reach || taken.contains(o)) continue; // another lancer's lunge is on its way to it
       if (o.winding case final s? when _breakable(o, s) && t >= o.stunUntil) {
         if (broken == null || o.tier.index > broken.tier.index || (o.tier == broken.tier && (d < bd || (d == bd && o.id < broken.id)))) {
           (broken, bd) = (o, d);
@@ -636,7 +676,9 @@ extension AwakenSkills on Game {
   Unit? _spellbreakerTarget(Unit u) {
     Unit? best;
     var most = 0;
+    final taken = _claimed(AwakenSkill.spellbreaker);
     for (final o in _foesNear(u.pos, u.stats.range)) {
+      if (taken.contains(o)) continue; // another archer is drawing a silver arrow at it
       final n = _strippable(o);
       if (n == 0 || (best != null && (o.tier.index < best.tier.index || (o.tier == best.tier && n <= most)))) continue;
       if (shots.any((s) => s.look == ShotLook.silver && s.target == o)) continue; // one on its way already
@@ -704,7 +746,12 @@ extension AwakenSkills on Game {
   /// the most such foes within the well's radius (itself too), [singularityK].crowd at least; then the nearest,
   /// then the first placed. Null: none.
   Unit? _singularityCentre(Unit u, int level) {
-    final r = singularityK.radius[_at(level)], free = [for (final o in enemies) if (_pullable(o)) o];
+    final r = singularityK.radius[_at(level)], wells = _claimedSpots(AwakenSkill.singularity);
+    // Not in an open well, nor in one another wizard is winding up ([_awakenClaim]).
+    final free = [
+      for (final o in enemies)
+        if (_pullable(o) && !wells.any((w) => o.pos.distanceTo(w.$1) <= singularityK.radius[_at(w.$2)])) o,
+    ];
     if (free.length < singularityK.crowd) return null;
     Unit? best;
     var (most, bd) = (0, 0.0);
@@ -754,6 +801,7 @@ extension AwakenSkills on Game {
   bool _wantsConsecration(Unit u, int level) {
     final r = consecrationK.radius[_at(level)];
     if (zones.any((z) => z.look == ZoneLook.consecrate && t < z.until && z.at.distanceTo(u.pos) <= consecrationK.apart * r)) return false;
+    if (_claimedSpots(AwakenSkill.consecration).any((c) => c.$1.distanceTo(u.pos) <= consecrationK.apart * r)) return false; // one winding up
     var n = 0;
     for (final o in enemies) {
       if (o.alive && o.entered && o.pos.distanceTo(u.pos) <= r && ++n >= consecrationK.crowd) return true;
@@ -765,10 +813,10 @@ extension AwakenSkills on Game {
   /// its damage in HP, not already weakened as strongly as Disarm would and not Disarmed in the last [disarmK].again
   /// s, the highest ranked, then the one that hits hardest, then the nearest.
   Unit? _disarmTarget(Unit u, int level) {
-    final i = _at(level), taunter = u.effects.isEmpty ? null : _taunter(u);
+    final i = _at(level), taunter = u.effects.isEmpty ? null : _taunter(u), taken = _claimed(AwakenSkill.disarm);
     Unit? best;
     for (final o in _foesNear(u.pos, u.stats.range)) {
-      if (taunter != null && o != taunter) continue;
+      if ((taunter != null && o != taunter) || taken.contains(o)) continue; // another soldier's Disarm is on its way to it
       final k = o.tier == Tier.boss ? disarmK.boss[i] : disarmK.weaken[i];
       if (o.hp < u.stats.dmg * disarmK.worth || t - o.disarmedAt < disarmK.again || effectK(o, Status.weaken) <= k) continue;
       if (best == null || o.tier.index > best.tier.index || (o.tier == best.tier && o.stats.dmg > best.stats.dmg)) best = o;
@@ -839,7 +887,7 @@ extension AwakenSkills on Game {
   /// (below [skyfallK].above of its HP, taunted, falling back, or a foe in its reach).
   Point<double>? _skyfallSpot(Unit u, int level) {
     if (u.hp < u.maxHp * skyfallK.above || u.retreating || (u.effects.isNotEmpty && _taunter(u) != null)) return null;
-    final r = skyfallK.radius[_at(level)], near = _foesNear(u.pos, skyfallK.far);
+    final r = skyfallK.radius[_at(level)], near = _foesNear(u.pos, skyfallK.far), leaps = _claimedSpots(AwakenSkill.skyfall);
     if (near.isNotEmpty && near.first.pos.distanceTo(u.pos) <= u.stats.range) return null; // in a fight already
     Point<double>? best;
     var most = 0;
@@ -852,8 +900,9 @@ extension AwakenSkills on Game {
       }
       if (front == null) continue; // no troop fights there
       if (p.x > front) p = Point(front, p.y); // never past the front melee
-      if (troops.any((b) => b != u && b.alive && b.move is Carry && (b.move as Carry).look == CarryLook.skyfall && (b.move as Carry).to.distanceTo(p) <= r)) {
-        continue; // another axeman lands there
+      if (troops.any((b) => b != u && b.alive && b.move is Carry && (b.move as Carry).look == CarryLook.skyfall && (b.move as Carry).to.distanceTo(p) <= r) ||
+          leaps.any((c) => c.$1.distanceTo(p) <= r)) {
+        continue; // another axeman lands there, or winds up to
       }
       var n = 0;
       for (final f in enemies) {
@@ -874,13 +923,18 @@ extension AwakenSkills on Game {
     return enemies.any((e) => e.alive && e.entered && e.pos.distanceTo(o.pos) <= lifelineK.near);
   }
 
-  /// The troops priest [u]'s Lifeline at [level] lifts: of those in peril ([_inPeril]), the [lifelineK].lifts most
-  /// hurt by HP share (the first placed on a tie).
-  List<Unit> _lifelines(Unit u, int level) => ([for (final o in troops) if (_inPeril(u, o)) o]
-        ..sort((a, b) {
-          final byShare = (a.hp / a.maxHp).compareTo(b.hp / b.maxHp);
-          return byShare != 0 ? byShare : a.id.compareTo(b.id);
-        }))
-      .take(lifelineK.lifts[_at(level)])
-      .toList();
+  /// The troops priest [u]'s Lifeline at [level] lifts: of those in peril ([_inPeril]) that no other priest's wind-up
+  /// claims ([_claimed]), the [lifelineK].lifts most hurt by HP share (the first placed on a tie).
+  List<Unit> _lifelines(Unit u, int level) {
+    final taken = _claimed(AwakenSkill.lifeline); // another priest is winding up to lift it
+    return ([
+      for (final o in troops)
+        if (!taken.contains(o) && _inPeril(u, o)) o,
+    ]..sort((a, b) {
+            final byShare = (a.hp / a.maxHp).compareTo(b.hp / b.maxHp);
+            return byShare != 0 ? byShare : a.id.compareTo(b.id);
+          }))
+        .take(lifelineK.lifts[_at(level)])
+        .toList();
+  }
 }

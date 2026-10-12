@@ -1632,8 +1632,9 @@ extension Omens on Game {
 
   /// [Game.startWave], beside Beban's freeze: Grudge's tally and Dusk start afresh ([Game.duskOn]); Lewati's skip buff
   /// owed moves onto this wave ([Game.waveSkipBuff]); the Beban factor ([Game.omenFactor]) and the troops that start it
-  /// ([Game.omenTroops]) are frozen for the wave; and from [omenFrom] the catch-up's next [omenCatchUpStep] levels land.
-  /// Nothing else while [omensOn] is off.
+  /// ([Game.omenTroops]) are frozen for the wave; and from [omenFrom] the catch-up's next [omenCatchUpStep] levels land,
+  /// once a wave number: none when a wave lost to a wipe is played again ([Game.lostWave], wipe.dart). Nothing else while
+  /// [omensOn] is off.
   void _omenWave() {
     waveSkipBuff = false;
     _waveKills.clear(); // Grudge's tally starts afresh
@@ -1647,7 +1648,7 @@ extension Omens on Game {
     omenStarters
       ..clear()
       ..addAll(troops.where((u) => u.alive));
-    if (wave < omenFrom) return;
+    if (wave < omenFrom || lostWave == wave) return;
     final land = omensOwed.take(omenCatchUpStep).toList();
     omensOwed.removeRange(0, land.length);
     for (final k in land) {

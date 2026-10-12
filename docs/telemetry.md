@@ -35,7 +35,7 @@ events it listens to are #60's stream (lib/game_events.dart, architecture.md).
 
 ## The records
 
-Every record is one JSON object with `tv` (`telemetryVersion` 12: raise it when a field changes; 2 added the wave's
+Every record is one JSON object with `tv` (`telemetryVersion` 13: raise it when a field changes; 2 added the wave's
 `pusaka` and `gold.pusakaSpent`, decisions-log 138; 3 the boss chest's events and `gold.chestSpent` /
 `gold.chestEarned`, decisions-log 152; 4 Asah's `pusakaAsah` and `gold.asahSpent`, decisions-log 154; 5 the wave
 start's `tide.over`, decisions-log 162; 6 Tempa's `tempa` and `gold.tempaSpent`, decisions-log 163; 7 Lebur's
@@ -57,7 +57,8 @@ decisions-log 296); 11 the Tavern switched on, decisions-log 268: its `boostBoug
 switched on, decisions-log 319: 8's Bayangan fields and the Dusk's `omenDusk` in every player's records (`eventVersion`
 12; none with `--dart-define=OMENS=false`); decisions-log 321 raised neither: the `towns` switch and the field drops'
 event `drop` went, but every player's game had the Towns, so none of its records changes (`dropped` and
-`relicsDropped` stay in the wave record, always `{}`), `rec`,
+`relicsDropped` stay in the wave record, always `{}`); 13 an army wiped mid-wave costs a heart and the wave is played
+again, decisions-log 322: the event `wipe` and a wave record's `end` `wiped` (`eventVersion` 13), `rec`,
 `install`, `session`, `game` (the number of the game within the session, 0 before the first) and `at` (UTC,
 ISO 8601).
 
@@ -65,7 +66,7 @@ ISO 8601).
 |---|---|---|
 | `session` | once, when the adapter is made (the first game played after launch) | `app` (`APP_VERSION` define, `dev`), `platform` (`Platform.operatingSystem`), `ev` (`eventVersion`) |
 | `game` | each `attach` | `wave` (0 new, more for a loaded save), `gold`, `lives`, `score` |
-| `event` | as it happens, for `passedOn`: fell, heroMade, awakened, bought, itemUsed, relicUsed, storeBought, storeSold, relicTakenOff, typeReleased, pusakaBound, pusakaMoved, ascended, heroRecalled, offerShown, offerPicked, offerRerolled, pusakaAsah, tempa, pusakaLebur, omenGained, omenEased, omenDusk, ukirFed, ukirStep, townMarked, townEntered, townLeft, crafted, itemCrafted, stoneCrafted, itemEnhanced, boostBought, tavernRerolled | `event`: the event's `toJson()` (`v`: `eventVersion` 12 (3: the chest's events; 4: Asah's; 5: heroRecalled's `refund`; 6: Tempa's; 7: Lebur's; 8: the Bayangan's, Ukir's, an Asah's `items`; 9: the Towns'; 10: the forge's, decisions-log 272; 11: the Tavern's, decisions-log 268; 12: the Bayangan's switched on, decisions-log 319), `kind`, `wave`, `t`, its fields) without `name`; a `fell` carries the troop's `relics` (names, back in the bag; `eventVersion` 2); `ascended` (#92 part 2, Bangkit 4-5 bought in the Toko, `Ascend.ascend`): `type`, `level` (4 or 5), `cost`; `heroRecalled` (#92 part 3, a fallen Hero called back in the Toko's Hero Gugur, `Recall.recallHero`; no `bought` for it): `type`, `stats` (its 2 attributes), `skill`, `fell` (the wave it fell in), `cost`, `refund` (`eventVersion` 5, decisions-log 167: what the troop a full army's recall sent home paid back, 0 without a swap; the troop's name stays in the battle log; `gold.recallSpent` is the `cost`, the refund not taken off); `offerPicked` (a boss chest closed, lib/draft.dart): `pick` (a Pusaka's name,
+| `event` | as it happens, for `passedOn`: fell, heroMade, awakened, bought, itemUsed, relicUsed, storeBought, storeSold, relicTakenOff, typeReleased, pusakaBound, pusakaMoved, ascended, heroRecalled, offerShown, offerPicked, offerRerolled, pusakaAsah, tempa, pusakaLebur, omenGained, omenEased, omenDusk, ukirFed, ukirStep, townMarked, townEntered, townLeft, crafted, itemCrafted, stoneCrafted, itemEnhanced, boostBought, tavernRerolled, wipe | `event`: the event's `toJson()` (`v`: `eventVersion` 13 (3: the chest's events; 4: Asah's; 5: heroRecalled's `refund`; 6: Tempa's; 7: Lebur's; 8: the Bayangan's, Ukir's, an Asah's `items`; 9: the Towns'; 10: the forge's, decisions-log 272; 11: the Tavern's, decisions-log 268; 12: the Bayangan's switched on, decisions-log 319; 13: the wipe's, decisions-log 322), `kind`, `wave`, `t`, its fields) without `name`; `wipe` (the army fell mid-wave, lib/wipe.dart; its `wave` the one lost): `lives` (left), `livesLost` (2, a heart; fewer when fewer were left), `foes` (the monsters alive and queued as it fell, swept off unless the game is over) and `over` (it took the last heart: the game is over; else the wave is played again, a new `wave` record with the same number); a `fell` carries the troop's `relics` (names, back in the bag; `eventVersion` 2); `ascended` (#92 part 2, Bangkit 4-5 bought in the Toko, `Ascend.ascend`): `type`, `level` (4 or 5), `cost`; `heroRecalled` (#92 part 3, a fallen Hero called back in the Toko's Hero Gugur, `Recall.recallHero`; no `bought` for it): `type`, `stats` (its 2 attributes), `skill`, `fell` (the wave it fell in), `cost`, `refund` (`eventVersion` 5, decisions-log 167: what the troop a full army's recall sent home paid back, 0 without a swap; the troop's name stays in the battle log; `gold.recallSpent` is the `cost`, the refund not taken off); `offerPicked` (a boss chest closed, lib/draft.dart): `pick` (a Pusaka's name,
 `serpihan`, or null when passed over), `rarity`, `stars` (after the take), `type` (where it went; null: the Gudang),
 `skipped`, `gain` (Lewati's gold), `rerolls`, `chest`, `chestWave`, and while the Bayangan are on (loot-items-relics.md
 "Bayangan", decisions-log 180) `omen` (the face the taken card hid; null: none), `levels` (the kinds its levels went to,
@@ -106,7 +107,7 @@ A `wave` record sums everything since the last wave ended (so the shop before a 
 
 | Field | What |
 |---|---|
-| `wave`, `end` | its number; `won`, `lost` (the game is over) or `left` (another game came in mid-wave) |
+| `wave`, `end` | its number; `won`, `lost` (the game is over), `wiped` (the army fell and the wave is played again: the next record has the same number; decisions-log 322) or `left` (another game came in mid-wave) |
 | `secs`, `marched` | game seconds from its start to its end (time to clear); seconds in when it stalled and marched, or null |
 | `start` | `WaveStarted`'s fields: `army`, `levels` (1 to 5: Bangkit 4-5 bought count, #92 part 2), `heroes`, `gold`, `capacity`, `lives`, `bag`, `relics`, `tide` (#92: the crowd's HP and damage multipliers and the spawn gap in seconds, `{hp: 1.3478, dmg: 1.1614, gap: 0.7743, over: 0}` on wave 65; 1, 1, 0.9 before the tide; `over`: how many waves earlier the tide counts from for an army over the cap, Beban, decisions-log 162: 32 for the owner's 16 over 32 once ramped in, 0 at the cap or under it, `hp`, `dmg` and (with `overPace` on) `gap` already including it; units-and-combat.md "The tide"), `pusaka`, and while the Bayangan are on `omens`: `levels` (kind → level), `factor` (the Beban factor frozen for the wave, four decimals), `owed` (an old save's catch-up levels still to land) and `skipBuff` (this wave owes Lewati's skip buff); while the Towns are on `materials` (the Towns' materials held, key → count, decisions-log 221); while a Tavern boost runs
 `boosts` (kind → the waves it has left, counting this one; decisions-log 266) |

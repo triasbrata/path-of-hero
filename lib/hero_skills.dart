@@ -430,6 +430,7 @@ extension HeroSkills on Game {
   /// Bayangan Unbowed, [Omens._omenShrug]).
   void addEffect(Unit u, Status s, double time, {double k = 1, Unit? by, int n = 0, bool bad = false, bool omen = false}) {
     assert(!bad || u.side == Side.troop, 'a bad effect is a monster\'s on a troop: ${s.name}');
+    if (bad && u.move != null && isPhantom(u)) return; // a phantom takes nothing from a monster (Phantom Rush, decisions-log 320)
     if (effectOn(u, s) case final old? when (old.k - s.base).abs() > (k - s.base).abs()) return;
     if (s == Status.impaled && by?.side == Side.troop && _omenShrug(u)) return; // Unbowed (omen.dart)
     u.effects[s] = Effect(t + _effectTime(u, s, time, by, omen: omen), k, by: by, n: n, next: t + 1, bad: bad, omen: omen);
@@ -483,11 +484,12 @@ extension HeroSkills on Game {
     }
   }
 
-  /// When a wave ends every effect ends with it, a troop's ward and a slot's Shield too (heal.dart, omen.dart), and
-  /// what was left for [later] is dropped; so do the heals the Bayangan Trickle spreads and what a troop owes Heal Siphon
-  /// (omen.dart).
+  /// When a wave ends (won, or lost to a wipe: wipe.dart) every effect ends with it, a troop's ward and a slot's Shield
+  /// too (heal.dart, omen.dart), and what was left for [later] is dropped; so do the heals the Bayangan Trickle spreads
+  /// and what a troop owes Heal Siphon (omen.dart).
   void _endEffects() {
     _later.clear();
+    _risesDue = 0; // a Phoenix Plume's rise among them (wipe.dart)
     for (final u in units) {
       final stat = u.effects.keys.any((s) => s.stat);
       if (u.alive && u.effects.containsKey(Status.hex)) _unhex(u);

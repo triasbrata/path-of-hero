@@ -424,7 +424,8 @@ pause button (#93, which stood in the top left row), in the same place in every 
   - While on, a won wave starts a countdown of `autoStartDelay` 5 s (`AutoStart`, lib/auto_start.dart),
     shown on the toggle's Start: "Start 5", "Start 4" … "Start 1". At 0 the next wave starts as a press on Start
     does (a book opened by hand closes). Real seconds: x2 doesn't hurry it.
-  - Only a win starts one: never before the first wave, after a save is loaded or another game comes in,
+  - Only a win starts one, or a wave lost to a wipe (played again, decisions-log 322; "An army wiped" below): never
+    before the first wave, after a save is loaded or another game comes in,
     nor when Auto is turned on between waves (the next win does). Meanwhile the player can still press
     Start (the countdown ends), place troops and use items.
   - It stands still while paused, while `Board.holdAutoStart` is set (the Hero splash, #47, sets it), while a
@@ -508,7 +509,8 @@ pause button (#93, which stood in the top left row), in the same place in every 
     lost), left to right. `Game.startLives` 6 is 3 hearts (#79, the owner: "jadi 3 heart saja"; it was 10,
     5 hearts): 5 lives show 2½, 2 lives 1 and 2 empty. No number. A save from before #79 comes back with
     at most 6.
-  - A life lost: the heart it went from (`heartsLost`; several with a bigger loss) pops, up to 1.3× from
+  - A life lost: the heart it went from (`heartsLost`; several with a bigger loss: an army wiped takes 2 lives, so a
+    whole heart, or two halves from an odd count) pops, up to 1.3× from
     its centre and back over `_heartPop` 0.35 s, drawn over its neighbours (`_Lives` keeps last frame's
     lives to see it).
   - More lives than `startLives` (none today) would add hearts, making the panel longer.
@@ -621,6 +623,7 @@ yang mati, troops pakai skill, monster drop item, monster high level appear". It
   | `AwakenSkillCast` (#88) | "<name> uses <skill>" with the level's numeral ("Disarm II") | the full star (48, 0) in the level's colour | cream |
   | `Awakened` | "<type>: Awaken n", and " - <skill>" when the type has a built awakening skill ("Soldier: Awaken 2 - Disarm II") | the full star (48, 0) in the level's colour | the level's colour |
   | `WaveEnded` | "Wave n won" / "Lost at wave n" | the trophy (80, 16) / the dark star (80, 0) | green / light red |
+  | `Wiped` (decisions-log 322) | "Army fell: -1 heart, wave n again" / "Army fell: no hearts left" | the dark heart (32, 0), as a fall's | light red |
   | `OmenGained` (decisions-log 191, only with the Shadows on) | "Monsters got Armor 2 (Boss Chest w90)" (a chest's), "Late Shadow: Wound 2" (the catch-up), "Carve: monsters got Haste 1" | the kind's icon ("Shadows" below) | cream |
   | `OmenEased` | "Shadow eased: Armor down to 1" | the kind's icon | cream |
 
@@ -3804,8 +3807,11 @@ follows the game's position, and never changes the game's positions (fights, the
       three frames, which slash the same way) laid at body height from where it set off to where it cuts, dyed
       magenta (`BeamLook.rush`, `_rushBeam` through `_streak`, 0.5 s). While it dashes, two afterimages of the
       swordsman in flat magenta (`_afterimages`, its walk strip through a `srcIn` filter) trail it at 0.3 and 0.6 of
-      the dash behind, at 50% and 28%. Each cut slashes `fx_hit_swordsman.png`'s X (from its 4th frame) across the
-      foe's body in magenta (`RingLook.crossCut`, `Ring.over` the foe, 0.3 s; no ground ring), with the swordsman's
+      the dash behind, at 50% and 28% (none within 1.5 px of the body: the way home and a dash's end). From its first
+      dash until it is home the swordsman is a phantom that no blow touches (units-and-combat.md, decisions-log 320),
+      and its body shows it the whole time: its own frame at 55% (`_phantomBody`) under the same frame in flat magenta
+      at 40% (`_phantomWash`, the afterimages' `_rushFilter`), so it reads as a see-through magenta ghost. Each cut
+      slashes `fx_hit_swordsman.png`'s X (from its 4th frame) across the foe's body in magenta (`RingLook.crossCut`, `Ring.over` the foe, 0.3 s; no ground ring), with the swordsman's
       hit burst.
     - **Skyfall** (ash `_ash` #D8D2C4): while the axeman is in the air, its own ground shadow
       (`tiny_armored_axeman_shadow.png`) lies where it will land, darkening as it falls and growing with the radius it
@@ -3982,7 +3988,8 @@ follows the game's position, and never changes the game's positions (fights, the
       - their blows show the Hero type's big hit (Chain Hook the axeman's plain one, Spear Wall's the
         lancer's), and a charge's passing blows the `hit_orc_rider` dust.
     - Resurrection says "<name> rises again!" in the message window (`Game.risen`, drained in
-      `_drainCasts`), the one Hero skill that speaks; the troop rises in the gold summon circle
+      `_drainCasts`; not for one fallen again by then, so an army wiped keeps its own message, decisions-log 322), the
+      one Hero skill that speaks; the troop rises in the gold summon circle
       (`awakeFx('summon', 3)`) with a `holy` burst, its death strip played backwards over `riseTime` (`_unit`:
       only `_summoners` have a summon strip).
     - A monster under Slime Hex is drawn with the slime's strips (`tiny_slime_*`), dying one too, with a
@@ -4263,6 +4270,13 @@ follows the game's position, and never changes the game's positions (fights, the
     the Hero splash shows, a boss chest is due (`_chestHolds`) or another message is up; then it shows.
   - Its words fit a phone: at 915×412 the window stands 8 px or more inside the screen
     (`test/cap_warning_hud_test.dart`).
+- **An army wiped** (lib/wipe.dart, decisions-log 322; units-and-combat.md "An army wiped"): the heart lost pops as
+  the last troop falls; the monsters left hop for joy where they stood (the game-over hop, `Game.swept`, drawn with the
+  units) for `wipeCheer` 2.4 s, then each goes in a summon circle (`tiny_fx_summon.png`, the necromancer's). `update`
+  sees `Game.wipedAt` change (`_savedWipe`) and, unless the game is over, saves the game at once (the heart lost stays
+  lost), starts Auto Wave's countdown as a win does, and says in the message window for `_noteTime` 8 s: "Your army
+  fell! -1 heart." / "Wave N again." (`Game.wipeNote`). Between waves the army's fallen are on "Replace fallen" and
+  Auto Buy buys them back as the gold allows; the Auto hold waits for the army as after any wave.
 - **Game over** (`_gameOver`, lib/scoreboard.dart): a light dim (the monsters cheer through it), "GAME OVER  -
   Wave N" (36·u, white), "Score N" (30·u, gold, dark outline) and two buttons side by side, 44·u tall:
   "Scoreboard" (180·u) and "Play again" (140·u; a fresh game, the save deleted). u as on the welcome screen.

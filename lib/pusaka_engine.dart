@@ -814,7 +814,11 @@ extension FxEngine on Game {
             _tally(b.relic).uses++;
           }
         case Fx(eff: Eff.revive, to: To.self):
-          later(b.fx.time, () => _fxRise(b, u)); // a wave's end drops it ([HeroSkills.later])
+          _risesDue++; // the army isn't wiped while it is due (wipe.dart)
+          later(b.fx.time, () {
+            _risesDue--;
+            _fxRise(b, u);
+          }); // a wave's end drops it ([HeroSkills.later])
         default:
           throw _unbuilt(b.fx);
       }

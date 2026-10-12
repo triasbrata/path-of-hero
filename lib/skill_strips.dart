@@ -130,9 +130,11 @@ int? skillStripFrame(SkillAnim a, int frames, double now) {
 enum WindKind { troop, awaken, hero }
 
 /// A troop's skill winding up (decisions-log 299; the owner: "Ancang-ancang beneran", a real wind-up like the monsters'):
-/// its [kind] (an awakening skill's [awaken] at [level]) lands at [until], on its strip's blow. Not saved: a save holds no
-/// wave in progress.
-typedef TroopWind = ({WindKind kind, AwakenSkill? awaken, int level, double until});
+/// its [kind] (an awakening skill's [awaken] at [level]) lands at [until], on its strip's blow. An awakening skill's wind-up
+/// claims what it aims at, [claims] (its foe, or the troops it lifts) and [at] (the spot of its ground, well or leap), so
+/// the others of its type pick something else meanwhile (decisions-log 320, [AwakenSkills._awakenClaim]). Not saved: a save
+/// holds no wave in progress.
+typedef TroopWind = ({WindKind kind, AwakenSkill? awaken, int level, double until, List<Unit> claims, Point<double>? at});
 
 /// The Hero skills without a wind-up here: Snipe aims first anyway ([snipeK].aim; its strip's release is timed to it), and
 /// a move's movement is its build-up (hero_moves.dart).
@@ -150,14 +152,16 @@ extension SkillWinds on Game {
   /// its blow at [strikeAt] if given): it winds up for the strip's frames from its entry to its blow (0.2-0.3 s) and the
   /// skill lands then ([_troopWindTurn]). One with no strip, or a Hero skill of [instantHeroSkills], lands now, and so does
   /// every one in a game without the wind-ups ([Game.skillWinds]: a plain Game()'s, the tests'), its strip only shown.
-  void _windUp(Unit u, WindKind kind, SkillStrip? strip, {AwakenSkill? awaken, int level = 0, double? strikeAt}) {
+  /// An awakening skill claims [claims] and [at] while it winds up ([TroopWind]).
+  void _windUp(Unit u, WindKind kind, SkillStrip? strip,
+      {AwakenSkill? awaken, int level = 0, double? strikeAt, List<Unit> claims = const [], Point<double>? at}) {
     _playStrip(u, strip, strikeAt);
     if (!skillWinds || strip == null || strip.strike <= strip.entry || (kind == WindKind.hero && instantHeroSkills.contains(u.heroSkill))) {
       _landTroopSkill(u, kind, awaken, level);
       return;
     }
     u
-      ..troopWind = (kind: kind, awaken: awaken, level: level, until: t + (strip.strike - strip.entry) / skillStripFps)
+      ..troopWind = (kind: kind, awaken: awaken, level: level, until: t + (strip.strike - strip.entry) / skillStripFps, claims: claims, at: at)
       ..moving = false;
   }
 
@@ -173,13 +177,18 @@ extension SkillWinds on Game {
 
   /// [u]'s skill lands: its effect, then its type's `cast` Fx (pusaka_engine.dart), Afterglow's charged hits (relics.dart)
   /// and the Bayangan's answers to a cast (omen.dart). After a wind-up ([again]) its rule is asked again (MP and cooldown
-  /// aside: [wantsSkill], [wantsAwakenSkill] (Impale by its target alone, its cooldown having just begun), [wantsHeroSkill]),
+  /// aside: [wantsSkill], [wantsAwakenSkill] (Impale by its target alone, its cooldown having just begun; Unbroken by a foe
+  /// in reach alone, decisions-log 320: a knight healed back to full in the wind-up still lands it), [wantsHeroSkill]),
   /// and with nobody to land on it fizzles: none of that happens and its strip stops.
   void _landTroopSkill(Unit u, WindKind kind, AwakenSkill? s, int level, {bool again = false}) {
     if (again &&
         !switch (kind) {
           WindKind.troop => wantsSkill(u),
-          WindKind.awaken => s == AwakenSkill.impale ? _impaleTarget(u) != null : wantsAwakenSkill(u, s!, level),
+          WindKind.awaken => switch (s!) {
+              AwakenSkill.impale => _impaleTarget(u) != null,
+              AwakenSkill.unbroken => _foeInReach(u),
+              _ => wantsAwakenSkill(u, s, level),
+            },
           WindKind.hero => wantsHeroSkill(u),
         }) {
       u.skillAnim = null;
