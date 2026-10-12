@@ -799,16 +799,8 @@ loot-items-relics.md "Pusaka"; this is how they are seen.
   skills' rings: a 1 px oval 20 × 8 (`_pusakaRingSize`, a little wider than the guard's 16 and the effects' 18, which
   sit inside it) round its feet, centred 1 above them, in the Pusaka's colour at 90%, steady (no pulse). Every troop of
   the type wears the same one, a Hero or an awakened troop too (theirs are the halo, and the coloured shadow and
-  outline). In the sprites' pixels (decisions-log 325, the owner: "ring putih atau kuning di bawah troops di buat jadi
-  pixelated"): its cells (`pixelRingCells`: each cell whose middle is inside the oval and one of whose four neighbours'
-  is not, a stepped line one cell thick, the units' shadows' kind of edge) one world unit each, as a sprite's pixels.
-  `TdGame.onLoad` builds them once as a white image with a clear pixel all round (`pusaka_ring`, `_pixelRing`), drawn
-  nearest and without anti-aliasing, flat in the Pusaka's colour (`_ringPaint`: `_flat`, alpha 0.9), its top left a
-  whole number of units from the feet (`_pusakaRingAt` (-11, -6)), so at any zoom its steps fall on the shadow's
-  pixels and each screen pixel is the colour or nothing. The guide's K6 picture draws it the same way (`_ringUnder`).
-  The field's other rings and ellipses stay smooth: the guard's (`_guardRing`), the effects' (`_statusRings`, a
-  Barrier's teal among them), Spear Wall's brace (`_braceRing`), a Hero's halo (`_heroHalo`) and a dragged troop's
-  reach disc (decisions-log 325 lists them for the owner).
+  outline). In the sprites' pixels, as every ring on the field ("The field's rings in pixels"), in the Pusaka's colour
+  at 90% (`_pusakaRingAlpha`); the guide's K6 picture draws it the same way (`_ringUnder`).
 - **The icon:** left of the HP bar, 6 × 6 like a small relic's, past the ones the troop holds (6.5 left of the bar,
   13 behind one relic, 19.5 behind a Hero's two).
 - **The colours** (`_pusakaColors`), kept off the awakening's blue, crimson, gold, violet and white and off the grass's
@@ -839,8 +831,8 @@ loot-items-relics.md "Pusaka"; this is how they are seen.
   heals; Wrath Psalm's smite the holy hit burst (a Priest's smite's) on each monster it strikes; Grave Seal shows nothing
   of its own (the heals that don't land).
 - **Cheap at 32+ troops:** each frame `_PusakaLook.refresh` maps type → Pusaka once (before the units are drawn), so a
-  troop finds its own in one lookup, and each ring is one draw of the one ring image in a paint made once per Pusaka
-  (`_pusakaRings`): no Paint per troop per frame.
+  troop finds its own in one lookup, and each ring is one draw of the one ring image in a paint made once per colour
+  (`_pixelPaint`): no Paint per troop per frame.
 - **The Grail's cut-in** (once a wave): the wave's first Grail save (`Game.grailFirst`, drained by `_grailNews` after
   the casts) shows for `grailCutTime` 1.6 s on the screen's clock: the tooltip frame's tan body at 2× (`_tipBody`,
   sliced 3/3/3/5, the foe banner's plate), centred under the top rows, the map and the boss bars (`_plateTop`), rising
@@ -860,6 +852,34 @@ loot-items-relics.md "Pusaka"; this is how they are seen.
   `_textWidth` counts it so; any HUD string can write a Pusaka's stars as "★2" (`_starGlyph`): the Bag slots and
   rows, the Army badge, the Shop's "Owned ★1", the tooltips' "On: Templar ★1", the chest's messages and log lines
   ("Iron Banner ★1!", "Boss Chest: Iron Banner ★1 (Rare) to Templar").
+
+## The field's rings in pixels (`lib/pixel_shapes.dart`)
+
+The owner, 2026-10-12: "ring putih atau kuning di bawah troops di buat jadi pixelated" (decisions-log 325), then every
+other ring, the Hero's halo and the reach too (325b). No ring, halo or disc on the field is a smooth line any more:
+
+- **How:** each shape is cells one world unit each, as a sprite's pixels. `TdGame.onLoad` builds every one once
+  (`_buildPixelShapes`) as a white image with a clear pixel all round, into process-wide maps (`_ringImages`,
+  `_dashImages`, `_haloImages`, `_discImages`). A draw is one `drawImage`, nearest and without anti-aliasing, flat in its
+  colour (`_pixelPaint`: one paint per colour, made once, given its alpha at each draw; `_flat`), its top left a whole
+  number of world units from the feet (or the cell) it is round, so at any zoom its steps fall on the sprites' pixels
+  and a screen pixel is the colour or nothing. No Paint is made per unit per frame.
+- **A ring** (`pixelRingCells`): each cell whose middle is inside the oval and one of whose four neighbours' is not, a
+  stepped line one cell thick (the units' shadows' kind of edge), its box centred 1 above the feet (`_ringImageAt`; an
+  odd height's half a unit higher, to stay on a whole unit). The sizes: the Pusaka's 20 × 8 (`_pusakaRingSize`), the
+  guard's 16 × 7 (`_guardRingSize`, rows 5 above to 1 below the feet), Spear Wall's brace 18 × 8 (`_braceRingSize`) and
+  the effects' one inside another 18 × 8, 14 × 6, 10 × 4, 6 × 2 (`_effectRingSizes`; a fifth and later takes the last;
+  they were 18 × 8 shrinking by 3 × 1.2). Colours, alphas and pulses are as they were.
+- **A dashed ring** (Impale's pin, Ice Grip's hold; `pixelDashCells`): the ring's cells whose angle round the oval falls
+  in the first half of one of its `ringDashes` 10 shares, turning 0.8 rad/s as the arcs did, in `dashPhases` 8 steps
+  through a dash and its gap (`_dashedRingAt`).
+- **A Hero's halo** (`pixelHaloCells`): a disc of radius 14 ± 1.5 pulsing, drawn at the nearest whole radius (13-16,
+  `haloRadii`), centred 11 above the feet, in `haloBands` 4 bands of white out from the middle, each the old gradient's
+  alpha at the band's middle (0xDD in the middle, 0x88 at 60%, clear at the edge): about 0.80, 0.66, 0.50, 0.17.
+- **A dragged troop's reach** (`pixelDiscCells`): while a troop is dragged over a cell it can go to, a filled disc of
+  its type's range (whole units) round the cell's middle, white at 12% (`_discAt`); the cell's square is as before.
+- **Tests:** `test/pixel_rings_test.dart`; the shots `test/probe_pixel_rings.dart` (testing.md "The field's rings in
+  the sprites' pixels").
 
 ## A foe's skill banner (`lib/foe_cut_in.dart`)
 
@@ -3763,8 +3783,8 @@ follows the game's position, and never changes the game's positions (fights, the
   - **"No MP"** (`Words.noMp`, decisions-log 297): a troop healer a heal found short of MP (`Game.noMp`) pops "No MP"
     over its bars like a skill's name, in the MP bar's blue, lighter (`_noMpPop` #7FB8FF, `_PopKind.noMp`), once
     until it has the MP again (`Unit.dry`; units-and-combat.md "Healers").
-  - A guarded unit stands in a ring at its feet, pulsing, fading out over the guard's last 0.5 s
-    (`_guardRing`), in its guard's colour (`Unit.guardLook`, `_ringColors`): Hold Fast's steel blue, Holy
+  - A guarded unit stands in a ring at its feet (16 × 7 in the sprites' pixels: "The field's rings in pixels"),
+    pulsing, fading out over the guard's last 0.5 s (`_guardRing`), in its guard's colour (`Unit.guardLook`, `_ringColors`): Hold Fast's steel blue, Holy
     Shield's white, a monster skill's own, else the pale blue (a Hero skill's guard).
   - A stunned monster (Crushing Blow) freezes on its hurt strip's first frame.
   - A cast plays its skill strip (decisions-log 299; which, and when: units-and-combat.md "Skill strips"):
@@ -3908,7 +3928,7 @@ follows the game's position, and never changes the game's positions (fights, the
       range, fang = lifesteal, thorns = reflect, potion = healing, guard = a block or veil (or a Pusaka's shield,
       its ward: Watch Shield, Bone Buckler), shield = a cap, MP bolt = mana shield, coin = Plunder, fury = holding
       its ground, heart = a link or Giant's Rage, sword on a knight = its duel. A monster under one shows coloured rings at its feet, one inside another, pulsing
-      like a guard's (`_statusRings`, the map `_effectRings`): ice blue slowed, purple cursed, red marked,
+      like a guard's (`_statusRings`, the map `_effectRings`; in the sprites' pixels, "The field's rings in pixels"): ice blue slowed, purple cursed, red marked,
       orange taunted (a duel's foe too), crimson bleeding; and a monster skill's: amber rallied (War Shout),
       steel grey shielded (Shield Up), mint sped up (`Status.swift`: Howl, Second Wind, Iron March), blue
       rending (Soul Rend), dark crimson lifestealing (Bloodrage), teal soaking (Unholy Ward); an awakening skill's:
@@ -4032,8 +4052,8 @@ follows the game's position, and never changes the game's positions (fights, the
       - Chain Hook's chain while it drags (`_chain`): 1.2-wide links from the axeman's hand to the
         monster's middle, dark and lighter by turns;
       - Spear Wall's brace: the lancer holds its attack strip at full thrust (its middle frame) between its
-        blows, over a steady pale steel ring (`_braceRing`, `_braceColor`) at its feet that fades out over
-        its last 0.5 s;
+        blows, over a steady pale steel ring (`_braceRing`, `_braceColor`; 18 × 8 in the sprites' pixels) at its
+        feet that fades out over its last 0.5 s;
       - their blows show the Hero type's big hit (Chain Hook the axeman's plain one, Spear Wall's the
         lancer's), and a charge's passing blows the `hit_orc_rider` dust.
     - Resurrection says "<name> rises again!" in the message window (`Game.risen`, drained in
@@ -4121,8 +4141,9 @@ follows the game's position, and never changes the game's positions (fights, the
     (`_statusLines`, `_effectLines`). A stunned troop freezes on its hurt strip's first frame, like a stunned
     monster.
 - **Heroes** (lib/hero.dart, a part of main.dart; the rules: units-and-combat.md):
-  - A soft white halo behind the body (`_heroHalo`: a radial gradient fading out, radius 14 ± 1.5 pulsing
-    on the field's clock, centred 11 units above the feet, hopping with the body). An awakening colours
+  - A white halo behind the body (`_heroHalo`: 4 stepped bands fainter outward in the sprites' pixels, "The field's
+    rings in pixels"; radius 14 ± 1.5 pulsing by whole units on the field's clock, centred 11 units above the feet,
+    hopping with the body). An awakening colours
     only the outline, the ground shadow and the sparks (blue / crimson / gold), so a Hero reads apart by
     the white light on the body and the crown.
   - The pack's gold crown (`_icCrown`, `ui_icons.png` (64, 16, 16×16)) 8 units big, just above the bars

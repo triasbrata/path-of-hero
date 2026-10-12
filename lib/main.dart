@@ -80,6 +80,7 @@ part 'spawn_bar.dart';
 part 'page_scroll.dart';
 part 'fps_readout.dart';
 part 'body_look.dart';
+part 'pixel_shapes.dart';
 part 'wizard_fx.dart';
 
 /// The player's volumes (settings.json), set on the book's Settings page; a new game keeps them.
@@ -617,8 +618,8 @@ class TdGame extends FlameGame with KeyboardEvents, ScrollDetector {
         images.add('tiny_${necroHealer}_$a.png', a == 'shadow' ? from.clone() : await _recoloured(from, _necroHealerTint));
       }
       images.add('tiny_fx_holy.png', await _recoloured(images.fromCache('tiny_fx_heal.png'), _holyTint));
-      // The Pusaka's ring under a bound type's troops, in the sprites' pixels (pusaka_look.dart).
-      images.add(_pusakaRingImage, await _pixelRing(_pusakaRingSize.width.toInt(), _pusakaRingSize.height.toInt()));
+      // The field's rings, the Hero's halo and the reach, in the sprites' pixels (pixel_shapes.dart).
+      await _buildPixelShapes();
       // Every monster strip's outline too, drawn in its rank's colour (tier_look.dart).
       for (final k in [...enemyTypes.keys, boss, necroHealer]) {
         for (final a in [..._anims, if (_summoners.contains(k)) 'summon', if (_casters.contains(k)) 'cast', ..._skillAnims(k)]) {
@@ -1337,6 +1338,11 @@ class Board extends PositionComponent
   /// Pusaka [r]'s ring under the feet at [ground] (world units in [c]), drawn as the field draws it ([_ringUnder],
   /// decisions-log 325). For tests.
   void paintPusakaRing(Canvas c, Offset ground, Relic r) => _ringUnder(c, ground, r);
+
+  /// A Hero's halo of whole radius [r] round [middle], and a dragged troop's reach [range] round [middle] at [alpha], drawn
+  /// as the field draws them (pixel_shapes.dart, decisions-log 325). For tests.
+  void paintHeroHalo(Canvas c, Offset middle, int r) => _haloAt(c, middle, r);
+  void paintReachDisc(Canvas c, Offset middle, double range, double alpha) => _discAt(c, middle, range, alpha);
 
   /// Where the open book's left and right pages write this frame: inside each page's printed line, less the book's
   /// padding ([bookWriting]; Rect.zero: the book is shut). For tests.
@@ -2092,9 +2098,7 @@ class Board extends PositionComponent
       final ok = _relocating != null ? g.inZone(cell.$1, cell.$2) : g.canPlace(cell.$1, cell.$2), center = Offset(cell.$1 * tile + tile / 2, cell.$2 * tile + tile / 2);
       c.drawRect(Rect.fromCenter(center: center, width: tile, height: tile),
           Paint()..color = (ok ? Colors.white : Colors.red).withValues(alpha: 0.35));
-      if (ok) {
-        c.drawCircle(center, troopTypes[dragging]!.range, Paint()..color = Colors.white.withValues(alpha: 0.12));
-      }
+      if (ok) _discAt(c, center, troopTypes[dragging]!.range, 0.12); // its reach, in the sprites' pixels (pixel_shapes.dart)
     }
 
     _matLootDraw(c, g); // town_look.dart: the materials lying where they fell, until the wave is won

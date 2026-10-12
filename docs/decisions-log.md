@@ -11480,13 +11480,17 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        the owner's wave-30 save at 1600×947, 40 s of its wave with 29 rings a frame (test/probe_pixel_rings.dart): a
        frame's drawing 1.93 → 1.49 ms on average (95th percentile 3.91 → 2.36), rasterising it in the tests' renderer
        185 → 160 ms; the two runs shared a busy machine, so read it as no rise, not as a gain.
-     - **Still smooth, for the owner to decide** (unchanged; the shots' others-*.png and other-*.png): the guard ring
-       (`_guardRing`: 16 × 7, Hold Fast's steel blue, Holy Shield's white, a taunt's orange, pulsing), the effects' rings
-       (`_statusRings`: 18 × 8 and smaller inside, a monster's statuses, a Barrier's teal soak ring, the Spree's red,
-       Impale's and Ice Grip's dashed one), Spear Wall's brace ring (`_braceRing`, 18 × 8), a Hero's halo (`_heroHalo`, a
-       soft white glow behind its body) and a dragged troop's reach disc (white at 12%, round the cell it would go to).
-       The zones', the wind-ups', the skills' ground circles and reach rings, Holy Shield's dome and a new Hero's gold
-       ring are the packs' sprites, in pixels already.
+     - **Then every other ring, the halo and the reach (325b).** The first pass left the field's other smooth shapes
+       for the owner to decide: the guard ring, the effects' rings (a Barrier's teal among them, Impale's and Ice
+       Grip's dashed one), Spear Wall's brace ring, a Hero's soft halo and a dragged troop's reach disc. The owner asked
+       for all of them, the halo and the disc too, as stepped pixel shapes (a glow as a few stepped bands of alpha, no
+       smooth gradient). By pixel-rings (lib/pixel_shapes.dart; ui-hud.md "The field's rings in pixels"). One module
+       now builds every shape once at load and draws it as the Pusaka's ring is drawn. The guard ring keeps 16 × 7 (an
+       odd height, so its box sits half a unit higher, on whole units); the effects' nested rings go 18 × 8, 14 × 6,
+       10 × 4, 6 × 2 (even, so each stays centred; they shrank by 3 × 1.2 before); the dashed ring turns as before in
+       8 steps a dash; the halo is 4 bands of the old gradient's alpha, its pulse by whole units; the reach is a filled
+       disc at the same 12%. Colours, alphas and pulses are as they were. The zones', the wind-ups', the skills' ground
+       circles and reach rings, Holy Shield's dome and a new Hero's gold ring were the packs' sprites, in pixels already.
 326. **Every Town has its identity, and forged goods sell at 1.3x to 4x their cost by grade and the Town's demand, less
      as one exact product floods, never under 1.3x, back over 2-3 Towns** (the owner, 2026-10-12: "harga item forge
      jangan terlalu murah ini biar jadi alat untuk user mendapatkan uang juga. jadi kalau bisa harga item + forge di jual

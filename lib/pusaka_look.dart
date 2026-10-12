@@ -10,7 +10,8 @@ part of 'main.dart';
 // - the battle log's lines for a save, a relic back in the bag and the wave's report (battle_log.dart), and one line
 //   on "VICTORY!" naming the wave's best counter ([pusakaWinLine]).
 // The field's two are drawn for 32+ troops every frame, so they allocate no Paint: each bound type's Pusaka is looked
-// up once a frame ([_PusakaLook.refresh]) and every ring is one of the paints below.
+// up once a frame ([_PusakaLook.refresh]) and every ring is one draw of pixel_shapes.dart's ring image in a paint made
+// once per colour ([_pixelPaint]).
 
 /// Each Pusaka's colour: its ring on the field and its line in the log. Kept off the awakening's blue, crimson, gold,
 /// violet and white ([_awakeColors]) and off the grass's green, so a ring never reads as an awakened troop's.
@@ -53,57 +54,8 @@ Paint _tintedPaint(Color c) => Paint()
 /// A Pusaka without a colour of its own above: cream on the field, the book's ink on the page.
 const _pusakaColorElse = Color(0xFFFFF1D6), _pusakaInkElse = Color(0xFF4A2C17);
 
-/// The ring under a bound type's troops: 1 px, a little wider than a skill's ring ([_guardRing] 16, the effects' 18), so
-/// those sit inside it. In the sprites' pixels (decisions-log 325): [pixelRingCells], one world unit a cell.
-const _pusakaRingSize = Size(20, 8);
-
-/// The cells of a 1 px oval [w] × [h] in the sprites' pixels (decisions-log 325), each (column, row) from the box's top
-/// left: every cell whose middle is inside the oval and one of whose four neighbours' is not. Its edge steps like the
-/// units' shadows (`tiny_<type>_shadow.png`) and is never two cells thick.
-List<(int, int)> pixelRingCells(int w, int h) {
-  bool inside(int i, int j) {
-    final x = (i + 0.5) / w * 2 - 1, y = (j + 0.5) / h * 2 - 1;
-    return i >= 0 && i < w && j >= 0 && j < h && x * x + y * y <= 1;
-  }
-
-  return [
-    for (var j = 0; j < h; j++)
-      for (var i = 0; i < w; i++)
-        if (inside(i, j) && !(inside(i - 1, j) && inside(i + 1, j) && inside(i, j - 1) && inside(i, j + 1))) (i, j),
-  ];
-}
-
-/// The ring's image, built in memory once ([TdGame.onLoad], [_pixelRing]): [pixelRingCells] of [_pusakaRingSize] in
-/// white, with a clear pixel all round.
-const _pusakaRingImage = 'pusaka_ring';
-
-/// Where the ring's image goes from a troop's feet: its box centred 1 above them, less its clear border. Whole world
-/// units, as a sprite's pixels are from its feet ([_feet]), so its steps fall on the shadow's at any zoom.
-const _pusakaRingAt = Offset(-11, -6);
-
-/// [pixelRingCells] of [w] × [h] in white, framed by a clear pixel all round: the quad's own edges then fall on clear
-/// pixels, so nothing at its border blends either.
-Future<ui.Image> _pixelRing(int w, int h) {
-  final px = Uint8List((w + 2) * (h + 2) * 4);
-  for (final (i, j) in pixelRingCells(w, h)) {
-    final at = ((j + 1) * (w + 2) + i + 1) * 4;
-    px.fillRange(at, at + 4, 255);
-  }
-  final done = async.Completer<ui.Image>();
-  ui.decodeImageFromPixels(px, w + 2, h + 2, ui.PixelFormat.rgba8888, done.complete);
-  return done.future;
-}
-
-/// The rings' paints, one per Pusaka, made once: the ring's white image flat in the Pusaka's colour ([_flat]) at 90%,
-/// nearest and without anti-aliasing, so every pixel is the colour or nothing.
-final _pusakaRings = {for (final MapEntry(:key, :value) in _pusakaColors.entries) key: _ringPaint(value)};
-final _pusakaRingElse = _ringPaint(_pusakaColorElse);
-
-Paint _ringPaint(Color c) => Paint()
-  ..filterQuality = FilterQuality.none
-  ..isAntiAlias = false
-  ..colorFilter = _flat(c)
-  ..color = Colors.white.withValues(alpha: 0.9);
+/// The rings' alpha: steady at 90%. The ring itself is pixel_shapes.dart's ([_pusakaRingSize], decisions-log 325).
+const _pusakaRingAlpha = 0.9;
 
 /// How long the Grail's cut-in shows (seconds on the screen's clock), and the share of it that fades in, and out.
 const grailCutTime = 1.6, _grailFadeIn = 0.12, _grailFadeOut = 0.25;
@@ -283,10 +235,9 @@ extension on Board {
     _ringUnder(c, ground, r);
   }
 
-  /// [r]'s ring round the feet at [ground] (the field's, the guide's pictures): the ring's image ([_pusakaRingImage]) at
-  /// [_pusakaRingAt], in [r]'s paint.
+  /// [r]'s ring round the feet at [ground] (the field's, the guide's pictures), in its colour ([_pixelRingAt]).
   void _ringUnder(Canvas c, Offset ground, Relic r) =>
-      c.drawImage(_img(_pusakaRingImage), ground + _pusakaRingAt, _pusakaRings[r] ?? _pusakaRingElse);
+      _pixelRingAt(c, ground, _pusakaRingSize, _pixelPaint(_pusakaColors[r] ?? _pusakaColorElse, _pusakaRingAlpha));
 
   /// Left of troop [u]'s HP bar ([box]), past the small relics it holds: its type's Pusaka's icon.
   void _pusakaBarIcon(Canvas c, Unit u, Rect box) {
