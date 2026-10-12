@@ -1616,9 +1616,17 @@ animasi attack 2 dan 3 kenapa tidak di pakai ya, itu paadahal bisa di pakai untu
   - a stun, a move (a knockback, a drag) or the wave's end cancels it (`_cancelTroopWind`): nothing lands, nothing is
     refunded, its strip stops;
   - on the blow its rule is asked again (MP and cooldown aside: `wantsSkill`, `wantsAwakenSkill` (Impale by its
-    target alone, `_impaleTarget`: its cooldown has just begun), `wantsHeroSkill`); with nobody to land on it fizzles
-    (nothing refunded); else it lands (`_landTroopSkill`): its effect, then its type's `cast` Fx, Afterglow's charges
-    and the Bayangan's answers to a cast, all moved from the cast to the blow;
+    target alone, `_impaleTarget`: its cooldown has just begun; Unbroken by a foe in reach alone, `_foeInReach`: a
+    knight healed back to full in the wind-up still lands it, decisions-log 320), `wantsHeroSkill`); with nobody to
+    land on it fizzles (nothing refunded); else it lands (`_landTroopSkill`): its effect, then its type's `cast` Fx,
+    Afterglow's charges and the Bayangan's answers to a cast, all moved from the cast to the blow;
+  - an awakening skill's wind-up **claims** what it aims at (`TroopWind.claims` and `at`, `_awakenClaim`;
+    decisions-log 320): Spellbreaker's, Disarm's and Impale's foe, the troops Lifeline lifts, Singularity's foe and the
+    well's spot, Consecration's ground, Skyfall's landing spot. Another troop of its type passes over a claimed foe or
+    troop (`_claimed`), takes no spot within the spacing of a claimed one (`_claimedSpots`: a ground `consecrationK.apart`
+    of its radius, a well its radius, a leap the radius) and with nothing else to aim at doesn't start. Before, the
+    troops of one type raced for one target, each paid its MP and cooldown, and all but the first fizzled on the blow:
+    84% of Spellbreaker's wind-ups, 85% of Lifeline's, 49% of Consecration's;
   - no wind-up for a skill with no strip, Snipe (it aims `snipeK.aim` first anyway; its strip's release is timed to
     that) or a move (Shield Bash, Spear Sweep, Guardian Leap, Death Leap, Cavalry Charge, Chain Hook, Spear Wall:
     `instantHeroSkills`; the movement is the build-up): they land at the cast;
@@ -1736,8 +1744,8 @@ rules):
 | Type | Skill (id) | Cooldown L1 / L2 / L3 | Casts when | Does (L1 / L2 / L3) |
 |---|---|---|---|---|
 | soldier | Disarm (`disarm`) | 11 / 10 / 9 s | a foe in reach (a taunted soldier: only its taunter), not weakened as strongly already (`effectK(o, weaken) > k`), and not Disarmed by any soldier in the last 30 s (`Unit.disarmedAt`, `disarmK.again`; decisions-log 156) | the highest ranked, then the one that hits hardest, then the nearest takes 1.5× / 2× / 2.5× its damage; if it lives it deals 0.9 / 0.85 / 0.8 (the boss rank 0.95 / 0.93 / 0.9) for 6 s (`Status.weaken`) |
-| knight | Unbroken (`unbroken`) | 11 / 10 / 9 s | a foe in reach, and hurt and hit in the last 1 s, or hurt under a monster's hindrance | it gets 25% / 30% / 35% of its max HP back, and the other troops within a tile 10% / 12% / 15% of theirs; it throws off every hindrance a monster put on it (`unbrokenFrees`: taunt, daze, bleed, slow, weaken, vulnerable, and a haste that slows); a Duel of Honour names a monster too, and stays |
-| swordsman | Phantom Rush (`phantomRush`) | 9 s | a foe in reach, while it isn't taunted or falling back | its round is the foes within 2.5 tiles at the cast, the most wounded by HP share first, then the nearest, then the first placed (never a heap of bones: only holy blows hurt one); 3 / 3 / 4 dashes of 0.2 s, each to 8 beside the next living foe of the round (round again after the last) and a cut there of 1.2× / 1.3× / 1.5× its damage; one cut more while Rampage lasts (`frenzyUntil` at the cast), and one more once a cut kills (once a cast); then back where it stood in 0.15 s. A dash is a `Carry` hop of 1, through everyone; its attack pause doesn't run meanwhile |
+| knight | Unbroken (`unbroken`) | 11 / 10 / 9 s | a foe in reach, and hurt and hit in the last 1 s, or hurt under a monster's hindrance (on the wind-up's blow a foe in reach alone, decisions-log 320) | it gets 25% / 30% / 35% of its max HP back, and the other troops within a tile 10% / 12% / 15% of theirs; it throws off every hindrance a monster put on it (`unbrokenFrees`: taunt, daze, bleed, slow, weaken, vulnerable, and a haste that slows); a Duel of Honour names a monster too, and stays |
+| swordsman | Phantom Rush (`phantomRush`) | 9 s | a foe in reach, while it isn't taunted or falling back | its round is the foes within 2.5 tiles at the cast, the most wounded by HP share first, then the nearest, then the first placed (never a heap of bones: only holy blows hurt one); 3 / 3 / 4 dashes of 0.2 s, each to 8 beside the next living foe of the round (round again after the last) and a cut there of 1.2× / 1.3× / 1.5× its damage; one cut more while Rampage lasts (`frenzyUntil` at the cast), and one more once a cut kills (once a cast); then back where it stood in 0.15 s. A dash is a `Carry` hop of 1, through everyone; its attack pause doesn't run meanwhile. From its first dash until it is home it is a **phantom** (`isPhantom`): no blow, monster's effect or stun lands on it (decisions-log 320) |
 | archer | Spellbreaker (`spellbreaker`) | 9 / 8 / 7 s | a foe in range that no silver arrow is flying at yet, with a monster's buff (`spellbreakerStrips`: might, haste, swift, steadfast, shotWard, absorb, reflect, lifesteal, soulRend, given by no troop) or a guard (Bulwark, Bone Shield, Thick Hide) with 1 s or more left; one it would only halve counts while not halved yet | the highest ranked, then the one with the most, then the nearest gets a silver arrow (`Shot.special`, 720/s) for 1.5× / 2× / 2.5× its damage; landing, it strips the foe, and at Bangkit 2 / 3 every foe within 1 / 1.5 tiles of it: a normal, elite or high-elite foe loses those buffs and its guard; a mini boss or the boss rank, and any foe for a buff the boss rank gave (Rally, Howl), loses half of what is left of each, once (`Effect.halved`, `Unit.guardHalved`). It never touches what troops put on monsters |
 | lancer | Impale (`impale`, holds) | 9 s | a foe within its reach + a tile (a taunted lancer: only its taunter): first a **break**, a foe winding up a skill that comes again (a finite cooldown, so never a once-only one: Frenzy, Thick Hide), not the boss rank, not a necromancer (the escort's high elite neither), not stunned, not broken in the last 25 s (`Unit.interruptedAt`); else a **pin**, a strong foe (elite and up) not pinned yet. While a monster it could break stands within 5 tiles it keeps the lance for a break, for 3 s at most after the skill is ready | a lunge for 1.5× / 2× / 2.5× its damage; the lancer stays where it stands. A break picks the highest ranked, then the nearest, then the first placed: its wind-up ends (`_cancelWind`; its cooldown, begun with the wind-up, runs on) and it staggers 0.3 s (`_stunFor`: a mini boss 0.15 s). A pin picks the highest ranked, then the most HP, then the nearest: it walks at 0.1× (the boss rank 0.55×) for 2 / 2.5 / 3 s (`Status.impaled`), and still attacks and casts; no stagger |
 | priest | Lifeline (`lifeline`) | 11 / 10 / 9 s | another troop in its reach, 2+ tiles from it, below 50% HP (30% until decisions-log 156), hit in the last 1 s, with a foe within a tile of it, and neither carried, braced nor holding its ground (`holdGround`) | the 1 / 1 / 2 most hurt (by HP share, then the first placed) are each lifted over 0.45 s (a `Carry` hop of 14, taking blows on the way) to 12 beside the priest, never behind the back line (`_troopRear`); landing with the priest alive, each gets 1.5× / 2× / 2.5× the priest's heal (`_healOf`), and `healedAt` and `waitFrom` are now, so the fall-back brain counts it come to its healer. Its priest fallen meanwhile, it lands unhealed |
@@ -1754,6 +1762,12 @@ rules):
 - **The movers** (branch 2) move only troops, so they cast during a march too. Their moves are `Carry`s
   ("Forced movement"): a carried troop does nothing else and nobody shoves it. The swordsman and the axeman cast
   their own move; Lifeline carries another troop, which a second priest's Lifeline then passes over.
+  - Phantom Rush's swordsman is a phantom through its dashes and its way home (`isPhantom`; the owner, asked what to do
+    about the swordsmen dying mid-rush: "Hantu: kebal saat melompat", a ghost, immune while it leaps; decisions-log
+    320): `_hurt` lands nothing on it, and neither a monster's effect (`addEffect`'s `bad` ones) nor its stun
+    (`stunTroop`) takes. It is the one carried troop that takes no blows. Until then 15-21% of rushes ended with the
+    swordsman dead in the rush, most from full HP: the round hops it among the monsters' front, and every monster
+    there makes it its nearest troop.
 - **The three that act on the monsters' rules** (branch 3) keep the monsters' guard rails:
   - Only Impale cuts a monster's skill short, and at most once in 25 s on one monster (`impaleK.window`). Its break
     stuns only through `_stunFor`, so never the boss rank or a necromancer, a mini boss half as long. It never
@@ -2002,8 +2016,9 @@ at the troops, a troop is knocked back or dragged, a troop is stunned (within li
 tick.
 
 - **Carried** (`Unit.move`): a unit moved by something other than its own legs.
-  - While carried it does nothing else: no walking, no blows, no casting. It still takes blows. Its attack
-    pause (`Unit.cd`) doesn't run meanwhile either.
+  - While carried it does nothing else: no walking, no blows, no casting. It still takes blows, except Phantom
+    Rush's swordsman, a phantom from its first dash until it is home (`isPhantom`, "The movers" in Awakening skills;
+    decisions-log 320). Its attack pause (`Unit.cd`) doesn't run meanwhile either.
   - The awakening skills' movers (#88 branch 2) are carries too: Phantom Rush's dashes (0.2 s, a hop of 1) and its
     way back (0.15 s), Skyfall's leap (0.5 s, a hop of 22) and Lifeline's lift of another troop (0.45 s, a hop of
     14, never behind the back line). `Carry.look` (`CarryLook`: plain, `ghost`, `skyfall`) and `Carry.radius`

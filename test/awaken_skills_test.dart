@@ -1077,6 +1077,8 @@ void main() {
       g.tick(0.01);
       expect(awakenCastsOf(g).single.skill, AwakenSkill.phantomRush);
       expect(isPhantom(u), isTrue);
+      g.addEffect(u, Status.slow, 3, k: 0.5, by: foes.first, bad: true);
+      expect((g.stunTroop(u, 1), u.effects[Status.slow]), (false, null), reason: 'no monster\'s stun or effect takes either');
       var phantom = 0;
       while (u.move != null) {
         expect(isPhantom(u), isTrue, reason: 'every dash and the way home');
@@ -1089,6 +1091,7 @@ void main() {
       expect(isPhantom(u), isFalse);
       runFor(g, 1.5);
       expect(u.hp, lessThan(hp), reason: 'home, the orcs\' blows land again');
+      expect(g.stunTroop(u, 1), isTrue, reason: 'nor a stun');
       expect(isPhantom(foeAt(g, 'orc', u.pos, Tier.elite)..move = Carry(u.pos, u.pos, g.t, g.t + 1, look: CarryLook.ghost)), isFalse,
           reason: 'only a troop');
     });

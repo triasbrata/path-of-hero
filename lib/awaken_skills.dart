@@ -369,8 +369,9 @@ String _dec(double v) => v.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), ''
 String _tiles(double v) => '${_dec(v)} ${v == 1 ? 'tile' : 'tiles'}';
 
 /// Whether troop [u] is a phantom now: in Phantom Rush's dash or on its way home ([CarryLook.ghost]). No blow lands
-/// on a phantom ([Game._hurt]), and the board draws it as a ghost the whole time (decisions-log 320; the owner: "Hantu:
-/// kebal saat melompat"). The one carried troop that takes no blows ("Forced movement" in docs/units-and-combat.md).
+/// on a phantom ([Game._hurt]), nor a monster's effect or stun ([HeroSkills.addEffect]'s bad ones,
+/// [HeroMoves.stunTroop]), and the board draws it as a ghost the whole time (decisions-log 320; the owner: "Hantu: kebal
+/// saat melompat"). The one carried troop that takes no blows ("Forced movement" in docs/units-and-combat.md).
 bool isPhantom(Unit u) => u.side == Side.troop && u.move is Carry && (u.move as Carry).look == CarryLook.ghost;
 
 /// The awakening skills' rules, casts and clocks (game.dart calls in from [Game._trySkill], [Game.startWave] and

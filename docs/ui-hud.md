@@ -3763,8 +3763,11 @@ follows the game's position, and never changes the game's positions (fights, the
       three frames, which slash the same way) laid at body height from where it set off to where it cuts, dyed
       magenta (`BeamLook.rush`, `_rushBeam` through `_streak`, 0.5 s). While it dashes, two afterimages of the
       swordsman in flat magenta (`_afterimages`, its walk strip through a `srcIn` filter) trail it at 0.3 and 0.6 of
-      the dash behind, at 50% and 28%. Each cut slashes `fx_hit_swordsman.png`'s X (from its 4th frame) across the
-      foe's body in magenta (`RingLook.crossCut`, `Ring.over` the foe, 0.3 s; no ground ring), with the swordsman's
+      the dash behind, at 50% and 28% (none within 1.5 px of the body: the way home and a dash's end). From its first
+      dash until it is home the swordsman is a phantom that no blow touches (units-and-combat.md, decisions-log 320),
+      and its body shows it the whole time: its own frame at 55% (`_phantomBody`) under the same frame in flat magenta
+      at 40% (`_phantomWash`, the afterimages' `_rushFilter`), so it reads as a see-through magenta ghost. Each cut
+      slashes `fx_hit_swordsman.png`'s X (from its 4th frame) across the foe's body in magenta (`RingLook.crossCut`, `Ring.over` the foe, 0.3 s; no ground ring), with the swordsman's
       hit burst.
     - **Skyfall** (ash `_ash` #D8D2C4): while the axeman is in the air, its own ground shadow
       (`tiny_armored_axeman_shadow.png`) lies where it will land, darkening as it falls and growing with the radius it
