@@ -96,7 +96,7 @@ Game chestGame({int wave = legendFrom, Random? draft}) => plain()
 List<Relic> get liveLegenda => [for (final r in Relic.values) if (r.pusaka && r.rarity == Rarity.legenda && pusakaCatalog[r]!.live) r];
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("six oaths appended after batch G-3's three (save keys), the army's, chest-only, never sold, ★1 only, no Carve and no "

@@ -90,7 +90,7 @@ double shotOn(Game g, Unit u, Unit by) {
 double? weakenOn(Game g, Unit u) => g.effectOn(u, Status.weaken)?.k;
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("Sap sits in the Langka pool alone, after Healer Hunt; its numbers, title, icon (an existing sheet's cell, its "

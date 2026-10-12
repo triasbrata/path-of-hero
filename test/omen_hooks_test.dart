@@ -80,7 +80,7 @@ bool slot(Tier tier) => tier == Tier.boss || tier == Tier.miniBoss;
 List<num?> fields(Stats s) => [s.hp, s.dmg, s.speed, s.rate, s.range, s.def, s.regen, s.mp, s.mpRegen, s.cost];
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('off: nothing acts', () {
     setUp(() => omensOn = false);

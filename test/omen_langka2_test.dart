@@ -81,7 +81,7 @@ double foeBlow(
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("the ten sit in the Langka pool alone, in the pool's order among L-1B's after today's three that stay; their "

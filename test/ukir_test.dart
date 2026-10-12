@@ -471,7 +471,7 @@ void main() {
       'would; none while they are off', () {
     List<(String, OmenKind, int, int)> run({required bool on}) {
       omensOn = on;
-      addTearDown(() => omensOn = false);
+      addTearDown(() => omensOn = omensDefault);
       final g = w89()..omensOwed.clear(), log = heard(g); // no old save's catch-up: only Ukir's levels
       for (final i in Item.values) {
         g.inventory[i] = 1000;

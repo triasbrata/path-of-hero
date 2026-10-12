@@ -305,7 +305,7 @@ final Map<MonsterHeal, (List<Healed>, Unit) Function(bool sealed)> heals = {
       tickUntil(g, () => heard.any((h) => h.src == MonsterHeal.feed), 2);
       return (heard, orc);
     } finally {
-      omensOn = false;
+      omensOn = omensDefault;
     }
   },
   MonsterHeal.gloat: (sealed) {
@@ -323,7 +323,7 @@ final Map<MonsterHeal, (List<Healed>, Unit) Function(bool sealed)> heals = {
       tickUntil(g, () => heard.any((h) => h.src == MonsterHeal.gloat), 2);
       return (heard, orc);
     } finally {
-      omensOn = false;
+      omensOn = omensDefault;
     }
   },
   MonsterHeal.rekindle: (sealed) {
@@ -342,7 +342,7 @@ final Map<MonsterHeal, (List<Healed>, Unit) Function(bool sealed)> heals = {
       lands(g, orc, MonsterSkill.brutalSwing);
       return (heard, orc);
     } finally {
-      omensOn = false;
+      omensOn = omensDefault;
     }
   },
   MonsterHeal.partingGift: (sealed) {
@@ -364,7 +364,7 @@ final Map<MonsterHeal, (List<Healed>, Unit) Function(bool sealed)> heals = {
       tickUntil(g, () => heard.any((h) => h.src == MonsterHeal.partingGift), 2);
       return (heard, orc);
     } finally {
-      omensOn = false;
+      omensOn = omensDefault;
     }
   },
   MonsterHeal.bloodMoon: (sealed) {
@@ -387,7 +387,7 @@ final Map<MonsterHeal, (List<Healed>, Unit) Function(bool sealed)> heals = {
       tickUntil(g, () => heard.any((h) => h.src == MonsterHeal.bloodMoon), 2);
       return (heard, wolf);
     } finally {
-      omensOn = false;
+      omensOn = omensDefault;
     }
   },
   MonsterHeal.siphon: (sealed) {
@@ -405,7 +405,7 @@ final Map<MonsterHeal, (List<Healed>, Unit) Function(bool sealed)> heals = {
       tickUntil(g, () => heard.any((h) => h.src == MonsterHeal.siphon), 3);
       return (heard, orc);
     } finally {
-      omensOn = false;
+      omensOn = omensDefault;
     }
   },
   MonsterHeal.lastGasp: (sealed) {
@@ -422,7 +422,7 @@ final Map<MonsterHeal, (List<Healed>, Unit) Function(bool sealed)> heals = {
       tickUntil(g, () => heard.any((h) => h.src == MonsterHeal.lastGasp), 1);
       return (heard, boss);
     } finally {
-      omensOn = false;
+      omensOn = omensDefault;
     }
   },
   MonsterHeal.reassemble: (sealed) {

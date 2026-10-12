@@ -124,7 +124,7 @@ double smite({List<OmenKind> omens = const [], double factor = 1, String type = 
 Matcher closeToBlow(double v) => closeTo(v, 1e-9);
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("the seven sit in the Legenda pool alone, among G-1B's and G-2B's after Barrier and Escort (today's seven until "

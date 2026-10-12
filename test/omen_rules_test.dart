@@ -70,7 +70,7 @@ double blowOn(Game g, Unit u, Unit by) {
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the combined caps', () {
     setUp(() => omensOn = true);

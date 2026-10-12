@@ -11548,3 +11548,8 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      - **The lives term in the score goes** (`lifeScore`, 50 a life left, added in the tick the game ended): since 322 a
        game ends only at 0 lives, so it always added 0. The guide's Goal topic said "Score: kills, waves won, hearts
        left."; now "Score: kills and waves won." (scoreboard.md). Scores, saves and telemetry don't change.
+     - **The tests put the Shadows back on after switching them** (`omensDefault`, omen.dart: what `omensOn` starts at,
+       on unless `--dart-define=OMENS=false`). 40 test files reset `omensOn = false` in a `tearDown` (or a `finally`),
+       written while off was the default; since 319 every test after the first such reset in its file played without
+       the Shadows, against 321's rule that the tests play the real rules. They now put the default back; the groups and
+       tests that check the off path still switch it off themselves (testing.md "The Bayangan").

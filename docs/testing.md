@@ -661,10 +661,12 @@ each plain and with each card lifted, at 1266×713 and 412×860.
 
 `test/omen_test.dart` (plain tests, `bareGame` / `placeNow`, every skill off; dice that give set draws and count them,
 `_Seq`; the owner's wave-86 and wave-89 saves of test/fixtures, read-only). `omensOn` is on by default since
-decisions-log 319 (the first test pins it); the `off` group switches it off in `setUp`, and off: a
+decisions-log 319 (the first test pins it), and every test file that switches it puts `omensDefault` back in its
+`tearDown` (decisions-log 329: their resets to off, from before 319, left the rest of each file without the Shadows);
+the `off` group switches it off in `setUp`, and off: a
 chest, a reroll, a take, a Lewati and a wave start draw no Bayangan die, write no key (the game's nor a chest's) and send
 no Bayangan event or field; the owner's saves load with none and no catch-up, and a save written while on loads with its
-Bayangan ignored. The `on` group switches it on in `setUp` (off again in `tearDown`): the seven kinds' pools, numbers,
+Bayangan ignored. The `on` group switches it on in `setUp`: the seven kinds' pools, numbers,
 icons (a sheet in `assets/images/`) and counters (`answers`, Dawn Star's Wound on a priest); a face's tilt (under 2/9 the
 card's counter, the rest of the pool evenly: 1/3 and 1/9 over 90 000 draws); one die draw a card, always 3 a roll (a
 Serpihan, a chest before wave 20), the cards the same on or off; the take's 1/2/3 levels by rarity of the taken face only;

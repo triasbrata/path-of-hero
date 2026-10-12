@@ -183,7 +183,7 @@ double castOnce(Game g, Unit pr, List<TroopHealed> heals) {
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("the seven sit in the Epik pool alone, in the pool's order among E-1B's and E-2B's; the Langka and Legenda pools "

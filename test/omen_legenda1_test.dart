@@ -116,7 +116,7 @@ void crowd(Game g, int n) {
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("the ten sit in the Legenda pool alone, after Barrier and Escort (today's seven until the Legenda cut-over), in "

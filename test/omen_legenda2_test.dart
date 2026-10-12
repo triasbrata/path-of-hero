@@ -172,7 +172,7 @@ void look(Game g, Unit o) {
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("the ten sit in the Legenda pool alone, among G-1B's (and G-3B's) after Barrier and Escort (today's seven until "

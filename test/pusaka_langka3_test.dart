@@ -117,7 +117,7 @@ class _Dice implements Random {
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test('six Langka appended after batch L-2P (save keys), chest-only, in the game; names, Carve roles, epithets, the '

@@ -97,7 +97,7 @@ class _Dice implements Random {
 }
 
 void main() {
-  tearDown(() => omensOn = false);
+  tearDown(() => omensOn = omensDefault);
 
   group('the rows', () {
     test("seven Epik appended after batch E-1P's (save keys), chest-only (sold back at the Epik price), in the game; "

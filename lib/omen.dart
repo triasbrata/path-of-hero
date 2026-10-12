@@ -15,8 +15,14 @@ part of 'game.dart';
 
 /// Whether the Bayangan are in the game: on (the owner, 2026-10-12, decisions-log 319: "Nyalakan"). Off, no face is
 /// drawn ([Game.omenDice] untouched), no save key is written and no event is sent, so a save loads and plays as before
-/// them: the off path a test switches to (and back in its tearDown), or a probe with `--dart-define=OMENS=false`.
-bool omensOn = const bool.fromEnvironment('OMENS', defaultValue: true);
+/// them: the off path a test switches to (and back to [omensDefault] in its tearDown), or a probe with
+/// `--dart-define=OMENS=false`.
+bool omensOn = omensDefault;
+
+/// What [omensOn] starts at: on, unless a build or probe gives `--dart-define=OMENS=false`. A test that switches it puts
+/// this back after (decisions-log 329: the tests' resets to off, from before 319, left every later test in their file
+/// playing without the Shadows).
+const omensDefault = bool.fromEnvironment('OMENS', defaultValue: true);
 
 /// The first wave whose chest's cards hide a Bayangan: a chest rolled earlier has no faces, and Lewati owes no skip buff.
 const omenFrom = 20;
