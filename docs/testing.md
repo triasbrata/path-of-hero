@@ -2773,7 +2773,8 @@ happens, never in the log); the Settings toggle is in hud_test.dart.
 Pure Dart. A save from before the skills and before attack rate left the Heroes' pool (#69; three Heroes with attack rate and no skill) loaded twice
 with the same dice passed to `fromJson` gives the same picks. Then two runs from the same seeds, compared
 wave by wave as one `digest` (the numbers, every unit's rank, HP, MP, place and picks, the bag, who fell):
-a new game through its first Hero (`heroEvery` + 1 waves), and that old save from wave 11 through the mini
+a new game through its first Hero (`heroEvery` + 1 waves; room for 24, since with 16 it loses the first boss wave's
+charge, decisions-log 329), and that old save from wave 11 through the mini
 boss and boss of wave 15. A player that only buys and gives items (`play`) drives both, with a fixed dt.
 
 The camera's invariant sweep (#85) plays the same fixture on seeds 1–3 for 10 waves and checks after every tick:

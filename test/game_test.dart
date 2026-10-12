@@ -5746,9 +5746,13 @@ void main() {
   });
 
   test('a spawn is progress: while the queue still spawns the wave never marches', () {
-    final g = bare()..gold = 1000;
+    final g = bare(Random(1))..gold = 1000;
     expect(placeNow(g, 'knight', 0, 0), isTrue); // stands by: a wave with no troop standing is lost (decisions-log 329)
     g.troops.single.busyUntil = hold;
+    // Every monster stands still from the moment it comes on: not a step toward the knight, so no shove moves them.
+    g.listeners.add((e) {
+      if (e is MonsterSpawned) g.units.last.busyUntil = hold;
+    });
     g.startWave();
     g.queue
       ..clear()
