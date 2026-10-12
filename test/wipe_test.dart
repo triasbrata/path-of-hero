@@ -103,61 +103,68 @@ void main() {
     }
   });
 
-  test('the back line holds the monsters and costs nothing (decisions-log 329): one chasing a troop behind it waits there', () {
+  test('no monster heads for the back line, and nothing is lost there: one goes past it to meet a troop walking in '
+      '(decisions-log 329)', () {
     final g = armyOfOne();
     final s = placeNow(g, 'soldier', 4, 1);
     s
       ..pos = Point(g.baseX - 60, s.pos.y) // bought mid-wave, behind the line, still walking in
       ..entered = false
-      ..busyUntil = hold; // and it stays there
+      ..busyUntil = hold // and it stays there
+      ..maxHp = 1000000
+      ..hp = 1e6;
     g
       ..startWave()
       ..queue.clear();
     final slime = Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(g.baseX + 30, s.pos.y))..entered = true;
     g.units.add(slime);
     runFor(g, 3);
-    expect((slime.alive, slime.gone, slime.pos.x, g.lives, g.waveActive, g.wipedOut), (true, false, g.baseX, Game.startLives, true, false));
+    expect((slime.alive, slime.gone, g.lives, g.waveActive, g.wipedOut), (true, false, Game.startLives, true, false));
+    expect(slime.pos.x, lessThan(g.baseX), reason: 'it went to the troop, over the line');
     expect(g.sfx, isNot(contains(Sfx.leak)));
   });
 
-  test('a wave begun with no troop is lost when its first monster reaches the back line: a heart, and the wave again', () {
+  test('a wave begun with no troop: its monsters wait, and emptyGrace s after they came on the wave is lost', () {
     final g = armyOfOne();
     final events = <GameEvent>[];
     g.listeners.add(events.add);
     g.startWave();
-    var nearest = double.infinity;
-    for (var i = 0; i < 4000 && !g.wipedOut; i++) {
+    while (g.waveSpawned == 0) {
       g.tick(0.05);
-      if (!g.wipedOut) {
-        for (final u in g.enemies) {
-          nearest = min(nearest, u.pos.x);
-        }
-      }
+    }
+    final from = g.t, first = g.enemies.first;
+    for (var i = 0; i < 400 && !g.wipedOut; i++) {
+      g.tick(0.05);
+      if (!g.wipedOut) expect(first.moving, isFalse, reason: 'it waits where it is');
     }
     expect((g.wipedOut, g.lives, g.wave, g.lostWave, g.wipeCause), (true, Game.startLives - wipeLives, 0, 1, WipeCause.empty));
-    expect(nearest, greaterThan(g.baseX + 1), reason: 'none at the line before');
-    expect(g.swept.map((u) => u.pos.x).reduce(min), lessThanOrEqualTo(g.baseX + 1), reason: 'the first one there');
+    expect(g.wipedAt - from, inInclusiveRange(emptyGrace, emptyGrace + 0.1));
     final w = events.whereType<Wiped>().single;
     expect((w.cause, w.toJson()['cause']), (WipeCause.empty, 'empty'));
     expect(g.wipeNote, 'No troops! -1 heart.\nWave 1 again.');
   });
 
-  test('with no troop, a monster on its way to the line loses nothing yet: a troop bought now meets it', () {
-    final g = armyOfOne()
-      ..startWave()
-      ..queue.clear();
-    final slime = Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(g.baseX + 200, fieldH / 2))..entered = true;
-    g.units.add(slime);
-    runFor(g, 0.5);
+  test('with no troop standing, a troop bought within emptyGrace s keeps the wave on; monsters a test put on the field with '
+      'no spawn are no wave', () {
+    final g = armyOfOne()..startWave();
+    while (g.waveSpawned == 0) {
+      g.tick(0.05);
+    }
+    runFor(g, emptyGrace - 1);
     expect((g.wipedOut, g.lives, g.waveActive), (false, Game.startLives, true));
     placeNow(g, 'soldier', 4, 1); // bought in time
-    slime.pos = Point(g.baseX, slime.pos.y);
-    g.tick(0.05);
+    runFor(g, 2);
     expect((g.wipedOut, g.lives), (false, Game.startLives), reason: 'a troop stands');
+
+    final h = armyOfOne()
+      ..startWave()
+      ..queue.clear();
+    h.units.add(Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(h.baseX + 200, fieldH / 2))..entered = true);
+    runFor(h, emptyGrace + 1);
+    expect((h.wipedOut, h.lives), (false, Game.startLives));
   });
 
-  test('a stalled wave\'s monsters charge the back line and hold it, striking a troop in reach; not won in marchMax s, '
-      'the wave is lost', () {
+  test('a stalled wave\'s monsters charge the troops and strike them; not won in marchMax s, the wave is lost', () {
     final g = armyOfOne()..skills = false;
     final s = placeNow(g, 'soldier', 4, 1)..busyUntil = hold; // never strikes back
     final events = <GameEvent>[];
@@ -165,7 +172,7 @@ void main() {
     g
       ..startWave()
       ..queue.clear();
-    final orc = foeAt(g, 'orc', Point(g.baseX + 400, s.pos.y))
+    final orc = foeAt(g, 'orc', Point(s.pos.x + 400, s.pos.y))
       ..maxHp = 1000000
       ..hp = 1e6
       ..busyUntil = double.negativeInfinity;
@@ -177,16 +184,11 @@ void main() {
     }
     expect((g.marching, g.newMarch), (true, true));
     expect(g.sfx, contains(Sfx.leak), reason: 'the charge\'s alarm');
-    final at = g.t;
-    runFor(g, 20);
-    expect(orc.pos.x, lessThanOrEqualTo(g.baseX + tile / 2), reason: 'at the line');
-    expect(orc.pos.x, greaterThanOrEqualTo(g.baseX), reason: 'never past it');
+    final at = g.t, hp = s.hp;
+    runFor(g, 5);
+    expect(orc.pos.distanceTo(s.pos), lessThan(orc.stats.range + 8), reason: 'at the soldier');
+    expect(s.hp, lessThan(hp), reason: 'it strikes');
     expect(g.lives, Game.startLives);
-    // The soldier walked into its reach (it is held): put it there, and the orc strikes it.
-    s.pos = Point(orc.pos.x + 8, orc.pos.y);
-    final hp = s.hp;
-    runFor(g, 3);
-    expect(s.hp, lessThan(hp), reason: 'it holds the line and strikes');
     for (var i = 0; i < 2000 && !g.wipedOut; i++) {
       g.tick(0.05);
     }

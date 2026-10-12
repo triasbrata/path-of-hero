@@ -2967,12 +2967,12 @@ Pure Dart (lib/wipe.dart). A soldier at 1 HP beside a werebear makes the wipe (`
 - What the lost wave paid stays (gold, score, kills) and no bonus or wave score comes; its lying materials are lost; the
   replay's win pays its bonus and score once and clears `lostWave`.
 - The last heart (2 lives, and 1): game over, the monsters stay, no lives score, the clock stands still.
-- The back line (decisions-log 329): a slime chasing a troop that stands behind the line waits at it, alive, no life
-  lost, no `Sfx.leak`. A wave begun with no troop is lost (`WipeCause.empty`, "No troops! -1 heart.") when its first
-  monster reaches the line, not before; with no troop, a monster on its way loses nothing yet, and a troop bought then
-  stands. A stalled wave's monsters charge (`Sfx.leak`), stop at the line and strike a troop that comes in reach; not won
-  `marchMax` s on, the wave is lost (`WipeCause.slow`, "Too slow! -1 heart.", `marchNote`); a march won in time is a
-  won wave.
+- The back line (decisions-log 329): no monster heads for it; a slime that goes past it to meet a troop walking in is
+  alive, no life lost, no `Sfx.leak`. A wave begun with no troop: its monsters wait, and `emptyGrace` s after they came
+  on it is lost (`WipeCause.empty`, "No troops! -1 heart."); a troop bought within the grace keeps it on, and monsters a
+  test put on the field with no spawn are no wave. A stalled wave's monsters charge the troops (`Sfx.leak`) and strike
+  them; not won `marchMax` s on, the wave is lost (`WipeCause.slow`, "Too slow! -1 heart.", `marchNote`); a march won in
+  time is a won wave.
 - A boss wave (wave 10, a Hero's too) lost: no chest nor Hero; won on the replay: one of each.
 - Towns: one left before the lost wave isn't due again; one marked for after it is due only once the replay is won.
 - The Shadows: the catch-up lands once for the wave number (not on the replay), and Lewati's skip buff owed meets the

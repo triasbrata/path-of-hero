@@ -146,7 +146,7 @@ void main() {
     // decisions-log 329: the back line costs nothing; a march not won in marchMax s costs a heart.
     expect(guideEn.intro[0].lines.join(' / '),
         'Monsters come from the right. / Lose your army: lose a heart, / and play the wave again. / No hearts left: game over.');
-    expect(lines('K16'), 'The wave took too long: / the monsters charge your line. / Kill them in ${marchMax.round()} s / or lose a heart.');
+    expect(lines('K16'), 'The wave took too long: / the monsters charge your troops. / Kill them in ${marchMax.round()} s / or lose a heart.');
     expect(lines('K3'), startsWith('Wave $necroHealerFrom: a healer monster.'));
     // K4 first says how to get ready (decisions-log 176), then what the boss leaves.
     expect(lines('K4'),

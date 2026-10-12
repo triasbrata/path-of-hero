@@ -60,13 +60,27 @@ Unit plain(Game g, Point<double> at) => g.monster('werebear', Tier.highElite, at
   ..maxHp = 1 << 30
   ..hp = 1e9;
 
-/// A wave under way, monster skills off and no troop, whose mini boss (and boss, with [boss]) came on as the wave
-/// spawns them (the overtime clock's last start, at the returned time), then stand and fight nobody; beside them a
+/// A troop far off that neither fights nor falls: since decisions-log 329 a wave whose monsters came on with no troop
+/// standing is lost [emptyGrace] s on.
+void bystander(Game g) {
+  g.gold += 1000;
+  expect(g.place('soldier', 0, 0), isTrue);
+  g.units.last
+    ..entered = true
+    ..arriving = false
+    ..busyUntil = 1e9
+    ..maxHp = 1 << 30
+    ..hp = 1e9;
+}
+
+/// A wave under way, monster skills off and only a [bystander], whose mini boss (and boss, with [boss]) came on as the
+/// wave spawns them (the overtime clock's last start, at the returned time), then stand and fight nobody; beside them a
 /// plain monster ([plain]) whose HP the test takes so the stall clock never stalls. The test takes the slots' HP too.
 (Game, List<Unit>, Unit, double) slotFight({bool boss = false}) {
   final g = Game(Random(1))
     ..units.clear()
     ..monsterSkills = false;
+  bystander(g);
   g.startWave();
   // On the field before the spawns, so its HP is in the stall clock's low from the first spawn on.
   final filler = plain(g, Point(g.baseX + 200, fieldH / 2));
@@ -106,7 +120,7 @@ void main() {
     var most = x0;
     while (g.waveActive && g.t - start < 300) {
       g.tick(dt);
-      if (!g.marching) most = max(most, wizard.pos.x);
+      if (g.waveActive && !g.marching) most = max(most, wizard.pos.x); // before the charge (it chases the wizard on)
     }
     // qa-3's scene: both go right, the boss after the wizard, the view in tow, its blows a new low of HP every time. Past
     // [stallDrift] they are no progress; [stallTime] later the boss marches, and neither can fall, so [marchMax] s on the

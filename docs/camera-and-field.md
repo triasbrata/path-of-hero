@@ -152,8 +152,9 @@ the middle of the screen is where our troops and the monsters actually hit each 
 
 ## Back line (`baseX`) and deploy zone
 
-- `baseX` is the zone start, and the line no monster passes (decisions-log 329: a monster there stands at it and waits
-  for the troops; until then one over it was gone and cost a life, half a heart). It only moves forward, and only when
+- `baseX` is the zone start. Since decisions-log 329 it costs nothing: no monster heads for it (its goal is a troop),
+  and one that goes past it to meet a troop walking in loses nothing; until then a monster with no foe walked to it,
+  and one over it was gone and cost a life, half a heart. It only moves forward, and only when
   a wave is won
   (#79, the owner: "garis belakang di majukan setiap selesai wave saja"):
   - mid-wave it stays put, however far the army fights its way forward. The view centres the battle, so

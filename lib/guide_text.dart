@@ -333,7 +333,7 @@ GuideText guideFor() => GuideText(
     'K16': [
       GuidePage('Too slow', [
         'The wave took too long:',
-        'the monsters charge your line.',
+        'the monsters charge your troops.',
         'Kill them in ${marchMax.round()} s',
         'or lose a heart.',
       ]),

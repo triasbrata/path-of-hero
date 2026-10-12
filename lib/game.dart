@@ -1181,8 +1181,8 @@ const bossBarLayer = 1000;
 }
 
 /// A wave whose own monsters make no progress for this long (none gets nearer the base or falls to a new
-/// low of HP, none dies, none spawns) has stalled: its monsters give up the fight and charge the back line through the
-/// troops ([Game.marching]), and the wave must be won within [marchMax] s. A necromancer's endless skeletons in
+/// low of HP, none dies, none spawns) has stalled: its monsters drop their tactics and charge the troops
+/// ([Game.marching]), and the wave must be won within [marchMax] s. A necromancer's endless skeletons in
 /// front of 1–2 kiting archers stalled wave 5 for good (#39).
 const stallTime = 30.0;
 
@@ -1210,10 +1210,11 @@ const stallProgress = 0.05;
 /// 600 s on the slots' progress alone; the slowest win of the late replays it ended came 278 s after the last spawn.
 const stallOvertimeMax = 300.0;
 
-/// A wave still on this long after its monsters began to march ([Game.marching]) is lost as a wiped one is: a heart, and
-/// the wave again ([WipeCause.slow], wipe.dart). Until decisions-log 329 the march ended at the back line, each monster
-/// over it half a heart, and the wave then counted as won: a w60 boss wave lost 5 lives that way, 87 s into its march.
-/// Of the other 6 marches in that audit's 397 waves, the troops killed every marcher within seconds.
+/// A wave still on this long after its monsters began to charge ([Game.marching]) is lost as a wiped one is: a heart,
+/// and the wave again ([WipeCause.slow], wipe.dart). Until decisions-log 329 the march walked through the troops to the
+/// back line, each monster over it half a heart, and the wave then counted as won: a w60 boss wave lost 5 lives that
+/// way, 87 s into its march. Of the other 6 marches in that audit's 397 waves, the troops killed every marcher within
+/// seconds.
 const marchMax = 60.0;
 
 /// The other necromancer ("Nekromanser Penyembuh", drawn as the boss recoloured teal): a support that
@@ -3556,13 +3557,16 @@ class Game {
   /// Phoenix Plume rises due ([HeroSkills.later]): while one is, the army isn't wiped. A wave's end drops them.
   int _risesDue = 0;
 
-  /// The wave stalled ([stallTime]): its monsters walk straight to the back line, through the troops, and
-  /// don't summon or heal any more; there they hold it, striking whatever troop comes in reach ([_holdLine]). Within
-  /// [marchMax] s of its start the wave is won, or lost (wipe.dart). Cleared when the wave ends.
+  /// The wave stalled ([stallTime]): its monsters charge the troops ([_charge]) and don't heal, summon or back off any
+  /// more. Within [marchMax] s of its start the wave is won, or lost (wipe.dart). Cleared when the wave ends.
   bool marching = false;
 
-  /// When the monsters began to march ([marching]).
+  /// When the monsters began to charge ([marching]).
   double _marchAt = 0;
+
+  /// Since when no troop has stood in this wave whose monsters came on and none of which fell ([emptyGrace], wipe.dart);
+  /// null while one stands.
+  double? _emptyFrom;
 
   /// The monsters just started marching ([marching]), for the UI to say so; the UI clears it.
   bool newMarch = false;
@@ -3689,6 +3693,7 @@ class Game {
     // the after-wave heals while it starts ([RetreatBrain.carryHealQueue]).
     if (!retreatPolicy.brain.carryHealQueue) healQueue.clear();
     marching = stalled = false;
+    _emptyFrom = null;
     _stallLow = _frontLow = double.infinity;
     _progressAt = _quietFrom = _overtimeFrom = t;
     _slotHp = _slotMaxHp = 0;
@@ -5341,11 +5346,15 @@ class Game {
       return;
     }
     final others = enemies.where((o) => o.alive && !o.stats.heals).toList();
-    // Alone, it walks on toward the back line like a monster with nobody to fight (into the troops' reach), so a wave
-    // never stalls.
+    // Alone, it walks on toward the troops (into their reach), so a wave never stalls; with none standing it waits.
     if (others.isEmpty) {
       act(Mend.alone);
-      return _moveToward(u, Point(baseX, u.pos.y), dt);
+      final to = _nearestFoe(u);
+      if (to == null) {
+        u.moving = false;
+        return;
+      }
+      return _moveToward(u, to.pos, dt);
     }
     if (back != null) {
       act(Mend.backOff);
@@ -5455,15 +5464,19 @@ class Game {
     return waits[best]! > 0 ? choice(saving: best, scores: scores) : choice(cast: best, scores: scores);
   }
 
-  /// A marching monster ([marching]): straight for the back line, through the troops; there it holds the line, striking
-  /// the nearest troop that comes in its reach, and walks no further (decisions-log 329: until then it went over the
-  /// line, half a heart lost).
-  void _holdLine(Unit u, double dt) {
-    if (u.pos.x > baseX + tile / 2) return _moveToward(u, Point(baseX, u.pos.y), dt);
-    u.moving = false;
+  /// A charging monster ([marching], decisions-log 329: the owner, "monster juga nga perlu ke garis belakang karna kan
+  /// targetnya para troops"): straight at the troop it goes for ([_monsterFoe]), to the edge of its reach, and it strikes
+  /// there; no heal, summon, skill or backing off. With no troop standing it waits where it is. Until 329 the march walked
+  /// through the troops to the back line, and each monster over it cost half a heart.
+  void _charge(Unit u, double dt) {
     u.cd -= dt;
-    final foe = _nearestFoe(u);
-    if (foe == null || !reaches(u, foe)) return;
+    final foe = _monsterFoe(u);
+    if (foe == null) {
+      u.moving = false;
+      return;
+    }
+    if (!reaches(u, foe)) return _moveToward(u, _reachPoint(u, foe), dt);
+    u.moving = false;
     _face(u, foe.pos.x - u.pos.x, 0);
     if (u.cd <= 0) _strike(u, foe);
   }
@@ -5576,7 +5589,7 @@ class Game {
         continue;
       }
       if (marching && u.side == Side.enemy) {
-        _holdLine(u, dt); // the wave stalled: straight for the back line, and it holds it
+        _charge(u, dt); // the wave stalled: straight at the troops
         continue;
       }
       // The summoner thinks about raising minions every so often ([decideSummon]); after deciding to wait
@@ -5683,7 +5696,7 @@ class Game {
           }
         }
       } else if (u.side == Side.enemy) {
-        _moveToward(u, Point(baseX, u.pos.y), dt); // nobody to fight (a Phoenix rise due): on to the back line, no further
+        u.moving = false; // no troop standing (a Phoenix rise due, a wave begun with none): it waits (decisions-log 329)
       } else {
         _rest(u, dt);
       }
@@ -5704,7 +5717,7 @@ class Game {
     for (var i = 0; i < live.length; i++) {
       for (var j = i + 1; j < live.length; j++) {
         final a = live[i], b = live[j], d = b.pos - a.pos, len = d.magnitude;
-        if (len >= _personalSpace || (marching && a.side != b.side)) continue; // marching, they walk through
+        if (len >= _personalSpace) continue; // (a march walked through the troops until decisions-log 329: it charges them now)
         if (_passesThrough(a) || _passesThrough(b)) continue; // hopping over, or charging through
         final push = len > 0.01 ? d * ((_personalSpace - len) / 2 / len) : Point(0.0, (_personalSpace / 2) * (i.isEven ? 1 : -1));
         if (a.side == Side.troop && b.side == Side.troop) {
@@ -5758,9 +5771,9 @@ class Game {
         // but its own steps left stand: a monster the view glided past still comes on (#42).
         if (u.entered && u.pos.x > rightLimit) u.pos = Point(max(rightLimit, min(u.pos.x, start[u]?.x ?? u.pos.x)), u.pos.y);
       }
-      // The back line holds the monsters as it holds the troops: one there waits for a troop to come to it. Until
-      // decisions-log 329 one over it was gone and cost a life, half a heart.
-      if (u.side == Side.enemy && u.pos.x < baseX) u.pos = Point(baseX, u.pos.y);
+      // No monster heads for the back line any more: its goal is always a troop, and with none standing it waits
+      // (decisions-log 329). One past the line, meeting a troop that walks in from behind it, costs nothing; until 329 it
+      // was gone and cost a life, half a heart.
     }
 
     // A shot whose target fell or left flies on to where it was, and lands there as on it (decisions-log 327).
@@ -5805,7 +5818,7 @@ class Game {
     _watchStall(spawned);
     // The army down, or a march not won in time: a heart lost, the wave swept and played again (wipe.dart).
     if (wasActive && !wipedOut && !over) {
-      if (_waveLost case final why?) _wipe(why);
+      if (_waveLost() case final why?) _wipe(why);
     }
 
     if (wasActive && !waveActive && !over && !wipedOut) {

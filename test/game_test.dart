@@ -1415,7 +1415,7 @@ void main() {
     expect(won.wave, 1);
   });
 
-  test('monsters come from the right; a wave begun with no troop is lost when one reaches the back line (decisions-log '
+  test('monsters come from the right; a wave begun with no troop is lost emptyGrace s after they come on (decisions-log '
       '329)', () {
     final g = bare(Random(1))..startWave();
     var spawnedRight = false;
@@ -4135,9 +4135,13 @@ void main() {
     expect(knight.healedUntil, double.negativeInfinity);
   });
 
-  test('a healing necromancer left alone walks on toward the back line, and swings at a troop in its way', () {
+  test('a healing necromancer left alone walks on toward the troops, and swings at a troop in its way', () {
     final g = bare();
     final u = mender(g, const Point(250, 60));
+    final at = u.pos;
+    g.tick(0.05);
+    expect((u.pos, u.moving), (at, false), reason: 'no troop standing: it waits (decisions-log 329)');
+    standing(g, 'knight', const Point(40, 60));
     for (var i = 0; i < 5; i++) {
       final x = u.pos.x;
       g.tick(0.05);
@@ -5654,7 +5658,7 @@ void main() {
     expect(capped, greaterThan(0));
   });
 
-  test('the lives the hearts show: startLives in a new game; a monster at the back line costs none (decisions-log 329)', () {
+  test('the lives the hearts show: startLives in a new game; a monster over the back line costs none (decisions-log 329)', () {
     expect(Game().lives, Game.startLives);
     final g = bare();
     expect(placeNow(g, 'knight', 2, 3), isTrue);
@@ -5663,11 +5667,11 @@ void main() {
     g.units.addAll(at); // over the line, as one was that leaked
     g.tick(0.05);
     expect((g.lives, g.over), (Game.startLives, false));
-    expect(at.every((u) => u.alive && u.pos.x >= g.baseX), isTrue, reason: 'the line holds them');
+    expect(at.every((u) => u.alive && !u.gone), isTrue, reason: 'still on the field, after the knight');
   });
 
-  test('a wave nobody can finish stalls after stallTime: its monsters charge the back line, and marchMax s on the wave '
-      'is lost', () {
+  test('a wave nobody can finish stalls after stallTime: its monsters charge the troops, and marchMax s on the wave is '
+      'lost', () {
     final g = Game(Random(1)); // the free priest alone: it can't hurt a bat and outheals its bites
     g.startWave();
     g.queue
@@ -5742,7 +5746,10 @@ void main() {
   });
 
   test('a spawn is progress: while the queue still spawns the wave never marches', () {
-    final g = bare()..startWave();
+    final g = bare()..gold = 1000;
+    expect(placeNow(g, 'knight', 0, 0), isTrue); // stands by: a wave with no troop standing is lost (decisions-log 329)
+    g.troops.single.busyUntil = hold;
+    g.startWave();
     g.queue
       ..clear()
       ..addAll(List.filled((1.5 * stallTime / Game.spawnGap).ceil(), ('slime', Tier.normal)));
@@ -5766,21 +5773,20 @@ void main() {
     expect(g.t - last, greaterThan(stallTime));
   });
 
-  test('marching monsters walk through the troops, and neither strike, raise nor heal', () {
+  test('charging monsters go at the troops and strike them, and neither raise nor heal (decisions-log 329)', () {
     final g = bare()..gold = 1000;
     placeNow(g, 'knight', 2, 3);
-    final knight = g.troops.single..busyUntil = hold; // doesn't hit back either
-    final bear = g.monster('werebear', Tier.normal, knight.pos + const Point(2, 0)); // on top of it
+    final knight = g.troops.single..busyUntil = hold; // doesn't hit back
+    final bear = g.monster('werebear', Tier.normal, knight.pos + const Point(80, 0));
     g.units.add(bear);
     g.marching = true;
-    var x = bear.pos.x;
-    for (var i = 0; i < 30; i++) {
+    final x = bear.pos.x;
+    for (var i = 0; i < 400 && knight.hp == knight.maxHp; i++) {
       g.tick(0.05);
-      expect(bear.pos.x, lessThan(x), reason: '$i');
-      x = bear.pos.x;
     }
-    expect(bear.pos.x, lessThan(knight.pos.x)); // walked through
-    expect(knight.hp, knight.maxHp);
+    expect(bear.pos.x, lessThan(x), reason: 'it came at the knight');
+    expect(bear.pos.x, greaterThan(knight.pos.x), reason: 'and stopped at it: no walking through any more');
+    expect(knight.hp, lessThan(knight.maxHp), reason: 'it strikes');
 
     final n = bare()..wave = 5;
     final necro = n.monster(boss, Tier.boss, const Point(250, 60))

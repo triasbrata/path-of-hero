@@ -115,13 +115,19 @@ void main() {
   test('an escort comes on with its boss: the four right behind a mini boss or boss from wave 50 follow it', () {
     for (final w in [50, 51, 60]) {
       final g = bare(seed: 3, wave: w - 1)..startWave();
+      // A troop far off that neither fights nor falls: a wave with none standing is lost (decisions-log 329).
+      g.units.add(Unit(Side.troop, 'soldier', troopTypes['soldier']!, Point(g.baseX - 40, fieldH / 2))
+        ..entered = true
+        ..busyUntil = 1e9
+        ..maxHp = 1 << 30
+        ..hp = 1e9);
       g.queue.removeRange(0, g.queue.indexWhere((e) => e.$2 == Tier.miniBoss || e.$2 == Tier.boss)); // the slots on
       final n = g.queue.length, spawned = <Unit>[];
       for (var i = 0; i < 2000 && spawned.length < n; i++) {
         g.tick(0.05);
         for (final u in g.enemies.where((u) => u.raisedBy == null && !spawned.contains(u))) {
           spawned.add(u
-            ..busyUntil = 1e9 // stands where it came on: nobody leaks
+            ..busyUntil = 1e9 // stands where it came on
             ..entered = true);
         }
       }

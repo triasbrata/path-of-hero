@@ -11803,29 +11803,39 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      - **`Game.keepUpWithView` goes**, a `static const` always true (#61's option A): its off arms in `speedTo`,
        `_rearEdge` and a healer's walk-in could never run. The rule itself is unchanged (camera-and-field.md "Back line").
        Whether the keep-up floor still binds once 324's front cap is in is measured after that merge (the audit's item 8).
-     - **The back line costs nothing** (game.dart, lib/wipe.dart; game-overview.md "Lose", units-and-combat.md): a
-       monster can't pass `baseX` (a clamp, as the troops have theirs); one that gets there waits for the troops, and no
-       life is lost. Deleting the line's cost needed three rules the audit named, so every lost wave costs one heart:
-       - **Monsters at the left end** stop at the line and fight on: one chasing a troop bought mid-wave that walks in
-         from behind the line waits there for it. The crossings in an army's last seconds (Auto Buy's one fresh troop
-         alive) are gone with it: such a collapse now ends at the wipe, one heart, not up to 2.5.
-       - **No troop standing** (a wave begun with none, or left with none): the wave is lost when a monster reaches the
-         line (`WipeCause.empty`, "No troops! -1 heart."), not at its first spawn: until then a troop bought mid-wave
-         can still meet it. Until now such a wave was never a wipe and its monsters walked over, half a heart each.
-       - **The collapse and the stall: `marchMax` 60 s.** The stall watchdog keeps its triggers; its march is a charge:
-         the monsters walk through the troops to the line and hold it, striking the troop nearest them in reach
-         (`_holdLine`), and a wave still on 60 s after its charge began is lost (`WipeCause.slow`, "Too slow! -1 heart.";
-         the charge says "Monsters charge! Win in 60 s or lose a heart." with the old leak sound). Until now the march
-         ended at the line, half a heart a monster, and the wave then counted as won (the w60 boss wave: 5 lives, 87 s
-         into its march). The other 6 marches of the audit were won within seconds and still would be. The suggestion
-         "no troop struck or was struck for N s while monsters advance" wasn't taken: between two monster groups the
-         army often fights nobody for 5-10 s, and in a collapse each fresh troop strikes before it falls, so it would
-         fire in ordinary waves and miss the grinder; the stall watchdog already measures "no progress".
+     - **The back line costs nothing** (game.dart, lib/wipe.dart; game-overview.md "Lose", units-and-combat.md), and
+       then, the owner (2026-10-13), "monster juga nga perlu ke garis belakang karna kan targetnya para troops"
+       (monsters don't need to go to the back line either, since their target is the troops): no monster heads for
+       `baseX` any more; its goal is always a troop. Deleting the line's cost needed three rules the audit named, so
+       every lost wave costs one heart:
+       - **Monsters at the left end**: none walks there. A monster with no foe stands where it is (a lone mending
+         necromancer walks to the nearest troop); one that goes past the line to meet a troop bought mid-wave, walking
+         in from behind it, costs nothing. The crossings in an army's last seconds (Auto Buy's one fresh troop alive)
+         are gone with it: such a collapse now ends at the wipe, one heart, not up to 2.5. The first build clamped the
+         monsters at `baseX` (as the troops have theirs); with nothing aiming there the clamp went: it held nothing a
+         rule needed, and its only catch (a monster shoved over) loses nothing now.
+       - **No troop standing** (a wave begun with none, or left with none): the wave is lost `emptyGrace` 5 s after
+         its monsters came on (`WipeCause.empty`, "No troops! -1 heart."); a troop bought meanwhile, by hand or by
+         Auto Buy, keeps it on. The first build lost it when a monster reached the line, then (the monsters no longer
+         walking there) at its first spawn, which ended the waves the tests begin empty and buy into at once; the grace
+         is the owner's "about 5 s". Until now such a wave was never a wipe and its monsters walked over, half a heart
+         each.
+       - **The collapse and the stall: `marchMax` 60 s.** The stall watchdog keeps its triggers; its march is a charge
+         at the troops (`_charge`): every monster goes straight at the troop it goes for and strikes it, with no skill,
+         summon, heal or backing off; a wave still on 60 s after its charge began is lost
+         (`WipeCause.slow`, "Too slow! -1 heart."; the charge says "Monsters charge! Win in 60 s or lose a heart." with
+         the old leak sound). The first build charged the line through the troops and held it (`_holdLine`), gone with
+         the owner's words. Until now the march walked to the line, half a heart a monster over it, and the wave then
+         counted as won (the w60 boss wave: 5 lives, 87 s into its march). The other 6 marches of the audit were won
+         within seconds and still would be. The suggestion "no troop struck or was struck for N s while monsters
+         advance" wasn't taken: between two monster groups the army often fights nobody for 5-10 s, and in a collapse
+         each fresh troop strikes before it falls, so it would fire in ordinary waves and miss the grinder; the stall
+         watchdog already measures "no progress".
        - **Watchman's Brew goes** (an Epic Tavern boost that forgave a wave's first crossing): the Plate is the one Epic;
          a save's `watch` offer or boost is dropped as an unknown kind's; the event `boostSaved` and the wave's
          `boostSaved` go. **Texts:** the guide's first page "Monsters come from the right. / Lose your army: lose a
          heart, / and play the wave again. / No hearts left: game over."; K16 "The wave took too long: / the monsters
-         charge your line. / Kill them in 60 s / or lose a heart." and its picture one heart lost (it drew a heart and a
+         charge your troops. / Kill them in 60 s / or lose a heart." and its picture one heart lost (it drew a heart and a
          half); the wipe's note and battle-log line by cause ("Army fell", "No troops", "Too slow").
        - **Telemetry:** `eventVersion` and `telemetryVersion` 16 (331 took 15): a `wipe`'s `cause` (`fell`, `empty`,
          `slow`); `boostSaved` gone.

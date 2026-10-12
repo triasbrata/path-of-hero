@@ -1208,15 +1208,16 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
   - The book's numbers (`Game.fieldStats`: the Army page's eight, the Bag's and the Artifacts' previews, an item's
     line) show the walk a troop gets (`Stats.walking`), and the Army page's Speed is red at the cap (ui-hud.md "Field
     stats").
-- A monster with no foe walks left, to `baseX` and no further. **The back line holds the monsters** (decisions-log 329;
-  the owner picked "Hapus garis belakang"): one that gets there (chasing a troop bought mid-wave that walks in from
-  behind the line, or with no troop left) stands at it, `x ≥ baseX`, and waits for the troops; nothing is lost there.
-  Until then a monster over it was gone and cost a life, half a heart (Watchman's Brew forgave a wave's first). The
-  audit before: no monster crossed while 2 or more troops stood outside a march, in 397 waves on that day's rules; it
+- **No monster heads for the back line** (decisions-log 329; the owner picked "Hapus garis belakang", then: "monster
+  juga nga perlu ke garis belakang karna kan targetnya para troops"): its goal is always a troop (`_monsterFoe`,
+  "Fighting rules" above), and with no troop standing it waits where it is (a lone mending necromancer walks to the
+  nearest troop). One that goes past `baseX` to meet a troop walking in from behind the line costs nothing. Until then
+  a monster with no foe walked left, and one over the line was gone and cost a life, half a heart (Watchman's Brew
+  forgave a wave's first). The audit before: no monster crossed while 2 or more troops stood outside a march, in 397 waves on that day's rules; it
   happened in an army's last seconds (Auto Buy's one fresh troop kept the wave from counting as wiped, so it cost up
   to 2.5 hearts), in waves begun with no troop, and in a stall march. Each of those is now a lost wave
-  (lib/wipe.dart, game-overview.md "Lose"): the army falls in the end, with no troop standing a monster reaching the
-  line loses the wave, and a march has `marchMax` s.
+  (lib/wipe.dart, game-overview.md "Lose"): the army falls in the end, a wave with no troop standing is lost
+  `emptyGrace` 5 s after its monsters come on, and a charge has `marchMax` s.
 - **Stalled waves** (`stallTime` 30 s, `_watchStall`, `Game.marching`; #39): every wave ends.
   - Progress: the wave's own monsters (raised minions don't count) get nearer the base, fall to a new
     low of HP or die, or one spawns. `_watchStall` keeps a running low of "what is left": their
@@ -1250,18 +1251,18 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
         `marchMax` s to be won).
     - Why a march began is `Marched.why` (`MarchCause`: `stalled`, `drifting`, `overtime`, `overtimeMax`), for the
       listeners.
-  - With no progress for `stallTime`, the wave has stalled and its monsters **charge** (`Game.marching`, decisions-log
-    329). Every monster (minions too) walks straight to `baseX` and passes through the troops: no shoves between the
-    two sides while marching. They don't summon or heal any more (a necromancer finishes a cast already started), nor
-    strike on the way. At the line they stop and hold it (`_holdLine`): each strikes the nearest troop that comes in its
-    reach, and walks no further. Troops still hit them all the way.
+  - With no progress for `stallTime`, the wave has stalled and its monsters **charge the troops** (`Game.marching`,
+    `_charge`; decisions-log 329). Every monster (minions too) goes straight at the troop it goes for (`_monsterFoe`),
+    to the edge of its reach, and strikes it there; it doesn't summon, heal, use a skill or back off any more (a
+    necromancer finishes a cast already started). With no troop standing it waits. Until 329
+    the march walked straight to `baseX` through the troops (no shoves between the two sides) and struck nobody.
   - **`marchMax` 60 s:** a wave still on 60 s after its march began is lost as a wiped one is (`WipeCause.slow`: a
     heart, the monsters swept, the wave again; lib/wipe.dart). Until decisions-log 329 the march ended at the back
     line, each monster over it half a heart, and the wave then counted as won: in that audit's 397 waves 7 marched; 6
     were won within seconds (the troops cut the marchers down on their way), and a w60 boss wave lost 5 lives 87 s into
     its march and still counted as won.
-  - A march needs the monsters to be able to walk: the right-edge clamp lets a monster's own steps left
-    stand (#42, camera-and-field.md), so one the view glided past marches too.
+  - A charge needs the monsters to be able to walk: the right-edge clamp lets a monster's own steps left
+    stand (#42, camera-and-field.md), so one the view glided past charges too.
   - The UI says "Monsters charge! Win in 60 s or lose a heart." once (`Game.newMarch`, `marchNote`, ui-hud.md), and
     `Sfx.leak` sounds (a monster over the line until decisions-log 329). The march ends with the wave and isn't saved
     (saves come only between waves).
@@ -1512,14 +1513,15 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
 - **An army wiped, and the other lost waves** (lib/wipe.dart, decisions-log 322, 329; the owner: "Kalah wave: −1 hati,
   ulang", then "Hapus garis belakang"): checked at the end of `tick`, after the raised joined and before the win
   (`_waveLost`, its `WipeCause`):
-  - `fell`, the army down (`_armyDown`): none is alive (a troop Resurrection raised this tick counts), no Phoenix Plume
+  - `fell`, the army down: none is alive (a troop Resurrection raised this tick counts), no Phoenix Plume
     rise is due (`_risesDue`, counted when its `later` is set, dropped by `_endEffects`), a monster lives or is queued
     (the last troop and the last monster falling together is a win), and a troop fell this wave (`fallen` isn't empty);
-  - `empty`, the same with none fallen, once a monster stands at the back line (`x ≤ baseX + 1`): a wave begun with no
-    troop ("No troops!"). Until then the player may still buy one (a troop bought mid-wave walks in), and nothing is
-    lost. Until decisions-log 329 it was never a wipe, and its monsters walked over the back line, half a heart each:
-    how 4 of the audit's 5 whole runs ended;
-  - `slow`, a stalled wave's march still on `marchMax` 60 s after it began ("Too slow!"; "Stalled waves" above).
+  - `empty`, the same with none fallen, `emptyGrace` 5 s on (`_emptyFrom`), counted from when the wave's monsters came
+    on (`waveSpawned` > 0; monsters a test put on the field with no spawn are no wave): a wave begun with no troop ("No
+    troops!"). Its monsters wait where they are meanwhile, and a troop bought then (by hand or Auto Buy) keeps the wave
+    on. Until decisions-log 329 it was never a wipe, and its monsters walked over the back line, half a heart each: how
+    4 of the audit's 5 whole runs ended;
+  - `slow`, a stalled wave's charge still on `marchMax` 60 s after it began ("Too slow!"; "Stalled waves" above).
 
   Then `_wipe`:
   - `wipeLives` 2 lives go (a heart; floor 0), `wipedOut` is set (until the next wave starts), `wipedAt` = `t`,

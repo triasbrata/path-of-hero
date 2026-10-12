@@ -37,10 +37,10 @@ but the troops move freely.
    to the next wave (with Auto Wave on, 5 s after coming in).
 5. **Lose.** A game starts with 3 hearts. When the whole army falls mid-wave the wave is lost, not the game
    (decisions-log 322): it costs a heart, the wave's monsters cheer a moment and are swept off, and the same wave is
-   played again after a break to buy the army back ("Your army fell! -1 heart. Wave N again."). With no troop standing
-   (a wave begun with none), the wave is lost the same way when a monster reaches the back line ("No troops!"), and so is a stalled wave whose monsters charge
-   and aren't beaten within 60 s ("Too slow!"). The back line costs nothing: monsters can't pass it and wait there for
-   the troops (until decisions-log 329 each one over it cost half a heart). Its win's gold, Hero, boss chest and Town
+   played again after a break to buy the army back ("Your army fell! -1 heart. Wave N again."). A wave begun with no
+   troop is lost the same way 5 s after its monsters come on ("No troops!"; time to buy one), and so is a stalled wave
+   whose monsters charge the troops and aren't beaten within 60 s ("Too slow!"). The back line costs nothing: the
+   monsters' goal is always the troops, never the line (until decisions-log 329 each one over it cost half a heart). Its win's gold, Hero, boss chest and Town
    come only when it is won. Game over when the last heart is lost (3 hearts = 3 chances); then the monsters cheer. The score (kills by rank, won waves) goes
    on the scoreboard under the player's name, asked the first time ("Scoreboard", also on the welcome screen).
 

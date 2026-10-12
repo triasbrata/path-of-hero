@@ -307,8 +307,9 @@ it changes when it is done or no longer holds, never back and forth tick by tick
 - **Can't heal** (MP below `necroHealCost`, or nobody hurt it can safely reach): it swings at a troop in
   its scythe's reach, taking at most one short step to it. It never walks toward the troops to find a
   fight; otherwise it backs off, goes to its rest spot or holds.
-- **Alone** (no other monster standing): it walks on toward the back line like a monster with nobody to
-  fight, swinging at troops that reach it, so a wave can't stall on it.
+- **Alone** (no other monster standing): it walks on toward the nearest troop, swinging at troops that reach it,
+  so a wave can't stall on it; with no troop standing it waits (until decisions-log 329 it walked on toward the back
+  line, like a monster with nobody to fight).
 - `speedTo` (below) is troops only.
 - Probe (a fixed army over 10 seeds, waves 5–20, while other monsters stand):
   - share of time inside a troop's reach + 1 tile: 42–57% before, 0–20% after;

@@ -4327,7 +4327,7 @@ follows the game's position, and never changes the game's positions (fights, the
   "Relic slots full"), a greyed row of the Tas page's list (its reason), a Remove refused ("Only between
   waves", #91), a greyed Sell's reason (the Shop's card and the Bag page's Sell row) and the Bag page's Sell all
   ("Sold Sword x86: +86,000 gold", decisions-log 169), and
-  for "Monsters charge!" / "Win in 60 s or lose a heart." when a stalled wave's monsters start charging the back line
+  for "Monsters charge!" / "Win in 60 s or lose a heart." when a stalled wave's monsters start charging the troops
   (`Game.newMarch`, drained in `update`; `marchNote`, lib/wipe.dart; units-and-combat.md, "Stalled waves"; "Monsters
   broke through!" until decisions-log 329). Also "The Tide rises! Monsters get stronger
   every wave" once when a save from before the tide comes in with it already on (`Game.tideCaughtUp`, drained in
@@ -4348,8 +4348,8 @@ follows the game's position, and never changes the game's positions (fights, the
   - Its words fit a phone: at 915×412 the window stands 8 px or more inside the screen
     (`test/cap_warning_hud_test.dart`).
 - **A lost wave** (lib/wipe.dart, decisions-log 322, 329; units-and-combat.md "An army wiped, and the other lost
-  waves"): the heart lost pops as the wave is lost (the last troop falls, a monster reaches the line with no troop
-  standing, the march runs out); the monsters left hop for joy where they stood (the game-over hop, `Game.swept`, drawn with the
+  waves"): the heart lost pops as the wave is lost (the last troop falls, 5 s pass with no troop standing once the
+  wave's monsters came on, the charge runs out); the monsters left hop for joy where they stood (the game-over hop, `Game.swept`, drawn with the
   units) for `wipeCheer` 2.4 s, then each goes in a summon circle (`tiny_fx_summon.png`, the necromancer's). `update`
   sees `Game.wipedAt` change (`_savedWipe`) and, unless the game is over, saves the game at once (the heart lost stays
   lost), starts Auto Wave's countdown as a win does, and says in the message window for `_noteTime` 8 s: "Your army

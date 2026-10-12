@@ -1719,7 +1719,7 @@ class Board extends PositionComponent
     _coachTick(g); // the guide's pointers: done, or dropped (coach.dart)
     if (g.newMarch) {
       g.newMarch = false;
-      showMessage(marchNote); // the wave stalled: its monsters charge the back line ([Game.marching], wipe.dart)
+      showMessage(marchNote); // the wave stalled: its monsters charge the troops ([Game.marching], wipe.dart)
     }
     if (g.tideCaughtUp) {
       g.tideCaughtUp = false;
