@@ -11401,7 +11401,10 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        at load as a white image with a clear pixel round it and drawn nearest, without anti-aliasing, flat in the
        Pusaka's colour, a whole number of units from the feet, so at any zoom its steps fall on the shadow's pixels and
        a screen pixel is the colour or nothing. The guide's K6 picture draws it the same way.
-     - **No dearer:** one image draw per ring in a paint made once per Pusaka, as the oval was one draw.
+     - **No dearer:** one image draw per ring in a paint made once per Pusaka, as the oval was one draw. Measured on
+       the owner's wave-30 save at 1600×947, 40 s of its wave with 29 rings a frame (test/probe_pixel_rings.dart): a
+       frame's drawing 1.93 → 1.49 ms on average (95th percentile 3.91 → 2.36), rasterising it in the tests' renderer
+       185 → 160 ms; the two runs shared a busy machine, so read it as no rise, not as a gain.
      - **Still smooth, for the owner to decide** (unchanged; the shots' others-*.png and other-*.png): the guard ring
        (`_guardRing`: 16 × 7, Hold Fast's steel blue, Holy Shield's white, a taunt's orange, pulsing), the effects' rings
        (`_statusRings`: 18 × 8 and smaller inside, a monster's statuses, a Barrier's teal soak ring, the Spree's red,

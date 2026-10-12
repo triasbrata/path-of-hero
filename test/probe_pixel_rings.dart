@@ -124,7 +124,13 @@ void main() {
       // ignore: avoid_print
       print('$name: zoom $k screen px a world unit; bound ${{for (final MapEntry(key: r, value: p) in g.pusaka.entries) if (p.type != null) r.name: p.type}}');
       final view = Offset.zero & size;
-      bool shows(Unit u) => u.alive && bound.contains(u.type) && view.contains(b.toScreen(u.pos.x, u.pos.y + 5));
+      // Where a troop's feet are drawn on the screen: at its drawn body (body_look.dart), not its game position.
+      Offset feetOf(Unit u) {
+        final p = b.drawnAt(u);
+        return b.toScreen(p.x, p.y + 5);
+      }
+
+      bool shows(Unit u) => u.alive && bound.contains(u.type) && view.contains(feetOf(u));
       for (final (look, pick) in [
         ('plain', (Unit u) => !u.hero && g.awakenLevel(u.type) == 0),
         ('hero', (Unit u) => u.hero),
@@ -138,7 +144,7 @@ void main() {
         }
         // ignore: avoid_print
         print('$name $look: ${u.type} at ${u.pos} (Hero ${u.hero}, Awaken ${g.awakenLevel(u.type)})');
-        final feet = b.toScreen(u.pos.x, u.pos.y + 5);
+        final feet = feetOf(u);
         final crop = Rect.fromLTWH(feet.dx - 18 * k, feet.dy - 30 * k, 36 * k, 36 * k).intersect(view);
         await zoom(shot, Rect.fromLTRB(crop.left.floorToDouble(), crop.top.floorToDouble(), crop.right.ceilToDouble(), crop.bottom.ceilToDouble()),
             6, '$look-$name');
@@ -147,9 +153,9 @@ void main() {
       // The rings and ellipses still drawn smooth (unchanged, for the owner to decide), put on for one frame: Holy
       // Shield's white guard ring, Spear Wall's brace ring, a monster's effect rings (a slow's ice blue, a Barrier's teal),
       // a Hero's halo, and a dragged troop's reach disc. others-<size>, and a 6x close-up of each (other-<what>-<size>).
-      final near = [for (final u in g.troops) if (u.alive && !u.hero && view.contains(b.toScreen(u.pos.x, u.pos.y + 5))) u];
+      final near = [for (final u in g.troops) if (u.alive && !u.hero && view.contains(feetOf(u))) u];
       final foe = g.units.where((u) => u.side == Side.enemy && u.alive && view.contains(b.toScreen(u.pos.x, u.pos.y + 5))).firstOrNull;
-      final hero = g.troops.where((u) => u.alive && u.hero && view.contains(b.toScreen(u.pos.x, u.pos.y + 5))).firstOrNull;
+      final hero = g.troops.where((u) => u.alive && u.hero && view.contains(feetOf(u))).firstOrNull;
       if (near.length < 3 || foe == null) {
         // ignore: avoid_print
         print('$name others: too few in view (${near.length} troops, foe $foe)');
@@ -163,7 +169,7 @@ void main() {
       foe
         ..effects[Status.slow] = Effect(g.t + 5, 0.5, bad: true)
         ..shield = 100;
-      final dragAt = b.toScreen(dragged.pos.x, dragged.pos.y - tile);
+      final dragAt = feetOf(dragged) - Offset(0, (tile + 5) * k);
       b
         ..dragging = dragged.type
         ..dragAt = Vector2(dragAt.dx, dragAt.dy);
@@ -175,7 +181,7 @@ void main() {
         ..dragAt = null;
       for (final (what, u, up) in [('guard', guarded, 8.0), ('brace', braced, 8.0), ('foe', foe, 8.0), if (hero != null) ('halo', hero, 14.0),
         ('drag', dragged, 8.0)]) {
-        final feet = what == 'drag' ? dragAt : b.toScreen(u.pos.x, u.pos.y + 5);
+        final feet = what == 'drag' ? dragAt : u.side == Side.troop ? feetOf(u) : b.toScreen(u.pos.x, u.pos.y + 5);
         final half = what == 'drag' ? 30 * k : 18 * k;
         final crop = Rect.fromLTWH(feet.dx - half, feet.dy - (up + 22) * k, 2 * half, (up + 30) * k).intersect(view);
         await zoom(others, Rect.fromLTRB(crop.left.floorToDouble(), crop.top.floorToDouble(), crop.right.ceilToDouble(), crop.bottom.ceilToDouble()),
@@ -226,6 +232,6 @@ void main() {
     // ignore: avoid_print
     print('$tag raster: ${stats(raster)}');
     b.state = Game();
-    await frames(1);
+    await tester.pump(const Duration(milliseconds: 100)); // the notes' tap's timer runs out
   });
 }
