@@ -45,7 +45,9 @@ import 'settings.dart';
 /// 12: the Bayangan switched on (decisions-log 319): their fields (8's, Dusk's) reach every player's records.
 /// 13: an army wiped mid-wave costs a heart and the wave is played again (decisions-log 322): the event `wipe`, and a
 /// wave record's `end` `wiped`.
-const telemetryVersion = 13;
+/// 14: the Towns' market and identities (decisions-log 326): a `storeSold` of an item or a small relic carries its
+/// `margin` and `pressure`, a `townEntered` its `n` and `identity`; an item's and a small relic's `gain` is the market's.
+const telemetryVersion = 14;
 
 /// Where [HttpSink] posts (`--dart-define=TELEMETRY_SERVER=https://...`). None by default, so nothing is sent.
 const telemetryServer = String.fromEnvironment('TELEMETRY_SERVER');

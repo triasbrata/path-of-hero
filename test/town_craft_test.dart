@@ -298,7 +298,7 @@ void main() {
       // The tier's and the shop's sell shares are read by nothing since the market (decisions-log 326); a recipe's gold
       // is in the relic's cost, at the floor.
       expect((g.buyPrice(Relic.fang), g.buyPrice(Relic.fang, 2)), (10000, 20000));
-      expect(g.costOf(Relic.fang).gold, 800);
+      expect(g.costOf(Relic.fang).gold, g.craftRecipe(Relic.fang)!.gold);
       expect((g.sellPrice(Relic.fang), g.sellPrice(Relic.fury)), (g.marketPrice(Relic.fang), g.marketPrice(Relic.fury)));
       expect((g.buyPrice(Item.potion), g.buyPrice(Item.potion, 1), g.sellPrice(Item.potion)), (3000, 3300, g.marketPrice(Item.potion)));
     });

@@ -220,7 +220,7 @@ void main() {
     expect(tavern['bought'], isEmpty);
     expect((tavern['rerolls'], tavern['spent']), (0, 0));
     expect([for (final e in log) if (e is TownMarked || e is TownEntered || e is TownLeft) logLine(e)],
-        ['${Words.townAfter} 6', Words.town, 'Left town']);
+        ['${Words.townAfter} 6', '${Words.town}: Millbrook', 'Left town'], reason: 'the Town gone into by its identity (decisions-log 326)');
     expect(logLine(log.whereType<TownMarked>().single), 'Town after wave 6');
     g.startWave();
     expect(g.wave, 7);
@@ -238,7 +238,7 @@ void main() {
     expect((left.auto, g.log.entries.whereType<TownEntered>().single.auto), (true, true));
   });
 
-  test('the save: `town` {chance, last, at, in}; a save in the Town reopens in it; a passed '
+  test('the save: `town` {chance, last, at, in, n}; a save in the Town reopens in it; a passed '
       "mark and a stray `in` are dropped; a save without the key counts a Town before its own wave", () {
     final g = towns(dice: _Dice([0.99, 0.99, 0.1, 0.5]));
     for (var w = 1; w <= 7; w++) {
@@ -253,7 +253,8 @@ void main() {
     g.enterTown();
     final inside = save(g);
     // The Tavern's visit rides along (on as shipped; its own save: tavern_test.dart).
-    expect({...inside['town'] as Map}..removeWhere((k, _) => '$k'.startsWith('tavern')), {'chance': 0.2, 'last': 2, 'at': 9, 'in': true});
+    expect({...inside['town'] as Map}..removeWhere((k, _) => '$k'.startsWith('tavern')),
+        {'chance': 0.2, 'last': 2, 'at': 9, 'in': true, 'n': 1}, reason: 'n: the Towns gone into (decisions-log 326)');
     expect((inside['town'] as Map).containsKey('tavern'), isTrue, reason: "the visit's offers");
     final back = load(inside);
     expect((back.inTown, back.townDue, back.canStartWave), (true, true, false));

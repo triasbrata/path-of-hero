@@ -66,16 +66,20 @@ void main() {
       expect((chip.left >= 0, chip.bottom < size.height), (true, true));
       expect(b.bookArea.overlaps(chip), isFalse, reason: 'clear of the open book');
       expect(b.bookTabs.any((t) => t.$2.overlaps(chip)), isFalse, reason: "clear of the book's tabs");
-      // The tooltip under the mouse: "Town after wave 11", the Smithy, the Tavern (decisions-log 268) and the Shop (open
-      // in every Town, decisions-log 253).
+      // The tooltip under the mouse: "Town after wave 11" and which Town, the Smithy, the Tavern (decisions-log 268) and the
+      // Shop (open in every Town, decisions-log 253) with what the Town pays well for.
       final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await mouse.addPointer(location: Offset.zero);
       addTearDown(mouse.removePointer);
       await mouse.moveTo(chip.center);
       await frames(tester, 30);
-      expect(b.tooltipShown?.$1, 'Town after wave 11');
-      expect(b.tooltipShown?.$2, ['Smithy: craft items and relics', 'Tavern: buy boosts', 'Shop: buy and sell'],
-          reason: 'the forge on (decisions-log 272), the Tavern on (decisions-log 268)');
+      expect(b.tooltipShown?.$1, 'Town after wave 11: Millbrook, a farming village', reason: 'its identity (decisions-log 326)');
+      expect(b.tooltipShown?.$2, [
+        'Smithy: craft items and relics',
+        'Tavern: buy boosts',
+        'Shop: buy and sell',
+        'Pays well for Boots, Potion, Gloves and Prayer Beads.',
+      ], reason: 'the forge on (decisions-log 272), the Tavern on (decisions-log 268)');
       await mouse.moveTo(Offset.zero);
       // Mid-wave 11 the chip stays (the Town comes after it).
       g.startWave();

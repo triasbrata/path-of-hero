@@ -75,12 +75,14 @@ void main() {
   });
 
   test("the prices: 2.5x the material's sell price rounded up to 5 (Slime Gel 25, Wolf Claw 65, Evil Eye 750, Soul Orb "
-      '1500, Lich Orb 2000), the same after a buy; an item, a small relic or a material not seen is "Not for sale"', () {
+      "1500, Lich Orb 2000), the market's 10% more for each bought (a Trophy 25%; decisions-log 326); an item, a small "
+      'relic or a material not seen is "Not for sale"', () {
     final g = forgeShopGame();
     expect({for (final m in seen) m: g.buyPrice(m)},
         {Mat.wolfClaw: 65, Mat.slimeGel: 25, Mat.lichOrb: 2000, Mat.evilEye: 750, Mat.soulOrb: 1500});
     for (final m in seen) {
-      expect((g.buyPrice(m), g.basePrice(m), g.buyPrice(m, 3)), (g.shopMatPrice(m), g.shopMatPrice(m), g.shopMatPrice(m)), reason: '$m');
+      final after3 = ((g.shopMatPrice(m) * g.matFactor(m, 3)) / 5 - 1e-9).ceil() * 5;
+      expect((g.buyPrice(m), g.basePrice(m), g.buyPrice(m, 3)), (g.shopMatPrice(m), g.shopMatPrice(m), after3), reason: '$m');
       expect(g.whyNotBuy(m), isNull, reason: '$m');
     }
     expect(storeRefusalNames[StoreRefusal.notSold], 'Not for sale');
@@ -94,13 +96,14 @@ void main() {
     expect([g.inventory, g.relicBag, g.materials, g.storeBought], [bag, relics, mats, isEmpty]);
     expect(g.sfx.where((s) => s == Sfx.error), hasLength(3));
 
-    // A patched rise (town.json shop.matRise) adds its share a buy, counted as the store's other goods.
+    // A patched rise (town.json shop.matRise) adds its share a buy, counted as the store's other goods, and the market's
+    // 10% goes on it (30 x 1.1, up to 35).
     g.townRules = TownRules.patch({
       'shop': {'matRise': 0.1},
     });
-    expect([g.buyPrice(Mat.slimeGel), g.buyPrice(Mat.slimeGel, 1)], [25, 30]);
+    expect([g.buyPrice(Mat.slimeGel), g.buyPrice(Mat.slimeGel, 1)], [25, 35]);
     expect(g.buy(Mat.slimeGel), isTrue);
-    expect((g.buyPrice(Mat.slimeGel), g.gold), (30, gold - 25));
+    expect((g.buyPrice(Mat.slimeGel), g.gold), (35, gold - 25));
   });
 
   test('buying a material: its price in gold, one more in the Bag (a first one too), the coin; never added to matsSeen; '

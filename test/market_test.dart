@@ -68,7 +68,7 @@ void main() {
     expect(g.hppOf(Item.royalSword), 2 * 40 + 35 + 250);
     final mithril = (parts: sell(Mat.evilEye) + 2 * sell(Mat.ironScrap) + sell(Mat.graveSteel), gold: 1000);
     expect(g.costOf(Item.royalSword, 2),
-        (parts: 115 + 2 * mithril.parts, gold: 250 + 2 * (500 + mithril.gold)), reason: '+2: two steps of a Mithril each');
+        (parts: 115 + 2 * mithril.parts, gold: 250 + 500 + 1000 + 2 * mithril.gold), reason: '+2: two steps, a Mithril each');
     // +4 takes a Starmetal: a Soul Orb, a Lich Orb and a Mithril, and its own gold.
     final star = (parts: sell(Mat.soulOrb) + sell(Mat.lichOrb) + mithril.parts, gold: 3000 + mithril.gold);
     expect(g.costOf(Item.sword, 4), (
@@ -94,7 +94,7 @@ void main() {
     ]);
     expect(rules.rowOf(40), rules.towns.last, reason: 'every Town past the table: its last row');
     final g = inTown(1); // Millbrook: Boots, Potion, Gloves, Prayer Beads
-    expect((g.freshMargin(Item.sword), g.freshMargin(Item.boots), g.freshMargin(Item.royalSword)), (3.0, closeTo(3.9, 1e-9), 1.6));
+    expect([g.freshMargin(Item.sword), g.freshMargin(Item.boots), g.freshMargin(Item.royalSword)], [3.0, closeTo(3.9, 1e-9), 1.6]);
     expect(g.sellPrice(Item.sword), 206); // 20 x 1.3 + 60 x 3.0
     expect(g.sellPrice(Item.boots), 182); // 20 x 1.3 + 40 x 3.9
     expect(g.sellPrice(Item.royalSword), 509); // 250 x 1.3 + 115 x 1.6
@@ -116,10 +116,10 @@ void main() {
     }
     // The late Towns pay for high-class goods; a beginner item there stays at the floor.
     g.townCount = 7; // Frostgate: Sword, Cap/Helm, Ring, Amulet
-    expect((g.freshMargin(Item.royalSword), g.freshMargin(Item.royalSword, 3), g.freshMargin(Item.boots)),
-        (closeTo(3.9, 1e-9), closeTo(2.86, 1e-9), 1.3));
+    expect([g.freshMargin(Item.royalSword), g.freshMargin(Item.royalSword, 3), g.freshMargin(Item.boots)],
+        [closeTo(3.9, 1e-9), closeTo(2.86, 1e-9), 1.3]);
     expect(g.sellPrice(Item.royalSword), 774); // 250 x 1.3 + 115 x 3.9
-    expect(g.sellPriceAt(Item.royalSword, 2), (3250 * 1.3 + 1195 * 2.86).round());
+    expect(g.sellPriceAt(Item.royalSword, 2), 8293); // 3,750 x 1.3 + 1,195 x 2.86
   });
 
   test('selling one exact product pulls its margin to the floor over 24 sales (gently at first), never under; '
@@ -141,7 +141,7 @@ void main() {
     expect(sum, [for (var s = 0; s < 30; s++) g.marketPrice(Item.sword, 0, s)].fold(0, (a, b) => a + b));
     expect(g.sell(Item.sword, 30), 30);
     expect(g.gold - before, sum, reason: 'each piece at its own step');
-    expect((g.pressureOf(Item.sword), g.marginOf(Item.sword), g.sellPrice(Item.sword)), (24, closeTo(1.3, 1e-9), (hpp * 1.3).round()));
+    expect([g.pressureOf(Item.sword), g.marginOf(Item.sword), g.sellPrice(Item.sword)], [24, closeTo(1.3, 1e-9), (hpp * 1.3).round()]);
     final sold = g.log.entries.whereType<StoreSold>().last;
     expect(sold.toJson(), {
       'v': eventVersion, 'kind': 'storeSold', 'wave': 40, 't': g.t, 'item': 'sword', 'relic': null, 'n': 30, //
@@ -151,7 +151,7 @@ void main() {
     expect((g.pressureOf(Item.sword, 2), g.pressureOf(Item.shield)), (0, 0), reason: 'the others untouched');
     expect(g.sellPriceAt(Item.sword, 2), g.marketPrice(Item.sword, 2));
     expect(g.sellAt(Item.sword, 2), 1);
-    expect((g.pressureOf(Item.sword, 2), g.market.keys.toSet()), (1, {'sword', 'sword+2'}));
+    expect([g.pressureOf(Item.sword, 2), g.market.keys.toSet()], [1, {'sword', 'sword+2'}]);
     expect(g.log.entries.whereType<StoreSold>().last.toJson()['plus'], 2);
   });
 
@@ -162,14 +162,14 @@ void main() {
     g.sell(Item.sword, 24);
     final mat = g.buyPrice(Mat.slimeGel);
     g.buy(Mat.slimeGel);
-    expect((g.market, g.townCount), ({'sword': 24, 'mat:slimeGel': 1}, 1));
+    expect([g.market, g.townCount], [{'sword': 24, 'mat:slimeGel': 1}, 1]);
     nextTown(g);
-    expect((g.market, g.townCount, g.townIdentity.key), ({'sword': 14}, 2, 'willowmere'));
+    expect([g.market, g.townCount, g.townIdentity.key], [{'sword': 14}, 2, 'willowmere']);
     expect(g.buyPrice(Mat.slimeGel), mat, reason: "the material's price back");
     nextTown(g);
     expect(g.market, {'sword': 4});
     nextTown(g);
-    expect((g.market, g.townCount), (<String, int>{}, 4));
+    expect([g.market, g.townCount], [<String, int>{}, 4]);
     expect(g.marginOf(Item.sword), g.freshMargin(Item.sword), reason: 'fresh again (Ironvale, Town 4)');
     final entered = g.log.entries.whereType<TownEntered>().last;
     expect((entered.toJson()['n'], entered.toJson()['identity']), (4, 'ironvale'));
@@ -198,8 +198,9 @@ void main() {
   test("the Sell page's words: Hot in the Town for a kind it wants (fresh 2x or more), Flooded past half way to the "
       'floor, else none', () {
     final g = inTown(1);
-    expect((g.marketWord(Item.boots), g.marketWord(Item.sword), g.marketWord(Item.windBoots)),
-        (MarketWord.hot, null, null), reason: 'Boots wanted (3.9); the Sword not; Wind Boots wanted but 1.6 x 1.3');
+    expect([g.marketWord(Item.boots), g.marketWord(Item.windBoots), g.marketWord(Item.sword), g.marketWord(Item.boots, 1)],
+        [MarketWord.hot, MarketWord.hot, null, null],
+        reason: 'Boots wanted (3.9), Wind Boots too (1.6 x 1.3: 2.08); the Sword not; Boots +1 wanted but 1.4 x 1.3, under 2');
     g.market['boots'] = 12;
     expect(g.marketWord(Item.boots), MarketWord.hot, reason: '12 sold: 35% of the way down');
     g.market['boots'] = 16;
@@ -213,9 +214,9 @@ void main() {
       "Town's slot; a key it doesn't know or a pressure out of range is let go", () {
     final g = inTown(5)..market.addAll({'sword': 7, 'royalSword+2': 3, 'relic:${droppedRelics.first.name}': 2, 'mat:slimeGel': 1});
     final j = jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>;
-    expect((j['market'], (j['town'] as Map)['n']), (g.market, 5));
+    expect([j['market'], (j['town'] as Map)['n']], [g.market, 5]);
     final back = Game.fromJson(j);
-    expect((back.market, back.townCount, back.townIdentity.key), (g.market, 5, 'ambergate'));
+    expect([back.market, back.townCount, back.townIdentity.key], [g.market, 5, 'ambergate']);
 
     final fresh = bareGame(Random(1));
     final none = jsonDecode(jsonEncode(fresh.toJson())) as Map<String, dynamic>;
@@ -231,7 +232,7 @@ void main() {
     old['town'] = {...(j['town'] as Map)}..remove('n');
     (old['town'] as Map)['last'] = 33;
     final was = Game.fromJson(old);
-    expect((was.market, was.inTown, was.townCount), (<String, int>{}, true, 5));
+    expect([was.market, was.inTown, was.townCount], [<String, int>{}, true, 5]);
     (old['town'] as Map).remove('in');
     expect(Game.fromJson(old).townCount, 4);
   });
@@ -241,9 +242,9 @@ void main() {
     expect(TownRules.fromJson(jsonDecode(jsonEncode(const TownRules().toJson()))).market.toJson(), rules.toJson());
     final skipped = <String>[];
     final m = MarketRules.fromJson({'floor': 0.5, 'top': 2.0, 'most': 0, 'towns': [[1, 2, 3]]}, skipped);
-    expect((m.floor, m.top, m.most, m.towns), (1.3, 2.0, 24, rules.towns));
+    expect([m.floor, m.top, m.most, m.towns], [1.3, 2.0, 24, rules.towns]);
     expect(skipped, ['market.towns: not rows of four margins']);
     final mine = MarketRules.fromJson({'floor': 1.5, 'towns': [[2, 2, 2, 2]]}, []);
-    expect((mine.floor, mine.rowOf(9)), (1.5, [2.0, 2.0, 2.0, 2.0]));
+    expect([mine.floor, mine.rowOf(9)], [1.5, [2.0, 2.0, 2.0, 2.0]]);
   });
 }

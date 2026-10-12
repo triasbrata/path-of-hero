@@ -73,8 +73,9 @@ void main() {
     expect(t.buy(Mat.wolfClaw), isTrue);
     expect((t.materials[Mat.wolfClaw], t.gold), (5, 100000 - claw));
     t.gold = 100000;
+    final two = t.marketSum(Item.sword, 0, 2); // each piece at its own step (decisions-log 326)
     expect(t.sell(Item.sword, 2), 2);
-    expect((t.inventory[Item.sword], t.gold), (1, 100000 + 2000));
+    expect((t.inventory[Item.sword], t.gold), (1, 100000 + two));
     t.gold = 1;
     expect(t.whyNotBuy(Mat.wolfClaw), StoreRefusal.gold);
     expect(t.sell(Relic.titanBane), 1, reason: 'a Vault Artifact sells in the Town');
@@ -114,12 +115,13 @@ void main() {
     expect(g.sell(Mat.wolfClaw, 3), 3);
     expect((g.materials.containsKey(Mat.wolfClaw), g.gold), (false, gold + 4 * claw));
     expect(g.whyNotSell(Mat.wolfClaw), StoreRefusal.none);
+    final sword = g.sellPrice(Item.sword);
     expect(g.sell(Item.sword), 1);
     final sold = events.whereType<StoreSold>().toList();
     expect([for (final e in sold) e.data], [
       {'item': null, 'relic': null, 'material': 'wolfClaw', 'n': 1, 'gain': claw},
       {'item': null, 'relic': null, 'material': 'wolfClaw', 'n': 3, 'gain': 3 * claw},
-      {'item': 'sword', 'relic': null, 'n': 1, 'gain': 1000},
+      {'item': 'sword', 'relic': null, 'n': 1, 'gain': sword, 'margin': 3.0, 'pressure': 0}, // the market's
     ]);
   });
 

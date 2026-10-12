@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
-import 'package:tower_defense/town_art.dart';
 
 import 'town_hud_test.dart' show boot, frames, townGame;
 
@@ -54,8 +53,8 @@ void main() {
         await frames(tester, 1);
       }
       expect((g.inTown, g.townCount, g.sceneIdentity.key), (true, n, who.key));
-      for (var i = 0; i < 120 && b.townFade > 0; i++) {
-        await frames(tester, 1);
+      for (var i = 0; i < 200 && !(b.townShown && b.townFade == 0); i++) {
+        await frames(tester, 1); // the fade: the field dims, then the Town comes up
       }
       await frames(tester, 20);
 
