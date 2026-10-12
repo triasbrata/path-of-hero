@@ -75,6 +75,7 @@ extension on Board {
   /// resumes. True when it did something.
   bool _pauseKey(LogicalKeyboardKey key) {
     if (_coachKey(key)) return true;
+    if (_wipeAskKey(key)) return true; // Enter tries again, Esc gives up after a wipe (wipe_ask.dart)
     if (_foeSplashKey(key)) return true; // Esc or P closes a foe skill's splash, and P doesn't pause (foe_splash.dart)
     if (key != LogicalKeyboardKey.escape && key != LogicalKeyboardKey.keyP) return false;
     if (welcome != null || state.over) return false;

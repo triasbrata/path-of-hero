@@ -103,12 +103,18 @@ extension _TownLook on Board {
   }
 
   /// The Towns' turn in the Board's update: a due Town is gone into once nothing of the win is left on screen (the
-  /// cheer's [victoryTime], the Hero splash, the chest's popup or a chest due, a monster skill's splash, a guide card),
+  /// cheer's [victoryTime], the Hero splash, the chest's popup or a chest due, a monster skill's splash, a guide card;
+  /// after a wipe sent the game back to the checkpoint's Town, the swept monsters' hop, [wipeCheer]: wipe.dart),
   /// never under the welcome screen; the game is saved there (a reload reopens it) and the book opens on the Smithy. No
   /// countdown runs in a Town, whatever Auto is (decisions-log 328): it stays until "Leave town" ([_leaveTown]). True
   /// while in a Town.
   bool _townTick(Game g, double dt) {
-    final calm = !holdAutoStart && !_chestHolds(g) && !_foeSplashBusy && !_coach.showing && g.t - g.victoryAt >= victoryTime;
+    final calm = !holdAutoStart &&
+        !_chestHolds(g) &&
+        !_foeSplashBusy &&
+        !_coach.showing &&
+        g.t - g.victoryAt >= victoryTime &&
+        g.t - g.wipedAt >= wipeCheer;
     if (welcome == null && g.townDue && !g.inTown && calm && g.enterTown(auto: autoStart.on)) {
       saveGame(g);
       _open(_Page.smithy); // the book opens on the Smithy (town_scene.dart)

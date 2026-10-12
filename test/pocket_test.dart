@@ -203,7 +203,7 @@ void main() {
   });
 
   group('a use (decisions-log 332)', () {
-    test('the refusals, in order: over, paused, Town, empty, none left, not in a wave, cooling, nobody to help', () {
+    test('the refusals, in order: over, paused, (a wipe\'s choice,) Town, empty, none left, not in a wave, cooling, nobody to help', () {
       final g = pocketGame();
       expect(g.whyNotUsePocket(0), PocketWhy.empty);
       holding(g, PocketKind.rageTonic, n: 0);
@@ -234,6 +234,20 @@ void main() {
       expect(g.whyNotUsePocket(3), PocketWhy.foes);
       g.lives = 0;
       expect(g.whyNotUsePocket(3), PocketWhy.over);
+    });
+
+    test("none while a wipe's choice waits (decisions-log 333: its dialog over everything), the bottles between waves too",
+        () {
+      final g = holding(pocketGame(), PocketKind.healBottle);
+      for (final u in g.troops) {
+        u.hp = u.maxHp * 0.5;
+      }
+      expect(g.whyNotUsePocket(0), isNull, reason: 'a bottle between waves');
+      g.wipeAsk = true;
+      expect((g.whyNotUsePocket(0), g.usePocket(0), g.pocketHeld(PocketKind.healBottle)), (PocketWhy.asked, false, 1));
+      expect(g.pocketWhyText(0), '${Words.tryAgain} or ${Words.giveUp} first');
+      expect(g.tryAgain(), isTrue);
+      expect(g.whyNotUsePocket(0), isNull);
     });
 
     test('Heal Bottle: every troop heals 35% of its max HP through the funnel (HealSrc.pocket); one fewer; the event', () {
@@ -471,7 +485,7 @@ void main() {
     expect(wave['pocket'], {'fireBomb': 1});
     expect(wave['crafted'], {'fireBomb': 1});
     expect(wave['start']['pocket'], {'fireBomb': 1});
-    expect(telemetryVersion, 16);
-    expect(eventVersion, 16);
+    expect(telemetryVersion, 18);
+    expect(eventVersion, 18);
   });
 }

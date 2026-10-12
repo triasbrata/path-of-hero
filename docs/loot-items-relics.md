@@ -1429,6 +1429,16 @@ launch deletes it (architecture.md, lib/save.dart).
   `leaveTown({auto})`, which makes its slot `townLast` and clears the mark. `townMarked` (marked and not yet gone into)
   drives the wave meter's chip (ui-hud.md "The Town chip"). Each Town gone into counts (`townCount`, decisions-log
   326): its number picks its identity, its look and its market ("Towns: the market" below).
+- **The checkpoint** (decisions-log 333; units-and-combat.md "An army wiped"): an army wiped after a Town was gone
+  into goes back to the last one (`Wipe.checkpoint`, its slot `townLast`): `wave` = its slot − 1 and the same slot
+  marked again (`townAgain`: `townAt == townLast`), so it is due at once and leaving it starts the wave after it. Going
+  in again (`enterTown`) is the same Town: no `townCount` step, so its identity and its look stay; no market recovery,
+  so its demand stays as it was left; the boosts until the next Town run on (it is no new Town); the monsters stay
+  weakened; its Tavern rolls a new visit's offers. The schedule starts again from it: a Town marked past it is
+  dropped, `townChance` back at `chanceStart` (as when it was marked), and the replayed wins roll again (new draws, so
+  the next Town may come at another slot, at `minGap` 5 at the earliest); it is the next Town by number, never a second
+  for one. Before the first Town a wipe replays the same wave (322). The next new Town gone into ends the monsters'
+  weakening (`Game.weakened`).
 - **The scene:** the HUD goes into a due Town once nothing of the win is left on screen and draws the
   Town where the field was (ui-hud.md "Town"; the field waits as it was left); the start button says "Leave town" there
   (ui-hud.md "Towns on the HUD"), and the player leaves by hand: Auto Wave never does (decisions-log 328), its
@@ -1443,8 +1453,8 @@ launch deletes it (architecture.md, lib/save.dart).
   rolls are new draws. No other die moves: a seeded run plays the same, wave by wave, through Towns (a probe going
   through each) and with none (rules whose every roll misses), and the queue (a mini boss every 3rd wave, the boss
   every 5th) and the Boss Chests are the same.
-- **Telemetry** (telemetry.md): `townMarked`, `townEntered` (its `n` and `identity` since decisions-log 326), `townLeft`, and a
-  won wave's `town`.
+- **Telemetry** (telemetry.md): `townMarked`, `townEntered` (its `n` and `identity` since decisions-log 326; `again` for
+  the checkpoint's Town, 333), `townLeft`, and a won wave's `town`.
 
 ## Town and Smithy: materials (decisions-log 221)
 
@@ -2177,7 +2187,9 @@ ui-hud.md's "The Tavern in battle"; the guide's K23 and its "Towns" topic name i
   331, until then it counted: it was fought): the replay is the same wave, as the wave meter reads it, so a boost bought
   for waves 7 and 8 covers 7 played again and 8; only Watchman's Brew's leak forgiven starts again. **Until the next
   Town** (`_boostTownEnd`): counted by no wave; it ends as the next Town is entered (`Towns.enterTown`, before that
-  Town's Tavern rolls, so it may offer the kind again), with `BoostEnded` and the refit; a wipe changes nothing. Each
+  Town's Tavern rolls, so it may offer the kind again), with `BoostEnded` and the refit; a wipe changes nothing, nor
+  going back into the checkpoint's Town after one (decisions-log 333: it is no new Town; the owner, "Ya, tetap"). The
+  waves won again after that trip back count like any wave fought. Each
   boost counts the waves it ran (`RunningBoost.fought`, 0 for one bought in the Town just left: the troops' burst).
 - **Probes:** `Game.tavernPolicy` ('top': the best offer it can pay, the highest rarity, then the dearest, so of one
   rarity the longest; 'all': every one it can pay in that order), from `_townByPolicy` before it leaves a Town; null: the player.
@@ -2279,7 +2291,8 @@ ui-hud.md's "The Smithy" and "Bag chips".
   (`heal`, `mp`, `cleanse`, `ready`, `dmg`, `rate`, `taken`, `slow` / `bossSlow`, `hit` / `bossHit`, `time`), so one is
   retuned, swapped or dropped in town.json and `PocketKind` alone; its icon is `pocket_<kind>.png` (assets.md).
 - **Using one** (`Pockets.usePocket`; the bar's slot, a tap or keys 1 to 4): refused (`whyNotUsePocket`, in this order;
-  `pocketWhyText` its words) at game over, paused, in a Town, on an empty slot, with none left ("None left: craft more
+  `pocketWhyText` its words) at game over, paused, while a wipe's choice waits (`Game.wipeAsk`, decisions-log 333: its
+  dialog stands over everything, keys 1 to 4 too), in a Town, on an empty slot, with none left ("None left: craft more
   at the Smithy"), between waves for all but the two bottles (`between`; the owner, "Botol juga di jeda wave": "Only in
   a wave"), while its kind's cooldown runs ("Ready in 12 s"), and where it would do nothing: a heal with every troop at
   full HP ("No one is hurt"), MP with none short ("No one needs MP"), a bomb with no monster on the field ("No monster on
@@ -2316,7 +2329,7 @@ ui-hud.md's "The Smithy" and "Bag chips".
   Flooded, no pressure; "Towns: the market"); the Shop never sells one.
 - **Never** by the auto-player or a probe's policy (none uses them); no Tavern boost, relic or Pusaka changes them.
 - **Events** (telemetry.md): `pocketUsed`, `pocketCrafted`, a wave's `pocket` (uses) and its start's `pocket` (held),
-  the pocket items made in its `crafted` (`eventVersion` and `telemetryVersion` 16).
+  the pocket items made in its `crafted` (`eventVersion` and `telemetryVersion` 18; 16 and 17 went to decisions-log 329 and 333).
 - **Saved** ("Saved" below): `pocket`.
 - **Tests:** test/pocket_test.dart (town.json's block, the effect lines, the prices from `purseAt`, crafting and its cap,
   the bar, every refusal, every kind's use, the boosts' caps with the Tavern's, the save and an odd save, the Shop's

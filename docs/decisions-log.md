@@ -11861,7 +11861,9 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      - **Cooldowns** are each kind's own on the game clock and run on through a wave's end and between waves (a bottle
        used as a wave ends isn't ready at once at the next start); the boosts and the ward end with the wave; none of the
        three is saved (a save is between waves). A use is refused where it would do nothing (no one hurt, no one short of
-       MP, no monster on the field), so a tap never wastes one.
+       MP, no monster on the field), so a tap never wastes one; and none while a wipe's choice waits (333's dialog: keys
+       1 to 4 reach under it otherwise). 333's weakened monsters take a bomb as any: the Frost Bomb's slow on top, the
+       Fire Bomb's 8% of the weakened HP.
      - **The costs** (as proposed): 13 to 16 materials each, a Rare one for the stronger kinds, a Trophy for the Pocket
        Watch; gold k × the Tavern's purse of the wave (`purseAt`, 318's merged), rounded as the Tavern's, at least 50:
        every kind 50 to wave 10, a bottle 650 at wave 50 and 5,200 at 86, a booster 1,000 and 8,300, the Pocket Watch
@@ -11884,7 +11886,7 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      - **Icons:** `pocket_<kind>.png`, eight 32×32 icons mapped from the Cute Fantasy Icons pack's Potions and Tools
        sheets into the game vault (assets.md; on the release's allowlist).
      - **Telemetry and save:** the events `pocketUsed` and `pocketCrafted`, a wave's `pocket` and its start's
-       (`eventVersion` and `telemetryVersion` 16); the save's `pocket` `{slots, stock}` only while any (additive, `v`
+       (`eventVersion` and `telemetryVersion` 18, after 329 and 333); the save's `pocket` `{slots, stock}` only while any (additive, `v`
        stays 3). The auto-player and the probes' policies never use one.
      - **Checked:** test/pocket_test.dart (the rules), test/pocket_ui_test.dart (the bar at four sizes, its taps, keys,
        tooltips, the bombs' bursts, the log over it, the Bag's row, the Smithy's section), test/hud_sweep_test.dart (the
@@ -11893,3 +11895,58 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        (waves 90 and 91 of the owner's wave-89 save) is byte-identical to main's golden: no pocket item in that save and
        none used. Balance (how much a pocket turns a wave, the gold it takes) is measured after the merge, by replaying
        saved waves.
+333. **A wipe goes back to the last Town as a checkpoint, the monsters weakened until the next one, and the player
+     chooses "Try again" or "Give up"** (the owner, 2026-10-13: "mungkin kita bisa buat kalau pasukan wipe user di
+     balikkan lagi ke town terakhir yang dia datangin supaya bisa mengumpulkan uang, dan wave selanjutnya di debuff
+     sampai next town", when the army is wiped, send the player back to the last Town he visited so he can gather
+     money, and debuff the following waves until the next Town; his answers: progress "Mundur ke wave 21" (a Town
+     after wave 20 and a wipe at wave 27: back to the Town, waves 21-26 pay again), the debuff "Ke monster (bantuan
+     bangkit)" (on the monsters, a comeback help), hearts "Ya, tetap −1 hati"; the defaults he took: the win's gold
+     again on a wave won again "Ya (Recommended)", −20%/−15% stacking to −30%/−25% with a third wipe the game over
+     "Oke (Recommended)", a Tavern boost until the next Town kept through the trip back "Ya, tetap (Recommended)"; and
+     after: "dan saat troops wipe kan juga user akan masuk kembali ke kota, ini perlu di tampilkan juga kali apakah
+     dia mau try again atau game over", show a choice, try again or game over). Why: 322 replayed only the lost wave,
+     so a wipe at a wall left the player facing the same wall with the gold he had; now he goes back to where he last
+     shopped, earns again on the way, and meets the wall with more. By town-checkpoint (lib/wipe.dart, lib/wipe_ask.dart;
+     units-and-combat.md "An army wiped", loot-items-relics.md "Towns", ui-hud.md "An army wiped", telemetry.md,
+     scoreboard.md, game-overview.md "Lose").
+     - **The checkpoint:** the last Town gone into (`checkpoint`: `townLast` once `townCount` > 0). A wipe that
+       leaves hearts costs its heart and sweeps the wave as 322, then `wave` = the Town's slot − 1 and `townAt` = the
+       slot: the Town is due again (`townAgain`, `townAt == townLast`) and gone into after the swept monsters' hop;
+       leaving it starts the wave after it. The same Town: its number, identity and look, its market as left (no
+       recovery), a new Tavern visit. The schedule starts again from it (a Town marked past it dropped, the chance at its
+       start, new rolls on the replayed wins: the next Town at the same 5-wave gap at the earliest, the next by number).
+       Before the first Town the same wave again (322), as the brief proposed.
+     - **What stays:** gold, the Bag (items, relics, materials), kills and kill score, Awaken, Ascend and Forge, the
+       Heroes (a fallen one to Fallen Heroes), the Shadows' levels and the catch-up owed. A wave won again pays its kill
+       gold, drops and win gold again; its wave score, Hero and Boss Chest (with its Shadow faces) only the first time
+       (`bestWon`, the highest wave won), and the Shadows' catch-up lands once a wave number. What opens at a wave won
+       goes by `bestWon` (`wonWave`: the Shop, Awaken 4-5, Forge, Recall, Enhance; Carve), so nothing locks again; one
+       Sharpen and one Carve budget a boss interval, a later interval's counting for an earlier one played again.
+     - **The Tavern:** a counted boost keeps its waves left (the lost wave counts nothing, 331), the waves won again
+       count; one until the next Town runs on through the checkpoint's Town (no new Town) and ends at the next new one.
+     - **The monsters weakened** (`weakened`, until the next new Town is gone into): after one wipe every monster has
+       ×0.8 HP and ×0.85 damage (`weakenedHp`, `weakenedDmg`), after a second ×0.7 and ×0.75, the most (a third wipe
+       is the game over: the back line's leaks are going, 329, so lives go only to wipes); through `spawnStats`, so the
+       queue, raised minions, bring-ins and Slime Hex's form alike; the kill gold stays. A chip under the wave meter,
+       "Weakened foes" with ui_icons' green down arrow (its cell mapped), its tooltip "Monsters: -20% HP, -15% damage."
+       / "Until next Town.".
+     - **Try again or Give up:** after the hop a dialog, the chest popup's panel and ribbon: "Your army fell!", the
+       hearts left, "Back to Millbrook: waves 21-27 again" and "Foes weakened until next Town", "-20% HP, -15% damage";
+       "Give up" and the green "Try again" (44 px tall at least). Enter is Try again, Esc Give up. The game waits on it
+       (`wipeAsk`, saved: a reload asks again; no wave, no Town, Auto Wave held). Give up is the game over (lives to 0,
+       the hearts left scoring nothing). At 0 hearts no dialog. Tests, probes and the replay kit take Try again by
+       themselves (`autoTryAgain`, on unless main() turns it off), so they play on as before.
+     - **The score's wave** is the furthest reached (`waveReached`): the game-over screen and the scoreboard.
+     - **Saves** (additive, `v` stays 3): `bestWon` (past `wave`), `weakened`, `wipeAsk`, and `lostWave` now the
+       furthest wave lost (loaded when past `wave`); the checkpoint's Town is `town.at == town.last`. A save from before
+       reads its `wave` as the highest won. **Telemetry** (`eventVersion` and `telemetryVersion` 17; 16 is 329's): a
+       `wipe`'s `checkpoint` and `debuff`, `townEntered`'s `again`, a wave start's `weakened` and `again`, the event
+       `wipeChoice` (`tryAgain`, `lives`). The battle log: "Army fell: -1 heart, back to Millbrook from wave 21".
+     - **Checked:** test/town_checkpoint_test.dart (the trip back and the same Town, one wave from it, the rewards once
+       and the win gold again, the catch-up once a number, the weakening's numbers on three ranks and a queued monster,
+       stacking, the checkpoint keeping it and the next new Town ending it with an until-Town boost, the third wipe,
+       the furthest wave, no Town yet, the save and an old save, the unlocks, Sharpen and Carve, Try again and Give up),
+       test/town_checkpoint_hud_test.dart (the dialog after the hop at 1600×947, 1266×713 and 915×412: on the screen,
+       44-px buttons, Enter, Esc, taps; the chip in the Town and on the field, its tooltip), test/wipe_test.dart, and
+       shots at 1600×947 and 915×412 (test/probe_town_checkpoint_shots.dart).

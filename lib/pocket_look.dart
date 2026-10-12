@@ -130,7 +130,7 @@ extension _PocketLook on Board {
   }
 
   /// Uses slot [i]'s pocket item ([Pockets.usePocket]); refused, the error sound, and why in the message window but for
-  /// its cooldown (the slot counts it down) and the pause.
+  /// its cooldown (the slot counts it down), the pause and a wipe's choice (its dialog says it, wipe_ask.dart).
   void _pocketUse(int i) {
     final g = state;
     final why = g.whyNotUsePocket(i);
@@ -139,6 +139,6 @@ extension _PocketLook on Board {
       return;
     }
     g.usePocket(i); // the error sound
-    if (why != PocketWhy.cooling && why != PocketWhy.paused) showMessage(g.pocketWhyText(i)!);
+    if (why != PocketWhy.cooling && why != PocketWhy.paused && why != PocketWhy.asked) showMessage(g.pocketWhyText(i)!);
   }
 }

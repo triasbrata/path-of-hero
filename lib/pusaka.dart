@@ -958,10 +958,11 @@ int _asahInterval(int w) => w ~/ bossEvery;
 /// The Asah's rules (the Tas page calls them).
 extension Asah on Game {
   /// Whether an Asah was done in this boss interval already ([Game.asahAt]).
-  bool get asahDone => asahAt != null && _asahInterval(asahAt!) == _asahInterval(wave);
+  /// A later interval's counts too: a wipe's trip back to a Town (wipe.dart) plays an interval again, never a second Asah.
+  bool get asahDone => asahAt != null && _asahInterval(asahAt!) >= _asahInterval(wave);
 
-  /// The wave whose end opens the next Asah while [asahDone]: the coming boss wave.
-  int get asahAgainAt => (_asahInterval(wave) + 1) * bossEvery;
+  /// The wave whose end opens the next Asah while [asahDone]: the coming boss wave (after the Asah's own interval).
+  int get asahAgainAt => (_asahInterval(max(wave, asahAt ?? 0)) + 1) * bossEvery;
 
   /// What raising [relic] a star costs now ([asahPrice] by its stars), or null when it can't rise: not owned, a Legenda,
   /// or at [starMax].
@@ -1003,7 +1004,7 @@ extension Asah on Game {
   /// on the field needs for its next Bangkit; ties in [Item] order); fewer when the bag has fewer. None by default.
   Map<Item, int> asahItemTake(Relic relic) {
     final take = <Item, int>{};
-    if (asahPriceOf(relic) == null || wave < ukirFrom) return take; // no next star, or before Ukir opens
+    if (asahPriceOf(relic) == null || !ukirOpen) return take; // no next star, or before Ukir opens
     final left = ukirSpare;
     for (var i = 0; i < asahItems[pusaka[relic]!.stars - 1]; i++) {
       final most = droppedItems.reduce((a, b) => left[b]! > left[a]! ? b : a);
@@ -1026,7 +1027,7 @@ extension Asah on Game {
     if (asahPriceOf(relic) case final price?) {
       if (gold < price) return asahRefusals.gold;
       if (asahRelicsInBag < asahRelics) return asahRefusals.relics;
-      if (wave >= ukirFrom && _itemsIn(asahItemTake(relic)) < asahItems[p.stars - 1]) return asahRefusals.items;
+      if (ukirOpen && _itemsIn(asahItemTake(relic)) < asahItems[p.stars - 1]) return asahRefusals.items;
       return null;
     }
     return relic.rarity == Rarity.legenda ? asahRefusals.legend : asahRefusals.maxed;
@@ -1195,7 +1196,8 @@ extension Lebur on Game {
 // carves it with its Carve strip, an item's Give rows give that kind to one (bag.dart). Every number the owner may tune
 // is one constant below.
 
-/// Ukir opens once wave [ukirFrom] is fought ([Game.wave] the last one fought), between waves only ([ukirMidWave]).
+/// Ukir opens once wave [ukirFrom] is fought ([Game.wave] the last one fought, or [Game.bestWon] after a wipe sent the game
+/// back: [Ukir.ukirOpen]), between waves only ([ukirMidWave]).
 const ukirFrom = 40, ukirMidWave = false;
 
 /// The items each [UkirRole] counts as its own (a Pusaka's role is its row's [Art.role]); each kind is in exactly one.
@@ -1311,11 +1313,15 @@ class UkirRun {
 
 /// Ukir's rules (the Bag's Carve strip and Give rows call them, bag.dart; [Game.ukirFill] for the probes).
 extension Ukir on Game {
-  /// The points the Pusaka may still take in this boss interval ([ukirPerBoss], shared by all).
-  int get ukirBudget => ukir.iv == _asahInterval(wave) ? max(0, ukirPerBoss - ukir.pts) : ukirPerBoss;
+  /// The points the Pusaka may still take in this boss interval ([ukirPerBoss], shared by all). An interval played again
+  /// after a wipe's trip back to a Town (wipe.dart) shares the later one's: never a second budget.
+  int get ukirBudget => ukir.iv >= _asahInterval(wave) ? max(0, ukirPerBoss - ukir.pts) : ukirPerBoss;
 
   /// The wave whose end opens the next budget: the coming boss wave (as [Asah.asahAgainAt]).
-  int get ukirAgainAt => (_asahInterval(wave) + 1) * bossEvery;
+  int get ukirAgainAt => (_asahInterval(max(wave, ukir.iv * bossEvery)) + 1) * bossEvery;
+
+  /// Ukir is open ([ukirFrom]): by the wave, or the highest won after a wipe's trip back ([Game.bestWon]).
+  bool get ukirOpen => max(wave, bestWon) >= ukirFrom;
 
   /// The items the types on the field (a troop of it alive) still need for their next Bangkit, by kind: what a tap keeps
   /// back ([ukirKeep]). A type at Bangkit 3 (its items' top) needs none.
@@ -1375,7 +1381,7 @@ extension Ukir on Game {
     final p = pusaka[relic];
     if (p == null) return pusakaRefusals.none;
     if (!ukirMidWave && waveActive) return ukirRefusals.midWave;
-    if (wave < ukirFrom) return ukirRefusals.from;
+    if (!ukirOpen) return ukirRefusals.from;
     if (relic.oath || pusakaCatalog[relic]?.role == null) return ukirRefusals.oath;
     if (!ukirGudang && p.type == null) return ukirRefusals.bound;
     if (p.ukir >= ukirCost.length) return ukirRefusals.full;
@@ -1399,7 +1405,7 @@ extension Ukir on Game {
     for (final MapEntry(key: i, value: n) in items.entries) {
       inventory[i] = inventory[i]! - n;
     }
-    if (ukir.iv != iv) {
+    if (ukir.iv < iv) {
       ukir
         ..iv = iv
         ..pts = 0;

@@ -16,7 +16,7 @@ class ScoreEntry {
         at = _wholeMs((at ?? DateTime.now()).toUtc());
 
   /// The entry for the finished game [g], played by [name].
-  ScoreEntry.of(Game g, String name, [DateTime? at]) : this(name: name, score: g.score, wave: g.wave, kills: g.kills, at: at);
+  ScoreEntry.of(Game g, String name, [DateTime? at]) : this(name: name, score: g.score, wave: g.waveReached, kills: g.kills, at: at);
 
   /// Throws a [FormatException] (or a [TypeError]) when [j] isn't one.
   factory ScoreEntry.fromJson(Map<String, dynamic> j) => ScoreEntry(

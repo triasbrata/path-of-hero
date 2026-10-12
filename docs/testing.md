@@ -3006,7 +3006,8 @@ Pure Dart (lib/wipe.dart). A soldier at 1 HP beside a werebear makes the wipe (`
   the last life in the tick the last troop falls are a game lost on lives (no `Wiped`); a wave begun with no troop only
   leaks.
 - A boss wave (wave 10, a Hero's too) lost: no chest nor Hero; won on the replay: one of each.
-- Towns: one left before the lost wave isn't due again; one marked for after it is due only once the replay is won.
+- Towns: before the first Town one marked for after the lost wave is due only once the replay is won (no checkpoint);
+  once one was gone into, a wipe goes back to it, a later mark dropped (town_checkpoint_test.dart has the rest).
 - The Shadows: the catch-up lands once for the wave number (not on the replay), and Lewati's skip buff owed meets the
   replay.
 - The save between a wipe and its replay (`lostWave`, the lives, "Replace fallen"), a `lostWave` that isn't the next
@@ -3019,6 +3020,41 @@ The shots come from `test/probe_wipe_shots.dart` (a probe, not in the suite; `OU
 it is down; at 1600×947 and 915×412 the heart's pop with the message and the monsters hopping (`pop`, with 2× crops
 of the hearts and the message), a second on (`hop`) and after the hop (`after`: the summon circles, the meter's next
 wave). The pop shot's field is crowded with the bursts of the ticks played before it.
+
+## test/town_checkpoint_test.dart: a wipe goes back to the last Town (decisions-log 333)
+
+Pure Dart (lib/wipe.dart). `checkpointed(at)` is a game whose Town before wave `at` was gone into and left, the rolls
+never marking another (`_noRolls`: chance 0); `loseNext` cuts the next wave's army down (wipe_test.dart's `wipe`);
+`winWaves` wins waves at once (`winNow`).
+- The trip back: a Town at 21, waves 21-26 won, 27 lost: a heart, `wave` 20, `lostWave` 27, `bestWon` 26, weakened 1,
+  the Town due again (`townAgain`), the gold kept, `Wiped`'s `checkpoint` 21 and `debuff` 1, the note "Back to
+  Millbrook: waves 21-27 again, foes weakened."; going in: `TownEntered.again`, the same number, name and market; left,
+  the next wave is 21 with `WaveStarted`'s `weakened` and `again`. One wave from the Town: "wave 21 again".
+- The rewards: waves 26-30 won with a chest and a Hero at 30, 31 lost; waves 26-30 won again pay their win gold each
+  time, no second chest or Hero, no wave score; 31 won scores.
+- The Shadows' catch-up lands once a wave number across the trip back.
+- The weakening's numbers on three ranks (HP, damage, gold kept; capped at 2) and a queued monster; stacking with a
+  second wipe, the checkpoint's Town keeping it and an until-Town boost, the next new Town ending both; the third wipe
+  the game over; the furthest wave after a game over in a wave played again.
+- Before the first Town: the same wave, weakened, `checkpoint` null; the first Town ends it.
+- The save after the trip back (`bestWon`, `weakened`, `lostWave`, `town.at == town.last`), one made in the Town, an
+  old save; the unlocks by `bestWon`, Sharpen's and Carve's interval.
+- With `autoTryAgain` off: the game waits (`wipeAsk`, saved; no wave, no Town), Try again, Give up (over, lives 0, the
+  score as it was, `ScoreEntry`'s wave the furthest), and the last heart asking nothing.
+
+## test/town_checkpoint_hud_test.dart: Try again or Give up, and the weakened foes' chip (decisions-log 333)
+
+Booted TdGames (their own boot: an empty `name` overlay for the game over, no guide cards), `autoTryAgain` off. A Town
+before wave 21 gone into and left, wave 21's army cut down. At 1600×947, 1266×713 and 915×412: no dialog and no message
+during the hop; then the dialog on the screen, its ribbon and its buttons (Give up left of Try again, each 44 px tall
+or more, inside the panel); a press beside them does nothing; Enter tries again and the Town opens (the same Town,
+weakened 1); the chip there right-aligned under the meter, its tooltip; left and wave 21 begun, the chip still there.
+Esc gives up (over, lives 0, the furthest wave 21); a tap on each button does its answer.
+
+The shots come from `test/probe_town_checkpoint_shots.dart` (a probe; `OUT`, default `shots/town-checkpoint/`): the
+w89 fixture with its Town before wave 90 gone into and left, wave 90 lost; at 1600×947 and 915×412 the hop, the dialog
+(`ask`, with a 2× crop), back in the Town with the chip (`town`, its tooltip's 2× crop `town-tip`), the army bought
+back and wave 90 begun weakened (`field`), and a second loss given up (`over`: the game over's name panel).
 
 ## test/shots_test.dart: a shot whose target went flies on (decisions-log 327)
 

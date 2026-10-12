@@ -82,6 +82,7 @@ part 'fps_readout.dart';
 part 'body_look.dart';
 part 'pixel_shapes.dart';
 part 'wizard_fx.dart';
+part 'wipe_ask.dart';
 part 'pocket_look.dart';
 
 /// The player's volumes (settings.json), set on the book's Settings page; a new game keeps them.
@@ -116,6 +117,7 @@ Future<void> main() async {
       debugPrint('town.json: left out $s'); // a name the game doesn't know, or a bad count
     }
   } catch (_) {}
+  autoTryAgain = false; // the player chooses after a wipe: Try again or Give up (wipe_ask.dart)
   runApp(gameRoot(TdGame()));
 }
 
@@ -701,6 +703,7 @@ class Board extends PositionComponent
   final _herald = _Herald(); // a new Hero's splash screen (hero_splash.dart)
   final _coach = _Coach(); // the first-time guide: its cards and pointers (coach.dart)
   final _chest = _ChestView(); // the boss chest's popup and its "Peti!" chip (chest_popup.dart)
+  final _wipeAsk = _WipeAskView(); // after a wipe: Try again or Give up (wipe_ask.dart)
   final _omenRow = _OmenRow(); // the Shadows' chips under the wave meter (omen_look.dart)
   final _troops = _TroopList(); // the troop counter's list (troop_counter.dart)
   final _release = _Release(); // Release on the Army page's detail: armed, its confirm (troop_row.dart)
@@ -734,6 +737,7 @@ class Board extends PositionComponent
   final _toggle = _ToggleState(); // what the toggle did last frame, and when a wave last began under it
   Rect _meterAt = Rect.zero; // the wave meter's panel this frame (wave_meter.dart; none at game over)
   Rect _townChipAt = Rect.zero; // the wave meter's Town chip this frame (town_look.dart; none without a Town marked)
+  Rect _weakChipAt = Rect.zero; // its "Weakened foes" chip under the boosts' (wipe_ask.dart; none while foes are themselves)
   final _boostChipsAt = <Rect>[]; // the boosts' chips under it this frame, in [Game.boosts]' order (tavern_look.dart)
   Rect _boostRowAt = Rect.zero; // all of them (none: Rect.zero), what the log, the boss bars and the plates keep clear of
   String _townMeterText = ''; // the wave meter's words in a Town this frame (town_look.dart; '' out of one)
@@ -1411,6 +1415,15 @@ class Board extends PositionComponent
   /// The boosts' chips under the wave meter as last drawn, in [Game.boosts]' order (tavern_look.dart; none: empty). For
   /// tests.
   List<Rect> get boostChips => [..._boostChipsAt];
+
+  /// The "Weakened foes" chip as last drawn (wipe_ask.dart; empty while the monsters are themselves). For tests.
+  Rect get weakChip => _weakChipAt;
+
+  /// After a wipe, the "Try again / Give up" dialog as last drawn (wipe_ask.dart; empty while it doesn't show): its
+  /// panel, its ribbon and its buttons by name ('tryAgain', 'giveUp'). For tests.
+  Rect get wipeAskPanel => _wipeAsk.panel;
+  Rect get wipeAskRibbon => _wipeAsk.ribbon;
+  Map<String, Rect> get wipeAskButtons => {..._wipeAsk.buttons};
   String get townChipLabel => _townChipLabel(state);
 
   /// The wave meter's words in a Town as last drawn ("In town", "next wave 7": [Board._inTownMeter]; '' out of one). For
@@ -1550,7 +1563,8 @@ class Board extends PositionComponent
   /// on the welcome screen (on launch [state] is a fresh game, not the save). The telemetry's buffered records are
   /// written too.
   void _toBackground() {
-    if (welcome == null && (state.canStartWave || state.townDue)) saveGame(state); // a due Town is between waves too
+    // A due Town is between waves too, and so is a wipe's choice waiting (wipe.dart)
+    if (welcome == null && (state.canStartWave || state.townDue || state.wipeAsk)) saveGame(state);
     async.unawaited(_telemetry.flush());
   }
 
@@ -1703,7 +1717,7 @@ class Board extends PositionComponent
       if (g.wipedOut && !g.over) {
         saveGame(g);
         autoStart.won();
-        showMessage(g.wipeNote, time: _noteTime);
+        if (!g.wipeAsk) showMessage(g.wipeNote, time: _noteTime); // else the dialog says it (wipe_ask.dart)
       }
     }
     // The auto start: its countdown stops once a wave is on (Start pressed early) or the game is over; it
@@ -1785,6 +1799,7 @@ class Board extends PositionComponent
     if (_heraldDown()) return; // it closed a new Hero's splash (hero_splash.dart)
     if (_msg.down(p)) return; // it closed the message window
     if (_chestDown(p)) return; // the boss chest's popup took it (chest_popup.dart)
+    if (_wipeAskDown(p)) return; // or the wipe's dialog: Try again or Give up (wipe_ask.dart)
     if (!_welcomeTap && _omenDown(p)) return; // it showed or hid the Shadows' tooltip (omen_look.dart)
     if (!_welcomeTap && _logDown(p)) return; // it opened or closed the battle log (battle_log.dart)
     if (!_welcomeTap && _mapDown(p)) return; // it opened or folded the minimap, or hit it (mini_map.dart)
@@ -1811,7 +1826,7 @@ class Board extends PositionComponent
     if (_press case final press?) _press = (at: press.at, down: press.down, up: _clock); // it comes back up
     if (_tip.up()) return; // a long press that showed a tooltip is no tap
     _townTapUp(); // a press on a Town's scene came up unmoved: its tap (town_scene.dart)
-    if (_chest.tapped) return; // the press was the chest popup's (chest_popup.dart)
+    if (_chest.tapped || _wipeAsk.tapped) return; // the press was the chest popup's (chest_popup.dart) or the wipe dialog's
     if (_coach.tapped) return; // or a guide card's (coach.dart): nothing under it reacts
     if (_foeSplash.tapped) return; // or it closed a foe skill's splash (foe_splash.dart)
     final p = event.localPosition.toOffset();
@@ -1869,7 +1884,7 @@ class Board extends PositionComponent
     // Flame leaves a drag's kind unknown (a mouse's too): then the press that began it ([onTapDown]) told.
     if (event.deviceKind != ui.PointerDeviceKind.unknown) _touch = event.deviceKind != ui.PointerDeviceKind.mouse;
     // It began on the chest popup (chest_popup.dart), a guide card (coach.dart) or a foe skill's splash (foe_splash.dart).
-    if (_chest.tapped || _coach.tapped || _foeSplash.tapped) return;
+    if (_chest.tapped || _coach.tapped || _foeSplash.tapped || _wipeAsk.tapped) return;
     if (welcome == null && _log.open && _log.panel.contains(p)) {
       _log.dragY = p.dy; // a drag on the battle log scrolls it (battle_log.dart)
       return;
@@ -2210,6 +2225,7 @@ class Board extends PositionComponent
     _omenChips(c, g); // the Shadows' chips under them (omen_look.dart)
     if (!_asideLeft) _townChip(c, g); // the Town chip under those (town_look.dart; with the book showing, after it)
     if (!_asideLeft) _boostChips(c, g); // the boosts' chips under it (tavern_look.dart; likewise)
+    if (!_asideLeft) _weakChip(c, g); // the weakened foes' chip under those (wipe_ask.dart; likewise)
     _pinnedPlate(c); // plates.dart: under the HUD
     _bossAt = Rect.zero;
     _bossAside = false;
@@ -2222,6 +2238,7 @@ class Board extends PositionComponent
     _foeSplashCard(c); // a monster skill's first sighting: the field frozen under its splash (foe_splash.dart)
     _heroSplash(c, g); // over the book too (hero_splash.dart)
     _chestPopup(c, g); // the boss's chest, after the splash (chest_popup.dart)
+    _wipeAskDialog(c, g); // after a wipe: Try again or Give up (wipe_ask.dart)
     _scoreScreens(c);
     _messageBox(c);
     _coachCard(c); // a guide card over everything (coach.dart)
@@ -2727,6 +2744,7 @@ class Board extends PositionComponent
       _miniMapDraw(c, g);
       _townChip(c, g);
       _boostChips(c, g);
+      _weakChip(c, g);
     }
     _pocketBar(c, g); // the pocket bar at the field's right edge, under the open log (pocket_look.dart)
     // The top left: the troop counter, always, the hearts and the gold on one panel, the book button in a wave

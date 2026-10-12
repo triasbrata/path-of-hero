@@ -228,7 +228,7 @@ List<String> pocketEffectLines(PocketRule rule) {
 /// Why a pocket slot can't be used now ([Pockets.whyNotUsePocket]): the game is over, paused, in a Town, the slot empty,
 /// none of its kind left, not in a wave (a kind that works only in one), its cooldown running, or nobody it would help
 /// (no troop hurt, none short of MP, no monster on the field).
-enum PocketWhy { over, paused, town, empty, none, wave, cooling, hurt, mp, foes }
+enum PocketWhy { over, paused, asked, town, empty, none, wave, cooling, hurt, mp, foes }
 
 /// A running pocket boost ([PocketRule.boosts]): its [kind] and the game time it ends at. Not saved: a save is between
 /// waves, and a wave's end ends them.
@@ -257,13 +257,15 @@ extension Pockets on Game {
   /// The pocket boost of [kind] running, or null.
   PocketBoost? pocketBoostOf(PocketKind kind) => pocketBoosts.where((b) => b.kind == kind).firstOrNull;
 
-  /// Why slot [slot] can't be used now, or null, in this order: the game over, paused, in a Town, an empty slot, none of
+  /// Why slot [slot] can't be used now, or null, in this order: the game over, paused, a wipe's choice waiting ([Game.wipeAsk],
+  /// decisions-log 333: its dialog over everything), in a Town, an empty slot, none of
   /// its kind left, not in a wave (a kind not [PocketRule.between]), its cooldown, and nobody it would act on: a kind
   /// that only heals with every troop at full HP, one that only gives MP with none short, one that only acts on monsters
   /// with none on the field.
   PocketWhy? whyNotUsePocket(int slot) {
     if (over) return PocketWhy.over;
     if (paused) return PocketWhy.paused;
+    if (wipeAsk) return PocketWhy.asked;
     if (inTown) return PocketWhy.town;
     final kind = slot >= 0 && slot < pocketSlots.length ? pocketSlots[slot] : null;
     if (kind == null) return PocketWhy.empty;
@@ -452,6 +454,7 @@ extension Pockets on Game {
         null => null,
         PocketWhy.over => Words.gameOver,
         PocketWhy.paused => Words.paused,
+        PocketWhy.asked => '${Words.tryAgain} or ${Words.giveUp} first',
         PocketWhy.town => Words.notInTown,
         PocketWhy.empty => Words.pocketEmpty,
         PocketWhy.none => Words.noneLeft,

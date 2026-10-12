@@ -49,10 +49,13 @@ import 'settings.dart';
 /// `margin` and `pressure`, a `townEntered` its `n` and `identity`; an item's and a small relic's `gain` is the market's.
 /// 15: a Tavern boost's length is rolled with its offer (decisions-log 331): a `boostBought`'s `waves` 2 to 4, or 0 with
 /// `untilTown`, and a wave start's `boosts` 0 for one until the next Town.
-/// 16: the pocket items (decisions-log 332): the events `pocketUsed` and `pocketCrafted`, a wave's `pocket` (each kind's
+/// 17: the Town checkpoint (decisions-log 333): a `wipe`'s `checkpoint` (the Town's slot, null before the first Town) and
+/// `debuff` (the monsters' weakening after it), a `townEntered`'s `again` (the checkpoint's Town after a wipe), a wave
+/// start's `weakened` and `again` (a wave won before, played again), and the event `wipeChoice` (`tryAgain`, `lives`).
+/// 18: the pocket items (decisions-log 332): the events `pocketUsed` and `pocketCrafted`, a wave's `pocket` (each kind's
 /// uses since the last wave ended, between-wave bottles too), the pockets made in a wave's `crafted`, `materialsUsed` and
 /// `gold.craftSpent`, and a wave start's `pocket` (the kinds held).
-const telemetryVersion = 16;
+const telemetryVersion = 18;
 
 /// Where [HttpSink] posts (`--dart-define=TELEMETRY_SERVER=https://...`). None by default, so nothing is sent.
 const telemetryServer = String.fromEnvironment('TELEMETRY_SERVER');
@@ -79,6 +82,7 @@ const passedOn = {
   EventKind.stoneCrafted, EventKind.itemEnhanced, // a stone made there and an item enhanced (decisions-log 255)
   EventKind.boostBought, EventKind.tavernRerolled, // a Tavern boost bought, its offers rerolled (decisions-log 266)
   EventKind.wipe, // an army wiped mid-wave: a heart lost, the wave played again (decisions-log 322)
+  EventKind.wipeChoice, // then "Try again" or "Give up" (decisions-log 333)
   EventKind.pocketUsed, EventKind.pocketCrafted, // a pocket item used, one made at the Smithy (decisions-log 332)
 };
 
@@ -443,6 +447,8 @@ class TelemetryAdapter {
         break; // passed on as they happen // the spawns count the strong foes, the wave record has the Pusaka's; the others are passed on
       case Wiped():
         break; // passed on as it happens; the WaveEnded right after closes the record as `wiped` (or `lost`)
+      case WipeChosen():
+        break; // passed on as it happens, between waves (decisions-log 333)
     }
   }
 

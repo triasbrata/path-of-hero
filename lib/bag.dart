@@ -1689,7 +1689,7 @@ extension on Board {
         final why = over ??
             (!ukirMidWave && g.waveActive
                 ? ukirRefusals.midWave
-                : g.wave < ukirFrom
+                : !g.ukirOpen
                     ? ukirRefusals.from
                     : rows.isEmpty
                         ? 'No ${Words.artifact} can take it'
@@ -2143,7 +2143,7 @@ extension on Board {
     final p = g.pusaka[relic]!, fs = math.max(10.0, 13 * ts), small = math.max(10.0, 11 * ts), color = why == null ? ink : _blockedInk;
     final words = why == null ? ['${p.feed}/${ukirCost[p.ukir]}'] : _carveWhy(g, why);
     var at = Rect.zero, shown = '';
-    if (relic.oath || g.wave < ukirFrom) {
+    if (relic.oath || !g.ukirOpen) {
       shown = _fitFirst(words, fs, box.width);
       _text(c, shown, Offset(box.left, box.center.dy), size: fs, color: color);
       at = Rect.fromLTWH(box.left, box.center.dy - fs * 0.6, _textWidth(shown, fs), fs * 1.2);

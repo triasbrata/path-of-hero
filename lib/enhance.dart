@@ -35,8 +35,7 @@ extension Enhance on Game {
   /// strip greys its Enhance segment by it and keeps its tab off while closed, and [whyNotEnhance] / [whyNotCraftStone]
   /// refuse by it ([CraftWhy.closed]).
   bool get enhanceOpen {
-    final from = townRules.enhance.from;
-    return wave > from || wave == from && !waveActive;
+    return wonWave(townRules.enhance.from); // a wipe's trip back to a Town shuts it no more ([Game.bestWon])
   }
 
   /// The most steps an item takes (town.json `enhance.most`, 5).

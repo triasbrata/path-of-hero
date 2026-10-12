@@ -101,6 +101,7 @@ extension on Board {
         if (!_asideLeft) _omenRow.at.bottom + 4, // the Shadows' chips under them (omen_look.dart): 0 without
         _townChipAt.bottom + 4, // the Town chip, under the meter even while the book shows (town_look.dart): 0 without
         _boostRowAt.bottom + 4, // the boosts' chips under it (tavern_look.dart): 0 without
+        _weakChipAt.bottom + 4, // the weakened foes' chip under those (wipe_ask.dart): 0 without
         if (!_bossAside) _bossAt.bottom + 4, // 0 without boss bars; at the left (the book open) they are no band
       ].reduce(math.max);
 
