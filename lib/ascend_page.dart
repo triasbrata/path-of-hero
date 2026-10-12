@@ -5,7 +5,7 @@ part of 'main.dart';
 // Bangkit 5 "Forge +5  33k" (purple), or greyed with why not, which a tap also says in the message window; a type below
 // Bangkit 3 whose next awakening the bag holds ([Ascend.bagLevel]) gets "Awaken 2 from the Bag", which turns the book to
 // the Bag with the item it needs picked. Tempa's "+n" after a type's stars ([Board._tempaMark]); the Bag tab's dot and
-// the Army tab's ([Tempa.tokoNudge]). Until decisions-log 296 the Toko (the Shop of a game without the Towns) had a
+// the Army tab's ([Tempa.armyNudge]). Until decisions-log 296 the Toko (the Shop of a game without the Towns) had a
 // Bangkit section here too, a row per type; it went with the Towns-off book.
 
 /// ui_buttons.png's purple row (main.dart's `Board._btn*`; button_fx.dart): the Awaken and Forge buttons.
@@ -22,7 +22,7 @@ final _shortWhy = {
 };
 
 /// The Tas tab's dot while a fielded type can awaken further from the bag ([Ascend.bagAwakens]); the Army tab's too
-/// ([Tempa.tokoNudge]).
+/// ([Tempa.armyNudge]).
 const _bagDot = Color(0xFFE0402A);
 
 /// Tempa's "+n" after the stars is this many times their height ([Board._tempaMark]).
@@ -122,9 +122,9 @@ extension on Board {
   }
 
   /// The Army tab's dot (its detail buys them, decisions-log 230), the same, while gold piles up and a fielded type can
-  /// buy its next Bangkit or Tempa level ([Tempa.tokoNudge], decisions-log 163; the owner's decision 4 a).
-  void _tokoTabDot(Canvas c, Game g, Rect icon, double ps) {
-    if (g.tokoNudge) _tabDot(c, icon, ps, 'tokoDot');
+  /// buy its next Bangkit or Tempa level ([Tempa.armyNudge], decisions-log 163; the owner's decision 4 a).
+  void _armyTabDot(Canvas c, Game g, Rect icon, double ps) {
+    if (g.armyNudge) _tabDot(c, icon, ps, 'armyDot');
   }
 
   /// A red dot, dark-rimmed, on the top right of a tab's [icon]; where it is goes in [_storeAt] as [key].

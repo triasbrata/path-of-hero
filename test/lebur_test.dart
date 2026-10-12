@@ -295,7 +295,7 @@ void main() {
     final lines = <String>[
       ...[leburRefusals.notGudang, leburRefusals.midWave, leburRefusals.legend, leburRefusals.noTarget, leburRefusals.same],
       ...[leburRefusals.maxed, leburRefusals.rarity, leburRefusals.gold, leburRefusals.relics],
-      Words.melt, Words.sure, Words.cancel, Words.vault, '${Words.melt} into:', 'Tap again', '60k', '150k',
+      Words.melt, Words.sure, Words.vault, '${Words.melt} into:', 'Tap again', '60k', '150k',
       for (final r in Relic.values)
         if (r.pusaka) ...[
           '${Words.melt} ${relicNames[r]} ★2 into:', '${Words.melt} ${relicNames[r]} into:', 'Tap again: ${relicNames[r]} ★1 is gone',

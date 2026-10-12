@@ -176,7 +176,7 @@ void main() {
 
   test('K18, K20, K21 on the owner\'s w86 save: gold for the Toko, an Asah; a Lebur once a Pusaka waits in the Gudang', () {
     final g = w86();
-    expect((isDue('K18', g), g.tokoNudge), (true, true));
+    expect((isDue('K18', g), g.armyNudge), (true, true));
     expect(isDue('K20', g), isTrue); // its five Pusaka at ★1, 1.8M gold, 90 small relics
     g.asahAt = g.wave;
     expect(isDue('K20', g), isFalse); // one Asah a boss interval

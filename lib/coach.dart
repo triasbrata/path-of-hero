@@ -316,7 +316,7 @@ extension on Board {
         ('K8', _) => (1.3, _picLimits),
         ('K9', _) => (1.7, _picBangkit),
         ('K10', _) => (1.3, _picHero),
-        ('K11', _) => (1.7, _picToko),
+        ('K11', _) => (1.7, _picShop),
         ('K12', _) => (1.3, _picLegenda),
         ('K13', _) => (1.7, _picCaps),
         ('K14', _) => (1.3, _picHeroFell),
@@ -703,7 +703,7 @@ extension on Board {
 
   /// K11: the Shop's tab (a Town's), and two materials, for gold: what a Town's Shop sells since the forge (decisions-log
   /// 317; a Sword and a Fang until then, from before it).
-  void _picToko(Canvas c, Rect box) => _picStrip(c, box, [
+  void _picShop(Canvas c, Rect box) => _picStrip(c, box, [
         (r) => _picTab(c, _icCoins, r),
         _picArrow(c),
         (r) => _icon(c, Mat.orcTooth, r),

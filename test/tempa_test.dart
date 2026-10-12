@@ -265,20 +265,20 @@ void main() {
     final bar = nudgePurses * purse(88);
     expect(bar, 528000);
     g.gold = bar - 1;
-    expect(g.tokoNudge, isFalse, reason: 'not yet 3 purses');
+    expect(g.armyNudge, isFalse, reason: 'not yet 3 purses');
     g.gold = bar;
-    expect(g.tokoNudge, isTrue);
+    expect(g.armyNudge, isTrue);
     g.tempa['knight'] = tempaMax;
-    expect(g.tokoNudge, isFalse, reason: 'nothing left to buy for it');
+    expect(g.armyNudge, isFalse, reason: 'nothing left to buy for it');
     // The Bangkit 2 archer can't buy anything; at Bangkit 3 it can buy Bangkit 4.
     g.upgrades['archer'] = awakenItems('archer', 3);
-    expect(g.tokoNudge, isTrue);
+    expect(g.armyNudge, isTrue);
     a.gone = true; // no archer alive: its Bangkit 4 doesn't count
-    expect(g.tokoNudge, isFalse);
+    expect(g.armyNudge, isFalse);
     g.tempa['knight'] = 3;
-    expect(g.tokoNudge, isTrue);
+    expect(g.armyNudge, isTrue);
     g.startWave();
-    expect(g.tokoNudge, isFalse, reason: 'between waves only');
+    expect(g.armyNudge, isFalse, reason: 'between waves only');
   });
 
   test('the tooltips: the Bangkit row at Bangkit 5 tells the next Tempa level; the stars tell what it has', () {

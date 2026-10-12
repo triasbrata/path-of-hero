@@ -1248,11 +1248,11 @@ refit with the HP gained, the burst, the sounds, the `Tempered` event and its lo
 HP and damage ×1.05 a level on six types (the heavy ones' +20% after), the other stats, the price and the awakening
 skill unchanged; levels waiting below Bangkit 5; a Hero's ×3 on top; Lepas jenis keeping the levels with no refund of
 them; the save (round trip, the troops' HP at load, an old save, odd entries); finite stats for a Bangkit 5 Hero at
-Tempa +30 with Dawn Star ★3 and Oath of One, fighting a boss; the Army tab's dot (`tokoNudge`); the cards (`tempaInfo`,
+Tempa +30 with Dawn Star ★3 and Oath of One, fighting a boss; the Army tab's dot (`armyNudge`); the cards (`tempaInfo`,
 `awakenInfo`); the telemetry (`tempa`, `gold.tempaSpent`); every line in the HUD's font. `test/tempa_hud_test.dart`
 boots its own `TdGame` at 1266×713 and 1164×777: the Army tab's dot (the Toko's until decisions-log 296), "+3"
 after the stars in the knight's Army detail header (never on its cell, decisions-log 218), the dot gone under 3
-purses, and the Tas rows' "+4" (`Board.tempaMarks`, `storeAt('tokoDot')`). The shots come from
+purses, and the Tas rows' "+4" (`Board.tempaMarks`, `storeAt('armyDot')`). The shots come from
 `test/probe_tempa_shots.dart` (a probe; queue `["test", "test/probe_tempa_shots.dart"]`; `OUT` sets the folder, default
 `<agents>/shots/tempa/`): the owner's w86 fixture with its three Bangkit 3 types at Bangkit 5 and Tempa +6, +2,
 +14, on the Pasukan, Toko (before and after a buy) and Tas pages at 1266×713 and 412×860, and a Tempa row's card

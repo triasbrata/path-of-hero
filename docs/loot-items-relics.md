@@ -222,7 +222,7 @@ rules and every constant are `lib/tempa.dart` (`extension Tempa on Game`); it is
   Awaken 5 first", "Already Forge +30 (Max)", "Not enough gold". A refused buy changes nothing and plays `Sfx.error`.
 - **Lepas jenis** keeps the levels and refunds none of them: its refund stays half the troops' price; the type bought
   again fights with its Tempa.
-- **The Army tab's dot** (`tokoNudge`, the owner's decision 4 a): while the gold is at least `nudgePurses` 3 × purse(wave +
+- **The Army tab's dot** (`armyNudge`, the owner's decision 4 a): while the gold is at least `nudgePurses` 3 × purse(wave +
   1) and a type with a living troop can buy its next Bangkit or Tempa level now (`whyNotAscend` / `whyNotTempa` null),
   a red dot on the Army's tab (ui-hud.md "Bookmarks"; the Toko's tab had it until decisions-log 296). Between waves only, since mid-wave the store refuses.
 - **Saved:** `tempa` (type → levels), only once one is bought, loaded before the troops so they come back at their

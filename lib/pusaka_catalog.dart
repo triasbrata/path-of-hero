@@ -122,12 +122,12 @@ enum If {
 /// come with their data batches.
 enum Eff { stat, power, cut, cap, heal, ward, status, mark, leap, burst, save, mp, cooldown, gold, strip, cleanse, revive, noHeal, relicK, skillGate, roster }
 
-/// Whom an [Fx] works on: the troop itself, its whole type, the troops within [Fx.r], the most hurt troop near, every
-/// troop (an oath), the monster hit, the monsters within [Fx.r], the attacker, the troop a heal landed on (a `heals`
+/// Whom an [Fx] works on: the troop itself, its whole type, the troops within [Fx.r], the most hurt troop near, the
+/// monster hit, the monsters within [Fx.r], the attacker, the troop a heal landed on (a `heals`
 /// Fx's: Full Cup, Pure Water; batch L-3). [nearTroops] are the living troops within [Fx.r], the holder among them
 /// (Heartbeat's, Bright Spring's, Saint's Tear's), but a fallen one (Mourning Bell's) and, after a heal, the troop healed
 /// (Halo Lantern's: the [Fx.count] nearest it).
-enum To { self, type, nearTroops, mostHurtNear, allTroops, foeHit, nearFoes, attacker, healed }
+enum To { self, type, nearTroops, mostHurtNear, foeHit, nearFoes, attacker, healed }
 
 /// The stat an [Eff.stat] changes: [hpDmg] is max HP and attack (a healer's heal) together, by one k (Vow of Silence's);
 /// [splash] adds px to a normal attack's splash (Wide Blows').

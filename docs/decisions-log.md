@@ -11556,3 +11556,9 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      - **`Game.keepUpWithView` goes**, a `static const` always true (#61's option A): its off arms in `speedTo`,
        `_rearEdge` and a healer's walk-in could never run. The rule itself is unchanged (camera-and-field.md "Back line").
        Whether the keep-up floor still binds once 324's front cap is in is measured after that merge (the audit's item 8).
+     - **Leftovers no player sees go** (the code audit's X1 and X2 of 317, never picked): the Toko-era names of the Army
+       tab's dot and K11's picture (`tokoNudge`, `_tokoTabDot`, `'tokoDot'`, `_picToko` are now `armyNudge`,
+       `_armyTabDot`, `'armyDot'`, `_picShop`); `Board.carveButton` (a test seam no test read); `To.allTroops` (no Fx
+       targets it); english_text_test's ids for the deleted Toko's hit keys (`'tab:bangkit'`, `'bangkit:'`); and
+       `Words.cancel` and `Words.onWishlist`, which only tests read. `Game.bindByDefault` stays: the probes' Pusaka knob
+       (`PUSAKA=bound`) calls it.

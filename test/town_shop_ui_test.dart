@@ -275,9 +275,9 @@ void main() {
             .boardRules()
           ..chests.clear()
           ..gold = 50000000;
-    expect(g.tokoNudge, isTrue);
+    expect(g.armyNudge, isTrue);
     await frames(tester, 40);
-    final dot = b.storeAt('tokoDot'), tab = b.bookTabs.firstWhere((t) => t.$1 == 'troops').$2;
+    final dot = b.storeAt('armyDot'), tab = b.bookTabs.firstWhere((t) => t.$1 == 'troops').$2;
     expect(dot, isNot(Rect.zero));
     expect(tab.overlaps(dot), isTrue, reason: 'on the Army tab');
     expect(b.bookTabs.map((t) => t.$1), isNot(contains('store')), reason: 'no Shop tab on the field');

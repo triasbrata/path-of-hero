@@ -1413,7 +1413,7 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
   differ: no spawn bar in a Town (no troop is bought there, as before), so the detail's foot has no "Replace fallen"
   either (`_replaceWords`; the offer waits for the field, where it lasts until the next wave); and a wish tapped on its
   Wishlist turns to the Smithy's Items tab on it (`_wishGo`), where outside a Town it says where it is made. Nothing is
-  given from the Army detail (giving is the Bag's, in a Town as on the field). The gold's red dot (`tokoNudge`) is on
+  given from the Army detail (giving is the Bag's, in a Town as on the field). The gold's red dot (`armyNudge`) is on
   the Army tab in a Town too.
   The Smithy's pages craft the relics and the items ("The Smithy" below); the Tavern's sell the boosts
   ("The Tavern" below); the Shop's is the Town's Shop on the Bag's code ("The Town's Shop" below).
@@ -2054,7 +2054,7 @@ outside a Town.
   a small relic and a Vault Artifact (a material's own grey line says it). A buy or sell asked for outside a Town is
   refused "Only in a Town" (`StoreRefusal.town`).
 - **Moved with it:** the fallen Heroes' Recall into the Army detail's Heroes section ("Army"), and the gold's red dot
-  (`tokoNudge`) onto the Army tab, whose detail's Next tag buys Awaken 4-5 and Forge ("Bookmarks"); in a Town too,
+  (`armyNudge`) onto the Army tab, whose detail's Next tag buys Awaken 4-5 and Forge ("Bookmarks"); in a Town too,
   where the book has the Army tab since decisions-log 301 (until then it had none, and so no dot). The Toko's pages (store_page.dart, ascend_page.dart's Awaken section, recall_page.dart)
   went in decisions-log 296.
 - **Fit:** test/town_shop_ui_test.dart (the strip, Sell), test/forge_shop_ui_test.dart (Buy) and
@@ -2389,7 +2389,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   | K15 | Full army | `armySize` at `armyMax` (36; 32 until decisions-log 260) | none |
   | K16 | Too slow | `Game.stalled`: the last wave marched ("Monsters broke through!"); set with `newMarch`, cleared at the next wave's start, not saved | 1 |
   | K17 | Tide | `tideRising` | 34 |
-  | K18 | Spend gold ("Red dot on "Army": / a type can buy more power.") | `tokoNudge` (the Army tab's dot, which it points at; the Toko's tab had it until decisions-log 296) | none |
+  | K18 | Spend gold ("Red dot on "Army": / a type can buy more power.") | `armyNudge` (the Army tab's dot, which it points at; the Toko's tab had it until decisions-log 296) | none |
   | K19 | Escorts | wave 49 won (`escortFrom` − 1) | 49 |
   | K20 | Sharpen (`Words.sharpen`; it quotes the button, decisions-log 187) | some Pusaka can Asah now (`whyNotAsah` null) | none |
   | K21 | Melt (`Words.melt`, likewise) | some Gudang Pusaka can melt (`whyNotLebur` null; the gold isn't asked) | none |
@@ -3008,7 +3008,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
       the tags 'carveBtn' and 'toVault', 'carveBar', 'empty') and `bagDetailText(key)` (the words: 'name', 'count',
       'where', 'desc', 'sharpen', 'carve', 'carveBar', 'next', 'meltArmed', 'empty', each row's 'title:<action>' and 'hint:<action>', the chooser's 'chooser') are for
       tests, with `bagActions` (each action row shown: what, where, whether it can now), `bagAction(act)`,
-      `bagChooser`, `bagBack`, `carveButton`, `carveArmed` and `carveWhyWords`.
+      `bagChooser`, `bagBack`, `carveArmed` and `carveWhyWords`.
   - **No Sell** (decisions-log 296): the Towns-off game's Sell rows (an item's "Sell +1000" and "Sell all", decisions-log
     169 and 202; a Vault Pusaka's "Sell +15k", 151) went with the Towns-off book; the Bag sells nothing, the Town's
     Shop's Sell side and its Sell Basket do (decisions-log 230 and 269). A bound Pusaka and an oath never sold.
@@ -3167,7 +3167,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     Tas (the bag, `ui_icons.png` (144, 32); a red dot, dark-rimmed, on its icon's top right while a type with a living
     troop could awaken further from the bag's items, `bagAwakens`, #92 part 2: `_bagTabDot`) and Settings (gear); on
     Pasukan's the same red dot while gold piles up, at least 3 purses of the next wave, and a type with a living troop
-    can buy its next Bangkit or Tempa level (`tokoNudge`, decisions-log 163: `_tokoTabDot`). Until decisions-log 296 a
+    can buy its next Bangkit or Tempa level (`armyNudge`, decisions-log 163: `_armyTabDot`). Until decisions-log 296 a
     game without the Towns had a fourth, Toko, the Shop (the coin stack, grey until the store opened, `_lockedTab`),
     with that dot. A Town's tabs: "Town". The open page's tab is the tall paper
     one (its fill is the page's colour); its last two rows cover the cover's top line (sprite row 6) and
@@ -3190,7 +3190,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   - The book opens on Pasukan: `_open(_home)` whenever the book has closed (`_bookT` 0), and
     when "Main Menu" is pressed (in a Town on the Smithy).
   - The field's tabs are Pasukan, Tas and Settings (the Shop is a Town's), and a Town's are Smithy, Tavern, Shop,
-    Pasukan, Tas and Settings ("Town"; Pasukan since decisions-log 301). The gold's red dot (`tokoNudge`) is on
+    Pasukan, Tas and Settings ("Town"; Pasukan since decisions-log 301). The gold's red dot (`armyNudge`) is on
     Pasukan's tab, whose detail buys the Awaken and Forge levels (decisions-log 230), in a Town too.
 - **No Shop page on the field** (decisions-log 296): the Toko, the Shop page of a game without the Towns
   (`lib/store_page.dart`'s goods in slots and the picked one's card with Buy / Sell; its "Awaken 4-5" section of a row
@@ -3198,7 +3198,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   the TOWNS define; with the Towns on (every board game since decisions-log 237) the player never saw it. What it held
   is elsewhere: a Town's Shop ("The Town's Shop"), Awaken 4-5 and Forge on the Army detail's Next tag
   (`_upgradeButton`, "Army"), the fallen Heroes' Recall in the Army detail's Heroes section, the gold's red dot on the
-  Army tab. `Board.storeAt('bagDot' | 'tokoDot' | 'tavernDot')` is where a tab's dot is this frame, `Board.tempaMarks`
+  Army tab. `Board.storeAt('bagDot' | 'armyDot' | 'tavernDot')` is where a tab's dot is this frame, `Board.tempaMarks`
   each Tempa "+n" drawn (where, and its text) and `Board.heroSplash` the Hero splash's title while it shows, for tests.
 - **Settings page (`_settingsPage`, `_Page.settings`):** replaces both pages' content. Like the other pages,
   mid-wave it is shown with the game paused by the book ("Pause").

@@ -40,8 +40,8 @@ RegExp _whole(List<String> words, {required bool caseSensitive}) =>
 final _indonesian = [_whole(_words, caseSensitive: false), _whole(_namesCased, caseSensitive: true)];
 
 /// Literals that are ids, never shown, and never change with the words: save keys and telemetry values ("pusaka",
-/// "tempa", "serpihan", "ukir"), the store's hit keys (`'tab:bangkit'`, `'bangkit:TYPE'`) and the suggestion strip's 'batal'.
-const _ids = {'pusaka', 'tempa', 'serpihan', 'ukir', 'tab:bangkit', 'bangkit:', 'batal'};
+/// "tempa", "serpihan", "ukir") and the suggestion strip's 'batal'.
+const _ids = {'pusaka', 'tempa', 'serpihan', 'ukir', 'batal'};
 
 /// English phrases with a word the finder reads as Indonesian: "Main" is Indonesian for play ("Main Baru"), English here.
 const _english = {'Main Menu'};
