@@ -16,7 +16,8 @@ part of 'game.dart';
 // - the same wave is played again: [Game.wave] goes back to the last won one, so between waves everything reads as after
 //   that win (a Town due, the wave meter's next wave), and [Game.lostWave] marks the replay. No wave bonus, score, Hero,
 //   chest, Town roll, Shadow ease or Grudge target comes until it is won; the Shadows' catch-up doesn't land twice
-//   ([Omens._omenWave]) and Lewati's skip buff owed for it is owed again; the Tavern's boosts count it (it was fought);
+//   ([Omens._omenWave]) and Lewati's skip buff owed for it is owed again; the Tavern's boosts don't count it (decisions-log
+//   331: the replay is the same wave, so a boost bought for waves 7 and 8 still covers 7 played again and 8);
 // - between waves as after any: "Replace fallen" lists the army ([Game.toReplace]), Auto Buy refills it, and the UI says
 //   so, pops the heart, saves and starts Auto Wave's countdown (main.dart).
 
@@ -76,7 +77,7 @@ extension Wipe on Game {
     marching = false;
     _watchGrail(end: true);
     _emit(WaveEnded(wave, t, won: false));
-    _boostWaveEnd(); // the Tavern's boosts count the wave (tavern.dart)
+    _boostWaveEnd(replay: true); // the Tavern's boosts don't count a wave played again (tavern.dart)
     waveMaterials.clear(); // what lay on the field comes only with a win
     toReplace
       ..clear()

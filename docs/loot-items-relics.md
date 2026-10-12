@@ -2070,7 +2070,7 @@ lib/wishlist.dart's `extension Wishlist on Game`; the pages are ui-hud.md's ("Th
   counts read live and two parents', the own wish kept apart, off with the parent by a tap or met, an ingredient's ✕
   and the group's, the star and the materials, the save's `parts`) and test/smithy_chain_ui_test.dart (its pages).
 
-## Towns: the Tavern (decisions-log 266-268)
+## Towns: the Tavern (decisions-log 266-268, 331)
 
 The owner, 2026-10-07: "terus di tavern ini aku mau ada feature user bisa beli temporary boost misal 500 gold untuk party
 yang bisa meningkatkan 2 wave atk+ def untuk semua jenis troops, nah ini di buat jadi gacha juga opsi yang di tawarkan di
@@ -2078,7 +2078,10 @@ tavern" (the Tavern sells temporary boosts for the party, e.g. 500 gold for two 
 troop type, offered gacha-style), and on 2026-10-08: "500 adalah contoh saja, kalau bisa jangan terlalu mahal untuk di
 kota kota awal" (500 was only an example; not too dear at the first Towns), "Sebanyak gold cukup" (buy as many as the
 gold allows), "semua buff tavern adalah temporary buff untuk 2 wave setelahnya" (every Tavern boost lasts the two waves
-after it), DEF as less damage taken, and the game's existing icons. On since decisions-log 268 (built dark in 266 and
+after it), DEF as less damage taken, and the game's existing icons; and on 2026-10-12 (decisions-log 331): "buff dari
+tavern di buat panjang buffnya bisa variasi bisa 2 tapi bisa juga sampai next town. nah ini di random saja dan semakin
+lama buffnya bertahan harusnya harganya juga ikut naik" (a boost's length varies, 2 waves or up to the next Town,
+rolled; the longer it lasts, the dearer). On since decisions-log 268 (built dark in 266 and
 267): every Town has its Tavern; its own switch and the `--dart-define=TAVERN=false` build are gone (decisions-log 296), and every game has the Towns since decisions-log 321. The rules are lib/tavern.dart's `extension
 Tavern on Game`, the numbers town.json `tavern` (`TownRules.tavern`, `TavernRules`). The Tavern's page in the Town's
 book (decisions-log 267) is ui-hud.md's "The Tavern": the offers, Reroll, the boosts running and Buy; the boosts in
@@ -2086,7 +2089,7 @@ battle (decisions-log 268: their chips under the wave meter, the troops' burst b
 ui-hud.md's "The Tavern in battle"; the guide's K23 and its "Towns" topic name it.
 
 - **The catalogue** (`Boost`, town.json `tavern.boosts.<kind>`; `boostNames`; each kind's `rarity`, its multipliers and
-  `who`). Every kind runs for the next `waves` 2 waves fought; "Damage" is a healer's heal too.
+  `who`). A kind has no length of its own: each offer rolls one ("The length" below); "Damage" is a healer's heal too.
 
   | Kind | Name | Rarity | What it does |
   |---|---|---|---|
@@ -2101,40 +2104,60 @@ ui-hud.md's "The Tavern in battle"; the guide's K23 and its "Towns" topic name i
   | `plate` | Champion's Plate | Epic | Damage ×1.40, attack speed ×1.15, on ONE troop type (`"who": "type"`, rolled with the offer among the types alive) |
   | `banquet` | King's Banquet | Legendary | Damage ×1.30, damage taken ×0.75, max HP ×1.25, attack speed ×1.10 |
 
-  Travel Rations was "longer but weaker" (five waves) in the design; with every boost two waves it is a cheap Common
-  with a little of everything. Every kind has the same length (`waves`, one number for all). Watchman's Brew (Epic,
-  `leaks` 1: the wave's first monster over the back line cost no life) went in decisions-log 329, when the line stopped
-  costing lives: the Plate is the one Epic, and a save's offer or boost of `watch` is dropped as an unknown kind's.
+  Travel Rations was "longer but weaker" (five waves) in the design; with every kind's lengths the same it is a cheap
+  Common with a little of everything. Watchman's Brew (Epic, `leaks` 1: the wave's first monster over the back line
+  cost no life) went in decisions-log 329, when the line stopped costing lives: the Plate is the one Epic, and a save's
+  offer or boost of `watch` is dropped as an unknown kind's.
 - **The roll** (`_rollTavern`, from `Towns.enterTown`): `offers` 3 different kinds, on `Game.tavernDice` (its own dice;
   not saved, a probe seeds it with seed + 800), so no other die moves. Each slot draws a rarity by `odds` (Common 0.55,
   Rare 0.30, Epic 0.13, Legendary 0.02, each a share of their sum) and a kind of it; a rarity with none left steps down,
   then up (the Boss Chest's way). Never offered: a kind running, a kind already in the roll, a Legendary before wave
   `legendFrom` 30, a one-type kind with no troop alive. The run's first Tavern (`Game.tavernSeen` false) has the Feast in
   its first slot (`firstFeast`). The pity: `Game.tavernDry` counts the visits in a row whose roll had no Epic or better;
-  the `pity` 4th has an Epic in its last slot when none came before it. The offers are saved with the Town and go when
-  it is left.
-- **The price** (`boostPrice`): the rarity's `price.k` (Common 0.3, Rare 0.5, Epic 0.9, Legendary 1.5; a kind's own `k`
-  over it) × the Tavern's purse of the wave won (`TavernRules.purseAt`: the game's purse before rounding, tempa.dart's
-  `purseRaw`, × `early` 0.5 at wave 0 rising in a line to × 1 at `fullFrom` 20, since early waves pay well under the
-  purse), rounded to 50 (to 1,000 from 10,000), at least `least` 50. A reroll (`tavernRerollPrice`) is `reroll.k` 0.1
+  the `pity` 4th has an Epic in its last slot when none came before it. Each offer then rolls its length (`_boostOffer`,
+  one more draw on the Tavern's dice after its kind and its type). The offers are saved with the Town and go when it is
+  left.
+- **The length** (decisions-log 331; `tavern.lengths`, each a share of their sum): 2 waves 0.45, 3 waves 0.25, 4 waves
+  0.18, "Until next Town" 0.12 (an offer lasts 3.26 waves on average, the next Town coming 7.42 waves on). The fixed ones stay under the schedule's `minGap` 5, so they never reach the next Town; the
+  next Town is never marked when one is bought (it is rolled two waves ahead, at least 5 on). A reroll rolls its new
+  offers' lengths afresh; a bought one keeps its own. `waves` 2 stays the base: a price's `k` buys that many waves, and
+  an offer or a boost saved before 331 lasts it.
+- **The price** (`boostPrice`, an offer's `offerPrice`): for 2 waves the rarity's `price.k` (Common 0.3, Rare 0.5, Epic
+  0.9, Legendary 1.5; a kind's own `k` over it) × the Tavern's purse of the wave won (`TavernRules.purseAt`: the game's
+  purse before rounding, tempa.dart's `purseRaw`, × `early` 0.5 at wave 0 rising in a line to × 1 at `fullFrom` 20,
+  since early waves pay well under the purse), rounded to 50 (to 1,000 from 10,000), at least `least` 50. A longer one
+  (decisions-log 331): that × waves / 2, rounded the same, and at least one step (50, or 1,000 from 10,000;
+  `TavernRules.stepUp`) over the price a wave shorter, so a longer one always costs more (at wave 6 a Common's 4 waves
+  is 150, not the 100 of ×2). "Until next Town": × the waves to the next Town on average by the Town roll's odds
+  (`townGapMean`: `minGap` 5, then 20% a roll rising 5% a miss; 7.42) / 2 × `price.town` 1.1 (the premium of a length
+  that may run long), at least a step over the 4 waves'. A reroll (`tavernRerollPrice`) is `reroll.k` 0.1
   purse (at least 50, rounded the same) × `rise` 2 for each one bought before it in the visit.
 
   | Wave won | Common | Feast (Rare) | Epic | Legendary | First reroll |
   |---|---|---|---|---|---|
   | 6 (the first Town at the earliest) | 50 | 100 | 150 | (from wave 30) | 50 |
   | 7 | 50 | 100 | 200 | | 50 |
-  | 12 | 150 | 250 | 500 | | 50 |
-  | 20 | 450 | 800 | 1,400 | | 150 |
-  | 30 | 1,100 | 1,850 | 3,300 | 5,550 | 350 |
-  | 50 | 4,750 | 7,950 | 14,000 | 24,000 | 1,600 |
-  | 70 | 18,000 | 29,000 | 53,000 | 88,000 | 5,850 |
-  | 86 | 47,000 | 78,000 | 140,000 | 234,000 | 16,000 |
+  | 12 | 150 | 250 | 450 | | 50 |
+  | 20 | 450 | 700 | 1,300 | | 150 |
+  | 30 | 950 | 1,600 | 2,900 | 4,800 | 300 |
+  | 50 | 3,800 | 6,300 | 11,000 | 19,000 | 1,250 |
+  | 70 | 13,000 | 21,000 | 38,000 | 63,000 | 4,200 |
+  | 86 | 31,000 | 52,000 | 93,000 | 156,000 | 10,000 |
+
+  By length (2 / 3 / 4 waves / until next Town):
+
+  | Wave won | Common | Feast (Rare) | Epic | Legendary |
+  |---|---|---|---|---|
+  | 6 | 50 / 100 / 150 / 200 | 100 / 150 / 200 / 350 | 150 / 250 / 350 / 650 | |
+  | 20 | 450 / 650 / 850 / 1,750 | 700 / 1,050 / 1,400 / 2,900 | 1,300 / 1,900 / 2,550 / 5,200 | |
+  | 50 | 3,800 / 5,650 / 7,550 / 15,000 | 6,300 / 9,450 / 13,000 / 26,000 | 11,000 / 17,000 / 23,000 / 46,000 | 19,000 / 28,000 / 38,000 / 77,000 |
+  | 86 | 31,000 / 47,000 / 62,000 / 127,000 | 52,000 / 78,000 / 104,000 / 212,000 | 93,000 / 140,000 / 187,000 / 382,000 | 156,000 / 234,000 / 312,000 / 636,000 |
 
 - **Buying** (`whyNotBuyBoost(i)`, `buyBoost(i)`): every offer once ("Sold"), as many as the gold allows (no limit a
   visit). Refused in this order (`BoostWhy`, `boostRefusals`): the game over, not in a Town with the Tavern ("Only in a
   Town"), bought already ("Sold"), the gold ("Not enough gold"). A buy takes the gold at once, the boost runs at once
   (`RunningBoost`, `Game.boosts`) and the living troops are refit (HP gained comes with it); `Sfx.clear` and the event
-  `BoostBought`. **Reroll** (`whyNotRerollTavern`, `rerollTavern`): the unbought offers are rolled again in their slots
+  `BoostBought`; it runs for its offer's length. **Reroll** (`whyNotRerollTavern`, `rerollTavern`): the unbought offers are rolled again in their slots
   (no first Feast, no pity), the bought ones stay; refused with every offer bought ("Sold out") or the gold short; the
   trace event `TavernRerolled`.
 - **What a boost does** (`_boostStats`, the last step of `Game.statsOf`, after the oath; units-and-combat.md): the product
@@ -2148,16 +2171,23 @@ ui-hud.md's "The Tavern in battle"; the guide's K23 and its "Towns" topic name i
   Plunder's extra: `_boostGold`).
 - **The countdown** (`_boostWaveEnd`, at each wave's end, won or lost): one wave fewer each; a boost at 0 ends (the event
   `BoostEnded`) and the troops are refit, HP over the new max only capped (never killed). Bought between waves n and
-  n+1, a boost runs through waves n+1 and n+2. A Town comes at least 5 waves after the last, so nothing runs into the
-  next Town (unless `schedule.minGap` is under 2; then a kind still running is left out of that Town's rolls).
-- **Probes:** `Game.tavernPolicy` ('top': the best offer it can pay, the highest rarity, then the dearest; 'all': every one
-  it can pay in that order), from `_townByPolicy` before it leaves a Town; null: the player.
+  n+1, a 2-wave boost runs through waves n+1 and n+2. A Town comes at least 5 waves after the last, so no fixed length
+  (4 at most) runs into the next Town (unless `schedule.minGap` is under the length; then a kind still running is left
+  out of that Town's rolls). **A wave lost to a wipe** (decisions-log 322) and played again counts nothing (decisions-log
+  331, until then it counted: it was fought): the replay is the same wave, as the wave meter reads it, so a boost bought
+  for waves 7 and 8 covers 7 played again and 8. **Until the next
+  Town** (`_boostTownEnd`): counted by no wave; it ends as the next Town is entered (`Towns.enterTown`, before that
+  Town's Tavern rolls, so it may offer the kind again), with `BoostEnded` and the refit; a wipe changes nothing. Each
+  boost counts the waves it ran (`RunningBoost.fought`, 0 for one bought in the Town just left: the troops' burst).
+- **Probes:** `Game.tavernPolicy` ('top': the best offer it can pay, the highest rarity, then the dearest, so of one
+  rarity the longest; 'all': every one it can pay in that order), from `_townByPolicy` before it leaves a Town; null: the player.
 - **Events and telemetry** (telemetry.md): `boostBought` and `tavernRerolled` passed on, `townLeft.tavern`, a wave's
-  `gold.tavernSpent` and its start's `boosts`; the battle log's lines "Feast: +20% damage, 15% less damage taken (2
-  waves)" and "Feast ended".
+  `gold.tavernSpent` and its start's `boosts` (an until-Town one's 0; `boostBought`'s `waves` 0 and `untilTown` true);
+  the battle log's lines "Feast: +20% damage, 15% less damage taken (2 waves)" ("(until next Town)") and "Feast ended".
 - **Saved** ("Saved" below): the boosts running and the Town's Tavern keys.
 - **Tests:** test/tavern_test.dart (town.json's block, the prices, the roll, the odds, buying, rerolling, the stats, the
-  countdown, the gold, the save, the telemetry, the probe policy).
+  countdown, the gold, the save, the telemetry, the probe policy; the lengths' odds, prices, countdown, end at the next
+  Town, a wipe's replay, save and telemetry).
 
 ## Towns: the market (decisions-log 326)
 
@@ -2460,11 +2490,14 @@ Enhance ("The forge: Enhance" above) saves `bagPlus` (the Bag's enhanced stacks,
 `upgradePlus` (type → its enhanced copies the same way), again only when any.
 `inventory` keeps the +0 items and `upgrades` every item, so a save without them (one from before Enhance) loads all +0, and the format stays version 3. On load an unknown item is skipped, a "+" is kept in 1 to
 `enhance.most`, and a type keeps no more enhanced copies of an item than `upgrades` lists (its highest).
-The Tavern ("Towns: the Tavern" above) saves `boosts` (the boosts running, each `{kind, left, type?}`, only while any
-runs) and in `town` `tavern` (the visit's offers `{kind, type?, sold?}`, `rerolls`, `spent` and `bought`, only while in
-a Town), `tavernDry` (above 0) and `tavernSeen` (once the first Tavern was rolled); none while unused, so a save of a
+The Tavern ("Towns: the Tavern" above) saves `boosts` (the boosts running, each `{kind, left, type?, fought?}`, or
+`{kind, town: true, type?, fought?}` until the next Town; `fought` the waves it ran, above 0; only while any runs) and in
+`town` `tavern` (the visit's offers `{kind, type?, waves}` or `{kind, type?, town: true}`, `sold?`; `rerolls`, `spent` and
+`bought`, only while in a Town), `tavernDry` (above 0) and `tavernSeen` (once the first Tavern was rolled); none while unused, so a save of a
 game without the Tavern is as before. `boosts` loads whatever the flags are (before the troops, so they fit with it); an
-unknown kind, a Champion's Plate without a troop type and one with no wave left are dropped. A save in a Town without
+unknown kind, a Champion's Plate without a troop type and one with no wave left are dropped. The lengths' keys are
+additive (decisions-log 331; the format stays version 3): an offer saved before them lasts `tavern.waves` 2, and a boost
+without `fought` ran 2 − `left`. A save in a Town without
 `tavern` (made by a build without the Tavern) rolls its offers on load when the Tavern is on.
 The Wishlist ("The Wishlist" above) saves `wishlist` (type → {item name: how many the type is to hold}, in the order put
 on; decisions-log 300) only with some wish, so a save without one is as before and the format stays

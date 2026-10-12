@@ -11827,7 +11827,8 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
          heart, / and play the wave again. / No hearts left: game over."; K16 "The wave took too long: / the monsters
          charge your line. / Kill them in 60 s / or lose a heart." and its picture one heart lost (it drew a heart and a
          half); the wipe's note and battle-log line by cause ("Army fell", "No troops", "Too slow").
-       - **Telemetry:** `eventVersion` and `telemetryVersion` 15: a `wipe`'s `cause` (`fell`, `empty`, `slow`).
+       - **Telemetry:** `eventVersion` and `telemetryVersion` 16 (331 took 15): a `wipe`'s `cause` (`fell`, `empty`,
+         `slow`); `boostSaved` gone.
        - What the owner's game loses: nothing he has seen (no crossing in his waves 1-74). A collapse costs one heart
          instead of up to 2.5; a march that can't be won costs a heart instead of half a heart a monster (harsher for
          one crosser, gentler for many), and is never a win.
@@ -11852,3 +11853,53 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        load and the wipe, and the saves are made between waves only.
      - **Open:** what the owner's run did differently (a boss chest, a card, the battle log's lines around that Town).
        No code change; the test stays, so a fix for what he saw lands against it.
+331. **A Tavern boost's length is rolled with its offer, 2 to 4 waves or until the next Town, and the longer one costs
+     more** (the owner, 2026-10-12: "buff dari tavern di buat panjang buffnya bisa variasi bisa 2 tapi bisa juga sampai
+     next town. nah ini di random saja dan semakin lama buffnya bertahan harusnya harganya juga ikut naik", make the
+     Tavern boosts' length vary, 2 waves or as long as until the next Town; roll it, and the longer a boost lasts the
+     higher its price should be). Why: every boost lasted the two waves after its Town (266's "semua buff tavern adalah
+     temporary buff untuk 2 wave setelahnya"), so a Town's offers differed only in kind and the five or more waves to the
+     next Town went unboosted after the second. By tavern-duration (lib/tavern.dart; loot-items-relics.md "Towns: the
+     Tavern", ui-hud.md "The Tavern" and "The Tavern in battle").
+     - **The roll:** each offer, after its kind and its type, draws its length on the Tavern's own dice (`Game.tavernDice`,
+       seed + 800 in `Game.seedDice`): 2 waves 45%, 3 waves 25%, 4 waves 18%, "until next Town" 12% (town.json
+       `tavern.lengths`; 2 the commonest and the Town the rarest, as asked; 3.26 waves an offer on average). The fixed
+       lengths stay under the schedule's 5-wave gap, so none reaches the next Town, and the next Town is never marked
+       when one is bought. A reroll's new offers roll theirs; a bought one keeps its own. One more draw a slot moves the
+       later Taverns' kinds in a seeded run (the first visit's stay the same).
+     - **The price:** the 2-wave price stays the one from 266 (rarity k × the Tavern's purse, rounded to 50 or 1,000,
+       at least 50); n waves × n/2, rounded the same and at least one step over the price a wave shorter, so the longer
+       is always dearer, even where the 50 floor would tie them (wave 6's Common: 50 / 100 / 150, not 50 / 100 / 100).
+       Until the next Town: the 2-wave price × the waves to it on average by the Town roll's odds (`townGapMean`: the
+       5-wave gap, then 20% a roll rising 5% a miss: 7.42 waves) / 2 × 1.1 (`tavern.price.town`, a small premium for a
+       length that may run long), at least a step over 4 waves'. Wave 20's Feast: 700 / 1,050 / 1,400 / 2,900 on 318's
+       purse (800 / 1,150 / 1,550 / 3,200 before it). Sent to the balance pass (318) as proposed numbers; they are
+       town.json's to tune.
+     - **The end:** a fixed one counts down at each wave's end as before; until the next Town counts no wave and ends as
+       that Town is entered (`Towns.enterTown`, before its Tavern rolls, so it may offer the kind again), with
+       `BoostEnded` and the troops refit. A wave with the Shadows (319) is a wave like any: it counts the same.
+     - **A replay counts nothing** (this replaces 322's "the Tavern's boosts count the lost wave (it was fought)"): a
+       wave lost to a wipe is played again as the same wave (322 put `wave` back), so a boost bought for waves 7 and 8
+       covers 7 again and 8; only Watchman's Brew's forgiven leak starts again. A game over counts as before.
+     - **What shows:** an offer's row says its length in grey after its rarity ("Rare · 4 waves · All troops", "Rare ·
+       Until next Town"; the length kept before the troops where the row is short, since it sets the price), its page
+       "Lasts the next 4 waves." or "Lasts until next Town, 5 waves or more." and an Effect row "Lasts", Buy's price and
+       the message "Feast! Until next Town" its length's. Running: the chip under the wave meter shows the waves left or
+       the Town chip's hammer (existing art), its tooltip "Feast: 3 waves left" or "Feast: until next Town" with "Town
+       after wave 12" once marked; the Active slot's capsule "Town"; the battle log "(until next Town)"; the guide's
+       Towns topic "The "Tavern" sells boosts for / 2-4 waves, or until next Town." (`Words.untilNextTown`; "Until
+       Town", `Words.untilTown`, where a row is too short for it).
+     - **Saves** (additive, `v` stays 3): an offer `{kind, type?, waves}` or `{kind, type?, town: true}`, a boost
+       `{kind, left, ...}` or `{kind, town: true, ...}`, with `fought` (the waves it ran) above 0; an offer saved before
+       lasts `tavern.waves` 2 and a boost without `fought` ran 2 − `left`. The troops' burst back from a Town now reads
+       `fought` 0 (no wave counted yet) instead of all of 2 waves left.
+     - **Telemetry:** `boostBought`'s `waves` is 2 to 4, or 0 with `untilTown` true; a wave start's `boosts` lists an
+       until-Town boost as 0 (`eventVersion` and `telemetryVersion` 15; 326's market took 14).
+     - **Checked:** test/tavern_test.dart (the odds over 15,000 offers, the prices by length at waves 6, 20 and 50 and
+       rising at every wave 1-100, 3 and 4 waves run out, until the next Town runs to it and ends as it is entered, a
+       wipe's replay, the save and an old save, the telemetry, the probe policy), test/tavern_ui_test.dart and
+       test/tavern_hud_test.dart (the row's length, the page's lines, Buy, "Town" under Active and the hammer chip at
+       1266×713, 1164×777 and 915×412), and shots at 1600×947 and 915×412. The w89 identity dump (waves 90 and 91 of
+       the owner's wave-89 save) is byte-identical to 327's golden: that save's next Town comes at wave 94 at the
+       earliest, so no Tavern rolls and no boost runs in it; the golden stands. Balance (more boosted waves a Town, the
+       gold they take) is measured after the merge, by replaying saved waves.

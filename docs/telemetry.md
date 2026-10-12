@@ -35,7 +35,7 @@ events it listens to are #60's stream (lib/game_events.dart, architecture.md).
 
 ## The records
 
-Every record is one JSON object with `tv` (`telemetryVersion` 15: raise it when a field changes; 2 added the wave's
+Every record is one JSON object with `tv` (`telemetryVersion` 16: raise it when a field changes; 2 added the wave's
 `pusaka` and `gold.pusakaSpent`, decisions-log 138; 3 the boss chest's events and `gold.chestSpent` /
 `gold.chestEarned`, decisions-log 152; 4 Asah's `pusakaAsah` and `gold.asahSpent`, decisions-log 154; 5 the wave
 start's `tide.over`, decisions-log 162; 6 Tempa's `tempa` and `gold.tempaSpent`, decisions-log 163; 7 Lebur's
@@ -61,10 +61,12 @@ event `drop` went, but every player's game had the Towns, so none of its records
 again, decisions-log 322: the event `wipe` and a wave record's `end` `wiped` (`eventVersion` 13); 14 the Towns'
 market and identities, decisions-log 326: a `storeSold` of an item or a small relic carries `margin` and `pressure`, a
 `townEntered` `n` and `identity`, and an item's and a small relic's `gain` is the market's price (`eventVersion` 14); 15
-the back line costs nothing, decisions-log 329: no monster crosses it, so a wave's `livesLost` is 0 or a lost wave's
-heart; a `wipe` has its `cause` (`fell`, `empty`: a monster at the line with no troop standing, `slow`: a march not won
-within 60 s, its record's `marched` set), each a record's `end` `wiped`; Watchman's Brew and the wave's `boostSaved` are
-gone (`eventVersion` 15), `rec`,
+a Tavern boost's length rolled with its offer, decisions-log 331: a `boostBought`'s `waves` 2 to 4, or 0 with
+`untilTown`, and a wave start's `boosts` 0 for one until the next Town (`eventVersion` 15); 16 the back line costs
+nothing, decisions-log 329: no monster crosses it, so a wave's `livesLost` is 0 or a lost wave's heart; a `wipe` has its
+`cause` (`fell`, `empty`: a monster at the line with no troop standing, `slow`: a march not won within 60 s, its
+record's `marched` set), each a record's `end` `wiped`; Watchman's Brew and the wave's `boostSaved` are gone
+(`eventVersion` 16), `rec`,
 `install`, `session`, `game` (the number of the game within the session, 0 before the first) and `at` (UTC,
 ISO 8601).
 
@@ -72,7 +74,7 @@ ISO 8601).
 |---|---|---|
 | `session` | once, when the adapter is made (the first game played after launch) | `app` (`APP_VERSION` define, `dev`), `platform` (`Platform.operatingSystem`), `ev` (`eventVersion`) |
 | `game` | each `attach` | `wave` (0 new, more for a loaded save), `gold`, `lives`, `score` |
-| `event` | as it happens, for `passedOn`: fell, heroMade, awakened, bought, itemUsed, relicUsed, storeBought, storeSold, relicTakenOff, typeReleased, pusakaBound, pusakaMoved, ascended, heroRecalled, offerShown, offerPicked, offerRerolled, pusakaAsah, tempa, pusakaLebur, omenGained, omenEased, omenDusk, ukirFed, ukirStep, townMarked, townEntered, townLeft, crafted, itemCrafted, stoneCrafted, itemEnhanced, boostBought, tavernRerolled, wipe | `event`: the event's `toJson()` (`v`: `eventVersion` 15 (3: the chest's events; 4: Asah's; 5: heroRecalled's `refund`; 6: Tempa's; 7: Lebur's; 8: the Bayangan's, Ukir's, an Asah's `items`; 9: the Towns'; 10: the forge's, decisions-log 272; 11: the Tavern's, decisions-log 268; 12: the Bayangan's switched on, decisions-log 319; 13: the wipe's, decisions-log 322; 14: the market's and the Towns' identities, decisions-log 326; 15: the wipe's `cause`, Watchman's Brew gone, decisions-log 329), `kind`, `wave`, `t`, its fields) without `name`; `wipe` (a wave lost, lib/wipe.dart; its `wave` the one lost): `lives` (left), `livesLost` (2, a heart; fewer when fewer were left), `foes` (the monsters alive and queued as it fell, swept off unless the game is over), `over` (it took the last heart: the game is over; else the wave is played again, a new `wave` record with the same number) and `cause` (`fell`: the army fell; `empty`: a monster reached the back line with no troop standing; `slow`: a march not won within `marchMax` 60 s; decisions-log 329); a `fell` carries the troop's `relics` (names, back in the bag; `eventVersion` 2); `ascended` (#92 part 2, Bangkit 4-5 bought in the Toko, `Ascend.ascend`): `type`, `level` (4 or 5), `cost`; `heroRecalled` (#92 part 3, a fallen Hero called back in the Toko's Hero Gugur, `Recall.recallHero`; no `bought` for it): `type`, `stats` (its 2 attributes), `skill`, `fell` (the wave it fell in), `cost`, `refund` (`eventVersion` 5, decisions-log 167: what the troop a full army's recall sent home paid back, 0 without a swap; the troop's name stays in the battle log; `gold.recallSpent` is the `cost`, the refund not taken off); `offerPicked` (a boss chest closed, lib/draft.dart): `pick` (a Pusaka's name,
+| `event` | as it happens, for `passedOn`: fell, heroMade, awakened, bought, itemUsed, relicUsed, storeBought, storeSold, relicTakenOff, typeReleased, pusakaBound, pusakaMoved, ascended, heroRecalled, offerShown, offerPicked, offerRerolled, pusakaAsah, tempa, pusakaLebur, omenGained, omenEased, omenDusk, ukirFed, ukirStep, townMarked, townEntered, townLeft, crafted, itemCrafted, stoneCrafted, itemEnhanced, boostBought, tavernRerolled, wipe | `event`: the event's `toJson()` (`v`: `eventVersion` 16 (3: the chest's events; 4: Asah's; 5: heroRecalled's `refund`; 6: Tempa's; 7: Lebur's; 8: the Bayangan's, Ukir's, an Asah's `items`; 9: the Towns'; 10: the forge's, decisions-log 272; 11: the Tavern's, decisions-log 268; 12: the Bayangan's switched on, decisions-log 319; 13: the wipe's, decisions-log 322; 14: the market's and the Towns' identities, decisions-log 326; 15: the Tavern's lengths, decisions-log 331; 16: the wipe's `cause`, Watchman's Brew gone, decisions-log 329), `kind`, `wave`, `t`, its fields) without `name`; `wipe` (a wave lost, lib/wipe.dart; its `wave` the one lost): `lives` (left), `livesLost` (2, a heart; fewer when fewer were left), `foes` (the monsters alive and queued as it fell, swept off unless the game is over), `over` (it took the last heart: the game is over; else the wave is played again, a new `wave` record with the same number) and `cause` (`fell`: the army fell; `empty`: a monster reached the back line with no troop standing; `slow`: a march not won within `marchMax` 60 s; decisions-log 329); a `fell` carries the troop's `relics` (names, back in the bag; `eventVersion` 2); `ascended` (#92 part 2, Bangkit 4-5 bought in the Toko, `Ascend.ascend`): `type`, `level` (4 or 5), `cost`; `heroRecalled` (#92 part 3, a fallen Hero called back in the Toko's Hero Gugur, `Recall.recallHero`; no `bought` for it): `type`, `stats` (its 2 attributes), `skill`, `fell` (the wave it fell in), `cost`, `refund` (`eventVersion` 5, decisions-log 167: what the troop a full army's recall sent home paid back, 0 without a swap; the troop's name stays in the battle log; `gold.recallSpent` is the `cost`, the refund not taken off); `offerPicked` (a boss chest closed, lib/draft.dart): `pick` (a Pusaka's name,
 `serpihan`, or null when passed over), `rarity`, `stars` (after the take), `type` (where it went; null: the Gudang),
 `skipped`, `gain` (Lewati's gold), `rerolls`, `chest`, `chestWave`, and while the Bayangan are on (loot-items-relics.md
 "Bayangan", decisions-log 180) `omen` (the face the taken card hid; null: none), `levels` (the kinds its levels went to,
@@ -106,7 +108,8 @@ or a small relic carries `margin` (the market's for its first piece, two decimal
 before the sale; loot-items-relics.md "Towns: the market", decisions-log 326). The Tavern's (lib/tavern.dart,
 decisions-log 266; loot-items-relics.md "Towns: the Tavern"): `boostBought` (a
 boost bought, `Tavern.buyBoost`): `boost` (its kind), `rarity` (`common`, `rare`, `epic`, `legendary`), `price`,
-`waves` (2), `type` (only a Champion's Plate's troop type), `slot` (the offer's, from 0), `effects` (what it multiplies,
+`waves` (2 to 4, the offer's length; 0 for one until the next Town, decisions-log 331, `telemetryVersion` 15), `untilTown`
+(true, only then), `type` (only a Champion's Plate's troop type), `slot` (the offer's, from 0), `effects` (what it multiplies,
 by its town.json names: `{"dmg": 1.2, "taken": 0.85}`); `tavernRerolled` (the unbought offers rolled again): `price`,
 `n` (the visit's how-many-th), `offers` (the kinds after it, by slot); and a `townLeft` gains `tavern`: `offered` (the
 kinds of the visit's last roll), `bought` (the kinds bought), `rerolls`, `spent` (boosts and rerolls). Not passed on: the battle log's `grailSaved` and `pusakaReport` (decisions-log 149), whose counts are the wave record's `pusaka` |
@@ -119,7 +122,7 @@ A `wave` record sums everything since the last wave ended (so the shop before a 
 | `wave`, `end` | its number; `won`, `lost` (the game is over), `wiped` (the wave was lost and is played again: the next record has the same number; decisions-log 322, 329; its `wipe` event says why) or `left` (another game came in mid-wave) |
 | `secs`, `marched` | game seconds from its start to its end (time to clear); seconds in when it stalled and marched, or null |
 | `start` | `WaveStarted`'s fields: `army`, `levels` (1 to 5: Bangkit 4-5 bought count, #92 part 2), `heroes`, `gold`, `capacity`, `lives`, `bag`, `relics`, `tide` (#92: the crowd's HP and damage multipliers and the spawn gap in seconds, `{hp: 1.3478, dmg: 1.1614, gap: 0.7743, over: 0}` on wave 65; 1, 1, 0.9 before the tide; `over`: how many waves earlier the tide counts from for an army over the cap, Beban, decisions-log 162: 32 for the owner's 16 over 32 once ramped in, 0 at the cap or under it, `hp`, `dmg` and (with `overPace` on) `gap` already including it; units-and-combat.md "The tide"), `pusaka`, and while the Bayangan are on `omens`: `levels` (kind → level), `factor` (the Beban factor frozen for the wave, four decimals), `owed` (an old save's catch-up levels still to land) and `skipBuff` (this wave owes Lewati's skip buff); while the Towns are on `materials` (the Towns' materials held, key → count, decisions-log 221); while a Tavern boost runs
-`boosts` (kind → the waves it has left, counting this one; decisions-log 266) |
+`boosts` (kind → the waves it has left, counting this one, 0 for one until the next Town; decisions-log 266, 331) |
 | `livesLost`, `kills` | lives at the start minus at the end; monsters killed in it (raised minions too) |
 | `spawns`, `raised` | type → rank → how many: off the queue; the necromancers' minions |
 | `fallen`, `heroesFallen`, `killers` | troop type → how many fell; Heroes among them; monster type → rank → troops it felled |
@@ -208,7 +211,7 @@ recorded:
   `materials` and `materialsUsed`, and the Shops' material events.
 - The Tavern (decisions-log 268), when a Town left carried its `tavern`: "tavern: V visits, B boosts bought (x a visit),
   R rerolls for G gold, T gold in all; L leaks forgiven" (the `townLeft`s' `tavern`, the `tavernRerolled` events, the
-  waves' `boostSaved`, in records before `telemetryVersion` 15: Watchman's Brew went in decisions-log 329); "tavern by Town (wave won before it: visits, bought, gold): 7: 3, 2, 300, …" (by the
+  waves' `boostSaved`, in records before `telemetryVersion` 16: Watchman's Brew went in decisions-log 329); "tavern by Town (wave won before it: visits, bought, gold): 7: 3, 2, 300, …" (by the
   `townLeft`'s `wave`: what each Town's Tavern sold as the run goes on); "tavern kinds (bought / offered): feast 4/9,
   ale 1/6, …" (each kind bought against offered, the visits' last rolls, most offered first).
 

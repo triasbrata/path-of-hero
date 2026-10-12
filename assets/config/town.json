@@ -163,8 +163,9 @@
   },
   "tavern": {
     "offers": 3, "waves": 2, "legendFrom": 30, "pity": 4, "firstFeast": true,
+    "lengths": {"2": 0.45, "3": 0.25, "4": 0.18, "town": 0.12},
     "odds": {"common": 0.55, "rare": 0.30, "epic": 0.13, "legendary": 0.02},
-    "price": {"k": {"common": 0.3, "rare": 0.5, "epic": 0.9, "legendary": 1.5}, "early": 0.5, "fullFrom": 20, "least": 50, "round": 50, "roundBig": 1000, "bigFrom": 10000},
+    "price": {"k": {"common": 0.3, "rare": 0.5, "epic": 0.9, "legendary": 1.5}, "early": 0.5, "fullFrom": 20, "least": 50, "round": 50, "roundBig": 1000, "bigFrom": 10000, "town": 1.1},
     "reroll": {"k": 0.1, "least": 50, "rise": 2.0},
     "most": {"dmg": 1.8, "hp": 1.8, "rate": 1.8, "mpRegen": 1.8, "gold": 2.0, "taken": 0.6},
     "boosts": {

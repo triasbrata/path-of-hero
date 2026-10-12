@@ -1046,6 +1046,7 @@ extension Towns on Game {
     _townSince = t;
     _townCrafts.clear();
     _townCraftSpent = 0;
+    _boostTownEnd(); // the boosts until this Town end, so its Tavern may offer them again (tavern.dart)
     _rollTavern(); // the Tavern's offers (tavern.dart), on its own dice
     _emit(TownEntered(wave, t, slot: townAt!, gold: gold, auto: auto, n: townCount, identity: townIdentity.key));
     return true;

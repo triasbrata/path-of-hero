@@ -114,8 +114,14 @@ final _healer = troopTypeNames[Game.freeHealer]!;
 /// Tempa's level in words: "+5% HP and attack" (or each its own when they differ).
 final _tempaGain = tempaHp == tempaDmg ? '+${_pct(tempaHp)} HP and attack' : '+${_pct(tempaHp)} HP, +${_pct(tempaDmg)} attack';
 
-/// How many waves a Tavern boost lasts (town.json `tavern.waves`, decisions-log 266).
-int get _tavernWaves => loadedTownRules.tavern.waves;
+/// How long a Tavern boost lasts (town.json `tavern.lengths`, decisions-log 331): "2-4 waves, or until next Town".
+String get _tavernLengths {
+  final r = loadedTownRules.tavern, n = [for (final MapEntry(:key, :value) in r.lengths.entries) if (value > 0) key];
+  return [
+    if (n.isNotEmpty) n.first == n.last ? boostLengthWords(n.first) : '${n.first}-${n.last} waves',
+    if (r.lengthTown > 0) boostLengthWords(0, untilTown: true, inLine: true),
+  ].join(', or ');
+}
 
 /// The guide in simple English (the owner's decision 1 a), with the UI's Indonesian names. The board plays with the Towns
 /// on (decisions-log 237), so the Shop, the relics and the Recall are told as a Town has them, and with the forge's
@@ -469,8 +475,8 @@ GuideText guideFor() => GuideText(
       'until you tap "${Words.leaveTown}".',
       // The tent opens the Army page (decisions-log 301).
       'Tap the tent for "${Words.army}".',
-      'The "${Words.tavern}" sells boosts',
-      'for the next $_tavernWaves waves.',
+      'The "${Words.tavern}" sells boosts for',
+      '$_tavernLengths.',
       // The Wishlist (decisions-log 282): set on the Smithy's item page and on a type's Army detail.
       'A "${Words.wishlist}" marks items to make,',
       'set in "${Words.smithy}" or "${Words.army}".',

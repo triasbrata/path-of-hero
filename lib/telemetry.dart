@@ -47,10 +47,13 @@ import 'settings.dart';
 /// wave record's `end` `wiped`.
 /// 14: the Towns' market and identities (decisions-log 326): a `storeSold` of an item or a small relic carries its
 /// `margin` and `pressure`, a `townEntered` its `n` and `identity`; an item's and a small relic's `gain` is the market's.
-/// 15: the back line costs nothing (decisions-log 329): no monster crosses it, so a wave's `livesLost` is 0 or a lost
-/// wave's heart; a `wipe` has its `cause` (`fell`, `empty`: begun with no troop, `slow`: its march not won within 60 s,
-/// with `marched` set), each a wave record's `end` `wiped`; Watchman's Brew and the wave's `boostSaved` are gone.
-const telemetryVersion = 15;
+/// 15: a Tavern boost's length is rolled with its offer (decisions-log 331): a `boostBought`'s `waves` 2 to 4, or 0 with
+/// `untilTown`, and a wave start's `boosts` 0 for one until the next Town.
+/// 16: the back line costs nothing (decisions-log 329): no monster crosses it, so a wave's `livesLost` is 0 or a lost
+/// wave's heart; a `wipe` has its `cause` (`fell`, `empty`: a monster at the line with no troop standing, `slow`: its
+/// march not won within 60 s, with `marched` set), each a wave record's `end` `wiped`; Watchman's Brew and the wave's
+/// `boostSaved` are gone.
+const telemetryVersion = 16;
 
 /// Where [HttpSink] posts (`--dart-define=TELEMETRY_SERVER=https://...`). None by default, so nothing is sent.
 const telemetryServer = String.fromEnvironment('TELEMETRY_SERVER');
