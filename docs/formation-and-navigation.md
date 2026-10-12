@@ -56,7 +56,7 @@ Purpose: how troops line up, walk in, make way and settle.
 | `_passes(a, b)` | Who goes first: in battle, a mover coming through from behind (heading right, more ahead than beside), on its way to the fight. Then the one on the move before one standing, then the further forward (line), else the lower `id`. Between waves only that fixed order (#82), so between two walking troops who gives way never changes while they meet, and no ring of them each waits for the next. Coming through from behind went first between waves too until #82: a yielder pushed back came through next and took the way, so two back-rank troops crossing swapped it for good. |
 | `_steer` | Between waves, a walking troop's way round the walking allies that go first (#82, below). It returns the step: a direction times the share of its speed it walks at. In battle only `_bendRound`: the nearest ally that goes first in the corridor ahead (`_lookAhead`, or as far as it goes; `_personalSpace` each side) bends its heading to the far side, harder the closer it is, and it never slows down. Spot mates (below) are not gone round. |
 | `_makeWay` | A troop in the corridor of one that passes it (`_lookAhead` 20 ahead; between waves no further than that one still goes, and one settling back onto its spot, under half a tile to go, has none to clear: in a packed zone it set its neighbours stepping aside by turns for good, #82) steps aside (even while shooting) and waits (`yieldUntil`), then walks back. A tick's steps aside take it one of its own walk steps (its capped walk, `walkSpeed`, decisions-log 311) at most in all, however many troops pass it (decisions-log 309, the owner: "Ya, batasi juga"; until then a step for each, up to 14.6 units a tick on the owner's wave-30 save). Before a wave, non-melee never step forward. A healer mid-cast (`_casting`) doesn't step aside, nor does a carried or braced troop (`_firm`, units-and-combat.md "Forced movement"), nor a spot mate (below). Between waves a troop walking somewhere of its own (`_walking`) isn't pushed: it finds its own way (`_steer`); in battle it is. A kiting archer's step back (`kite`) is no walk to anywhere: it is pushed as before and doesn't steer (without that, archers kiting against the view's left edge jammed 2–3× longer). |
-| Separation | `_personalSpace` 12 keeps units apart. Between troops the yielder moves: sideways, and backwards for non-melee before a wave. A healer mid-cast holds its ground, and so does a carried unit, a braced troop or one under `noShove` (`_firm`): the other one yields, or (troop against monster) takes the whole push. Between two troops a stand a troop gave itself (the Pusaka Anchor's, all wave) doesn't count: it holds against the monsters, and its troops still part. A unit in a leap's air or charging (`_passesThrough`) is skipped, and so is a pair of troops where one walks through its allies (`_ghost`: `arriving`, or the stall detector's moment), and so are two spot mates (below). Between two monsters, one walking into one that stands takes the whole push and slides round it (`_slideRound`, units-and-combat.md "Fighting rules"). |
+| Separation | `_personalSpace` 12 keeps units apart. Between troops the yielder moves: sideways, and backwards for non-melee before a wave; mid-wave its x part is the two troops' x apart over their distance (decisions-log 324: a whole half gap by the sign before, so allies one above the other shoved each other back and forth). A healer mid-cast holds its ground, and so does a carried unit, a braced troop or one under `noShove` (`_firm`): the other one yields, or (troop against monster) takes the whole push. Between two troops a stand a troop gave itself (the Pusaka Anchor's, all wave) doesn't count: it holds against the monsters, and its troops still part. A unit in a leap's air or charging (`_passesThrough`) is skipped, and so is a pair of troops where one walks through its allies (`_ghost`: `arriving`, or the stall detector's moment), and so are two spot mates (below). Between two monsters, one walking into one that stands takes the whole push and slides round it (`_slideRound`, units-and-combat.md "Fighting rules"). |
 | Stall detector | `_watchStuck` (#82): a troop more than half a tile from where it heads that walked this tick, or that stands aside (`yieldUntil`) on its way home between waves, without getting on counts the tick (`Unit.stuckFor`). Getting on is, in battle, a quarter of its step (its capped walk) along its way; between waves (its spot stays put), a quarter of its step nearer its spot than it has been yet on this walk (`Unit.closest`): a troop pushed back and forth by one that kept stepping back onto its own spot on the way got on now and then, and a tick-by-tick count never reached the limit (the probe, auto-player seed 1 wave 14). After `_stuckAfter` 1.5 s of that it walks through its allies for `_throughFor` 1 s (`Unit.throughUntil`, `_ghost`). A jam of allies holds nobody for good; monsters still block. |
 
 ## How the moves look (decisions-log 307)
@@ -159,7 +159,14 @@ fighting it. Decisions-log 120.
   (`_steer`) for each other: eight of them close in together.
 - **Waiting** (`_waitPoint`): with every spot of every monster taken, a troop waits `waitBack` 1.5 tiles behind
   the front spot of the monster nearest to it, level with it within a tile (about 2.5 tiles from that monster),
-  and takes the first spot that frees (it looks again every tick).
+  and takes the first spot that frees (it looks again every tick). Mid-wave (decisions-log 324) one already between
+  there and the front spot stays at its x: a troop that has just lost its spot, or stepped aside, doesn't walk back
+  to wait.
+- **A hold before a turn** (`Game.turnHold` 0.6 s, `Unit.forwardAt`, not saved; decisions-log 324): mid-wave a melee
+  troop that walked forward to its spot or its foe less than `turnHold` ago doesn't turn back to a goal more than
+  `turnSlack` 1 unit behind it; it stands facing its foe meanwhile. A spot taken and freed again, a wait point that
+  jumps with the nearest foe, or a step aside no longer sends it back and forth; a goal that stays behind it, it
+  walks to after the hold.
 - **Reach** (`reaches`): a unit reaches a foe within its reach plus `spotSlack`. The separation parts two bodies
   to exactly 12, a melee unit's reach, give or take a rounding error; without the slack one a hair out stepped in
   again, shoving, instead of striking.
@@ -171,7 +178,10 @@ fighting it. Decisions-log 120.
 
 - Fighters = those attacked in the last `_engagedFor` 2s (else all), so a fresh troop at the back
   doesn't pull the healers back.
-- Rest line = max(max(baseX, cam + keepUpShift) + tile/2, rearmost fighter − tile): never behind the back
+- Rest line = max(max(baseX, cam + keepUpShift) + tile/2, rearmost fighter − tile, rearmost melee in the fight
+  (not falling back) − `healBehind` 2.5 tiles): the last with `Game.keepSupports` only (decisions-log 324), so a healer
+  follows the melee, not the long range standing back at their hold (archers about 3 tiles behind the melee, wizards
+  up to 5: they now stand level with the healers or behind them). Never behind the back
   line, nor behind the keep-up floor at the view's left edge, `keepUpInset` 2 tiles inside it once the wave
   has shown a fight (#61: the line no longer follows the view, so the healers keep up with it by walking,
   `_rearEdge`). Since #85 the view is centred on the fight (camera-and-field.md), so in a settled fight that
@@ -189,9 +199,12 @@ fighting it. Decisions-log 120.
   of the view (once the wave has shown a fight, less than `keepUpShift` − `offViewBy` inside its left edge) walks up to
   its rest at the catch-up pace before it heals or smites, so no heal of its comes from off the screen: a Hero priest's
   ×3 reach (288) healed the whole field from the back line, never seen.
-- **Left behind** (decisions-log 312): between heals (its cooldown running) one more than a tile behind its rest walks
-  up toward it at the catch-up pace, never past it, and stands again to cast. A long reach kept it where it stood, and
-  so held the melee on their leash ("Melee keep their supports in reach", below) for the whole wave.
+- **Left behind** (decisions-log 312, 324): one more than a tile behind its rest walks up toward it at the catch-up pace,
+  never past it, whenever no heal of its is due (its cooldown running, short of the MP, saving it for a skill). And it
+  walks up first: it stops to heal only an ally falling back or at `retreatAt` (half) of its HP or less, and doesn't stop
+  to smite. A heal holds a healer `healCast` 0.6 s, and the priests cast about every 1.3 s, so stopping for every heal
+  they averaged about 25 units a second against the army's 32 and trailed the melee by 6 to 9 tiles once the view
+  centred the fight (324); a long reach (a Hero priest's 288) lets it heal the field from there, never seen.
 - Both are `Game.keepSupports`'s (on); off, a healer heals from wherever it reaches.
 
 ## Hurt troops fall back to a healer (`_fallBackTo`, lib/retreat.dart)
@@ -360,46 +373,51 @@ fell far behind the light melee (soldier, knight, swordsman, lancer: 22–28, mo
   (#39). `Game.heavyPace` (on) switches it, for probes and tests.
 - Once the fight is on, the heavies left behind catch up (`speedTo`, above).
 
-## Melee keep their supports in reach (`supportLine`, decisions-log 312)
+## The front stops at the view's right edge (`frontCap`, decisions-log 324)
 
-The owner: "make sure jangan sampai support teringgal dan membuat heal mereka tidak masuk dan off screen" (the
-supports must not be left behind, their heals out of reach, off the screen), then, of a first cut that stopped the
-melee at a line and held them there: "ini para trops sekarang seperti berbaris, yang aku maksud adalah mereka dinamis
-bisa maju tapi ketika terlalu maju mereka akan turun lagi ke belakang dan jangan pasif dan berdiam saja" (they line up
-now; they should push on, drop back when too far ahead, and never stand idle). So the melee are on an elastic leash.
+The owner, of 312's elastic leash (the melee walked up to 1.5 tiles past their supports' line and dropped back to it from
+3 tiles past): "yang troops maju mundur ini mungkin batas maksimal maju adalah sejauh kanan kamera, jadi yang paling depan
+akan iddle atau attack saja tapi tida bisa maju lagi jika troops di belakang ada yang ketinggalan" (the troops going
+forward and back: maybe the furthest they may go is the camera's right edge, so the front-most just idle or attack, but
+can't go further while troops behind lag). So there is no line and no walking back; the view itself is the bound.
 
-- **The line** (`Game.supportLine`, one for every melee troop, found once a tick): for every troop healer and long
-  range on the field (entered, not joining), alive, not falling back nor carried, its x plus its working reach (a
-  healer's heal reach, a long range's hold, `holdAt`), never more than `supportView` 0.4 of the view's width
-  (`viewW`), less `supportSlack` half a tile; the least of them. Past it a melee troop is out of a healer's reach, or
-  fights a foe the long range don't cover. A long range with a foe in its reach already works and doesn't count (a
-  kiting one's steps back would only tug the line). The line comes forward at once and goes back at `leashEase` half a
-  tile a second at most, so a support's step back (a healer going to the hurt, a long range losing its foe) doesn't
-  yank the melee.
-- **No leash** (no line) with `Game.keepSupports` off, before a wave and after a win, in the stall march, with no
-  support on the field, and for anyone but a melee troop on the field, not falling back.
-- **The leash** (`leashCap` 1.5 tiles): a melee troop walking to its spot or its foe goes no further than `leashCap`
-  past the line. With its way past it, it takes the nearest monster it can fight without going further (its near
-  side, `spotRing` in front of it, within the leash; already past the leash, level with it or behind it) and walks
-  to it at the catch-up pace; with none, it walks its way up to the leash and stands there facing its foe until the
-  supports come up. A foe in its reach it fights wherever it stands, the leash or not. The light melee's
-  `paceLimit` (above) holds while it is the nearer of the two.
-- **The drop back** (`leashOut` 3 tiles, `Unit.leashed`, not saved): one more than `leashOut` past the line (a fight
-  that drifted on, a shove, the line going back) walks back to the line (`leashBack` 0), facing its foe and striking
-  what it reaches, so the monsters follow it into the supports' reach. At the line it is free again: the leash
-  above. Falling back to a healer (`_fallBackTo`) comes first. Standing at the leash is no walk, so the stall
+- **The cap** (`Game.frontCap`): mid-wave `capInset` a tile inside the view's right edge, `cam + viewW − capInset`, so a
+  troop there is on the screen with its sprite and bar. No troop that has marched in walks past it (`_capWay`, in
+  `_moveToward`: a way that runs past it ends where it crosses the cap). A melee troop whose spot or foe lies past it walks
+  as far as the cap at its pace and stands there facing its foe; a foe in its reach it fights wherever it stands. One
+  already past it (the view went back) stands where it is: it never steps back for the cap. A shove never pushes a troop
+  past it, and the view gliding left leaves it where it is (after the shoves, as `rightLimit` holds the monsters); a
+  troop carried by a move (a leap, a charge) lands where its move takes it. Standing at the cap is no walk, so the stall
   detector stays quiet.
-- **Why those numbers:** a first spec (the leash at 1.5 tiles, a drop back from past 2 tiles to half a tile inside
-  the line) turned the melee back and forth: a shove of 8-10 units at the leash set it off, then a 40-unit walk back
-  and one forward again, 29 turns of a tile or more a troop-minute on the owner's wave-30 save against 6-8 before.
-  Another bound the spots themselves (no spot past the leash): melee waited beside monsters whose spots lay past it,
-  and the wave took 60% longer on one dice. 1.5 tiles between the leash and the drop back, and back to the line only, keep the
-  turns at the level before.
-- **Measured** (the owner's wave-30 save played through the board, five dice, at 1600×947 and 915×412, before →
-  after): a support out of sight 61.8 → 0 and 34.7 → 0 s a wave; a melee troop at half its HP or less out of every
-  healer's reach 5.0 → 0.0 and 16.7 → 0.9 troop-seconds; heals 244 → 211 and 237 → 216; melee standing out of a fight
-  with monsters about 93.5 → 95.5 and 144 → 113 troop-seconds; turns of a tile or more 5.9 → 5.5 and 4.7 → 3.9 a
-  troop-minute (of 6 units or more 17.1 → 25.8 and 12.2 → 18.8: the push and pull itself, about two drop backs a
-  melee troop a wave); the wave 78.6 → 90.5 and 87.7 → 92.5 s, no troop lost. The first cut (a melee walking to a
-  foe, out of a fight, stopped at the line and held) had the supports out of sight 4 s but the melee standing 812
-  troop-seconds.
+- **The army stays together round the fight** (the owner, after the first cut in develop: "battle harus tetap di tengah
+  layar, karna dengan pendekatan sekarang malah para mele di ujung kanan dan para healer ke di ujung kiri camera,
+  harusnya para healer ikut maju agar battle field kembali ke center camera"): the view centres the battle point as
+  before (#85, camera-and-field.md); it doesn't wait for anyone. The healers rest at most `healBehind` 2.5 tiles behind
+  the rearmost melee in the fight ("Healers mid-battle"), the long range stand at their hold, and when the melee go on
+  the supports follow at their pace (the catch-up pace when they fell behind, `speedTo`); a healer far behind walks up
+  before it heals, unless one is at half its HP or less ("Left behind"). A troop far behind (bought
+  mid-wave, revived) comes up at the catch-up pace; the view doesn't wait for it. With the fight in the middle, the cap
+  is a safety that seldom binds. (The first cut held the view back so the rearmost troop stayed 2 tiles inside its
+  left edge: the melee stood at the right edge and the healers at the left one.)
+- **None** (`Game.keepSupports` off): before a wave and after a win, and in the stall march.
+- **Kept:** the healers' walk-in and walk-up ("Healers mid-battle"), the catch-up pace (`speedTo`), make-way, the light
+  melee's `paceLimit`, the melee spots (#84), the stall detector and `rightLimit`.
+- **No wobble** (the owner's "maju mundur" itself: a troop moving forward keeps moving forward, or stops): without the leash the melee crowd the fight, and the spots' and the waiting's own turns came forward. Each
+  turnaround charged to the step that made it (an instrumented copy of the game): of 5.9 turns of a tile a
+  troop-minute with the cap alone (owner's wave 30, 1600×947), a troop that lost its spot walking back to wait 1.75, a
+  spot taken again 1.47, walking back to wait after stepping aside 1.02, shoves 0.60, steps aside 0.43; on w89 23.2,
+  the wait point jumping with the nearest foe 7.0. So a waiting troop stays at its x ("Waiting" above), a melee troop
+  holds before it turns (`turnHold`, above), and mid-wave an ally's shove moves x as the two stand apart in x
+  ("Walking without shoving").
+- **Measured** (the owner's wave-30 save through the board, five dice, and w89's waves 90 and 91; main with 312's leash
+  → now; 1600×947 | 915×412 | w89 at 1600×947): turns of a tile a troop-minute 6.60 → 2.55 | 3.20 → 3.03 | 7.36 → 0.47,
+  of 6 units 28.0 → 8.0 | 18.1 → 7.7 | 21.3 → 8.4; a support out of sight 0 → 1.6 | 0 → 8.2 | 32.9 → 14.2 s a wave;
+  healers behind the rearmost melee in the fight at the median 110 → 64 | 126 → 96 | 130 → 70 units; the fight shown
+  off the view's centre 16 → 23 | 21 → 30 | 13 → 20 units on average (the view 324 | 477 | 324 wide); a melee troop at
+  half its HP or less out of every healer's reach 0.4 → 0.0 | 0.1 → 1.2 troop-seconds; the wave 83.5 → 66.6 | 84.4 →
+  78.9 | 142 → 129 s; troops lost 0 → 0.2 | 0.2 → 0.6 | 2.5 → 1.5 a run; no life lost. What's left out of sight is the
+  melee's rush on a wide view: the fight goes on faster than twice a priest's walk, and the view doesn't wait.
+- **Until 324** (decisions-log 312) the melee were on an elastic leash on `supportLine`, the least of each healer's x
+  plus its heal reach and each long range's plus its hold (at most 0.4 of the view): a melee troop walked to at most
+  1.5 tiles past it and, one more than 3 tiles past it, dropped back to it. The supports stayed on the screen, but the
+  melee went back and forth: the walk to the leash and the drop back were 2.57 of 5.07 turns of a tile a troop-minute.

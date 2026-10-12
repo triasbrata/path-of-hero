@@ -11523,6 +11523,81 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        main 7deb8354, 325, merged, no file in common) on c4d5ea13: `analyze lib test` no issues (-1791800007-an);
        smithy_chain_ui (its new Bag test), wishlist_chain, wishlist, smithy_wish_ui, wishlist_ui +50 −0 (-t1); bag_detail,
        bag_actions, bag_chips, bag_grid, forge_smithy_ui, forge_shop_ui, words, english_text +72 −0 (-t2).
+324. **The front stops at the view's right edge; the view centres the fight and the healers follow the melee close
+     behind** (the owner, 2026-10-12, of 312's leash: "yang troops maju mundur ini mungkin batas maksimal maju adalah
+     sejauh kanan kamera, jadi yang paling depan akan iddle atau attack saja tapi tida bisa maju lagi jika troops di
+     belakang ada yang ketinggalan", the troops going forward and back: maybe the furthest they may go is the camera's
+     right edge, so the front-most just idle or attack but can't go further while troops behind lag; then, of the
+     first cut in develop: "battle harus tetap di tengah layar, karna dengan pendekatan sekarang malah para mele di
+     ujung kanan dan para healer ke di ujung kiri camera, harusnya para healer ikut maju agar battle field kembali ke
+     center camera", the battle must stay in the middle of the screen: now the melee are at the right end and the
+     healers at the camera's left end; the healers should come forward so the battle is back in the centre). Built by
+     front-cap on 312. formation-and-navigation.md "The front stops at the view's right edge" and "Healers mid-battle"
+     hold the rules; camera-and-field.md (the cap, the keep-up) and units-and-combat.md (fighting rules, healers) the
+     short form.
+     - **312's leash goes** (`supportLine`, `leashCap/leashOut/leashBack/leashEase`, `supportSlack/supportView`,
+       `Unit.leashed`): its walk to the line and its drop back were 2.57 of 5.07 turns of a tile a troop-minute on the
+       owner's wave 30 at 1600×947.
+     - **The cap** (`frontCap`): mid-wave, `keepSupports` on and no stall march, a tile inside the view's right edge. No
+       troop that has marched in walks past it (`_capWay` in `_moveToward`); one whose way runs past it walks to it and
+       stands facing its foe, striking what it reaches; one past it already never steps back for it; a shove doesn't
+       push it past it (after the shoves, as `rightLimit` holds the monsters).
+     - **The turns the leash hid** (an instrumented copy charging each turn of a tile to the step that made it): with the
+       cap alone 5.9 a troop-minute; a troop that lost its spot walking back to its wait point 1.75, a spot taken again
+       1.47, walking back to wait after stepping aside 1.02, shoves 0.60, steps aside 0.43; on w89 23.2, the wait point
+       jumping with the nearest foe 7.0. So a waiting troop stays at its x between its wait point and the front spot
+       (`_waitPoint`), a melee troop holds `turnHold` 0.6 s before it turns back to a goal more than `turnSlack` behind,
+       and mid-wave an ally's shove moves x only as the two stand apart in x.
+     - **The first cut** (4b5a372c, in develop): the view also waited for the rearmost troop (its left edge 2 tiles
+       behind it), so the cap bound the front to the army. Turns of a tile a troop-minute (main → the cap alone → the
+       cap and the three rules; 1600×947 | 915×412 | w89) 5.07 → 5.90 → 2.89 | 3.54 → 3.82 → 3.26 | 7.2 → 23.2 → 3.2. The
+       owner's second message: the melee stood at the view's right edge and the healers at its left.
+     - **So the view centres the fight again** (#85, the wait dropped) and the healers follow the melee: a healer's rest
+       is at most `healBehind` 2.5 tiles behind the rearmost melee in the fight (not falling back), not behind the long
+       range standing at their hold. That alone moved nothing (healers 110 units behind the rearmost fighting melee at
+       the median, as main; supports off the screen 7.8 / 11.5 / 175 s a wave): a trace of each priest showed them
+       walking, not standing, and stopping to cast. A heal holds a healer `healCast` 0.6 s and the priests cast about
+       every 1.3 s, so at 23 a second (46 catching up) they averaged about 25 against the army's 32, and the view
+       jumped 60-85 units a second when the melee rushed the next group. So a healer more than a tile behind its rest
+       walks up first: it stops to heal only an ally falling back or at `retreatAt` (half) of its HP or less, and not
+       to smite; and it walks up whenever no heal of its is due, short of the MP too (312: between heals only).
+     - **Kept:** the healers' walk-in from out of sight and their walk-up (312), the catch-up pace (`speedTo`, 309/311:
+       never more than twice a troop's own walk), make-way, `paceLimit` (its 312 clause back to the pre-312 form), the
+       spots, the stall detector and `rightLimit`. With `keepSupports` off: no cap and the rules before 324.
+     - **Measured** (main 7deb8354 → now; the owner's wave-30 save through the Board, five dice, 1600×947 | 915×412;
+       w89's waves 90 and 91 at 1600×947; probe_front_cap_sweep.dart): turns of a tile a troop-minute 6.60 → 2.55 | 3.20
+       → 3.03 | 7.36 → 0.47, of 6 units 28.0 → 8.0 | 18.1 → 7.7 | 21.3 → 8.4; supports out of sight 0 → 1.6 | 0 → 8.2 |
+       32.9 → 14.2 s a wave; healers behind the rearmost fighting melee at the median 110 → 64 | 126 → 96 | 130 → 70
+       units (95th percentile 140 → 146 | 161 → 217 | 154 → 102); the fight shown off the view's centre 16.3 → 23.2 |
+       20.9 → 29.6 | 12.6 → 19.9 units on average; a melee troop at half its HP or less out of every healer's reach 0.4
+       → 0.0 | 0.1 → 1.2 troop-seconds; heals 150 → 126 | 107 → 135 | 272 → 502; melee standing out of a fight with
+       monsters about 83 → 102 | 108 → 157 | 1173 → 58 troop-seconds; the wave 83.5 → 66.6 | 84.4 → 78.9 | 142.3 →
+       129.4 s; troops lost 0 → 0.2 | 0.2 → 0.6 | 2.5 → 1.5 a run; no life lost. What's left of the out of sight is the
+       melee's rush at 915×412, where the view is 477 units wide: the fight goes on faster than twice a priest's walk,
+       and the view doesn't wait (one die: 35.6 s across 8 supports, the worst priest 8.6 s).
+     - **Shots** (shots/front-cap/centred2/gifs/, looked at): new3-1600-w30-28s.gif, new3-1600-w30-60s.gif,
+       new3-915-w30-28s.gif, new3-915-w30-60s.gif against main-*.gif. The fight in the middle of the view; the army one
+       mass behind it, the priests and wizards right behind the knights, the archers shooting over them; the melee
+       without a spot stand in the mass facing the foe, not going back and forth. At 915×412 after a rush the priests
+       and wizards come up from the view's left edge.
+     - **The w89 identity** (against probes/shot-through/w89-on-e05b6e4b.txt): DIFFERS from the first fight on (line
+       1396), every difference a fight dump or telemetry; stats, texts, tooltips and previews the same. Waves 90 / 91
+       177.2 / 130.2 → 160.0 / 119.7 s (as saved), 151.6 / 121.1 → 159.1 / 121.2 (epik ★2), 180.4 / 132.7 → 170.6 /
+       129.0 (langka+crown ★2); troops lost 6 → 7 (as saved: Templars to the boss necromancer, now three of them to the
+       skeleton archer mini boss, and an axeman), 0 → 0, 1 → 0; no life lost. The golden for the next change:
+       probes/front-cap/w89-on-39bffd06.txt.
+     - **Checked** (no whole suite, decisions-log 273): `analyze lib test` no issues; front_cap_test (from
+       support_leash_test: the cap, the walk to it, a strike at it and no step back, no shove past it, past it standing,
+       the view centring the fight, the healers' rest behind the melee, a walking army, the cap off, `turnHold`, the
+       waiter's x, allies' shoves, a healer short of MP walking up, a healer far behind walking up first, healing on
+       the way only one at half HP or less, and 312's walk-in and walk-up), engage, heal_funnel, heal_mp, kite_stall,
+       path_cross, troop_motion, walk_cap, necro_mend, auto_replace, monster_skill_signatures, determinism, hero_moves,
+       wipe, shots, game_test and hud. The tests of a healer's rest a tile behind the rearmost fighter, its heal's size
+       and the funnel run with `keepSupports` off; the smite test's knight stands 1.5 tiles ahead (from 5 the priest
+       walks up first).
+     - **For the balance pass** (not weighed here): the wave about 20% / 7% / 9% shorter; troops lost (w89's wave 90
+       above all); the healers stand closer to the fight, so they are in more monsters' reach; a healer far behind
+       heals only the badly hurt until it is back.
 325. **The Pusaka's ring under a bound type's troops is drawn in the sprites' pixels** (the owner, 2026-10-12: "ring
      putih atau kuning di bawah troops di buat jadi pixelated", make the white or yellow ring under the troops
      pixelated). Why: it was the field's one smooth line right under the troops, a 1 px anti-aliased oval among pixel

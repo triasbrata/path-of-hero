@@ -287,10 +287,14 @@ extension Engage on Game {
   }
 
   /// Where [u] waits with every spot taken: [waitBack] behind the front spot of the monster nearest to it,
-  /// level with it within a tile.
+  /// level with it within a tile. Mid-wave one already between there and the front spot stays at its x, so a troop
+  /// that just lost its spot doesn't walk back to wait (decisions-log 324: the turn back to the wait point and up again
+  /// was the commonest turnaround of a tile).
   Point<double> _waitPoint(Unit u) {
     final f = _nearestFoe(u)!;
-    return Point(f.pos.x - spotRing(u, f) - waitBack, u.pos.y.clamp(f.pos.y - tile, f.pos.y + tile));
+    final front = f.pos.x - spotRing(u, f), back = front - waitBack;
+    final x = waveActive && keepSupports ? min(max(u.pos.x, back), front) : back;
+    return Point(x, u.pos.y.clamp(f.pos.y - tile, f.pos.y + tile));
   }
 }
 
