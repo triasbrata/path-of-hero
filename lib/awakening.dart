@@ -82,11 +82,13 @@ Future<ui.Image> _outlined(ui.Image src) async {
   return done.future;
 }
 
-/// A burst name split into the plain burst and the awakening level it was queued in ([awakeFx]).
-(String, int) _awakeOf(String who) {
-  final m = RegExp(r'^(.+)_awake(\d)$').firstMatch(who);
-  return m == null ? (who, 0) : (m[1]!, int.parse(m[2]!));
-}
+/// A burst name split into the plain burst and the awakening level it was queued in ([awakeFx]). Read several times a
+/// burst every frame, so each name is split once ([_awakeOfs]; the names are a small fixed set; decisions-log 317).
+(String, int) _awakeOf(String who) => _awakeOfs[who] ??= switch (_awakeName.firstMatch(who)) {
+      final m? => (m[1]!, int.parse(m[2]!)),
+      null => (who, 0),
+    };
+final _awakeName = RegExp(r'^(.+)_awake(\d)$'), _awakeOfs = <String, (String, int)>{};
 
 extension on Board {
   /// The outline paint for a troop of awakening [level] (none at 0), faded for a [ghost].

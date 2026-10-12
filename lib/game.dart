@@ -3516,7 +3516,17 @@ class Game {
     return {for (final t in troopTypes.keys) t: ?n[t]};
   }
 
-  bool get waveActive => queue.isNotEmpty || enemies.isNotEmpty;
+  bool get waveActive => queue.isNotEmpty || _anyEnemy;
+
+  /// Whether a monster is in [units] ([enemies] isn't empty), looked for from the end, where the monsters come in after
+  /// the troops: [waveActive] is read thousands of times a tick late in a wave, and [enemies] walked every troop first
+  /// (decisions-log 317).
+  bool get _anyEnemy {
+    for (var i = units.length - 1; i >= 0; i--) {
+      if (units[i].side == Side.enemy) return true;
+    }
+    return false;
+  }
 
   /// The fewest monsters alive on the field while the wave's [queue] holds more ([spawnFloorOf]): one for every
   /// [spawnFloorPer] living troops, Heroes too, rounded up. Every living monster counts toward it, a raised minion too

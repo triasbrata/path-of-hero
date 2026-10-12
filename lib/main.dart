@@ -752,6 +752,8 @@ class Board extends PositionComponent
   Game? _bodiesFor; // the game they are of
   double _bodiesT = 0; // its clock at the last step
   final _strips = <Unit, String>{}; // the strip each troop was drawn with this frame ("walk", "idle", "attack", ...)
+  final _textPaints = <(String, double, Color, bool), TextPaint>{}; // [_textPaint]'s, one per text and look
+  static const _textPaintsMost = 2000;
   final _magicDrawn = <(WizardMagic, int, int)>[]; // the wizard's magic drawn this frame (wizard_fx.dart; for tests)
   Rect _storeTabAt = Rect.zero; // the shut Shop tab this frame (a Town's)
   final _tabAt = <_Page, Rect>{}; // every page tab this frame, shut or open (for tests)
@@ -1983,7 +1985,10 @@ class Board extends PositionComponent
     if (fx.endsWith(_bigFx)) return fx.substring(0, fx.length - _bigFx.length); // a skill's bigger hit (skills.dart)
     return _summonPaints.containsKey(fx) ? 'summon' : fx;
   }
-  int _frames(String n) => _img(n).width ~/ _img(n).height;
+  int _frames(String n) {
+    final i = _img(n);
+    return i.width ~/ i.height;
+  }
 
   /// Draws frame [f] of a strip with [anchor] (in frame pixels) on [at]; with [line], the strip's
   /// awakening outline ([_outlines]) in that paint round it.
@@ -2378,12 +2383,42 @@ class Board extends PositionComponent
       {double size = 18, Color color = Colors.white, Anchor anchor = Anchor.centerLeft, Color? outline, bool bold = false}) {
     if (t.contains(_starGlyph)) return _starText(c, t, at, size: size, color: color, anchor: anchor, outline: outline, bold: bold);
     if (outline != null) {
+      final paint = _textPaint(t, size, outline, bold); // the five passes share one layout
       for (final d in const [Offset(-2, 0), Offset(2, 0), Offset(0, -2), Offset(0, 2), Offset(2, 2)]) {
-        TextPaint(style: hudStyle(size, color: outline, bold: bold)).render(c, t, Vector2(at.dx + d.dx, at.dy + d.dy), anchor: anchor);
+        paint.render(c, t, Vector2(at.dx + d.dx, at.dy + d.dy), anchor: anchor);
       }
     }
-    TextPaint(style: hudStyle(size, color: color, bold: bold)).render(c, t, Vector2(at.dx, at.dy), anchor: anchor);
+    _textPaint(t, size, color, bold).render(c, t, Vector2(at.dx, at.dy), anchor: anchor);
   }
+
+  /// The [TextPaint] for [t] in the game's font at [size], [color] and [bold] (decisions-log 317). Flame's keeps the
+  /// layouts of the last few texts it drew, so one kept per text and look lays a label out once instead of every frame
+  /// (an outlined one took six layouts a frame: five outline passes and the fill). A fading colour (alpha under 1, the
+  /// cast pops) changes every frame: its paint is new each call, its outline passes still sharing it. The kept ones go
+  /// past [_textPaintsMost], and when the fonts change ([_fontsChanged]: a layout made before the game's font loaded
+  /// would keep the fallback's).
+  TextPaint _textPaint(String t, double size, Color color, bool bold) {
+    if (color.a < 1) return TextPaint(style: hudStyle(size, color: color, bold: bold));
+    final key = (t, size, color, bold);
+    if (_textPaints[key] case final paint?) return paint;
+    if (_textPaints.length >= _textPaintsMost) _textPaints.clear();
+    return _textPaints[key] = TextPaint(style: hudStyle(size, color: color, bold: bold));
+  }
+
+  @override
+  void onMount() {
+    super.onMount();
+    PaintingBinding.instance.systemFonts.addListener(_fontsChanged);
+  }
+
+  @override
+  void onRemove() {
+    PaintingBinding.instance.systemFonts.removeListener(_fontsChanged);
+    super.onRemove();
+  }
+
+  /// A font was loaded (the game's own, or a test's): the kept layouts may be the fallback font's ([_textPaint]).
+  void _fontsChanged() => _textPaints.clear();
 
   /// [_text] for a line with a [_starGlyph] in it, which the game's font lacks (the Pusaka's stars): each one is drawn
   /// as ui_icons.png's full star ([_starIcon]), [_starW] wide, between the text's pieces.
