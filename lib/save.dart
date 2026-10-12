@@ -48,15 +48,41 @@ File get _file => dataFile('save.json');
 bool _current(Object? j) => j is Map && switch (j['v']) { final int v => v >= Game.saveLoadsFrom, _ => false };
 
 /// The saved game, or null when there is none, it can't be read, or it is from before [Game.saveLoadsFrom] (an old one
-/// is no save: [launchSave] deletes it).
+/// is no save: [launchSave] deletes it). One that can't be read (a cut or broken file, JSON that is no save, or a save
+/// this build fails on) is logged and moved aside ([keepAside]), so the fresh game's first save can't write over it
+/// (decisions-log 317).
 Game? loadGame() {
+  final f = _file;
   try {
-    final f = _file;
     if (!f.existsSync()) return null;
     final j = jsonDecode(f.readAsStringSync());
+    if (j is! Map) throw const FormatException('not a save');
     return _current(j) ? Game.fromJson(j as Map<String, dynamic>) : null;
-  } catch (_) {
-    return null; // a broken save just means a fresh game
+  } catch (e, s) {
+    debugPrint('Save not loaded (${f.path}): $e\n$s');
+    keepAside(f);
+    return null; // a fresh game; the bad file stays beside it
+  }
+}
+
+/// Moves an unreadable save [f] to `save.bad-<yyyyMMdd-HHmmss>.json` in its folder ([now]'s time; `-2`, `-3` … added
+/// while that name is taken), where nothing writes: the next save starts a new save.json. Returns the file it went to,
+/// or null when it couldn't move (logged; the next save then writes over it).
+@visibleForTesting
+File? keepAside(File f, [DateTime? now]) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  final t = now ?? DateTime.now(), stamp = '${t.year}${two(t.month)}${two(t.day)}-${two(t.hour)}${two(t.minute)}${two(t.second)}';
+  try {
+    var to = File('${f.parent.path}/save.bad-$stamp.json');
+    for (var n = 2; to.existsSync(); n++) {
+      to = File('${f.parent.path}/save.bad-$stamp-$n.json');
+    }
+    final kept = f.renameSync(to.path);
+    debugPrint('The unreadable save is kept as ${kept.path}');
+    return kept;
+  } catch (e) {
+    debugPrint('Save not kept aside (${f.path}): $e');
+    return null;
   }
 }
 
@@ -80,15 +106,21 @@ Game? launchSave() {
 }
 
 /// Saves [g] (to [file], save.json by default); false when it couldn't be written (no disk, no folder),
-/// which only logs: the game goes on, and the save before stays.
+/// which only logs: the game goes on, and the save before stays. It writes `<file>.tmp` and renames it over [file]
+/// in one step (as the scoreboard does, scores.dart), so a game killed mid-write (a phone ending it in the background)
+/// leaves the save before whole, never a cut one (decisions-log 317).
 bool saveGame(Game g, [File? file]) {
-  final f = file ?? _file;
+  final f = file ?? _file, tmp = File('${f.path}.tmp');
   try {
     f.parent.createSync(recursive: true);
-    f.writeAsStringSync(jsonEncode(g.toJson()));
+    tmp.writeAsStringSync(jsonEncode(g.toJson()), flush: true);
+    tmp.renameSync(f.path);
     return true;
   } catch (e) {
     debugPrint('Not saved (${f.path}): $e');
+    try {
+      if (tmp.existsSync()) tmp.deleteSync();
+    } on FileSystemException catch (_) {} // a tmp left behind is written over by the next save
     return false;
   }
 }

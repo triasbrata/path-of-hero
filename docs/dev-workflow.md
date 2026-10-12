@@ -49,6 +49,15 @@ change to `lib/game.dart` needs a hot restart (`R`), and so do new images (Traps
   Desktop never asks, and its paths are unchanged.
 - **Writes don't crash.** `saveGame`, `saveSettings`, `clearSave` and the telemetry's file catch I/O errors and log
   them (`debugPrint`); `saveGame`/`saveSettings` return false. A failed score write shows "Score not saved".
+- **A save is never cut nor silently lost** (decisions-log 317). `saveGame` writes `save.json.tmp` and renames it over
+  `save.json` in one step (the scoreboard's `scores.json` the same way), so a game killed mid-write, as a phone may end
+  one in the background right after its save, leaves the save before whole. A `save.json` that can't be read (a cut
+  or broken file, JSON that is no save, or a save this build fails on) is logged ("Save not loaded …" with the error)
+  and renamed to `save.bad-<yyyyMMdd-HHmmss>.json` beside it (`-2`, `-3` … added while the name is taken;
+  `keepAside`, lib/save.dart); the welcome then offers only a new game, as for no save, and the new game's saves
+  start a new `save.json`, so the bad one stays for a look. Only a readable save from before `Game.saveLoadsFrom` is
+  deleted (by the launch, decisions-log 237). If the rename itself fails, that is logged too and the next save writes
+  over the file.
 - **To the background** (the window hidden or minimized, or the app in the background, where Android may end it
   without a word): between waves the game is saved, so what was bought or put on since the last won wave stays.
   Mid-wave it isn't, because a save holds no wave in progress (loading it would skip that wave), so the last won

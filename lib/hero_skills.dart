@@ -920,6 +920,7 @@ extension HeroSkills on Game {
           ..busyUntil = t + riseTime; // it rises like a raised minion
         raised.add(r); // joins after the update loop
         fallen.remove(dead);
+        _autoRose(dead); // Auto no longer buys it back (auto_replace.dart)
         risen.add(r);
         impacts
           ..add((r.pos, awakeFx('summon', maxAwaken))) // the summon circle in gold

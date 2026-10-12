@@ -704,12 +704,13 @@ extension on Board {
     _heroPortrait(c, u, Rect.fromCenter(center: box.center, width: box.height, height: box.height), _clock - _coach.since);
   }
 
-  /// K11: the Shop's tab (a Town's), and an item and a relic, for gold.
+  /// K11: the Shop's tab (a Town's), and two materials, for gold: what a Town's Shop sells since the forge (decisions-log
+  /// 317; a Sword and a Fang until then, from before it).
   void _picToko(Canvas c, Rect box) => _picStrip(c, box, [
         (r) => _picTab(c, _icCoins, r),
         _picArrow(c),
-        (r) => _icon(c, Item.sword, r),
-        (r) => _icon(c, Relic.fang, r),
+        (r) => _icon(c, Mat.orcTooth, r),
+        (r) => _icon(c, Mat.wolfClaw, r),
         (r) => _uiIcon(c, Board._icCoin, r.deflate(r.width * 0.1)),
       ]);
 

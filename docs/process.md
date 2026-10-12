@@ -25,7 +25,7 @@ decisions log, the art's vault and its hooks, and what never goes into this publ
 
 ## Checks before main
 
-- `flutter analyze lib test` (the known infos only) and the test files the change touches: the files it adds or changes
+- `flutter analyze lib test` (no issues: none left since decisions-log 317) and the test files the change touches: the files it adds or changes
   and those that cover the code it changes. The whole suite runs on main after each merge; a failure traced to a merge
   goes back to its branch.
 - CI (`.github/workflows/ci.yml`) runs the privacy check, the tools' tests, analyze and a fast set on every pull

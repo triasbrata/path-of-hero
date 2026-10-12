@@ -583,12 +583,14 @@ yang mati, troops pakai skill, monster drop item, monster high level appear". It
   `Board.logButton` / `logPanel` are where they are, for tests.
   - On top, filter chips (pack buttons, the chosen one orange; their labels at 4.5·k, or a 4.8th of a chip's width
     when that is smaller, decisions-log 197, so "Monsters" and "Artifact" sit inside with room): All, Fallen (a
-    fall), Skill (#10, Hero and awakening skills), Loot (drops), Artifact (`Words.artifact`: a Grail save, a won wave's
+    fall), Skill (#10, Hero and awakening skills), Artifact (`Words.artifact`: a Grail save, a won wave's
     Pusaka report, decisions-log 149; a boss chest closed, "Boss Chest: Iron Banner ★1 (Rare) to Templar", its card's
     icon in its rarity's ink, decisions-log 152; an Asah, 154; a Lebur, "Melt: Void Eye into Dragon Heart ★2 on
     Templar (60k gold)", 164), Monsters (strong monsters and their skills), Other (a new Hero, a Hero called back
     ("Budi (Knight) is back (57k gold)", #92 part 3), an awakening, an Awaken 4-5 bought ("Knight: Awaken 4 (100k
-    gold)", #92 part 2), a wave won or lost). A chip starts the list at the top again.
+    gold)", #92 part 2), a wave won or lost). A chip starts the list at the top again. A Loot chip (field drops) went
+    in decisions-log 317: a board game drops no item or relic on the field, so it was always empty; a Towns-off
+    game's drops (the tests') stay under All.
   - Under them the entries, newest on top, 9·k a row, faint lines between: the wave number (small,
     faded), the event's icon (6·k) and its line (`logLine`, cream, 5·k and 11 px at least, cut with ".."
     to the width). The Hero and monster skills keep their English titles.
@@ -731,7 +733,10 @@ the field's own ground, whose top is under the lowest anything of the battle is 
     (`_replaceOne`); the gold short, the rest wait behind it; one refused for more than the gold stays on the list (its
     greyed button says why);
   - at the next wave's start what is left on the list goes into the queue (`_autoWaveStart`); what of it the gold
-    hasn't covered by the next win is let go, as the list's offer itself ends at a wave's start.
+    hasn't covered by the next win is let go, as the list's offer itself ends at a wave's start;
+  - one brought back mid-wave (a Rising Pusaka, a priest Hero's Resurrection) is no longer down: its type's last entry
+    of the wave leaves the queue (`_autoRose`, decisions-log 317), so Auto doesn't buy it a second time. One Auto
+    already bought stays bought, and counts at the win like any other.
   Turning it off empties the queue. The save keeps it (`"autoReplace": true`, written only while on; a save without it
   loads off); the queue isn't saved (it is empty between waves).
 - **The field under the bar** takes no press, hover or drag (`_onBar` in `_covered`, plates.dart: the step with its
@@ -2195,7 +2200,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     Grail on the store's glow over three Ksatria with its ring under them; K7 a small relic, ▶, a Ksatria; K8 the
     Ksatria's item list over a plain Ksatria, ▶, the same in Bangkit 1's outline; K9 the Tas tab (the book's tan tab)
     with its red dot, ▶, a Ksatria in Bangkit 1's outline, ui_icons.png's green up arrow; K10 the Hero splash's
-    portrait (this game's Hero, else the Pendeta); K11 the Shop tab, ▶, an item, a relic, a coin; K12 two Legendary
+    portrait (this game's Hero, else the Pendeta); K11 the Shop tab, ▶, two materials (Orc Tooth, Wolf Claw), a coin (what a Town's Shop sells since the forge; an item and a relic until decisions-log 317); K12 two Legendary
     cards (Dragon Crown, Oath of One); K13 the same two rows as I3; K14 a fallen Hero faded with its crown,
     ▶, the Shop tab (with the Towns on the Army tab, whose detail recalls it); K15 "36/36" (`armyMaxBoard`) over two full rows of troops; K16 the lives' hearts (full, half, empty) over three
     monsters marching; K17 an orc drawn bigger wave by wave with red up arrows between; K18 this game's gold (short,

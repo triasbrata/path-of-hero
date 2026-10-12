@@ -752,6 +752,8 @@ class Board extends PositionComponent
   Game? _bodiesFor; // the game they are of
   double _bodiesT = 0; // its clock at the last step
   final _strips = <Unit, String>{}; // the strip each troop was drawn with this frame ("walk", "idle", "attack", ...)
+  final _textPaints = <(String, double, Color, bool), TextPaint>{}; // [_textPaint]'s, one per text and look
+  static const _textPaintsMost = 2000;
   final _magicDrawn = <(WizardMagic, int, int)>[]; // the wizard's magic drawn this frame (wizard_fx.dart; for tests)
   Rect _storeTabAt = Rect.zero; // the shut Shop tab this frame (a Town's)
   final _tabAt = <_Page, Rect>{}; // every page tab this frame, shut or open (for tests)
@@ -811,9 +813,9 @@ class Board extends PositionComponent
   Offset get _origin => Offset(0, _hotGeom().stepTop - (backdropH + stepLip) * _scale);
 
   @override
-  void onGameResize(Vector2 s) {
-    super.onGameResize(s);
-    size = s;
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    this.size = size;
   }
 
   /// Where the Start/Pause toggle is this frame while it starts a wave: Rect.zero while it doesn't (it pauses or
@@ -1727,16 +1729,16 @@ class Board extends PositionComponent
   }
 
   @override
-  void onTapDown(TapDownEvent e) {
-    final p = e.localPosition.toOffset();
+  void onTapDown(TapDownEvent event) {
+    final p = event.localPosition.toOffset();
     _town.press = null; // a new press: the last one's Town tap is gone (town_scene.dart)
     _bar.down = null; // and the spawn bar's card it went down on (spawn_bar.dart)
     _clicks.add((p, _clock));
     _press = (at: p, down: _clock, up: null);
     _grid.down = _bagLootAt(p); // the Bag cell (or the Town's Shop's) under it, for its tap up (bag.dart)
     _handAt = p;
-    _touch = e.deviceKind != ui.PointerDeviceKind.mouse;
-    _tip.down(e);
+    _touch = event.deviceKind != ui.PointerDeviceKind.mouse;
+    _tip.down(event);
     _welcomeTap = welcome != null;
     if (!_welcomeTap) _townPress(p); // in a Town it stops Auto's countdown (town_scene.dart)
     _pauseDown(); // pause.dart
@@ -1766,14 +1768,14 @@ class Board extends PositionComponent
 
   // On tap up, not down: a drag out of a bag slot must not pick it too.
   @override
-  void onTapUp(TapUpEvent e) {
+  void onTapUp(TapUpEvent event) {
     if (_press case final press?) _press = (at: press.at, down: press.down, up: _clock); // it comes back up
     if (_tip.up()) return; // a long press that showed a tooltip is no tap
     _townTapUp(); // a press on a Town's scene came up unmoved: its tap (town_scene.dart)
     if (_chest.tapped) return; // the press was the chest popup's (chest_popup.dart)
     if (_coach.tapped) return; // or a guide card's (coach.dart): nothing under it reacts
     if (_foeSplash.tapped) return; // or it closed a foe skill's splash (foe_splash.dart)
-    final p = e.localPosition.toOffset();
+    final p = event.localPosition.toOffset();
     if (!_welcomeTap && !_herald.tapped && !_msg.tapped && _barTap(p)) return; // the spawn bar: a card buys one (spawn_bar.dart)
     if (_plateTap(p)) return; // a Lepas on the pinned plate: that relic comes off, and the pin stays (plates.dart)
     if (_handTap(p)) return; // loot in hand given to the troop under it, and nothing pinned (drop_popup.dart)
@@ -1814,18 +1816,18 @@ class Board extends PositionComponent
   }
 
   @override
-  void onPointerMove(PointerMoveEvent e) {
-    _mouse = _handAt = e.localPosition.toOffset();
+  void onPointerMove(PointerMoveEvent event) {
+    _mouse = _handAt = event.localPosition.toOffset();
     _touch = false;
   }
 
   @override
-  void onDragStart(DragStartEvent e) {
-    super.onDragStart(e);
-    final p = _dragPos = e.localPosition.toOffset();
+  void onDragStart(DragStartEvent event) {
+    super.onDragStart(event);
+    final p = _dragPos = event.localPosition.toOffset();
     _handAt = p;
     // Flame leaves a drag's kind unknown (a mouse's too): then the press that began it ([onTapDown]) told.
-    if (e.deviceKind != ui.PointerDeviceKind.unknown) _touch = e.deviceKind != ui.PointerDeviceKind.mouse;
+    if (event.deviceKind != ui.PointerDeviceKind.unknown) _touch = event.deviceKind != ui.PointerDeviceKind.mouse;
     // It began on the chest popup (chest_popup.dart), a guide card (coach.dart) or a foe skill's splash (foe_splash.dart).
     if (_chest.tapped || _coach.tapped || _foeSplash.tapped) return;
     if (welcome == null && _log.open && _log.panel.contains(p)) {
@@ -1852,14 +1854,14 @@ class Board extends PositionComponent
       if (rect.contains(p) && state.bagOf(item, plus) > 0 && !state.over) {
         _itemDrag = item;
         _dragPlus = plus; // an enhanced stack's (decisions-log 255)
-        dragAt = e.localPosition.clone();
+        dragAt = event.localPosition.clone();
         return;
       }
     }
     for (final (rect, relic) in _cellsStay ? const <(Rect, Relic)>[] : _relicSlots) {
       if (rect.contains(p) && (state.relicBag[relic] ?? 0) > 0 && !state.over) {
         _relicDrag = relic;
-        dragAt = e.localPosition.clone();
+        dragAt = event.localPosition.clone();
         return;
       }
     }
@@ -1868,39 +1870,39 @@ class Board extends PositionComponent
       _itemDrag = loot is Item ? loot : null;
       _relicDrag = loot is Relic ? loot : null;
       _dragPlus = _pickPlus;
-      dragAt = e.localPosition.clone();
+      dragAt = event.localPosition.clone();
       return;
     }
     if (dragging == null && !state.waveActive && !state.over && !_onBar(p)) {
-      if (_cellAt(e.localPosition) case (final c, final r)) {
+      if (_cellAt(event.localPosition) case (final c, final r)) {
         _relocating = state.troopAt(c, r);
         dragging = _relocating?.type;
-        dragAt = e.localPosition.clone();
+        dragAt = event.localPosition.clone();
       }
     }
   }
 
   @override
-  void onDragUpdate(DragUpdateEvent e) {
-    super.onDragUpdate(e);
+  void onDragUpdate(DragUpdateEvent event) {
+    super.onDragUpdate(event);
     // Where the pointer is now: where the drag began plus every move since. Flame's localEndPosition adds the
     // move to where the pointer already is, so it runs one move ahead (a drop could miss the troop under it).
-    final p = _dragPos += e.localDelta.toOffset();
+    final p = _dragPos += event.localDelta.toOffset();
     if (_mouse != null) _mouse = p; // no hover events while a button is down
     if (_log.dragY case final y?) {
       _log
         ..scroll += y - p.dy // up: on to older ones
         ..dragY = p.dy;
     }
-    if (_assign.dragY != null) _assign.scroll -= e.localDelta.y; // up: on down the list
+    if (_assign.dragY != null) _assign.scroll -= event.localDelta.y; // up: on down the list
     _barDragTo(p); // a swipe on the spawn bar's cards turns their page (spawn_bar.dart)
-    if (_detail.dragY != null) _detail.scroll -= e.localDelta.y; // the same (troop_detail.dart)
-    _pageScrollDragBy(e.localDelta.y); // the same (page_scroll.dart)
+    if (_detail.dragY != null) _detail.scroll -= event.localDelta.y; // the same (troop_detail.dart)
+    _pageScrollDragBy(event.localDelta.y); // the same (page_scroll.dart)
     for (final col in _columns) {
-      if (col.dragY != null) col.scroll -= e.localDelta.y; // licence_page.dart
+      if (col.dragY != null) col.scroll -= event.localDelta.y; // licence_page.dart
     }
     if (dragging != null || _itemDrag != null || _relicDrag != null) dragAt = Vector2(p.dx, p.dy);
-    _townDrag(p, e.localDelta.toOffset()); // town_scene.dart
+    _townDrag(p, event.localDelta.toOffset()); // town_scene.dart
     _handAt = p;
   }
 
@@ -1918,9 +1920,9 @@ class Board extends PositionComponent
   }
 
   @override
-  void onDragEnd(DragEndEvent e) {
-    super.onDragEnd(e);
-    if (_townLetGo(e.velocity.toOffset())) return; // a Town's pan glides on; one that never moved is a tap (town_scene.dart)
+  void onDragEnd(DragEndEvent event) {
+    super.onDragEnd(event);
+    if (_townLetGo(event.velocity.toOffset())) return; // a Town's pan glides on; one that never moved is a tap (town_scene.dart)
     final at = dragAt, unit = _relocating, item = _itemDrag, relic = _relicDrag;
     _log.dragY = _assign.dragY = _detail.dragY = _bar.dragX = null;
     _pageScrollDragEnd();
@@ -1983,7 +1985,10 @@ class Board extends PositionComponent
     if (fx.endsWith(_bigFx)) return fx.substring(0, fx.length - _bigFx.length); // a skill's bigger hit (skills.dart)
     return _summonPaints.containsKey(fx) ? 'summon' : fx;
   }
-  int _frames(String n) => _img(n).width ~/ _img(n).height;
+  int _frames(String n) {
+    final i = _img(n);
+    return i.width ~/ i.height;
+  }
 
   /// Draws frame [f] of a strip with [anchor] (in frame pixels) on [at]; with [line], the strip's
   /// awakening outline ([_outlines]) in that paint round it.
@@ -2378,12 +2383,42 @@ class Board extends PositionComponent
       {double size = 18, Color color = Colors.white, Anchor anchor = Anchor.centerLeft, Color? outline, bool bold = false}) {
     if (t.contains(_starGlyph)) return _starText(c, t, at, size: size, color: color, anchor: anchor, outline: outline, bold: bold);
     if (outline != null) {
+      final paint = _textPaint(t, size, outline, bold); // the five passes share one layout
       for (final d in const [Offset(-2, 0), Offset(2, 0), Offset(0, -2), Offset(0, 2), Offset(2, 2)]) {
-        TextPaint(style: hudStyle(size, color: outline, bold: bold)).render(c, t, Vector2(at.dx + d.dx, at.dy + d.dy), anchor: anchor);
+        paint.render(c, t, Vector2(at.dx + d.dx, at.dy + d.dy), anchor: anchor);
       }
     }
-    TextPaint(style: hudStyle(size, color: color, bold: bold)).render(c, t, Vector2(at.dx, at.dy), anchor: anchor);
+    _textPaint(t, size, color, bold).render(c, t, Vector2(at.dx, at.dy), anchor: anchor);
   }
+
+  /// The [TextPaint] for [t] in the game's font at [size], [color] and [bold] (decisions-log 317). Flame's keeps the
+  /// layouts of the last few texts it drew, so one kept per text and look lays a label out once instead of every frame
+  /// (an outlined one took six layouts a frame: five outline passes and the fill). A fading colour (alpha under 1, the
+  /// cast pops) changes every frame: its paint is new each call, its outline passes still sharing it. The kept ones go
+  /// past [_textPaintsMost], and when the fonts change ([_fontsChanged]: a layout made before the game's font loaded
+  /// would keep the fallback's).
+  TextPaint _textPaint(String t, double size, Color color, bool bold) {
+    if (color.a < 1) return TextPaint(style: hudStyle(size, color: color, bold: bold));
+    final key = (t, size, color, bold);
+    if (_textPaints[key] case final paint?) return paint;
+    if (_textPaints.length >= _textPaintsMost) _textPaints.clear();
+    return _textPaints[key] = TextPaint(style: hudStyle(size, color: color, bold: bold));
+  }
+
+  @override
+  void onMount() {
+    super.onMount();
+    PaintingBinding.instance.systemFonts.addListener(_fontsChanged);
+  }
+
+  @override
+  void onRemove() {
+    PaintingBinding.instance.systemFonts.removeListener(_fontsChanged);
+    super.onRemove();
+  }
+
+  /// A font was loaded (the game's own, or a test's): the kept layouts may be the fallback font's ([_textPaint]).
+  void _fontsChanged() => _textPaints.clear();
 
   /// [_text] for a line with a [_starGlyph] in it, which the game's font lacks (the Pusaka's stars): each one is drawn
   /// as ui_icons.png's full star ([_starIcon]), [_starW] wide, between the text's pieces.
