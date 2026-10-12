@@ -281,7 +281,7 @@ extension on Board {
   /// last row's: the relic most sent back); the Town's hammer for a Town marked, gone into or left; the relic or the item the Smithy crafted.
   void _logIcon(Canvas c, GameEvent e, Rect to, [int row = 0]) => switch (e) {
         TroopFell(:final relics) when row > 0 => _icon(c, relics.first, to), // what went back to the bag
-        TroopFell() => _uiIcon(c, _icDarkHeart, to),
+        TroopFell() || Wiped() => _uiIcon(c, _icDarkHeart, to), // a wipe's: the heart it cost (wipe.dart)
         GrailSaved() => _icon(c, Relic.grail, to),
         PusakaAsah(:final relics) || PusakaLebur(:final relics) when row > 0 => _icon(c, relics.keys.first, to), // the most taken from the bag
         PusakaAsah(:final relic) || PusakaLebur(:final relic) => _icon(c, relic, to),
@@ -302,7 +302,6 @@ extension on Board {
         HeroMade() || HeroRecalled() => _uiIcon(c, _icCrown, to),
         OfferPicked(:final pick) => pick == null ? _uiIcon(c, _icChest, to) : _icon(c, pick, to), // chest_popup.dart
         WaveEnded(:final won) => _uiIcon(c, won ? _icTrophy : _icDarkStar, to),
-        Wiped() => c.drawImageRect(_img('ui_icons.png'), _heartIcons.first, to, _px), // the empty heart (lives.dart)
         OmenGained(:final omen) || OmenEased(:final omen) => _omenIcon(c, state, omen, to), // omen_look.dart
         OmenDusk() => _omenIcon(c, state, OmenKind.dusk, to),
         TownMarked() || TownEntered() || TownLeft() => _townMark(c, to), // the Town's hammer (town_look.dart)

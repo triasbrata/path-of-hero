@@ -1462,7 +1462,28 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
     never strips it (it is a troop's).
   - **`Status.noHeal`** on a troop: the Bayangan Blight's (a monster's, bad, so a cleanse ends it): in a wave its heal
     ceiling is its HP and the heal funnel gives it nothing ("Bayangan on the field").
-- **Game over** is `lives <= 0` or `wipedOut` (the last troop fell). Then `tick` stops.
+- **Game over** is `lives <= 0`. Then `tick` stops.
+- **An army wiped** (lib/wipe.dart, decisions-log 322; the owner: "Kalah wave: −1 hati, ulang"): checked at the end of
+  `tick`, after the raised joined and before the win. `_armyDown`: a troop fell this wave (`fallen` isn't empty), none
+  is alive (a troop Resurrection raised this tick counts), no Phoenix Plume rise is due (`_risesDue`, counted when its
+  `later` is set, dropped by `_endEffects`), and a monster lives or is queued (the last troop and the last monster
+  falling together is a win; a wave begun with no troop is never a wipe: only its leaks cost). Then `_wipe`:
+  - `wipeLives` 2 lives go (a heart; floor 0), `wipedOut` is set (until the next wave starts), `wipedAt` = `t`, the
+    lose sound, and the event `Wiped` (the lives left and lost, the monsters alive and queued, `over`). At 0 lives the
+    game is over as by leaks: the monsters stay and cheer, the tick's end scores it (`WaveEnded(won: false)`).
+  - Else the sweep: the living monsters leave `units` for `swept` (the UI draws them hopping for joy `wipeCheer` 2.4 s,
+    then each goes in a summon circle, `_sweptGone`), the queue, shots, line shots, beams, zones and the monsters'
+    rings are cleared, the march ends, `_endEffects`, the Grail's watch ends, `WaveEnded(won: false)`, the Tavern's
+    boosts count the wave, the wave's materials lying on the field are lost (`waveMaterials` cleared: they come with a
+    win), "Replace fallen" lists the fallen (not the Heroes: Recall's), Auto's `_autoWon`, no after-wave heal, Lewati's
+    skip buff it carried is owed again (`skipBuffDue`), `lostWave` = the wave and `wave` goes back one.
+  - No `victoryAt`, wave bonus, wave score, Shadow ease, Grudge target, Hero, boss chest or Town roll: they come when
+    the wave is won (the win clears `lostWave`). What the wave paid as it went stays: kill gold, kill score, kills.
+  - Between waves it reads as after the last win: the back line where it was, a Town due by `townAt == wave + 1`
+    (one left before the lost wave isn't due again; one marked after it waits for its win), "from wave 15 won". The next
+    `startWave` rolls the same wave afresh (its number, tide and slots; new dice), and `_omenWave` lands no catch-up
+    on it (`lostWave == wave`).
+  - Saved between waves as `lostWave` (only while set; loaded only when it is `wave` + 1), save version 3.
 
 ### Oaths in a fight (decisions-log 155, 247)
 

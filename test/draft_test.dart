@@ -127,7 +127,7 @@ void main() {
     final c = g.chest!;
     expect((c.kind, c.wave, c.title, c.cards!.length, c.cards!.toSet().length), (ChestKind.boss, 5, 'Boss Chest', draftCards, 3));
     expect([draftCards, catchUpMax, legendPity], [3, 3, 6]); // offerQueueMax went with Later (decisions-log 281)
-    // A lost boss wave brings none: its last troop falls.
+    // A lost boss wave brings none: its last troop falls (a heart goes, and wave 10 is played again: wipe.dart).
     final lost = chested(wave: 9);
     final k = placeNow(lost, 'knight', 2, 3)..busyUntil = hold;
     lost
@@ -137,7 +137,7 @@ void main() {
     k.hp = 1;
     strikeBy(lost, orc);
     lost.tick(0.05);
-    expect((lost.wave, lost.over), (10, true));
+    expect((lost.wave, lost.lostWave, lost.over), (9, 10, false));
     expect(lost.chests, isEmpty);
     expect(chestOdds.rare + chestOdds.epic + chestOdds.legend, closeTo(1, 1e-12));
   });

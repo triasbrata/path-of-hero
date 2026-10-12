@@ -39,6 +39,7 @@ extension Wipe on Game {
     sfx.add(Sfx.lose);
     _emit(Wiped(wave, t, lives: lives, lost: before - lives, foes: left.length + queue.length, over: over));
     if (over) return; // the game is over: the monsters cheer, and the tick's end scores it
+    _endEffects(); // every effect ends (a hexed monster hops as itself), and what was left for later (hero_skills.dart)
     swept
       ..clear()
       ..addAll(left);
@@ -50,7 +51,6 @@ extension Wipe on Game {
     zones.clear();
     rings.removeWhere((r) => r.follow?.side == Side.enemy);
     marching = false;
-    _endEffects(); // every effect ends, and what was left for later (hero_skills.dart)
     _watchGrail(end: true);
     _emit(WaveEnded(wave, t, won: false));
     _boostWaveEnd(); // the Tavern's boosts count the wave (tavern.dart)

@@ -237,6 +237,8 @@ void main() {
       expect(g.troops.where((u) => u.alive).map((u) => u.type), ['soldier'], reason: 'Auto Buy refilled the army');
       expect(g.toReplace, isEmpty);
     }
-    expect((waves, lives, g.over), ([1, 1, 1], [4, 2, 0], true));
+    expect(waves, [1, 1, 1]);
+    expect(lives, [4, 2, 0]);
+    expect(g.over, isTrue);
   });
 }
