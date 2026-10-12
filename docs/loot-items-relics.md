@@ -82,9 +82,10 @@ spears raised it ("The forge: the new kinds' effects" below). No melee base reac
 Bows until the ceiling: soldier 5, swordsman 5, knight / armored_axeman / knight_templar 4, lancer 2.
 
 **Price:** every item a type has taken makes that type dearer, a little, and every awakening level
-triples it. `priceOf(type)` is the base `cost` plus, per item, `Game.priceStep(type)` = `priceRise` 0.1
-of the base cost (rounded, at least 1 gold), times `awakenPrice` 3 to the power of `awakenLevel(type)`: soldier 30 → 33
-→ 36, and with its 8-item recipe 54 × 3 = 162 once awakened. Every item counts once (also items past a
+doubles it. `priceOf(type)` is the base `cost` plus, per item, `Game.priceStep(type)` = `priceRise` 0.1
+of the base cost (rounded, at least 1 gold), times `awakenPrice` 2 to the power of `awakenLevel(type)`: soldier 30 → 33
+→ 36, and with its 8-item recipe 54 × 2 = 108 once awakened. Awaken 3 is ×8 (×27 while `awakenPrice` was 3, until
+decisions-log 318: a late army's rebuys ate every coin it earned). Every item counts once (also items past a
 cap); relics don't. Buying (`place` / `autoPlace`) and the book's price label go through it. It is
 derived from `upgrades`, so it isn't saved. `priceWith(type, item)` is the price one more `item` would
 give: `priceOf` with the item tried on and taken back, so an awakening it completes counts (the knight a
@@ -156,15 +157,16 @@ game.dart, the prices in ascend.dart; they are bought on the type's Army detail,
 - **Who:** a type at Bangkit 3 from its items (`itemLevel` 3) buys Bangkit 4, then 5 (`maxAscend` 2), for the whole
   type, its troops now and later. `ascended[type]` counts the levels bought; it only counts while the items are at
   Bangkit 3. Items, recipe and caps stay as at Bangkit 3: no more items fit (`capOf`, `whyNot` unchanged).
-- **Price** (`ascendPrice`, per type): 100,000 for Bangkit 4, 250,000 for Bangkit 5 (the owner's decision 6 b, the
-  default: five types to Bangkit 5 = 1.75M). `ascendPriceOf(type)` is the next one's, null at Bangkit 5.
+- **Price** (`ascendPrice`, per type): 40,000 for Bangkit 4, 100,000 for Bangkit 5: five types to Bangkit 5 = 700k
+  (decisions-log 318; 100,000 and 250,000 before, the owner's decision 6 b, when no measured run reached Bangkit 4
+  before the late waves' wall). `ascendPriceOf(type)` is the next one's, null at Bangkit 5.
 - **What a level gives** (each past `maxAwaken`; `ascendFactor(level, k)` = k^(level − 3)):
 
   | | Bangkit 3 | Bangkit 4 | Bangkit 5 |
   |---|---|---|---|
   | HP and MP (`awakenHp` / `awakenMp` of the base, kept) | ×1.75 | ×2.0 | ×2.25 |
   | damage, a healer's heal (`ascendPower` 1.25) | ×1 | ×1.25 | ×1.5625 |
-  | troop price (`ascendTroopPrice` 1.0: `_awakenedPrice` = `awakenPrice`^min(level, 3) × it^(level − 3)) | ×27 | ×27 | ×27 |
+  | troop price (`ascendTroopPrice` 1.0: `_awakenedPrice` = `awakenPrice`^min(level, 3) × it^(level − 3)) | ×8 | ×8 | ×8 |
   | awakening skill cooldown (`ascendSkillCd` 0.85) | ×1 | ×0.85 | ×0.7225 |
 
   The damage multiplies the items' (`statsOf`), before the heavy types' +20%. The awakening skill's other numbers
@@ -197,8 +199,8 @@ rules and every constant are `lib/tempa.dart` (`extension Tempa on Game`); it is
 (ui-hud.md "Army"). On screen Tempa is "Forge": "Forge +3" (`tempaName`), its button "Forge +4  33k".
 
 - **The purse** (`purse(w)`): about what wave w pays in kill gold late in a run, `purseK` 14 × (4 + 2w) ×
-  (1 + `killGoldGrowth`)^(w − 1), rounded to `purseRound` 1000. Wave 86 156k, 87 166k, 100 358k, 105 479k (0.87-1.0
-  of the formula's kill gold). Tempa's prices and the Shop tab's dot count in purses.
+  (1 + `killGoldGrowth`)^(w − 1), rounded to `purseRound` 1000. Wave 86 104k, 87 110k, 100 223k, 105 291k (156k, 166k, 358k, 479k
+  at the 5% kill gold growth before decisions-log 318; 0.87-1.0 of the formula's kill gold). Tempa's prices and the Shop tab's dot count in purses.
 - **Who:** a type at Bangkit 5 (`tempaFrom` = `awakenTop`), between waves, for the whole type, its troops now and later.
   `tempa[type]` counts the levels bought; they count only while the type is at Bangkit 5 (`tempaOf`).
 - **What a level gives:** HP ×(1 + `tempaHp` 0.05) and damage (a healer's heal) ×(1 + `tempaDmg` 0.05), compounding
@@ -210,10 +212,10 @@ rules and every constant are `lib/tempa.dart` (`extension Tempa on Game`); it is
 
   | Level | 1 | 2 | 3 | 4 | 5 | 10 | 30 |
   |---|---|---|---|---|---|---|---|
-  | after wave 87 | 33k | 40k | 48k | 57k | 69k | 171k | 6.57M |
-  | after wave 100 | 72k | 86k | 103k | 124k | 148k | 369k | 14.2M |
+  | after wave 87 | 22k | 26k | 32k | 38k | 46k | 114k | 4.35M |
+  | after wave 100 | 45k | 54k | 64k | 77k | 92k | 230k | 8.82M |
 
-  `tempaMax` 30 is a guard (no run gets there: all 30 at wave 105 cost 113M); `tempaPriceOf` is null at it.
+  `tempaMax` 30 is a guard (no run gets there: all 30 at wave 105 cost 69M); `tempaPriceOf` is null at it.
 - **Buying** (`temper(type)`): the gold goes, `tempa` rises, every living troop of the type is refitted (`_refit`: the HP
   gained comes with it) and bursts `awakeFx('upgrade', 5)` in Bangkit 5's white, `Sfx.magic` then `Sfx.clear`, and a
   `Tempered` event (type, level, cost) goes to the battle log ("Knight: Forge +1 (33k gold)") and the telemetry
@@ -1235,10 +1237,11 @@ constant there.
 - **The ease:** at a won wave's end, each full `omenEaseShare` (an eighth) of the troops that started it fallen (6 of
   48, 4 of 32) takes the newest level away, at most `omenEaseMax` 2 a wave. What counts as a fall is the knob
   `omenEaseCount` (`OmenEaseCount`, `Game.omenFalls`): `falls`, every troop that fell, one Auto Buy bought back and that
-  fell again too (as designed, and shipped); `starters`, only the troops that started the wave (`Game.omenStarters`),
-  each once; `awakened`, only the falls of a type at Awaken 1 or more. Measured when they were switched on (decisions-log
-  319): the owner's wave-58 army loses ~20 un-awakened fodder troops a wave, so with `falls` every wave eases 2, as many
-  as the catch-up lands, and a chest's levels go within a wave or two; the owner decides.
+  fell again too (as designed, shipped until decisions-log 318); `starters`, only the troops that started the wave (`Game.omenStarters`),
+  each once; `awakened`, only the falls of a type at Awaken 1 or more, which ships (the owner's pick, decisions-log 318).
+  Measured when they were switched on (decisions-log 319): the owner's wave-58 army loses ~20 un-awakened fodder troops
+  a wave, so with `falls` every wave eased 2, as many as the catch-up lands, and a chest's levels went within a wave or
+  two; counting only the starters or easing at most 1 a wave changed almost nothing (decisions-log 318).
 - **An old save** (one without `omens`, with a Pusaka owned) catches up (the owner's answer): every Pusaka owned, the
   Toko's too, owes `omenMarks` × its stars levels of its counter, dealt one level at a time round-robin in `Relic` order,
   at most `omenCatchUpMax` 12 (`omenCatchUp`). They wait in `Game.omensOwed` and land `omenCatchUpStep` 2 a wave from
@@ -2166,7 +2169,7 @@ there. The economy they were weighed against was measured with the full-economy 
   purpose; what is short is got by selling the surplus (two items buy one at base).
   Measured income (#63, on the kill gold before #83): about 1.1k a wave at wave 15, 2–2.7k after wave 30, with
   18k banked by wave 40 and 41k by wave 50 when nothing else is left to buy. Since #83 the kill gold grows 5% a
-  wave (units-and-combat.md "Kill gold"): a wave cleared pays about 1k in kills at wave 15, 4.6k at 30, 8.8k at
+  wave (4.5% since decisions-log 318; units-and-combat.md "Kill gold"): a wave cleared pays about 1k in kills at wave 15, 4.6k at 30, 8.8k at
   40 and 17.6k at 50, and the auto-player banks the Grail's 24,000 around wave 30 (decisions-log 119).
 - **Buying:** `buy(kind)` takes `buyPrice` in gold, adds one to the bag and to `storeBought`, `Sfx.kill`
   (the coin). `whyNotBuy(kind)` → `StoreRefusal` (`storeRefusalNames`, English since decisions-log 187): `locked`

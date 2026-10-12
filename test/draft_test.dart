@@ -450,7 +450,7 @@ void main() {
         ..slots = Random(seed + 400)
         ..draft = Random(seed + 500)
         ..gold = 3000
-        ..capacity = 16
+        ..capacity = 20 // 16 until decisions-log 318's harder early waves wiped it on wave 10, before its second chest
         ..offers = true
         ..draftPolicy = 'rarity';
       final out = <String>[];

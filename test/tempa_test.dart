@@ -56,8 +56,8 @@ void main() {
     expect([for (final n in [1, 7, 30]) tempaName(n)], ['${Words.forge} +1', '${Words.forge} +7', '${Words.forge} +30']);
   });
 
-  test("the purse: wave 87 166k, 100 358k, 105 479k (the design's values), rounded to 1k", () {
-    expect([for (final w in [86, 87, 100, 105]) purse(w)], [156000, 166000, 358000, 479000]);
+  test("the purse: wave 87 110k, 100 223k, 105 291k (the kill gold's 4.5% a wave, decisions-log 318), rounded to 1k", () {
+    expect([for (final w in [86, 87, 100, 105]) purse(w)], [104000, 110000, 223000, 291000]);
     for (final w in [1, 15, 40, 63, 87, 120]) {
       final raw = purseK * (4 + 2 * w) * pow(1 + killGoldGrowth, w - 1);
       expect((purse(w) - raw).abs(), lessThanOrEqualTo(purseRound / 2), reason: 'wave $w');
@@ -65,14 +65,14 @@ void main() {
     }
   });
 
-  test('the prices: wave 87 33k, 40k, 48k, 57k, 69k; wave 100 72k, 86k, 103k, 124k; never under 1k', () {
-    expect([for (var n = 0; n < 5; n++) tempaPrice(87, n)], [33000, 40000, 48000, 57000, 69000]);
-    expect([for (var n = 0; n < 4; n++) tempaPrice(100, n)], [72000, 86000, 103000, 124000]);
+  test('the prices: wave 87 22k, 26k, 32k, 38k, 46k; wave 100 45k, 54k, 64k, 77k; never under 1k', () {
+    expect([for (var n = 0; n < 5; n++) tempaPrice(87, n)], [22000, 26000, 32000, 38000, 46000]);
+    expect([for (var n = 0; n < 4; n++) tempaPrice(100, n)], [45000, 54000, 64000, 77000]);
     expect((tempaPrice(15, 0), tempaPrice(1, 0)), (tempaRound, tempaRound), reason: 'a purse that small would round to 0');
     final g = atFive('knight');
-    expect(g.tempaPriceOf('knight'), 33000);
+    expect(g.tempaPriceOf('knight'), 22000);
     g.tempa['knight'] = 4;
-    expect(g.tempaPriceOf('knight'), 69000);
+    expect(g.tempaPriceOf('knight'), 46000);
     g.wave = 100;
     expect(g.tempaPriceOf('knight'), tempaPrice(100, 4), reason: "the wave's purse, now");
     g.tempa['knight'] = tempaMax;
@@ -118,7 +118,7 @@ void main() {
     k.hp = k.maxHp - 30.0; // wounded
     final gold = g.gold;
     expect(g.temper('knight'), isTrue);
-    expect((g.gold, g.tempa['knight'], g.tempaOf('knight'), g.tempaPriceOf('knight')), (gold - 33000, 1, 1, 40000));
+    expect((g.gold, g.tempa['knight'], g.tempaOf('knight'), g.tempaPriceOf('knight')), (gold - 22000, 1, 1, 26000));
     expect(g.statsOf('knight').hp, (five.hp * 1.05).round());
     expect(g.statsOf('knight').dmg, closeTo(five.dmg * 1.05, 1e-9));
     expect(k.maxHp, g.statsOf('knight').hp);
@@ -129,14 +129,14 @@ void main() {
     expect(g.impacts.last, (k.pos, awakeFx('upgrade', awakenTop)));
     expect(g.sfx.sublist(g.sfx.length - 2), [Sfx.magic, Sfx.clear]);
     final e = g.log.entries.whereType<Tempered>().single;
-    expect(e.toJson(), {'v': eventVersion, 'kind': 'tempa', 'wave': 87, 't': g.t, 'type': 'knight', 'level': 1, 'cost': 33000});
-    expect(logLine(e), '${troopTypeNames['knight']}: ${tempaName(1)} (33k gold)');
+    expect(e.toJson(), {'v': eventVersion, 'kind': 'tempa', 'wave': 87, 't': g.t, 'type': 'knight', 'level': 1, 'cost': 22000});
+    expect(logLine(e), '${troopTypeNames['knight']}: ${tempaName(1)} (22k gold)');
 
     expect(g.temper('knight'), isTrue);
-    expect((g.gold, g.tempaOf('knight')), (gold - 73000, 2));
+    expect((g.gold, g.tempaOf('knight')), (gold - 48000, 2));
     expect(g.statsOf('knight').hp, (five.hp * pow(1.05, 2)).round(), reason: 'compounding, from Bangkit 5\'s');
     expect(g.statsOf('knight').dmg, closeTo(five.dmg * pow(1.05, 2), 1e-9));
-    expect(logLine(g.log.entries.whereType<Tempered>().last), '${troopTypeNames['knight']}: ${tempaName(2)} (40k gold)');
+    expect(logLine(g.log.entries.whereType<Tempered>().last), '${troopTypeNames['knight']}: ${tempaName(2)} (26k gold)');
   });
 
   test('the stats: HP and damage (a heal) x1.05 a level, compounding, after Bangkit 5\'s; the rest, the MP, the troop '
@@ -266,7 +266,7 @@ void main() {
     final a = placeNow(g, 'archer', 0, 2);
     g.upgrades['archer'] = recipe('archer', 2);
     final bar = nudgePurses * purse(88);
-    expect(bar, 528000);
+    expect(bar, 348000);
     g.gold = bar - 1;
     expect(g.tokoNudge, isFalse, reason: 'not yet 3 purses');
     g.gold = bar;
@@ -293,7 +293,7 @@ void main() {
       'All troops of this type, now and later',
       'Skills stay the same',
       'Troop price stays the same',
-      'Price: 33,000 gold',
+      'Price: 22,000 gold',
     ]);
     expect(g.awakenInfo('knight').$2.reversed.take(2).toList(), [(null, '${tempaName(1)}: buy in the Shop'), (null, "Max: can't Awaken more")]);
     g.tempa['knight'] = 6;
@@ -318,9 +318,9 @@ void main() {
       ..temper('knight');
     win(g);
     final events = [for (final r in kept.records.where((r) => r['rec'] == 'event')) r['event'] as Map<String, dynamic>];
-    expect([for (final e in events.where((e) => e['kind'] == 'tempa')) (e['type'], e['level'], e['cost'])], [('knight', 1, 33000), ('knight', 2, 40000)]);
+    expect([for (final e in events.where((e) => e['kind'] == 'tempa')) (e['type'], e['level'], e['cost'])], [('knight', 1, 22000), ('knight', 2, 26000)]);
     final w = kept.records.lastWhere((r) => r['rec'] == 'wave');
-    expect((w['wave'], (w['gold'] as Map)['tempaSpent'], w['tv']), (88, 73000, telemetryVersion));
+    expect((w['wave'], (w['gold'] as Map)['tempaSpent'], w['tv']), (88, 48000, telemetryVersion));
     win(g);
     expect((kept.records.lastWhere((r) => r['rec'] == 'wave')['gold'] as Map)['tempaSpent'], 0); // since then
   });

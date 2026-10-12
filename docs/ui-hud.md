@@ -587,7 +587,7 @@ yang mati, troops pakai skill, monster drop item, monster high level appear". It
     Pusaka report, decisions-log 149; a boss chest closed, "Boss Chest: Iron Banner ★1 (Rare) to Templar", its card's
     icon in its rarity's ink, decisions-log 152; an Asah, 154; a Lebur, "Melt: Void Eye into Dragon Heart ★2 on
     Templar (60k gold)", 164), Monsters (strong monsters and their skills), Other (a new Hero, a Hero called back
-    ("Budi (Knight) is back (57k gold)", #92 part 3), an awakening, an Awaken 4-5 bought ("Knight: Awaken 4 (100k
+    ("Budi (Knight) is back (57k gold)", #92 part 3), an awakening, an Awaken 4-5 bought ("Knight: Awaken 4 (40k
     gold)", #92 part 2), a wave won or lost). A chip starts the list at the top again. A Loot chip (field drops) went
     in decisions-log 317: a board game drops no item or relic on the field, so it was always empty; a Towns-off
     game's drops (the tests') stay under All.
@@ -2510,7 +2510,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
          from the Bag", which turns the book to the Bag with the first recipe item the type still needs picked
          (`_openBag`, main.dart), so a tap on its row there gives it: 2 taps (3 before). From Awaken 3: "Next: Awaken
          4" (at Awaken 5 "Next: Forge +5"; nothing once Forge is at its max) over the Awaken and Forge button as a tag
-         (`_upgradeButton` with `tag`, ascend_page.dart): green "Awaken 4  100k" / "Forge +5  33k", or greyed with
+         (`_upgradeButton` with `tag`, ascend_page.dart): green "Awaken 4  40k" / "Forge +5  33k", or greyed with
          why, the step named first where it fits ("Awaken 4: Opens after wave 15", "Not enough gold", "Only between
          waves", "Already Forge +30 (Max)"), a tap then saying why. One tap buys, through `_ascend` / `_temper` and
          their refusals (the field's Toko had a row per type with the same button until decisions-log 296).

@@ -677,7 +677,7 @@ a reroll's new faces; the overflow past `omenCap` along the pool and round to it
 level, and the skip buff owed from wave 20, once, saved; the save round trip by name (an unknown kind skipped); b86's
 catch-up exactly Wear Down 2 / Heal Siphon 2 / Mend 2 / Prey 2 / Armor 2, round-robin, 2 a wave, once, also across a save; w89's 19 owed,
 12 dealt; the Beban factor (48 over 32: ×1.5, at most ×2, 1 at or under the cap or with no cap) and E; the ease (each
-full eighth of the starting troops fallen takes the newest level, at most 2 a wave); telemetry 8's fields; and
+full eighth of the starting troops fallen, awakened archers, takes the newest level, at most 2 a wave); telemetry 8's fields; and
 `policyPick` taking the same cards on or off. With the Bayangan off (`--dart-define=OMENS=false`),
 `test/probe_pusaka_w89_identity.dart` (The Pusaka, above) is the same as on a base from before them; on, the default since
 decisions-log 319, its dump moves: the w89 save owes its catch-up (12, 2 a wave), so waves 90 and 91 meet those Shadows
@@ -1019,9 +1019,9 @@ from before them and the PNGs compare byte for byte, `cmp`).
   tavernDice +800 and the Shadows' `omenDice` +900 (none seeded it before, so a run with the Shadows on was never the
   same twice). `Game.dice` lists every die; `test/dice_test.dart` holds both to game.dart's `Random` fields. The omen
   shot probes and the w89 identity probe use it.
-- **The ease's knob** (`test/omen_ease_test.dart`, decisions-log 319): `omenEaseCount` ships `falls`; `omenFalls` with
-  each `OmenEaseCount` on a wave with a troop bought mid-wave and fallen twice, two fodder starters and an awakened
-  knight: 5, 3 and 1.
+- **The ease's knob** (`test/omen_ease_test.dart`, decisions-log 319): `omenEaseCount` ships `awakened` (the owner's
+  pick, decisions-log 318; `falls` before); `omenFalls` with each `OmenEaseCount` on a wave with a troop bought mid-wave
+  and fallen twice, two fodder starters and an awakened knight: 5, 3 and 1 (1 as shipped).
 
 ## The Legenda (decisions-log 155)
 
@@ -1175,8 +1175,8 @@ UI yet.
 
 `test/ascend_test.dart`, pure Dart on `bareGame`: the constants and level names; `awakenLevel` counts `ascended` only
 at `itemLevel` 3; Bangkit 4 and 5's HP and MP (×2.0, ×2.25 of the base, the heavy types' +20% after), damage (a heal)
-×1.25 and ×1.5625 of Bangkit 3's, the other stats, price and caps unchanged; the refusals in order; a buy (100k then
-250k, the troops refit with the HP gained, the burst, the sounds, the `Ascended` event and its log line); the nine
+×1.25 and ×1.5625 of Bangkit 3's, the other stats, price and caps unchanged; the refusals in order; a buy (40k then
+100k, the troops refit with the HP gained, the burst, the sounds, the `Ascended` event and its log line); the nine
 awakening skills' cooldown ×0.85 a level, MP, numeral and lines at Bangkit 3's, and a Bangkit 5 soldier's Disarm with
 Bangkit 3's numbers; the book's words (`awakenInfo`, `ascendInfo`); the save (round trip, the troops' HP at load, an
 old save, odd entries); the bag's hint (`bagLevel`, `bagAwakens` for fielded types only).
@@ -1244,8 +1244,8 @@ K5 over its chest 8 px inside 1266×713, 1164×777 and 915×412, both pages. The
 
 ## Tempa (decisions-log 163)
 
-`test/tempa_test.dart`, pure Dart on `bareGame`: the constants; the purse (wave 86 156k, 87 166k, 100 358k, 105 479k)
-and the prices pinned (wave 87 33k-69k, wave 100 72k-124k, never under 1k); the refusals in order; a buy (the troops
+`test/tempa_test.dart`, pure Dart on `bareGame`: the constants; the purse (wave 86 104k, 87 110k, 100 223k, 105 291k)
+and the prices pinned (wave 87 22k-46k, wave 100 45k-77k, never under 1k); the refusals in order; a buy (the troops
 refit with the HP gained, the burst, the sounds, the `Tempered` event and its log line) and the next level compounding;
 HP and damage ×1.05 a level on six types (the heavy ones' +20% after), the other stats, the price and the awakening
 skill unchanged; levels waiting below Bangkit 5; a Hero's ×3 on top; Lepas jenis keeping the levels with no refund of
@@ -1262,7 +1262,7 @@ purses, and the Tas rows' "+4" (`Board.tempaMarks`, `storeAt('tokoDot')`). The s
 
 ## Hero Gugur (#92 part 3)
 
-`test/recall_test.dart`, pure Dart on `bareGame`: the price (57k / 80k / 118k / 313k at waves 65 / 72 / 80 / 100); a
+`test/recall_test.dart`, pure Dart on `bareGame`: the price (42k / 57k / 81k / 195k at waves 65 / 72 / 80 / 100); a
 Hero's fall keeps it (name, type, attributes, skill, the wave; its relics in the bag), a troop's doesn't; Resurrection
 never raises it; a recall brings the same Hero back (its type's stats now with Bangkit and Pusaka ×3 on its two, full
 HP, empty slots, the aura, autoPlace's cell, no Hero or name dice drawn, `HeroRecalled` and no `Bought`); `heroMax`
@@ -2154,7 +2154,7 @@ decisions-log 283; `scrolledTo`, test/page_scroll.dart); `seen` scrolls a part i
 - The tabs (Smithy, Tavern, Shop, Army, Bag, Settings), the Tavern tab's dot until its page shows; the rows in their slots
   with their kinds and prices, the first not bought picked; "New offers every Town", Reroll's price, "None yet.".
 - The Feast's page: its name and rarity, "Every troop: +20% damage, 15% less damage taken.", the grey line, its Effect
-  rows (Damage +20%, Damage taken -15%, Troops All troops, Waves 2) and "Buy (800 gold)"; a Buy by a tap ("Feast! 2
+  rows (Damage +20%, Damage taken -15%, Troops All troops, Waves 2) and "Buy (700 gold)"; a Buy by a tap ("Feast! 2
   waves", the gold, the boost running 2 waves, "Sold", the Active slot), the white Buy's "Sold" again.
 - Another row picked; the gold short: the prices red, "Not enough gold" on Buy and on Reroll by a tap; a Reroll with gold
   (the Feast stays, the rows follow the offers, the next price higher, no dot); leaving the Town shuts the page.

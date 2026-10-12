@@ -23,9 +23,9 @@ Game atThree(String type, [int gold = 1000000]) => bareGame()
   ..upgrades[type] = recipe(type, maxAwaken);
 
 void main() {
-  test('the constants: two levels past Bangkit 3, x1.25 damage, the same troop price, -15% cooldown, 100k and 250k', () {
+  test('the constants: two levels past Bangkit 3, x1.25 damage, the same troop price, -15% cooldown, 40k and 100k (decisions-log 318)', () {
     expect((maxAscend, awakenTop, ascendPower, ascendTroopPrice, ascendSkillCd), (2, 5, 1.25, 1.0, 0.85));
-    expect(ascendPrice, [100000, 250000]);
+    expect(ascendPrice, [40000, 100000]);
     expect([for (var l = 0; l <= awakenTop; l++) awakenName(l)],
         [awakenName(0), awakenName(1), awakenName(2), awakenName(3), awakenName(4), awakenName(5)]);
   });
@@ -83,15 +83,15 @@ void main() {
     expect(g.whyNotAscend('knight'), storeRefusalNames[StoreRefusal.over]);
   });
 
-  test('buying: 100k then 250k off the gold, every living troop of the type refit with its HP and bursting, logged', () {
+  test('buying: 40k then 100k off the gold, every living troop of the type refit with its HP and bursting, logged', () {
     final g = atThree('knight');
     final k = placeNow(g, 'knight', 2, 3), other = placeNow(g, 'archer', 0, 2);
     g.gold = 400000;
     k.hp = k.maxHp - 30.0; // wounded
     final (maxHp, otherHp) = (k.maxHp, other.maxHp);
-    expect(g.ascendPriceOf('knight'), 100000);
+    expect(g.ascendPriceOf('knight'), 40000);
     expect(g.ascend('knight'), isTrue);
-    expect((g.gold, g.ascended['knight'], g.awakenLevel('knight'), g.ascendPriceOf('knight')), (300000, 1, 4, 250000));
+    expect((g.gold, g.ascended['knight'], g.awakenLevel('knight'), g.ascendPriceOf('knight')), (360000, 1, 4, 100000));
     final gain = troopTypes['knight']!.hp * awakenHp;
     expect(k.maxHp, maxHp + gain.round());
     expect(k.hp, closeTo(k.maxHp - 30, 1e-9), reason: 'the HP gained comes with it');
@@ -100,13 +100,13 @@ void main() {
     expect(g.impacts.last, (k.pos, awakeFx('upgrade', 4)));
     expect(g.sfx.sublist(g.sfx.length - 2), [Sfx.magic, Sfx.clear]);
     final e = g.log.entries.whereType<Ascended>().single;
-    expect(e.toJson(), {'v': eventVersion, 'kind': 'ascended', 'wave': storeFrom, 't': g.t, 'type': 'knight', 'level': 4, 'cost': 100000});
-    expect(logLine(e), '${troopTypeNames['knight']}: ${awakenName(4)} (100k gold)');
+    expect(e.toJson(), {'v': eventVersion, 'kind': 'ascended', 'wave': storeFrom, 't': g.t, 'type': 'knight', 'level': 4, 'cost': 40000});
+    expect(logLine(e), '${troopTypeNames['knight']}: ${awakenName(4)} (40k gold)');
 
     expect(g.ascend('knight'), isTrue);
-    expect((g.gold, g.awakenLevel('knight'), g.ascendPriceOf('knight'), g.whyNotAscend('knight')), (50000, 5, null, 'Already ${awakenName(5)}'));
+    expect((g.gold, g.awakenLevel('knight'), g.ascendPriceOf('knight'), g.whyNotAscend('knight')), (260000, 5, null, 'Already ${awakenName(5)}'));
     expect(k.maxHp, g.statsOf('knight').hp);
-    expect(logLine(g.log.entries.whereType<Ascended>().last), '${troopTypeNames['knight']}: ${awakenName(5)} (250k gold)');
+    expect(logLine(g.log.entries.whereType<Ascended>().last), '${troopTypeNames['knight']}: ${awakenName(5)} (100k gold)');
   });
 
   test('the awakening skill past Bangkit 3: its numbers and MP stay Bangkit 3\'s, its cooldown x0.85 a level', () {
@@ -161,7 +161,7 @@ void main() {
       'All troops of this type, now and later',
       'Awaken skill: cooldown -15%',
       'Troop price stays the same',
-      'Price: 100,000 gold',
+      'Price: 40,000 gold',
     ]);
     expect(g.ascendInfo('archer').$2[1], 'Attack x1.25');
     expect(g.ascendInfo('archer').$1, awakenName(4), reason: 'below Bangkit 3 it tells of the first one bought');

@@ -8,7 +8,7 @@ part of 'game.dart';
 // decision 4 a).
 
 /// A wave's purse: about what wave [w] pays in kill gold late in a run, [purseK] × (4 + 2w) × (1 + [killGoldGrowth])^(w − 1),
-/// rounded to [purseRound]: wave 87 166k, 100 358k, 105 479k (0.87-1.0 of the formula's kill gold). Tempa's prices and
+/// rounded to [purseRound]: wave 87 110k, 100 223k, 105 291k (0.87-1.0 of the formula's kill gold). Tempa's prices and
 /// the Army tab's dot are counted in purses.
 const purseK = 14, purseRound = 1000;
 
@@ -28,7 +28,7 @@ const tempaK = 0.2, tempaRise = 1.2, tempaRound = 1000;
 const nudgePurses = 3;
 
 /// What Tempa level [n] + 1 costs after wave [w]: [tempaK] × [purse] × [tempaRise]^[n], rounded to [tempaRound], at
-/// least [tempaRound]. Wave 87: 33k, 40k, 48k, 57k, 69k; wave 100: 72k, 86k, 103k, 124k.
+/// least [tempaRound]. Wave 87: 22k, 26k, 32k, 38k, 46k; wave 100: 45k, 54k, 64k, 77k.
 int tempaPrice(int w, int n) => max(1, (tempaK * purse(w) * pow(tempaRise, n) / tempaRound).round()) * tempaRound;
 
 /// Why a type can't buy its next Tempa level, after the store's own refusals ([StoreRefusal]): it isn't at Bangkit 5
