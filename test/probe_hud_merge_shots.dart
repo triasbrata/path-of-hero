@@ -106,7 +106,6 @@ void main() {
         }
         // In a Town (decisions-log 216) with Auto on: the toggle's Start is "Leave town 4".
         final town = b.state = army()
-          ..towns = true
           ..townAt = 4;
         await frames(tester, 3); // the board goes into the due Town by itself once the game is calm
         if (!town.inTown) expect(town.enterTown(auto: true), isTrue);

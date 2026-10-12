@@ -30,7 +30,7 @@ import 'settings.dart';
 /// 9: the Towns' events (`townMarked`, `townEntered`, `townLeft`) and a won wave's `town`, what the Town roll after it
 /// did (decisions-log 216); a wave's `materials` (dropped) and its start's (held, decisions-log 221); the Smithy's
 /// `crafted` event, a wave's `crafted`, `materialsUsed` and `gold.craftSpent`, and a `townLeft`'s `crafts` and
-/// `craftSpent` (decisions-log 233). While [Game.towns] is off no Town field is written.
+/// `craftSpent` (decisions-log 233). Every game writes them (decisions-log 321: a test's Towns-off game wrote none).
 /// The Bayangan Dusk's event (`omenDusk`, decisions-log 239) came without a raise: like every Bayangan field it is
 /// written only while [omensOn] is on, which no player's game has yet, so no record changed.
 /// The Tavern's (decisions-log 266: the events `boostBought` and `tavernRerolled`, a wave's `gold.tavernSpent` and
@@ -41,8 +41,7 @@ import 'settings.dart';
 /// `materialsUsed` and `gold.craftSpent` and the events `itemCrafted`, `stoneCrafted`, `itemEnhanced` (decisions-log 249,
 /// 255), and what changed meaning: `dropped` holds no item (none drops, decisions-log 246) and `materials` about three
 /// times as many. The forge-off build, whose records were as at 9, is gone (decisions-log 296).
-/// 11: the Tavern switched on (decisions-log 268): its fields and events, while the Towns are on (its own switch is gone,
-/// decisions-log 296).
+/// 11: the Tavern switched on (decisions-log 268): its fields and events (its own switch is gone, decisions-log 296).
 /// 12: the Bayangan switched on (decisions-log 319): their fields (8's, Dusk's) reach every player's records.
 const telemetryVersion = 12;
 
@@ -439,7 +438,7 @@ class TelemetryAdapter {
   }
 
   /// The `wave` record of the wave begun at [_WaveSum.start], ended now as [end], read off [g]; then a
-  /// fresh sum and a flush. A won one with the Towns on waits for its Town roll ([_held]).
+  /// fresh sum and a flush. A won one waits for its Town roll ([_held]).
   void _sum(Game g, String end) {
     final w = _w, s = w.start;
     _w = _WaveSum();
@@ -476,8 +475,8 @@ class TelemetryAdapter {
           'asahSpent': w.asahSpent, // on Asah (a Pusaka's star, on the Tas page), since then
           'tempaSpent': w.tempaSpent, // on Tempa (past Bangkit 5, in the Toko), since then
           'leburSpent': w.leburSpent, // on Lebur (a Gudang Pusaka melted into another for a star), since then
-          if (g.towns) 'craftSpent': w.craftSpent, // on relics crafted at a Town's Smithy, since then
-          if (g.towns) 'tavernSpent': w.tavernSpent, // on the Tavern's boosts and rerolls, since then
+          'craftSpent': w.craftSpent, // on relics crafted at a Town's Smithy, since then
+          'tavernSpent': w.tavernSpent, // on the Tavern's boosts and rerolls, since then
           'bonus': end == 'won' ? Game.waveBonus(s.wave) : 0,
         },
         // Each Pusaka owned: its type and stars now, and what it did in the wave (decisions-log 138): `uses` (the
@@ -493,17 +492,15 @@ class TelemetryAdapter {
               'worth': _round(g.pusakaWorth[r]?.worth ?? 0),
             },
         },
-        // The forge's small relics (relics.dart, decisions-log 250), only with the Towns on: each of the nine
-        // that did something, its uses and the damage it added; and each pair a troop wielded (its relics, "@" its type's
-        // Artifact: "fury+giantSlayer", "chill@snareCord"), the troops of it that dealt damage and how much.
-        if (g.towns) ...{
-          'relics': {
-            for (final r in forgeRelics)
-              if (g.relicWorth[r] case final w? when w.uses > 0) r.name: {'uses': w.uses, 'worth': _round(w.worth)},
-          },
-          'relicPairs': {
-            for (final MapEntry(:key, :value) in g.relicPairs.entries) key: {'troops': value.ids.length, 'dealt': _round(value.dealt)},
-          },
+        // The forge's small relics (relics.dart, decisions-log 250): each of the nine that did something, its uses and the
+        // damage it added; and each pair a troop wielded (its relics, "@" its type's Artifact: "fury+giantSlayer",
+        // "chill@snareCord"), the troops of it that dealt damage and how much.
+        'relics': {
+          for (final r in forgeRelics)
+            if (g.relicWorth[r] case final w? when w.uses > 0) r.name: {'uses': w.uses, 'worth': _round(w.worth)},
+        },
+        'relicPairs': {
+          for (final MapEntry(:key, :value) in g.relicPairs.entries) key: {'troops': value.ids.length, 'dealt': _round(value.dealt)},
         },
         // Ukir (pusaka.dart), only when some was fed since the last wave ended: the items fed by kind, their points, and
         // each Pusaka's steps taken.
@@ -511,12 +508,13 @@ class TelemetryAdapter {
         if (w.boostSaved > 0) 'boostSaved': w.boostSaved, // the leaks a Tavern boost forgave (Watchman's Brew)
         'dropped': w.dropped,
         'relicsDropped': w.relicsDropped,
-        // The Towns' materials the wave dropped (town.dart; summed, never an event each), only while they are on: read off
-        // the game before a win moves them into the bag.
-        if (g.towns) 'materials': {for (final MapEntry(:key, :value) in g.waveMaterials.entries) key.name: value},
+        // The Towns' materials the wave dropped (town.dart; summed, never an event each): read off the game before a win
+        // moves them into the bag.
+        'materials': {for (final MapEntry(:key, :value) in g.waveMaterials.entries) key.name: value},
         // The relics crafted at a Town's Smithy since the last wave ended (town.dart's Craft), by kind, and the materials
-        // they took; only while the Towns are on.
-        if (g.towns) ...{'crafted': w.crafted, 'materialsUsed': w.materialsUsed},
+        // they took.
+        'crafted': w.crafted,
+        'materialsUsed': w.materialsUsed,
         'used': w.used, // items given, since the last wave ended
         'relicsUsed': w.relicsUsed,
         'relicsTakenOff': w.relicsTakenOff, // relics taken off troops back into the bag (#91), since the last wave ended
@@ -526,7 +524,7 @@ class TelemetryAdapter {
         'monsterCasts': w.monsterCasts, // monster skill -> rank -> casts (#59)
         'score': g.score,
       };
-      if (end == 'won' && g.towns) {
+      if (end == 'won') {
         _held = record; // [TownRolled] comes later in this tick
         return;
       }

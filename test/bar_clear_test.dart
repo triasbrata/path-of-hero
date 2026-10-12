@@ -157,7 +157,6 @@ void main() {
       // A Town (no bar): the field's scale and framing don't move.
       final top = b.spawnBarArea.top;
       final t = b.state = Game()
-        ..towns = true
         ..townAt = 1;
       expect(t.enterTown(), isTrue);
       await frames(tester, 40);

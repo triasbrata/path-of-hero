@@ -4,13 +4,12 @@ part of 'game.dart';
 // item and relic the monsters drop at very high prices that rise with each one bought, and, while its shelf is open
 // ([shelfOpen]: not beside the boss's chest, draft.dart), the five epik Pusaka ([Relic.store]; pusaka.dart): one of
 // each, a copy of one owned is refused; what is in the bag (and a Pusaka in the Gudang) sells back for a small share. Every choice the owner may still change is one constant or
-// switch below. With the Towns on ([Game.towns], decisions-log 230; every board game, and a game without them is the
-// tests' alone since decisions-log 296, when the field's Toko page went) it deals only in a Town ([StoreRefusal.town]):
-// the Town's Shop page, on the Bag's own code (lib/bag.dart), buys and
+// switch below. It deals only in a Town ([StoreRefusal.town], decisions-log 230; the field's Toko page went in
+// decisions-log 296, its rules in 321): the Town's Shop page, on the Bag's own code (lib/bag.dart), buys and
 // sells there, the Towns' materials too (each at its own price, [TownRules.materials]). Its prices are then town.json's
 // ([TownRules], decisions-log 233): a small relic costs its tier's price ([TierPrices.shop], +[TierPrices.shopRise] of
 // it a buy) and sells back for half its craft gold ([Recipe.gold], [TierPrices.sellShare]); an item the [TownShop]'s.
-// With the Towns on too ([Store.forgeShop], decisions-log 248) its shelf holds only the materials that have dropped
+// The forge's Shop (decisions-log 248): its shelf holds only the materials that have dropped
 // ([Game.matsSeen]), each at [Materials.shopMatPrice], and no item or small relic; it still buys them all.
 
 /// The store opens once wave [storeFrom] is won (the owner: "hanya dibuka ketika player sudah melewati wave 15"); with the
@@ -46,12 +45,12 @@ final storeGoods = <Enum>[...droppedItems, ...droppedRelics, for (final r in Rel
 
 /// Why the store won't buy or sell now ([Store.whyNotBuy], [Store.whyNotSell]): besides the store's own, a Pusaka
 /// already owned isn't sold again ([owned]), one bound to a type isn't bought back ([bound]), with the shelf closed
-/// a Pusaka comes only from the boss's chest ([shelf], [artefactShelf]), with the Towns on it deals only in a Town
-/// ([town], decisions-log 230), and what isn't on its shelf isn't sold ([notSold]: a material with the Towns off, or
-/// one not dropped yet; with the Towns on an item and a small relic, decisions-log 248).
+/// a Pusaka comes only from the boss's chest ([shelf], [artefactShelf]), it deals only in a Town ([town], decisions-log
+/// 230), and what isn't on its shelf isn't sold ([notSold]: a material not dropped yet, an item and a small relic,
+/// decisions-log 248).
 enum StoreRefusal { locked, midWave, over, gold, none, owned, bound, shelf, town, notSold }
 
-/// The "VICTORY!" popup's line at the win that opens the Shop, with the Towns on (decisions-log 237): it deals only in a
+/// The "VICTORY!" popup's line at the win that opens the Shop (decisions-log 237): it deals only in a
 /// Town. None while town.json's `shop.from` is 1 (decisions-log 253): no Town comes before wave 1 is won, so the Shop
 /// never was shut.
 const shopInTowns = 'Towns have a ${Words.shop} now!';
@@ -72,10 +71,10 @@ const storeRefusalNames = {
 
 /// The store's rules.
 extension Store on Game {
-  /// The wave whose win opens the store: [storeFrom], or with the Towns on town.json's `shop.from` ([TownShop.from]: 1, so
-  /// a Town's Shop is open in every Town, decisions-log 253). It opens the Shop only; Awaken 4-5, Forge and Recall on the
-  /// Army page keep [storeFrom] ([armyBuysOpen]).
-  int get shopFrom => towns ? townRules.shop.from : storeFrom;
+  /// The wave whose win opens the store: town.json's `shop.from` ([TownShop.from]: 1, so a Town's Shop is open in every
+  /// Town, decisions-log 253). It opens the Shop only; Awaken 4-5, Forge and Recall on the Army page keep [storeFrom]
+  /// ([armyBuysOpen]).
+  int get shopFrom => townRules.shop.from;
 
   /// Wave [shopFrom] has been won. Derived from the wave, so not saved.
   bool get storeOpen => wave > shopFrom || (wave == shopFrom && !waveActive);
@@ -84,27 +83,21 @@ extension Store on Game {
   /// [shopFrom] is 1, where no Town comes before it and so the Shop was never shut (decisions-log 253).
   bool get shopJustOpened => wave == shopFrom && shopFrom > 1;
 
-  /// Wave [storeFrom] has been won: Awaken 4-5, Forge and Recall can be bought (with the Towns on in the Army page's
-  /// detail, between any waves; off in the store's pages). The Towns-off store opens with them, so then this is
-  /// [storeOpen]; with the Towns on a Town's Shop opens at [shopFrom] instead (decisions-log 253: the owner asked the
-  /// Shop open in every Town, nothing about these). Derived from the wave, so not saved.
+  /// Wave [storeFrom] has been won: Awaken 4-5, Forge and Recall can be bought (in the Army page's detail, between any
+  /// waves). A Town's Shop opens at [shopFrom] instead (decisions-log 253: the owner asked the Shop open in every Town,
+  /// nothing about these). Derived from the wave, so not saved.
   bool get armyBuysOpen => wave > storeFrom || (wave == storeFrom && !waveActive);
 
   /// [why] in the store's words ([storeRefusalNames]), the locked one with this game's [shopFrom].
   String storeWhy(StoreRefusal why) => why == StoreRefusal.locked ? 'Opens after wave $shopFrom' : storeRefusalNames[why]!;
 
-  /// The forge's Town Shop (decisions-log 248; the owner, 2026-10-04: "shop di town hanya menjual item yang pernah di drop
-  /// dari wave sebelumnya dengan harga x2.5 harga jual item ke toko"): with the Towns on, the shelf holds
-  /// the materials that have dropped ([Game.matsSeen]) at [Materials.shopMatPrice] and no item or small relic (they never
-  /// drop then); the Artifact shelf is unchanged, and the Shop still buys everything.
-  bool get forgeShop => towns;
-
-  /// Whether the shelf has no [kind] to sell ([StoreRefusal.notSold]): a material unless the forge's Shop has seen it
-  /// drop, and with the forge's Shop an item or a small relic.
+  /// Whether the shelf has no [kind] to sell ([StoreRefusal.notSold]). The forge's Town Shop (decisions-log 248; the
+  /// owner, 2026-10-04: "shop di town hanya menjual item yang pernah di drop dari wave sebelumnya dengan harga x2.5 harga
+  /// jual item ke toko"): the shelf holds the materials that have dropped ([Game.matsSeen]) at [Materials.shopMatPrice]
+  /// and no item or small relic (they never drop); the Artifact shelf is unchanged, and the Shop still buys everything.
   bool _notSold(Enum kind) => switch (kind) {
-        final Mat m => !forgeShop || !matsSeen.contains(m),
-        Item() => forgeShop,
-        Relic(pusaka: false) => forgeShop,
+        final Mat m => !matsSeen.contains(m),
+        Item() || Relic(pusaka: false) => true,
         _ => false,
       };
 
@@ -126,12 +119,12 @@ extension Store on Game {
           ? StoreRefusal.midWave
           : null;
 
-  /// Why the store won't deal here at all: with the Towns on, only in a Town (decisions-log 230), first, so a stale tap
-  /// or a test can't buy or sell on the field; null with them off. Not for Awaken, Forge or Recall, which the Army
-  /// page's detail buys between any waves ([_armyClosed] alone).
-  StoreRefusal? get _away => towns && !inTown ? StoreRefusal.town : null;
+  /// Why the store won't deal here at all: only in a Town (decisions-log 230), first, so a stale tap or a test can't buy
+  /// or sell on the field. Not for Awaken, Forge or Recall, which the Army page's detail buys between any waves
+  /// ([_armyClosed] alone).
+  StoreRefusal? get _away => !inTown ? StoreRefusal.town : null;
 
-  /// [kind]'s price before any was bought; with the Towns on a small relic's is its tier's ([TierPrices.shop]: Basic
+  /// [kind]'s price before any was bought; a small relic's is its tier's ([TierPrices.shop]: Basic
   /// 12,000, Strong 20,000, Mighty 32,000) and an item's the [TownShop]'s; a material's the forge's Shop's
   /// ([Materials.shopMatPrice]).
   int basePrice(Enum kind) => switch (kind) {
@@ -140,14 +133,13 @@ extension Store on Game {
         Relic(rarity: Rarity.legenda) => legendaPrice, // the chest's Legenda, never sold here (pusaka.dart)
         Relic(rarity: Rarity.epik, pusaka: true) => epikPrice, // the chest's new Epik (owner: its own price), sold to it, never bought (draft.dart)
         Relic(pusaka: true) => langkaPrice, // the chest's Langka (owner 3c: sold to it, never bought), never sold here (draft.dart)
-        final Relic r when towns => _tierPrices(r).shop,
-        Relic() => relicPrice.base,
-        Item() when towns => townRules.shop.itemPrice,
+        final Relic r => _tierPrices(r).shop,
+        Item() => townRules.shop.itemPrice,
         _ => itemPrice.base,
       };
 
   /// What the next [kind] costs: its base price, risen by every one of it the store sold this game (and by
-  /// [ahead] more: what the one after would cost). With the Towns on a small relic rises its tier's [TierPrices.shopRise]
+  /// [ahead] more: what the one after would cost). A small relic rises its tier's [TierPrices.shopRise]
   /// of its base a buy (Basic 12,000, 14,400, 16,800, …) and an item the [TownShop]'s rise; a material the forge's Shop's
   /// ([Materials.shopMatPrice]: its [TownShop.matRise] a buy, 0 as shipped).
   int buyPrice(Enum kind, [int ahead = 0]) {
@@ -155,20 +147,20 @@ extension Store on Game {
     return switch (kind) {
       final Mat m => shopMatPrice(m, n),
       Relic(store: true) => (artefactPrice[kind]! * pow(artefactRise, n)).round(),
-      final Relic r when towns && !r.pusaka => _tierPrices(r).priceAfter(n),
+      final Relic r when !r.pusaka => _tierPrices(r).priceAfter(n),
       Relic() => relicPrice.base + relicPrice.rise * n,
-      Item() when towns => townRules.shop.itemPrice + townRules.shop.itemRise * n,
+      Item() => townRules.shop.itemPrice + townRules.shop.itemRise * n,
       _ => itemPrice.base + itemPrice.rise * n,
     };
   }
 
   /// What one [kind] from the bag sells for: [sellShare] of its base price; a material ([Mat]) its own price
-  /// ([MatInfo.sell], town.json `materials`). With the Towns on a small relic sells for its tier's [TierPrices.sellShare]
+  /// ([MatInfo.sell], town.json `materials`). A small relic sells for its tier's [TierPrices.sellShare]
   /// of its craft gold ([Recipe.gold]: half, 150 to 1,750) and an item for the [TownShop]'s share of its price.
   int sellPrice(Enum kind) => switch (kind) {
         Mat() => townRules.materials[kind]?.sell ?? 0,
-        final Relic r when towns && !r.pusaka => (_craftGold(r) * _tierPrices(r).sellShare).round(),
-        Item() when towns => (townRules.shop.itemPrice * townRules.shop.itemSellShare).round(),
+        final Relic r when !r.pusaka => (_craftGold(r) * _tierPrices(r).sellShare).round(),
+        Item() => (townRules.shop.itemPrice * townRules.shop.itemSellShare).round(),
         _ => (basePrice(kind) * sellShare).round(),
       };
 
@@ -211,8 +203,8 @@ extension Store on Game {
     }
   }
 
-  /// Why one [kind] can't be bought now, or null when it can: outside a Town with the Towns on ([_away]), nothing off the
-  /// shelf ([_notSold]: a material, with the forge's Shop one not dropped yet, an item, a small relic), a Pusaka only
+  /// Why one [kind] can't be bought now, or null when it can: outside a Town ([_away]), nothing off the shelf
+  /// ([_notSold]: a material not dropped yet, an item, a small relic), a Pusaka only
   /// while the shelf is open ([shelfOpen]; a Langka never), and one already owned isn't sold again.
   StoreRefusal? whyNotBuy(Enum kind) =>
       _away ??
@@ -225,7 +217,7 @@ extension Store on Game {
                   ? StoreRefusal.owned
                   : (gold < buyPrice(kind) ? StoreRefusal.gold : null));
 
-  /// Why one [kind] can't be sold now, or null when it can: outside a Town with the Towns on ([_away]); a Pusaka sells
+  /// Why one [kind] can't be sold now, or null when it can: outside a Town ([_away]); a Pusaka sells
   /// only from the Gudang.
   StoreRefusal? whyNotSell(Enum kind) =>
       _away ?? _closed ?? (kind is Relic && pusaka[kind]?.type != null ? StoreRefusal.bound : (inBag(kind) == 0 ? StoreRefusal.none : null));

@@ -27,9 +27,7 @@ void main() {
       ..townAt = 2
       ..inTown = true;
     g.inventory[Item.sword] = 1;
-    expect((g.towns, g.storeOpen, g.armyBuysOpen), (true, true, false));
-    final shelf = g.forgeShop ? null : Item.sword; // the forge's Shop sells materials only (decisions-log 248)
-    if (shelf != null) expect(g.whyNotBuy(shelf), isNull);
+    expect((g.storeOpen, g.armyBuysOpen), (true, false));
     expect(g.whyNotSell(Item.sword), isNull);
     expect(g.sell(Item.sword), 1, reason: 'sold in the first Town');
     g.fallenHeroes.add(FallenHero(name: 'Kael', type: 'knight', stats: const [HeroStat.hp], fell: 1));
@@ -38,11 +36,9 @@ void main() {
 
   test('no "VICTORY!" Shop line while shop.from is 1; a later shop.from has it at its wave', () {
     final on = Game()
-      ..towns = true
       ..townRules = shipped;
     expect([for (var w = 0; w <= 40; w++) (on..wave = w).shopJustOpened], everyElement(isFalse));
     final later = Game()
-      ..towns = true
       ..townRules = TownRules.patch({'shop': {'from': 10}});
     expect([for (var w = 0; w <= 40; w++) if ((later..wave = w).shopJustOpened) w], [10]);
   });

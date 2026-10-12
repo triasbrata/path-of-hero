@@ -291,7 +291,7 @@ void main() {
 
     test('its words and its gap', () {
       expect((capWarnEvery, capWarningText(32, 87), capTip(32)),
-          (5, '${Words.army} full: cap 32 - ${Words.tide} +87%\nMake types stronger in the ${Words.shop} (${Words.awaken})',
+          (5, '${Words.army} full: cap 32 - ${Words.tide} +87%\nMake types stronger in the ${Words.army} page (${Words.awaken})',
               '${Words.army} full (32): make types stronger'));
     });
 
@@ -328,7 +328,7 @@ void main() {
 
     test('it is due between waves, once every 5 waves, with the coming wave\'s tide', () {
       final g = atCap();
-      expect(g.capWarning(), capWarningText(armyMaxBoard, tidePercent(64), towns: true)); // the board's Towns on (decisions-log 237)
+      expect(g.capWarning(), capWarningText(armyMaxBoard, tidePercent(64)));
       expect(g.capWarnedAt, 63);
       final shown = <int>[];
       for (var won = 63; won <= 75; won++) {
@@ -562,7 +562,7 @@ void main() {
     test('the HUD\'s words: the tooltip\'s line, the cap\'s warning and the one-time note follow it', () {
       final g = overCap()..overFrom = 82;
       expect(g.tideTip.$2, [...tideInfo(87, 34).$2, overTip(16, 32), capTip(cap)]); // its pace too (overPace)
-      expect(g.capWarning(), capWarningText(cap, tidePercent(87, 34), towns: true)); // the board's Towns on (decisions-log 237)
+      expect(g.capWarning(), capWarningText(cap, tidePercent(87, 34)));
       expect(tidePercent(87, 34), 69);
       fall(g, 16); // at the cap: the tide as before
       expect(g.tideTip.$2, [...tideInfo(87, 66).$2, capTip(cap)]);

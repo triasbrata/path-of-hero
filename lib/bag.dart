@@ -65,11 +65,9 @@ const bagCategoryNames = {
 };
 
 /// The kinds of [category] that have a cell in the Bag, in its fixed order (decisions-log 187): the items with some in
-/// the bag in [Item] order (the seven monsters drop; with the Towns on every item: [Relics.itemsInPlay], decisions-log 245),
-/// then the small relics in [Relic] order (the four monsters drop, with the Towns on every small relic:
-/// [Relics.relicsInPlay], decisions-log 227), then the Towns' materials held in
-/// [Mat] order (decisions-log 221: Common, Rare, Trophy; none with the Towns off; the forge's stones only with it on,
-/// [Materials.matsInPlay]), then every Pusaka owned (bound, in
+/// the bag in [Item] order (every item: [Relics.itemsInPlay], decisions-log 245), then the small relics in [Relic] order
+/// (every small relic: [Relics.relicsInPlay], decisions-log 227), then the Towns' materials held in [Mat] order
+/// (decisions-log 221: Common, Rare, Trophy, then the forge's stones, [Materials.matsInPlay]), then every Pusaka owned (bound, in
 /// the Gudang, an oath), the rarest first and in [Relic.values] order within a rarity. Nothing but owning moves a cell:
 /// counts, binding, stars and the Gudang never reorder them.
 List<Enum> bagKinds(Game g, BagCategory category) {
@@ -112,17 +110,12 @@ List<BagLoot> bagLoot(Game g, BagCategory category) => [
         if (k is! Item) (kind: k, plus: 0),
     ];
 
-/// Whether the store's shelf sells [kind] now (decisions-log 230): the seven items monsters drop ([droppedItems]; the
-/// forge's crafted ones never, decisions-log 245), the small relics in play (with the Towns
-/// on all eleven, the Smithy's seven too: [Relics.relicsInPlay], decisions-log 227), and the store's Artifacts while
-/// their shelf is open ([Store.shelfOpen]; on the board they come from the Boss Chest alone). With the forge's Shop
-/// ([Store.forgeShop], decisions-log 248) the materials that have dropped ([Game.matsSeen]) in place of the items and
-/// the small relics.
+/// Whether the store's shelf sells [kind] now (decisions-log 230): the materials that have dropped ([Game.matsSeen],
+/// the forge's Shop, decisions-log 248) and the store's Artifacts while their shelf is open ([Store.shelfOpen]; on the
+/// board they come from the Boss Chest alone); never an item or a small relic (the Smithy makes them, decisions-log 245).
 bool onShopShelf(Game g, Enum kind) => switch (kind) {
-      final Item i => !g.forgeShop && droppedItems.contains(i),
-      final Relic r when !r.pusaka => !g.forgeShop && g.relicsInPlay.contains(r),
-      Relic() => storeGoods.contains(kind) && g.shelfOpen,
-      final Mat m => g.forgeShop && g.matsSeen.contains(m),
+      Relic(pusaka: true) => storeGoods.contains(kind) && g.shelfOpen,
+      final Mat m => g.matsSeen.contains(m),
       _ => false,
     };
 
@@ -393,8 +386,7 @@ extension on Board {
     _assignPage(c, g, loot, right, ts, ps, target);
   }
 
-  /// Whether the book shows the Town's Shop on the Bag's code this frame (the Towns on: decisions-log 230); the Shop
-  /// tab of the Towns-off game is store_page.dart's.
+  /// Whether the book shows the Town's Shop on the Bag's code this frame (decisions-log 230).
   bool get _shopShown => _page == _Page.store;
 
   /// The grid the book shows: the Shop's tab's on its page ([_shopShown], shop_page.dart), the Smithy's materials on its
@@ -638,7 +630,7 @@ extension on Board {
   /// The category chips across the top of [area] as one segmented control (decisions-log 198's "Bag chips": a light
   /// control, not ui_buttons' bevels): one paper strip, the Bag slot's card ([Board._framePlain]) at [k] screen px per
   /// sprite px, cut into a segment per category, All, Items, Relics, Materials ("Mats" where the words don't
-  /// all fit; the Towns off too since decisions-log 296) and, while it shows ([_artifactsShown]), Artifacts, each its word on the paper. The one on is lit as a picked slot (the lit card in the pick's cream and orange, [_bagPickPaint]) with its word
+  /// all fit) and, while it shows ([_artifactsShown]), Artifacts, each its word on the paper. The one on is lit as a picked slot (the lit card in the pick's cream and orange, [_bagPickPaint]) with its word
   /// bold; another lights under the mouse as a slot does and sinks a sprite px while pressed. As wide as each other where
   /// every word fits, else each as wide as its word and the room left shared out ([_chips]). A tap turns to that
   /// category ([_bagChipTap]). Returns the strip's bottom.
@@ -1535,8 +1527,8 @@ extension on Board {
   }
 
   /// [loot]'s action list in [list] (decisions-log 202): a row per thing the player can do with it ([_actionsFor]), a few
-  /// px apart, on whole pixels, scrolled by the wheel or a drag when they don't all fit; under them, with the Towns on,
-  /// the grey line that says where it sells ([_bagNote], decisions-log 230). An enhanced stack's ([pick]'s plus) at it.
+  /// px apart, on whole pixels, scrolled by the wheel or a drag when they don't all fit; under them the grey line that
+  /// says where it sells ([_bagNote], decisions-log 230). An enhanced stack's ([pick]'s plus) at it.
   void _actionList(Canvas c, Game g, BagLoot pick, Rect list, double ts, double ps) {
     const grey = Color(0xFF9E9080);
     final (kind: loot, :plus) = pick;
@@ -1979,8 +1971,7 @@ extension on Board {
   }
 
   /// What [loot] is, in a sentence or two of plain words (decisions-log 202): an item's first effect line for one troop
-  /// type, and that each type takes a few ([Game.itemEffect]); a small relic's ([Game.relicEffect]), with the Towns on who
-  /// it suits ([Relics.relicBestLine], decisions-log 227), and that a troop wears one ([relicSlotsLine]); an Artifact's first sentence ([firstSentence]) at its stars and Carve, and that it is
+  /// type, and that each type takes a few ([Game.itemEffect]); a small relic's ([Game.relicEffect]), who it suits ([Relics.relicBestLine], decisions-log 227), and that a troop wears one ([relicSlotsLine]); an Artifact's first sentence ([firstSentence]) at its stars and Carve, and that it is
   /// for a whole type ([pusakaLine]); an oath's two lines. Without [tail], none of the closing sentences after what it
   /// does ([_descLines]). An item's enhanced stack: what one does at its [plus] (decisions-log 255).
   String _detailDesc(Game g, Enum loot, {bool tail = true, int plus = 0}) => switch (loot) {

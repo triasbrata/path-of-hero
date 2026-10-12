@@ -137,7 +137,6 @@ void main() {
       }
 
       final fresh = Game(Random(seed), Random(seed + 100)).boardRules()
-        ..towns = false // no Town due: Start shows in the cheer
         ..armyMax = null
         ..gold = 200000
         ..wave = 4 // the first boss win: no Hero is made at it (at wave 90 one is)
@@ -161,7 +160,6 @@ void main() {
         // after the cheer the Hero's splash, and once it is closed the chest.
         final h = await bossWin(load()
           ..chests.clear()
-          ..towns = false
           ..wave = 89);
         await tap(b.startButton.center);
         note('hero start pressed', h);

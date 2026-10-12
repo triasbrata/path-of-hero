@@ -19,7 +19,6 @@ import 'package:tower_defense/main.dart' show smithyItemOrder, smithyRelics;
 Game forgeGame({bool inTown = false}) {
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
-    ..towns = true
     ..armyMax = null
     ..wave = 20;
   for (final type in ['soldier', 'knight', 'archer', 'priest']) {

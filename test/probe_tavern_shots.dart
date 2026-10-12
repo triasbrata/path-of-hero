@@ -44,7 +44,6 @@ Game board({int wave = 20, int gold = 4090, TownRules rules = const TownRules()}
     ..townDice = Random(seed + 600)
     ..matDice = Random(seed + 700)
     ..tavernDice = Random(seed + 800)
-    ..towns = true
     ..townRules = rules
     ..armyMax = null
     ..wave = wave;

@@ -78,23 +78,19 @@ extension Ascend on Game {
     return true;
   }
 
-  /// The highest awakening [type] could reach (up to [maxAwaken]) with the bag's items on top of its own: over its
-  /// recipe, the fewest (taken + in the bag) ÷ needed; by grade ([Game.byGrade], decisions-log 249) the grade sets after
-  /// its level that (taken + in the bag) hold in a row ([Game.gradeSet]). Counts only: two types may count the same items.
-  /// (No recipe asks a melee type for the bows that would take it to [meleeMaxRange]: the soldier's three reach 20.7 of
-  /// 27.2.)
+  /// The highest awakening [type] could reach (up to [maxAwaken]) with the bag's items on top of its own: the grade sets
+  /// after its level that (taken + in the bag) hold in a row ([Game.gradeSet], decisions-log 249). Counts only: two types
+  /// may count the same items. (No recipe asks a melee type for the bows that would take it to [meleeMaxRange]: the
+  /// soldier's three reach 20.7 of 27.2.)
   int bagLevel(String type) {
-    final recipe = recipeOf(type), level = itemLevel(type);
-    if (recipe.isEmpty || level >= maxAwaken) return level;
+    final level = itemLevel(type);
+    if (recipeOf(type).isEmpty || level >= maxAwaken) return level;
     int have(Item item) => countOf(type, item) + (inventory[item] ?? 0);
-    if (byGrade) {
-      var l = level;
-      while (l < maxAwaken && gradeSet(type, l + 1).entries.every((e) => have(e.key) >= e.value)) {
-        l++;
-      }
-      return l;
+    var l = level;
+    while (l < maxAwaken && gradeSet(type, l + 1).entries.every((e) => have(e.key) >= e.value)) {
+      l++;
     }
-    return max(level, recipe.entries.map((e) => have(e.key) ~/ e.value).reduce(min).clamp(0, maxAwaken));
+    return l;
   }
 
   /// Some fielded type (one with a living troop) can awaken further from the bag ([bagLevel]): the Tas tab's dot.

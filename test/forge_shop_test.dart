@@ -39,7 +39,6 @@ void main() {
   test("the shelf is the materials seen, in first-drop order: Buy's one section Materials (Items and Relics, which have "
       'none, left out); Sell is what the player holds, in the Bag\'s order; no item, no small relic on the shelf', () {
     final g = forgeShopGame()..offers = true; // the board's: the Artifact shelf closed beside the boss's chest
-    expect(g.forgeShop, isTrue);
     final relic = droppedRelics.first;
     expect(shopBuySections(g), [BagCategory.materials]);
     expect(shopBuyKinds(g, BagCategory.materials), seen, reason: 'the shelf alone, never a held kind not dropped');

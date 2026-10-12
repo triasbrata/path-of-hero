@@ -40,7 +40,6 @@ Game board() {
     ..draft = Random(seed + 500)
     ..townDice = Random(seed + 600)
     ..matDice = Random(seed + 700)
-    ..towns = true
     ..armyMax = null
     ..gold = 40000
     ..wave = 20;

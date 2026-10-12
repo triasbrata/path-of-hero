@@ -36,7 +36,6 @@ Game w89() =>
       ..loot = Random(seed + 200)
       ..slots = Random(seed + 400)
       ..draft = Random(seed + 500)
-      ..towns = true
       ..townDice = Random(seed + 600)
       ..matDice = Random(seed + 700);
 

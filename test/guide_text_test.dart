@@ -187,8 +187,7 @@ void main() {
     loadedTownRules = TownRules.patch({'awaken': {'share': [1, 1, 0.75]}});
     expect(topic(guideFor()).last, 'The last level: 75%.');
     loadedTownRules = shipped;
-    // Every board game plays the forge (decisions-log 272, 296): its guide is the one by grade, word for word.
-    expect((Game()..towns = true).byGrade, isTrue);
+    // Every game plays the forge (decisions-log 272, 296, 321): its guide is the one by grade, word for word.
     for (final key in ['K8', 'K9']) {
       expect(lines(guideEn, key), lines(grades, key), reason: key);
     }

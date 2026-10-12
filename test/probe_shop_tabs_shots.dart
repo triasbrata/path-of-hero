@@ -46,7 +46,6 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
 Game shotGame() {
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
-    ..towns = true
     ..armyMax = null
     ..gold = 400000
     ..wave = 30

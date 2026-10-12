@@ -1130,7 +1130,7 @@ class Board extends PositionComponent
   /// shown); the page shown (from 0), how many there are and how many cells a page holds (alone, and above the pager;
   /// the note's strip, while it shows, taken off both); the pager's 'back' and 'on' buttons (Rect.zero: a single page);
   /// what [loot]'s cell shows (null: no cell shows); and the empty text's lines (none: a cell shows). For tests.
-  /// On the Town's Shop page (the Towns on), its grid's (decisions-log 230).
+  /// On the Town's Shop page, its grid's (decisions-log 230).
   List<(Enum, Rect)> get bagCells => [for (final (cell, r) in _grid.cells) (cell.kind, r)];
   List<Rect> get bagSlots => [..._grid.slots];
   BagCategory get bagCategory => _grid.category;

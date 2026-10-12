@@ -13,7 +13,6 @@ import 'package:tower_defense/telemetry.dart';
 
 /// A game with the Towns and the forge on, [gold], at [wave].
 Game forge({int gold = 0, int wave = 30}) => Game(Random(1), Random(101))
-  ..towns = true
   ..gold = gold
   ..wave = wave;
 
@@ -138,7 +137,6 @@ void main() {
   test('an item goes up to +5 one step at a time, each its own Bag stack, and every step works (no dice)', () {
     for (final seed in [1, 2, 3]) {
       final g = Game(Random(seed), Random(seed + 100))
-        ..towns = true
         ..gold = 0
         ..wave = 30
         ..townAt = 31;
@@ -371,8 +369,7 @@ void main() {
       ],
     });
     expect(j['v'], Game.saveVersion);
-    final back = Game.fromJson(j)
-      ..towns = true;
+    final back = Game.fromJson(j);
     expect(back.upgradePlus, g.upgradePlus);
     expect(back.enhancedBag, g.enhancedBag);
     expect(back.statsOf('knight').dmg, closeTo(g.statsOf('knight').dmg, 1e-9));

@@ -33,7 +33,6 @@ Game tavern({TownRules rules = const TownRules(), int seed = 1, int gold = 10000
   ..loot = Random(seed + 200)
   ..slots = Random(seed + 400)
   ..draft = Random(seed + 500)
-  ..towns = true
   ..townRules = rules
   ..townDice = Random(seed + 600)
   ..matDice = Random(seed + 700)
@@ -62,7 +61,7 @@ TownRules only(String rarity, {bool firstFeast = false, int pity = 0}) => rules(
 List<Boost> kinds(Game g) => [for (final o in g.tavernOffers) o.kind];
 
 /// Saved and loaded back, through JSON as the file does, into a game with the Towns (and so the Tavern) on.
-Game reloaded(Game g) => Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>)..towns = true;
+Game reloaded(Game g) => Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>);
 
 /// Starts [g]'s next wave (through a due Town first) with [foes] put on the field (none: one slime that leaks at once),
 /// and ticks until it ends.
@@ -355,7 +354,6 @@ void main() {
 
     test('damage taken: a blow lands ×0.85 under the Feast, after the defence', () {
       final g = bareGame()
-        ..towns = true
         ..boosts.add(RunningBoost(Boost.feast, 2));
       final u = placeNow(g, 'soldier', 2, 3)..busyUntil = hold;
       expect(u.stats.taken, 0.85);
@@ -388,7 +386,7 @@ void main() {
 
     test('Lucky Toast: a kill pays ×1.3 at the pay line', () {
       for (final on in [false, true]) {
-        final g = bareGame()..towns = true;
+        final g = bareGame();
         if (on) g.boosts.add(RunningBoost(Boost.toast, 2));
         placeNow(g, 'knight', 2, 3);
         final s = enemyStats('orc', Tier.elite, 1);

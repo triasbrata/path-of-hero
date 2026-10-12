@@ -249,7 +249,6 @@ void main() {
 
     test('Afterglow: after a skill cast its next 3 hits deal x1.5', () {
       final (g, hero) = heroCaster(HeroSkill.cleave, Random(1));
-      g.towns = true;
       hero.relics.add(Relic.afterglow);
       final f = dummy(g, next(hero.pos), tier: Tier.miniBoss);
       expect(lost(f, () => runFor(g, 0.3)), greaterThan(0), reason: 'the Hero cast its Cleave');
@@ -429,7 +428,6 @@ void main() {
 
     test('C5 Mana Siphon + Afterglow: the hits a cast charges are x1.5 (the siphon brings the casts sooner)', () {
       final (g, hero) = heroCaster(HeroSkill.cleave, Random(1));
-      g.towns = true;
       hero.relics.addAll([Relic.manaSiphon, Relic.afterglow]);
       final f = dummy(g, next(hero.pos), tier: Tier.miniBoss);
       runFor(g, 0.3);
@@ -564,8 +562,7 @@ void main() {
   group('the save', () {
     test('the save never writes their state: a Hero holding two of the nine round-trips as before', () {
       final g = Game(Random(1))
-        ..boardRules()
-        ..towns = true;
+        ..boardRules();
       final h = placeNow(g, 'knight', 2, 4)..hero = true;
       h.relics.addAll([Relic.chill, Relic.reaper]);
       h

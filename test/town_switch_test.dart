@@ -83,9 +83,11 @@ Game seeded(int seed) => Game(Random(seed), Random(seed + 100)).boardRules()
   ..townPolicy = 'leave';
 
 void main() {
-  test('every game plays with the Towns: the board (no define, decisions-log 296) and a plain Game() (decisions-log 321)', () {
-    expect(Game().towns, isTrue);
-    expect(Game().boardRules().towns, isTrue);
+  test('every game plays with the Towns: the board (no define, decisions-log 296) and a plain Game() (decisions-log 321) '
+      'save their schedule', () {
+    for (final g in [Game(), Game().boardRules()]) {
+      expect(g.toJson()['town'], {'chance': const TownSchedule().chanceStart, 'last': const TownSchedule().firstTownAfter});
+    }
   });
 
   test('a board game rolls Towns: over 30 waves won at once each seed has Towns, none before wave 7, 5 apart at least, '
@@ -151,7 +153,6 @@ void main() {
       final g = Game(Random(1))
         ..wave = 12
         ..gold = 777
-        ..towns = true
         ..townAt = 13;
       expect(saveGame(g), isTrue);
       expect(jsonDecode(_save.readAsStringSync())['v'], Game.saveVersion);
@@ -198,7 +199,7 @@ void main() {
       for (var i = 0; i < 120 && !b.townShown; i++) {
         await frames(tester, 1);
       }
-      expect((b.welcome, b.state.towns, b.state.inTown, b.townShown), (null, true, true, true));
+      expect((b.welcome, b.state.inTown, b.townShown), (null, true, true));
       await frames(tester, 40); // the tap's own timers
     });
   });
@@ -280,7 +281,6 @@ void main() {
       'Recall keep wave 15', () {
     expect(const TownRules().shop.from, 1);
     final on = Game()
-      ..towns = true
       ..townRules = TownRules.patch({'shop': {'from': 10}})
       ..wave = 9;
     expect((on.shopFrom, on.storeOpen, on.storeWhy(StoreRefusal.locked)), (10, false, 'Opens after wave 10'));
@@ -306,7 +306,7 @@ void main() {
   });
 
   test('the Shop texts: the cap warning and the awakening tooltip send to the Army page', () {
-    expect(capWarningText(32, 50, towns: true), endsWith('in the ${Words.army} page (${Words.awaken})'));
+    expect(capWarningText(32, 50), endsWith('in the ${Words.army} page (${Words.awaken})'));
     // At Awaken 3 from its items, by the game's own rule (by grade, decisions-log 272): the next is bought.
     final g = Game()..upgrades['priest'] = awakenItems('priest', maxAwaken);
     expect(g.awakenLevel('priest'), maxAwaken);

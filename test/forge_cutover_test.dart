@@ -55,21 +55,18 @@ String stats(Stats s) => 'hp ${s.hp} mp ${s.mp} heals ${s.heals} speed ${s.speed
 void main() {
   test('the forge plays in every game, a plain Game() too (decisions-log 321)', () {
     for (final g in [Game().boardRules(), Game()]) {
-      expect((g.byGrade, g.enhanceOn, g.forgeShop, g.smithyItems(1).length), (true, true, true, 14));
+      expect((g.smithyItems(1).length, g.toJson().containsKey('awakenKept')), (14, true));
     }
   });
 
   test("the telemetry's and the events' version 10 or later: the forge's fields reach every player's records now", () {
     expect((telemetryVersion >= 10, eventVersion >= 10), (true, true)); // 11: the Tavern's (decisions-log 268)
-    final g = Game().boardRules();
-    expect((g.towns, passedOn.containsAll([EventKind.itemCrafted, EventKind.stoneCrafted, EventKind.itemEnhanced])),
-        (true, true));
+    expect(passedOn.containsAll([EventKind.itemCrafted, EventKind.stoneCrafted, EventKind.itemEnhanced]), isTrue);
   });
 
   test('the w89 save (items by the old rule, Bangkit 5 and Tempa): every type keeps its level, Bangkit, Tempa and stats',
       () {
     final on = load(json(w89));
-    expect(on.byGrade, isTrue);
     expect(on.awakenKept, {'priest': 3, 'armored_axeman': 3, 'archer': 2, 'wizard': 3, 'knight_templar': 2});
     for (final type in troopTypes.keys) {
       expect(standing(on, type), _before['w89']![type], reason: type);

@@ -4,9 +4,8 @@ part of 'game.dart';
 // crafted at a Smithy in a Town, not dropped; a Town is an interlude BETWEEN two waves, rolled two waves ahead. The
 // owner's 2026-10-04 answer: "untuk town setiap wave antara wave 6 dan wave7, jadi harusnya tida menggangu spawn mini
 // boss atau boss" (a Town sits between two waves, so the mini boss / boss schedule is untouched). The schedule and the
-// Town's state live here; the scene is town_scene.dart's, the Smithy smithy_page.dart's, the Shop bag.dart's. [Game.towns]
-// is on for every board game (decisions-log 237) and off only in a plain Game(), a state only tests reach (decisions-log
-// 296: the TOWNS define is gone).
+// Town's state live here; the scene is town_scene.dart's, the Smithy smithy_page.dart's, the Shop bag.dart's. Every game
+// has the Towns (decisions-log 237, 296; a plain Game() too since decisions-log 321).
 //
 // The roll ([Towns._rollTown], in tick's win path after the Hero and the Boss Chest, so the auto-save keeps it): after
 // wave n is won, for "a Town before wave n+2" (slot n+2: it opens once wave n+1 is won, before wave n+2 starts). A Town
@@ -19,7 +18,7 @@ part of 'game.dart';
 /// [Game] reads its own [Game.townRules], so a test or probe swaps them per game ([patch]). The game reads the
 /// [schedule] (decisions-log 216), the materials' [forgeDrops], [parts] and [materials] (decisions-log 221, 246), the
 /// crafted relics' [relics] numbers (decisions-log 227), and the Smithy's [recipes] ([Craft]), the relic [tiers]' prices
-/// and the [shop]'s item prices ([Store], with the Towns on; decisions-log 233); the forge's (decisions-log 245, in every
+/// and the [shop]'s item prices ([Store], decisions-log 233); the forge's (decisions-log 245, in every
 /// game with the Towns since the forge-off build went, decisions-log 296): the [items]' recipes and effects, the relic recipes that change with it ([forgeChanges]) and the [combos]; the
 /// Tavern's boosts ([tavern], decisions-log 266). [parse] skips any block it doesn't know.
 class TownRules {
@@ -70,7 +69,7 @@ class TownRules {
   final Map<Mat, MatInfo> materials;
 
   /// The Smithy's recipes by the relic's save key ([townRelics], then the forge's nine, [forgeRelics]): its tier,
-  /// materials, items and gold. With the Towns on, [forgeRecipe] reads them with its changes.
+  /// materials, items and gold. [forgeRecipe] reads them with its changes.
   final Map<String, Recipe> recipes;
 
   /// Each relic tier's prices: the share of its craft gold a sale pays, the Shop's price and its rise a buy.
@@ -94,11 +93,10 @@ class TownRules {
   /// yet.
   final Combos combos;
 
-  /// Awaken by grade (decisions-log 245; the file's `awaken`): read with the Towns on ([Game.byGrade], decisions-log 249).
+  /// Awaken by grade (decisions-log 245, 249; the file's `awaken`).
   final AwakenRules awaken;
 
-  /// The late game's Enhance (decisions-log 245; the file's `enhance`): read with the Towns on (enhance.dart's [Enhance],
-  /// decisions-log 255).
+  /// The late game's Enhance (decisions-log 245; the file's `enhance`; enhance.dart's [Enhance], decisions-log 255).
   final EnhanceRules enhance;
 
   /// The Tavern's boosts (decisions-log 266; the file's `tavern`, lib/tavern.dart): read with the Tavern on.
@@ -265,7 +263,7 @@ class TownRules {
   /// The monster types that drop [m] as a part (its Common or Rare), in [parts]' order.
   List<String> sourcesOf(Mat m) => [for (final MapEntry(key: type, value: (c, r)) in parts.entries) if (c == m || r == m) type];
 
-  /// [key]'s recipe with the Towns on (decisions-log 245): its [forgeChanges] one, else its own ([recipes]).
+  /// [key]'s recipe (decisions-log 245): its [forgeChanges] one, else its own ([recipes]).
   Recipe? forgeRecipe(String key) => forgeChanges[key] ?? recipes[key];
 
   /// The relics whose recipe takes [m], in [townRelics]' order.
@@ -300,8 +298,8 @@ class TownRules {
 
 /// Awaken by grade (town.json `awaken`, decisions-log 245 and 249; forge-design §11): Awaken L needs the type's recipe in
 /// grade-L items ([Game.gradeSet]), grade L's counts [share] L's of the recipe's, rounded up ([gradeCount]; one per
-/// grade, the first grade's first). Always by grade with the Towns ([Game.byGrade]): the file's `byGrade`, the switch
-/// back to the rule from before the grades, is gone (decisions-log 296) and an old file's is ignored.
+/// grade, the first grade's first). Always by grade: the file's `byGrade`, the switch back to the rule from before the
+/// grades, is gone (decisions-log 296) and an old file's is ignored.
 class AwakenRules {
   const AwakenRules({this.share = const [1.0, 1.0, 0.667]});
 
@@ -324,8 +322,8 @@ class AwakenRules {
 
 /// Enhance (town.json `enhance`, decisions-log 245; forge-design §12): from wave [from] a Smithy takes a crafted item
 /// up to [most] steps, each adding [per] of the item's own bonus, step n taking [stone] n and [gold] n; the stones are
-/// made from [stones]' recipes, and an item at +n shows under [tints] n at [tintAlpha]. Read with the Towns on (enhance.dart's
-/// [Enhance], decisions-log 255).
+/// made from [stones]' recipes, and an item at +n shows under [tints] n at [tintAlpha]. Read by enhance.dart's
+/// [Enhance] (decisions-log 255).
 class EnhanceRules {
   const EnhanceRules({
     this.from = 30,
@@ -484,7 +482,7 @@ class TownSchedule {
 enum MatGrade { common, rare, trophy, crafted }
 
 /// The 30 materials (decisions-log 221; docs/loot-items-relics.md "Town and Smithy"): each monster type's Common and Rare
-/// part and the three Trophies, which the Smithy crafts relics from. Monsters drop them with the Towns on
+/// part and the three Trophies, which the Smithy crafts relics from. Monsters drop them
 /// ([Materials._dropMaterials]), into [Game.materials] at a won wave. The value is the save key and the icon's name
 /// (`mat_<name>.png`), so a new one is only ever appended; this order is the Bag's: Common, Rare, Trophy, and within a
 /// grade the monsters weakest first ([enemyTypes]), then the healer, then the Necromancer. The forge's two stones come
@@ -506,7 +504,7 @@ enum Mat {
 }
 
 /// The forge's stones (decisions-log 245; forge-design §12): Smithy-made for Enhance (town.json `enhance.stones`). No
-/// monster drops one, the Shop's shelf never holds one ([Game.matsSeen]), and only a game with the Towns on shows them
+/// monster drops one, the Shop's shelf never holds one ([Game.matsSeen]); the Bag shows them
 /// ([Materials.matsInPlay]).
 const craftedMats = [Mat.mithril, Mat.starmetal];
 
@@ -593,7 +591,7 @@ class Recipe {
   }
 }
 
-/// An item's Smithy recipe and what one does (town.json `items`, decisions-log 245; read only with the Towns on): the
+/// An item's Smithy recipe and what one does (town.json `items`, decisions-log 245): the
 /// [materials], the lower-grade [items] it takes (only the Cap's and the Ring's grades II and III take one, the grade
 /// below's), the [gold], and its [effect] on a troop type by its kind ([Item.slot]): sword and staff attack ×, shield
 /// defence +, boots walk ×, bow reach ×, gloves wait ×, potion regen + HP/s, amulet max HP ×, beads heal ×, torch damage
@@ -724,7 +722,7 @@ class TierPrices {
 
 /// The Town's Shop (town.json `shop`): open from wave [from]'s win (1, the owner's 2026-10-07 "shop juga harusnya di buka
 /// ketika masuk kota": open in every Town, decisions-log 253; it was 15) — OWNER-MAY-CHANGE KNOB; an item costs
-/// [itemPrice], [itemRise] more after each bought, and sells back for [itemSellShare] of its price. With the Towns on (decisions-log 246) it sells the materials
+/// [itemPrice], [itemRise] more after each bought, and sells back for [itemSellShare] of its price. It sells (decisions-log 246) the materials
 /// that have dropped ([Game.matsSeen]) at [matMarkup] times their sell price, and [matRise] of that more a buy ([matPrice]).
 class TownShop {
   const TownShop({
@@ -1023,7 +1021,7 @@ const _townSecrets = {
 /// The rules every [Game] starts with: the defaults until the game loads assets/config/town.json at start (main.dart).
 TownRules loadedTownRules = const TownRules();
 
-/// The Town's schedule and state on [Game] (the fields are the class's: [Game.towns], [Game.townAt], …).
+/// The Town's schedule and state on [Game] (the fields are the class's: [Game.townAt], …).
 extension Towns on Game {
   /// The chance of the next roll: [TownSchedule.chanceStart] until a roll moved it.
   double get townChance => _townChance ?? townRules.schedule.chanceStart;
@@ -1031,12 +1029,12 @@ extension Towns on Game {
   /// The slot of the last Town left, or where a new run counts one ([TownSchedule.firstTownAfter]).
   int get townLast => _townLast ?? townRules.schedule.firstTownAfter;
 
-  /// The marked Town comes before the next wave: between waves, with the Towns on. While it is due (until it is left,
-  /// [leaveTown]) no wave starts ([Game.canStartWave]).
-  bool get townDue => towns && townAt != null && townAt == wave + 1 && !waveActive;
+  /// The marked Town comes before the next wave: between waves. While it is due (until it is left, [leaveTown]) no wave
+  /// starts ([Game.canStartWave]).
+  bool get townDue => townAt != null && townAt == wave + 1 && !waveActive;
 
   /// The Town before wave [townAt] was marked and hasn't come yet ([TownMarked]): the wave meter's chip says so.
-  bool get townMarked => towns && townAt != null && !inTown;
+  bool get townMarked => townAt != null && !inTown;
 
   /// Goes into the due Town ([townDue]); [auto]: Auto was on. False (nothing changes) when none is due or it is in one.
   bool enterTown({bool auto = false}) {
@@ -1068,10 +1066,9 @@ extension Towns on Game {
     return true;
   }
 
-  /// The roll after wave [Game.wave] was won (the class comment's rule), with the Towns on; nothing with them off. The
-  /// wave's record gets what it did ([TownRolled]).
+  /// The roll after wave [Game.wave] was won (the class comment's rule). The wave's record gets what it did
+  /// ([TownRolled]).
   void _rollTown() {
-    if (!towns) return;
     final s = townRules.schedule, slot = wave + 2;
     if (townAt case final at?) return _emit(TownRolled(wave, t, town: {'marked': at}));
     if (slot - townLast < s.minGap) return _emit(TownRolled(wave, t, town: {'blocked': true}));
@@ -1096,13 +1093,13 @@ extension Towns on Game {
     leaveTown(auto: true);
   }
 
-  /// The save's `town` (only while the Towns are on): the chance, the last Town's slot, the marked slot and whether the
-  /// player is in it; the Tavern's keys (tavern.dart), none while unused.
+  /// The save's `town`: the chance, the last Town's slot, the marked slot and whether the player is in it; the Tavern's
+  /// keys (tavern.dart), none while unused.
   Map<String, Object> get _townJson => {
-        if (towns) 'town': {'chance': townChance, 'last': townLast, 'at': ?townAt, if (inTown) 'in': true, ..._tavernTownJson},
+        'town': {'chance': townChance, 'last': townLast, 'at': ?townAt, if (inTown) 'in': true, ..._tavernTownJson},
       };
 
-  /// [j]'s `town`, whatever [towns] is (a save without it is from before the Towns: it counts as a Town before its own
+  /// [j]'s `town` (a save without it is from before the Towns: it counts as a Town before its own
   /// wave, so the first comes [TownSchedule.minGap] waves on at the earliest, like a new run's). A mark already passed,
   /// and `in` without a due Town, are dropped.
   void _loadTown(Map<String, dynamic> j) {
@@ -1132,14 +1129,13 @@ String townRelicName(String key) => switch (Relic.values.asNameMap()[key]) { fin
 /// What a material is for, under what drops it (the Bag's facing page, its tooltip).
 const matUseLine = 'Used at the ${Words.smithy}, in a ${Words.town}. Sold at its ${Words.shop}.';
 
-/// The materials monsters drop with the Towns on (decisions-log 221; [Mat], [TownRules.forgeDrops]).
+/// The materials monsters drop (decisions-log 221; [Mat], [TownRules.forgeDrops]).
 extension Materials on Game {
   /// [m]'s tooltip: its name, what drops it ([matSource]) and what it is for ([matUseLine]).
   (String, List<String>) matInfo(Mat m) => (m.label, [matSource(m), matUseLine]);
 
-  /// The materials this game can hold (decisions-log 245): with the Towns on in a game with the Towns every [Mat], else
-  /// the dropped ones ([droppedMats]); the forge's stones ([craftedMats]) never show while it is off.
-  List<Mat> get matsInPlay => towns ? Mat.values : droppedMats;
+  /// The materials this game can hold (decisions-log 245): every [Mat], the forge's stones ([craftedMats]) too.
+  List<Mat> get matsInPlay => Mat.values;
 
   /// Who drops [m], by the rules ([townRules]): "Common material. Slimes drop it."; a Rare part's "Rare material. High
   /// elite slimes drop it, a slime mini boss 2, a boss 3."; a Trophy's "Trophy. Every mini boss drops one."; a forge
@@ -1269,11 +1265,9 @@ String craftedLine(Relic relic) => '${relicNames[relic]} ${Words.crafted}!';
 
 /// The Smithy's rules (decisions-log 233): the Smithy's page calls them.
 extension Craft on Game {
-  /// [relic]'s recipe ([TownRules.recipes], by its save key), or null for a relic the Smithy doesn't make (a Pusaka).
-  /// With the Towns on (decisions-log 245), the recipe as it changes
-  /// ([TownRules.forgeRecipe]).
-  Recipe? craftRecipe(Relic relic) =>
-      relic.pusaka ? null : (towns ? townRules.forgeRecipe(relic.name) : townRules.recipes[relic.name]);
+  /// [relic]'s recipe ([TownRules.recipes], by its save key, as the forge changes it: [TownRules.forgeRecipe],
+  /// decisions-log 245), or null for a relic the Smithy doesn't make (a Pusaka).
+  Recipe? craftRecipe(Relic relic) => relic.pusaka ? null : townRules.forgeRecipe(relic.name);
 
   /// [relic]'s recipe line by line: each material, then each item, as the file lists them, then the gold: what the bag
   /// holds and what it takes. None for a relic without a recipe.
@@ -1286,11 +1280,10 @@ extension Craft on Game {
         null => const [],
       };
 
-  /// Why [relic] can't be crafted now, or null: the game over, not in a Town ([Game.inTown]: always with the Towns off),
-  /// no recipe, then the first line of [craftRows] short: a material, an item ("Need 1 Bow"), the gold.
+  /// Why [relic] can't be crafted now, or null: the game over, not in a Town ([Game.inTown]), no recipe, then the first line of [craftRows] short: a material, an item ("Need 1 Bow"), the gold.
   CraftRefusal? whyNotCraft(Relic relic) {
     if (over) return const CraftRefusal(CraftWhy.over);
-    if (!towns || !inTown) return const CraftRefusal(CraftWhy.town);
+    if (!inTown) return const CraftRefusal(CraftWhy.town);
     return _rowsShort(craftRows(relic));
   }
 
@@ -1362,13 +1355,13 @@ extension Craft on Game {
     _townCraftSpent += gold;
   }
 
-  // The forge's items (decisions-log 249; forge-design §1, §11): with the Towns on in a game with the
-  // Towns, the Smithy makes every [Item] from its town.json `items` recipe ([TownRules.items]): grade I, II and III from
-  // their own materials and 20 / 60 / 250 gold, the Cap's and the Ring's grades II and III from the grade below too. The
-  // Smithy's Items board draws [smithyItems] grade by grade and asks [whyNotCraftItem]; the Army detail asks [canMake].
+  // The forge's items (decisions-log 249; forge-design §1, §11): the Smithy makes every [Item] from its town.json `items`
+  // recipe ([TownRules.items]): grade I, II and III from their own materials and 20 / 60 / 250 gold, the Cap's and the
+  // Ring's grades II and III from the grade below too. The Smithy's Items board draws [smithyItems] grade by grade and
+  // asks [whyNotCraftItem]; the Army detail asks [canMake].
 
-  /// [item]'s Smithy recipe ([TownRules.items]), or null without the Towns.
-  ItemRecipe? itemRecipe(Item item) => towns ? townRules.items[item] : null;
+  /// [item]'s Smithy recipe ([TownRules.items]).
+  ItemRecipe? itemRecipe(Item item) => townRules.items[item];
 
   /// [item]'s recipe line by line, as [craftRows]: each material, then the item it takes (the Cap's and the Ring's grade
   /// below), then the gold; none without a recipe.
@@ -1381,11 +1374,11 @@ extension Craft on Game {
         null => const [],
       };
 
-  /// Why [item] can't be crafted now, or null, in [whyNotCraft]'s order: the game over, not in a Town, no recipe (the
-  /// Towns off), a material short, the grade-below item short ("Need 1 Leather Cap"), the gold.
+  /// Why [item] can't be crafted now, or null, in [whyNotCraft]'s order: the game over, not in a Town, no recipe, a
+  /// material short, the grade-below item short ("Need 1 Leather Cap"), the gold.
   CraftRefusal? whyNotCraftItem(Item item) {
     if (over) return const CraftRefusal(CraftWhy.over);
-    if (!towns || !inTown) return const CraftRefusal(CraftWhy.town);
+    if (!inTown) return const CraftRefusal(CraftWhy.town);
     return _rowsShort(itemCraftRows(item));
   }
 
@@ -1404,8 +1397,8 @@ extension Craft on Game {
   /// needs Wolf Claw".
   CraftRefusal? whyNotMake(Item item) => _rowsShort(itemCraftRows(item));
 
-  /// The Smithy's items of [grade] (1 to 3) in [Item] order: every kind's, with the Towns on; none without it.
-  List<Item> smithyItems(int grade) => [if (towns) for (final i in Item.values) if (i.grade == grade) i];
+  /// The Smithy's items of [grade] (1 to 3) in [Item] order: every kind's.
+  List<Item> smithyItems(int grade) => [for (final i in Item.values) if (i.grade == grade) i];
 
   /// Those of [smithyItems] that can be crafted now ([canCraftItem]).
   List<Item> craftableItems(int grade) => [for (final i in smithyItems(grade)) if (canCraftItem(i)) i];

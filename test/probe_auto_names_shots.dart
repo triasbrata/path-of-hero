@@ -127,7 +127,6 @@ void main() {
       // A Town with Auto Wave on: "Leave town 5".
       g = b.state = Game(Random(1), Random(2)).boardRules()
         ..armyMax = null
-        ..towns = true
         ..townDice = Random(3)
         ..gold = 99999
         ..wave = 5

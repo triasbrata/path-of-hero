@@ -1,6 +1,6 @@
 part of 'main.dart';
 
-// The Towns on the HUD (decisions-log 216; lib/town.dart; dark: only with [Game.towns] on; the scene is
+// The Towns on the HUD (decisions-log 216; lib/town.dart; the scene is
 // town_scene.dart's, decisions-log 224): a due Town is gone into once nothing of the win is left on screen (the
 // "VICTORY!" cheer, the Hero splash, a Boss Chest: taken or skipped first), the book opening on its Smithy; the Start/Pause
 // toggle's Start says "Leave town" there ([Words.leaveTown], start_button.dart) and leaves it, and Auto leaves after

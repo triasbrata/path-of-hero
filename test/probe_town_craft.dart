@@ -18,8 +18,7 @@ void main() {
   test('craft each of the 11 on the w89 save, seed $seed', () {
     final g = Game.fromJson(
         jsonDecode(File('test/fixtures/save-20261002-2222-w89-sellbug.json').readAsStringSync()) as Map<String, dynamic>,
-        Random(seed), Random(seed + 100), Random(seed + 300))
-      ..towns = true;
+        Random(seed), Random(seed + 100), Random(seed + 300));
     final dice = Random(seed + 700);
     for (final m in Mat.values) {
       g.materials[m] = 2 + dice.nextInt(11); // 2 to 12 of each: most recipes covered, some twice

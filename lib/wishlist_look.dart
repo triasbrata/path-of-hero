@@ -149,14 +149,13 @@ extension on Board {
       ..texts['wishMissing'] = text;
   }
 
-  /// The Army detail's Wishlist section for [type] between [x0] and [x1] (decisions-log 282), with the Wishlist on
-  /// ([Wishlist.wishOn]) and some product the type can use ([Wishlist.wishable]): "Wishlist" and at the right its tag,
+  /// The Army detail's Wishlist section for [type] between [x0] and [x1] (decisions-log 282), with some product the type
+  /// can use ([Wishlist.wishable]): "Wishlist" and at the right its tag,
   /// "Add to wishlist" ("Add" where short; [Words.done] while the picker is open); its wishes as the Bag's slots
   /// ([_wishCells]), or "No items yet" in grey; while the picker is open, "Tap an item to add or remove it" in grey and
   /// the type's products by grade ([_wishPicker]). Its taps on tap UP ([_Detail.hits]), as the detail's.
   List<_DetailLine> _detailWishlist(Canvas c, Game g, String type, double x0, double x1, _DetailSizes s, double ps) {
     const ink = Color(0xFF4A2C17), grey = Color(0xFF9E9080);
-    if (!g.wishOn) return const [];
     final products = g.wishable(type);
     if (products.isEmpty) return const [];
     final open = _wish.editing == type, wishes = g.wishesOf(type), w = x1 - x0, ts = s.ts;
@@ -253,7 +252,7 @@ extension on Board {
   }
 
   /// The picker of [type]'s [products] (decisions-log 282), by grade as the Smithy's Items sections (277): each grade's
-  /// heading ("Grade II", [gradeTitle]; one heading-less group where Awaken doesn't go by grade) over its cells, a wished
+  /// heading ("Grade II", [gradeTitle]) over its cells, a wished
   /// one lit with the gold star; a tap puts it on or takes it off ([_wishTap]). For tests: `pick:<item>` where each is.
   List<_DetailLine> _wishPicker(Canvas c, Game g, String type, List<Item> products, double x0, double x1, _DetailSizes s, double ps) {
     const ink = Color(0xFF4A2C17);
@@ -261,10 +260,8 @@ extension on Board {
     for (var n = 1; n <= Words.gradeNumerals.length; n++) {
       final items = [for (final i in products) if (i.grade == n) i];
       if (items.isEmpty) continue;
-      if (g.byGrade) {
-        final title = gradeTitle(n);
-        out.add((h: s.line, draw: (top) => _say(c, 'wishPicker', title, Offset(x0, top + s.line / 2), s.small, ink, bold: true)));
-      }
+      final title = gradeTitle(n);
+      out.add((h: s.line, draw: (top) => _say(c, 'wishPicker', title, Offset(x0, top + s.line / 2), s.small, ink, bold: true)));
       out.addAll(_wishRows(items, x0, x1, ps, (item, r) {
         final on = g.wishesOf(type).contains(item);
         _detail.at['pick:${item.name}'] = _wishCell(c, item, type, r, ps, () => _wishTap(type, item), lit: on, star: on);

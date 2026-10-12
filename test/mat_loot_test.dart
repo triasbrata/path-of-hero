@@ -64,7 +64,6 @@ Game towns() {
     ..skills = false
     ..heroSkills = false
     ..awakenSkills = false
-    ..towns = true
     ..matDice = _Zero()
     ..wave = 20;
   placeNow(g, 'knight', 2, 3);

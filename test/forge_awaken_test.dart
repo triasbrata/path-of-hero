@@ -16,7 +16,6 @@ import 'hero_skill_helpers.dart';
 
 /// A game with the Towns and the forge on, [gold].
 Game forge({int gold = 0}) => Game(Random(1), Random(101))
-  ..towns = true
   ..gold = gold;
 
 /// [forge] in the Town before wave [wave] + 1 (the Smithy open).
@@ -72,7 +71,6 @@ void main() {
   test("each type's grade sets: its recipe plus its own new kind, the same counts at Awaken 1 and 2, two thirds at 3 "
       "(the design's table)", () {
     final g = forge();
-    expect(g.byGrade, isTrue);
     const table = {
       // type: {kind: count a level}, then the Awaken 3 counts where they differ, then the items of I / II / III.
       'soldier': ({ItemSlot.sword: 2, ItemSlot.shield: 2, ItemSlot.boots: 1, ItemSlot.bow: 1, ItemSlot.gloves: 1, ItemSlot.potion: 1, ItemSlot.amulet: 1}, <ItemSlot, int>{}, (9, 9, 9)),
@@ -328,7 +326,6 @@ void main() {
 
   test("a Cap's cut lands on every blow after the defence", () {
     final g = bareGame()
-      ..towns = true
       ..upgrades['soldier'] = [Item.royalHelm];
     final u = placeNow(g, 'soldier', 2, 3)..busyUntil = hold;
     expect(u.stats.taken, 0.93);

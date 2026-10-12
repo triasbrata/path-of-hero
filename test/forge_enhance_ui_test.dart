@@ -87,7 +87,6 @@ const sizes = [Size(1266, 713), Size(1164, 777), Size(915, 412)];
 Game enhanceGame({int wave = 30}) {
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
-    ..towns = true
     ..armyMax = null
     ..wave = wave;
   for (final type in ['soldier', 'knight', 'archer', 'priest']) {

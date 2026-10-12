@@ -252,7 +252,7 @@ const notHeals = <String, List<String>>{
   ],
   'game.dart': [
     'u.hp = min(u.hp + max(0, u.maxHp - before), u.maxHp.toDouble());', // _refit: the HP its new max HP brings
-    'u.hp = min(hp, u.maxHp.toDouble());', // _loadedHpBack: the saved HP, capped (fromJson, and boardRules' refit)
+    'u.hp = min(hp, u.maxHp.toDouble());', // _loadedHpBack: the saved HP, capped (fromJson)
   ],
   'heal.dart': [
     'u.hp = inWave && scar > 0 ? max(u.hp, min(full * (1 - scar), to)) : min(full, to);', // the troop funnel itself (Scar's ceiling)

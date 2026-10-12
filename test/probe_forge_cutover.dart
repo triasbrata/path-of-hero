@@ -45,7 +45,6 @@ Game sixWavesAndACraft() {
     ..awakenSkills = false
     ..monsterSkills = false
     ..gold = 2000;
-  expect((g.towns, g.byGrade), (true, true), reason: 'a board game plays the forge');
   final knights = [for (final r in [1, 3, 5, 7]) placeNow(g, 'knight', g.baseCol + deployCols - 1, r)];
   for (var w = 1; w <= 6; w++) {
     g.startWave();

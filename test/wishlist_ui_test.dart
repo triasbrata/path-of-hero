@@ -105,7 +105,6 @@ Future<Rect> seen(WidgetTester tester, Board b, String key) => scrolledTo(tester
 Game forgeGame({bool inTown = true}) {
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
-    ..towns = true
     ..armyMax = null
     ..wave = 20
     ..gold = 40000;

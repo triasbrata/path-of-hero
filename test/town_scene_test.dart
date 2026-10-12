@@ -370,7 +370,7 @@ void main() {
     b.guideSeen = seen;
 
     saveGame(g);
-    final back = loadGame()!..towns = true;
+    final back = loadGame()!;
     expect(back.inTown, isTrue);
     b.state = back;
     await frames(tester, 2);

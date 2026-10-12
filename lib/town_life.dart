@@ -5,7 +5,7 @@ part of 'main.dart';
 // "para pasukan nanti akan seperti jalan jalan di sekitar kota ... mereka bisa saling passthrough karna di kota hanya 1
 // line. dan buat aktifitas untuk masing masing trops, ada yang berjaga, ada yang saling bicara dengan buble di atas
 // kepala mereka terus ada yang lihat lihat shop dan ada yang lihat lihat smitty, ada yang ngobrol di dalam tavern" and
-// "tenda hanya jadi seperti tempat per-istirahatan para troops". Dark like the Town ([Game.towns]).
+// "tenda hanya jadi seperti tempat per-istirahatan para troops".
 //
 // [TownLife] is the troops' errands along the street in the layout's world px ([_TownLayout.spots] are its anchors),
 // rolled on its own VISUAL dice ([TownLife.dice]), never the game's: nothing in it reaches a [Game] but reading its

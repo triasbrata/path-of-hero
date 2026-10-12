@@ -551,15 +551,14 @@ void main() {
     });
   }
 
-  // What drops, true to the build (decisions-log 292): with the Towns (and the forge) on, the board's, monsters drop no
-  // item, only materials, and the Smithy makes the items.
+  // What drops, true to the build (decisions-log 292): monsters drop no item, only materials, and the Smithy makes the
+  // items.
   for (final size in const [owner, desk, mid, wide]) {
     final at = '${size.width.round()}x${size.height.round()}';
-    testWidgets('at $at the empty Bag with the Towns on says monsters drop materials and the Smithy makes items, whole and '
-        'inside its card', (tester) async {
+    testWidgets('at $at the empty Bag says monsters drop materials and the Smithy makes items, whole and inside its card',
+        (tester) async {
       final b = await boot(tester, size);
-      final g = b.state = bagGame()..towns = true;
-      expect(g.towns, isTrue, reason: "the board's");
+      b.state = bagGame();
       await frames(tester, 50);
       await openBag(tester, b);
       expect(b.bagCells, isEmpty, reason: at);

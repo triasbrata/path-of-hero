@@ -31,7 +31,7 @@ enum _Aim { down, left, right, up }
 /// page's detail (troop_detail.dart): who that Hero is; a Pasukan row's Pusaka badge (bag.dart): its Pusaka's; the Shadows' chips
 /// under the wave meter (omen_look.dart): what each does; and a Pusaka's Carve bar on the Bag's facing page (bag.dart):
 /// how Carve works ([Ukir.carveInfo]), its Pusaka by name; and the wave meter's Town chip (town_look.dart): the Town
-/// marked ([Towns.townTip]); with the Towns on, a small relic's icon on the Army page's detail (troop_detail.dart): its
+/// marked ([Towns.townTip]); a small relic's icon on the Army page's detail (troop_detail.dart): its
 /// tooltip ([Game.relicInfo], its tier among its lines; decisions-log 227); and the spawn bar's "+Room" (spawn_bar.dart,
 /// the Army header's until decisions-log 283): what the capacity buy does and costs ([Game.roomTip], decisions-log 260,
 /// 292).

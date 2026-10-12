@@ -31,14 +31,13 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
   }
 }
 
-/// A board game between waves, seeded; with [towns] its Town due after the next win.
-Game board(bool towns) => Game(Random(1), Random(2)).boardRules()
-  ..towns = towns
+/// A board game between waves, seeded; with [town] its Town due after the next win, else none marked.
+Game board(bool town) => Game(Random(1), Random(2)).boardRules()
   ..townDice = Random(3)
   ..armyMax = null
   ..gold = 5000
   ..wave = 5
-  ..townAt = 7;
+  ..townAt = town ? 7 : null;
 
 void main() {
   final sizes = [

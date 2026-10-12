@@ -43,7 +43,6 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
 /// A board game with the Towns on (no army cap, so Auto never holds), seeded.
 Game townGame() => Game(Random(1), Random(2)).boardRules()
   ..armyMax = null
-  ..towns = true
   ..townDice = Random(3)
   ..gold = 5000;
 
@@ -237,7 +236,7 @@ void main() {
       ..townAt = 7;
     expect(g.enterTown(), isTrue);
     saveGame(g);
-    final back = loadGame()!..towns = true;
+    final back = loadGame()!;
     expect((back.inTown, back.townDue), (true, true));
     b.state = back;
     await frames(tester, 10);

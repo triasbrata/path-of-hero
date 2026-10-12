@@ -31,8 +31,7 @@ Color _pusakaLogInk(Relic r) => switch (r) {
 Relic _mostBack(Map<Relic, int> back) => back.entries.reduce((a, b) => b.value > a.value || (b.value == a.value && b.key.index < a.key.index) ? b : a).key;
 
 /// The filter chips over the log, and the kinds each shows. A field drop ([EventKind.drop]) had a Loot chip of its own
-/// until decisions-log 317: no item or relic lies on the field of a board game (the Smithy makes them), so it was always
-/// empty; a game with the Towns off (the tests') still lists its drops under All.
+/// until decisions-log 317: no item or relic lies on the field (the Smithy makes them), so it was always empty.
 enum _LogChip {
   all('All', EventKind.values), // the log holds no TraceEvents
   fell('Fallen', [EventKind.fell]),

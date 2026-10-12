@@ -115,9 +115,7 @@ void main() {
       }
 
       // Too poor: 20 gold for the next 40.
-      final g = b.state = Game().boardRules()
-        ..towns = false
-        ..gold = 20;
+      final g = b.state = Game().boardRules()..gold = 20;
       await frames(tester, 40);
       await tester.tapAt(b.capacityButton.center);
       await frames(tester, 6);
@@ -266,11 +264,11 @@ void main() {
         print('$name $s: ${b.bagEmpty} card ${b.bagEmptyCard}');
       }
 
-      b.state = bagGame()..towns = true;
+      b.state = bagGame();
       await frames(tester, 50);
       await openBag(tester, b);
       await shoot('bag');
-      final g = b.state = forgeGame()
+      b.state = forgeGame()
         ..matsSeen.clear()
         ..inventory.clear()
         ..relicBag.clear()
@@ -280,7 +278,6 @@ void main() {
       if (b.bookPage != 'store') await turnTo(tester, b, 'store');
       await tester.tapAt(b.shopTabAt(ShopTab.sell).center);
       await shoot('sell');
-      expect(g.towns, isTrue);
       b.state = Game();
       await frames(tester, 10);
     });

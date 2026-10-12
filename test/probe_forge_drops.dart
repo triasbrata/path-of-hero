@@ -54,7 +54,6 @@ void main() {
     final held = <int, List<int>>{}, rules = <int, double>{}, missed = <String>[];
     for (var seed = 1; seed <= seeds; seed++) {
       final (g, knights) = board(seed);
-      expect(g.towns, isTrue);
       var exp = 0.0;
       for (var w = 1; w <= waves; w++) {
         g.startWave();

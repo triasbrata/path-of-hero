@@ -50,7 +50,6 @@ Game towns({TownRules rules = const TownRules(), Random? dice, int seed = 1}) =>
   ..loot = Random(seed + 200)
   ..slots = Random(seed + 400)
   ..draft = Random(seed + 500)
-  ..towns = true
   ..townRules = rules
   ..townDice = dice ?? Random(seed + 600);
 
@@ -244,7 +243,7 @@ void main() {
     }
     Map<String, dynamic> save(Game g) => jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>;
     expect(save(g)['town'], {'chance': 0.2, 'last': 2, 'at': 9});
-    Game load(Map<String, dynamic> j) => Game.fromJson(j, Random(1), Random(2), Random(3))..towns = true;
+    Game load(Map<String, dynamic> j) => Game.fromJson(j, Random(1), Random(2), Random(3));
     final marked = load(save(g));
     expect((marked.townChance, marked.townLast, marked.townAt, marked.inTown, marked.townMarked), (0.2, 2, 9, false, true));
     winWave(g);

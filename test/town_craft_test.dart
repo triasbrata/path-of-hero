@@ -16,7 +16,6 @@ import 'package:tower_defense/telemetry.dart';
 /// forge_data_test.dart's and forge_awaken_test.dart's).
 Game inTown({int gold = 0, int wave = 0}) {
   final g = Game(Random(1), Random(101))
-    ..towns = true
     ..wave = wave
     ..gold = gold;
   g.townAt = wave + 1;
@@ -79,7 +78,6 @@ void main() {
 
     // Only in a Town: on the field, whatever the bag holds.
     final field = Game()
-      ..towns = true
       ..gold = 100000;
     giveRecipe(field, Relic.fang);
     refused(field, Relic.fang, CraftWhy.town, Words.onlyInTown);
@@ -277,7 +275,7 @@ void main() {
       expect((g.whyNotBuy(Relic.cleave), g.buy(Relic.cleave), g.gold), (StoreRefusal.notSold, false, 1000000));
       g.storeBought[Relic.cleave] = 2;
       expect((g.buyPrice(Relic.cleave), g.buyPrice(Relic.venom), g.sellPrice(Relic.cleave)), (28000, 20000, 500));
-      final back = Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>)..towns = true;
+      final back = Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>);
       expect((back.storeBought[Relic.cleave], back.buyPrice(Relic.cleave)), (2, 28000));
       g.relicBag[Relic.cleave] = 2;
       expect(g.sell(Relic.cleave, 2), 2);
@@ -303,7 +301,7 @@ void main() {
   group("Asah's take", () {
     test('Towns on: the cheapest first by craft gold, the most held first among one price; a dearer one only once the '
         'cheaper are gone', () {
-      final g = Game()..towns = true;
+      final g = Game();
       g.relicBag.addAll({Relic.fang: 3, Relic.thorns: 5, Relic.fury: 4, Relic.cleave: 5, Relic.lastStand: 2, Relic.giantSlayer: 1});
       expect(g.asahRelicsInBag, 20);
       expect(g.asahTake, {Relic.thorns: 5, Relic.fang: 3, Relic.fury: 2});
@@ -326,7 +324,6 @@ void main() {
 
     test("Towns on: a Sharpen takes them from the Bag; the Smithy's seven count toward its 10", () {
       final g = Game()
-        ..towns = true
         ..gold = 60000;
       g.pusaka[Relic.grail] = OwnedPusaka();
       g.relicBag.addAll({Relic.cleave: 4, Relic.blessing: 6, Relic.fang: 1});
