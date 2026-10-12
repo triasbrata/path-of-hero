@@ -3944,7 +3944,8 @@ follows the game's position, and never changes the game's positions (fights, the
       - their blows show the Hero type's big hit (Chain Hook the axeman's plain one, Spear Wall's the
         lancer's), and a charge's passing blows the `hit_orc_rider` dust.
     - Resurrection says "<name> rises again!" in the message window (`Game.risen`, drained in
-      `_drainCasts`), the one Hero skill that speaks; the troop rises in the gold summon circle
+      `_drainCasts`; not for one fallen again by then, so an army wiped keeps its own message, decisions-log 322), the
+      one Hero skill that speaks; the troop rises in the gold summon circle
       (`awakeFx('summon', 3)`) with a `holy` burst, its death strip played backwards over `riseTime` (`_unit`:
       only `_summoners` have a summon strip).
     - A monster under Slime Hex is drawn with the slime's strips (`tiny_slime_*`), dying one too, with a
