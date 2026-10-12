@@ -11386,6 +11386,82 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        lives, so it pays nothing. The battle log adds "Army fell: -1 heart, wave N again".
      - **What a run's end means now:** a run ends after three wipes, or fewer with leaks. The balance pass weighs where
        runs end and how many replays they take (lives-rule's probe plan).
+323. **A forged ingredient links to its forge page, and joins the Wishlist with its parent, never for a troop** (the
+     owner, 2026-10-12: "jika material dari item yang mau di forge, adalah hasil forge ketika user click itu akan
+     mengarah ke forge item tersebut, begitu juga kalau user whitelist item yang item untuk forgenya ada item yang perlu
+     di forge dulu maka item itu juga akan langsung ke whitelist. cuma perlu hati hati karna jangan sampai item
+     requirement untuk forge ini malah ada cta untuk give to troops karna ini di whitelist bukan untuk troops", i.e. a
+     material of an item to forge that is itself forged opens that item's forge page when tapped; wishing for an item
+     whose recipe needs an item that must be forged first puts that item on the wishlist too; careful that it never gets
+     a "give to troops" call to action, since it is wished as an ingredient, not for troops. His answers: its row on the
+     Wishlist tab "sama saja seperti whitelist biasa tapi jangan sampai ada tulisan untuk give to trops" (the same as a
+     normal wishlist row, but never any "give to troops" wording); when the parent wish is removed or met, its added
+     ingredient wishes "Ikut terhapus" (go with it), the player's own wishes for them staying). Built by wish-chain.
+     loot-items-relics.md "The Wishlist" ("Ingredient wishes", "Saved") and ui-hud.md "The Smithy" ("A forged ingredient
+     is a link", "Kept for a craft", the Wishlist tab's parts and "Ingredients"), "The Bag" ("The free line") and "Army"
+     hold it.
+     - **Which recipes:** the Cap's and the Ring's grades II and III take the grade below (Steel Helm ← Leather Cap,
+       Royal Helm ← Steel Helm, Gem Ring ← Ring, Royal Ring ← Gem Ring), and ten relics an item: Cleave ← Sword, Venom ←
+       Bow, Mana Siphon ← Staff, Spirit Ward ← Shield, Last Stand ← Tower Shield, Giant Slayer ← Steel Gloves, Blessing ←
+       Big Potion (the last three the forge's changes), Avalanche ← Steel Sword, Afterglow ← Magic Staff, Reaper ← Long
+       Bow. No recipe takes a relic, and no Awaken set item takes an item; the Royal Helm and the Royal Ring chain two
+       deep. Every item has a recipe, so every item part is a link and an ingredient.
+     - **The link:** on a product's Smithy page a recipe row of an item has the action rows' green "›" and is lit under
+       the mouse; its tap (on tap up: a drag over the page still scrolls it) opens that item's page on the Items tab, as
+       picking it on the board. The page then has **Back** on its Recipe line (the Bag chooser's tag), a step at a time
+       along the trail (Royal Ring → Gem Ring → Ring, back twice); a board pick, the strip or the book turning drop the
+       trail. On the Wishlist tab a row's part the Smithy makes opens its page the same way (on tap up through the Bag
+       cell's tap, so a long press keeps the tooltip), Back returning to the tab. The Bag's item page lists no recipe:
+       nothing to link there.
+     - **The chain:** `wish`, `wishSet` and `wishFreeAdd` (the Army detail's picker, "+" and "Wishlist all", the Smithy's
+       and the Bag's free lines) put on an ingredient wish (`WishPart`: the root wish's type or none, its product and the
+       chain down, "knight/royalRing/gemRing/ring") for every forgeable item its recipe takes, recursively, once each.
+       Its count is read live rather than stored: the recipe's count for each of the parent still to make, less the
+       Bag's, the Bag's going to the wishes for it in order (nearer the root first). Asked was "the recipe count × the
+       parent's count, minus nothing (the tab shows have/need)"; a count fixed when wished would ask again, after the
+       Royal Ring's craft, for the Gem Ring that craft used up. Two parents' counts add up; it stays while either needs it. The player's own wish for the same product stays a
+       wish of its own (its own row; kept when the parent goes).
+     - **The rows:** the Wishlist tab's last group, **Ingredients** (`Words.ingredients`; no sprite; its Remove takes
+       every ingredient wish off, the parents staying), a row per product still wanted: "Gem Ring ×1" and in grey "for
+       Royal Ring" (the product it is for, never a troop), its parts, status, Craft and ✕ (it and those under it off, the
+       parent staying). No Give: no tag, no words, no "for Knight". Its Craft says "Gem Ring crafted!" only, and the one
+       made stays in the Bag for the parent. On the made product's own Smithy page, while an ingredient wish keeps it and no
+       type's open wish asks for it, the Give row ("Give to troops") gives way to a grey "Needed for Royal Ring"
+       (`Words.neededFor`): the owner's warning taken to the page the link opens; and on the orchestrator's word, after
+       the first READY, to the Bag's item page too (its +0 page's "Give to troops" row; the rows under it and a drag
+       onto the field as before), Give coming back once no parent needs it or a type's own wish asks for it. Chosen
+       over listing the ingredient under its parent's type group: that heading is the troop's sprite and name; the
+       orchestrator keeps the last group "Ingredients" for now, for the owner to see on develop.
+     - **Off:** removing a wish (a row's ✕, a group's Remove, Remove on its page, the Army detail's ✕ and "Remove set")
+       takes its ingredient wishes off, recursively, and so does a met parent: a type's wish held in full (a Cap's or a
+       Ring's drops at once; an Awaken item's waiting for its Awaken loses its ingredients at once), a free line crafted.
+     - **Save:** `wishlist.parts`, a list of name lists (["knight", "royalRing", "gemRing", "ring"], a free line's type
+       "free"), written with every `wishlist` (empty too) for the wishes saved. A save without the key (before 323) puts
+       its wishes' ingredients on at load as a wish put on now does; one with it loads only what it holds (an ingredient
+       taken off by hand stays off). An unknown name, a type that isn't one, a lost root or parent, a part the parent's
+       recipe doesn't take: skipped. Additive: a build from before skips the key (no troop type has the name);
+       `Game.saveVersion` stays 3. Save-affecting (DEV 96247211).
+     - **Tests:** test/wishlist_chain_test.dart (new: the recipes above pinned, the chain one and two deep from a type's
+       wish, a set and a free line, counts read live and two parents', the own wish apart, off by a tap or met, the
+       star and the materials, the save's `parts` with an old save's chain and the skips) and test/smithy_chain_ui_test.dart
+       (new, at 1600×947 and 915×412: the recipe rows' link and Back from an item's and a relic's page, a material's
+       none, a board pick dropping the trail; a Wishlist part's link and Back; the Ingredients rows without Give, "Needed
+       for Royal Ring", Craft, ✕ and Remove). wishlist_test's save shapes gain `'parts': []`; smithy_wish_ui_test's 303
+       fixture (a Royal Helm among its 17 rows) clears its ingredient wishes so 303's rows-a-spread table stays true.
+     - **Checks** (wish-chain on 96247211 = main 18b56bb2 + the change, in a mirror; no whole suite, decisions-log 273):
+       `analyze lib test` no issues (-1791797821-an); wishlist_chain, wishlist, words, english_text +25 −1 (-t1: a test's
+       list-in-record slip, fixed; then wishlist_chain, wishlist, smithy_chain_ui +24 −0 on 35ba91eb, -1791799488-t1, with
+       analyze again no issues); smithy_wish_ui, wishlist_ui, bag_grid +45 −0 (-t3); forge_smithy_ui, town_smithy_ui,
+       forge_enhance_ui, forge_army_detail, forge_shop_ui, town_materials_ui +50 −0 (-t4); bag_detail, bag_actions,
+       bag_chips, troops_detail, save, town_craft, forge_awaken +69 −0 (-t5); the w89 identity SAME against 320's
+       golden `<agents>/probes/awaken-skills/w89-on-fccf102f.txt` (-w89: UI and wish bookkeeping only). Shots
+       (test/probe_wish_chain_shots.dart, -shots) at 1600×947 and 915×412, looked at: the Wishlist tab with its
+       Ingredients group (and its second spread on the phone), the Royal Ring's page with its Gem Ring row's "›" and lit
+       under the mouse, the Gem Ring's page after the link with Back and "Needed for Royal Ring", the Gem Ring crafted
+       from its row. Main be2af703 (327) merged after, no file in common. The Bag's kept line (after the first READY;
+       main 7deb8354, 325, merged, no file in common) on c4d5ea13: `analyze lib test` no issues (-1791800007-an);
+       smithy_chain_ui (its new Bag test), wishlist_chain, wishlist, smithy_wish_ui, wishlist_ui +50 −0 (-t1); bag_detail,
+       bag_actions, bag_chips, bag_grid, forge_smithy_ui, forge_shop_ui, words, english_text +72 −0 (-t2).
 325. **The Pusaka's ring under a bound type's troops is drawn in the sprites' pixels** (the owner, 2026-10-12: "ring
      putih atau kuning di bawah troops di buat jadi pixelated", make the white or yellow ring under the troops
      pixelated). Why: it was the field's one smooth line right under the troops, a 1 px anti-aliased oval among pixel

@@ -986,7 +986,11 @@ class Board extends PositionComponent
   // 'wishType:<group>', 'wishOffAll:<group>' ("Remove", armed "Sure?"), and per row 'wishTitle:…' ("Sword ×2 for Knight"),
   // 'wishParts:…' ("boneShard 11/4,orcTooth 3/4,gold 40"), 'wishStatus:…', 'wishCraft:…' (why it is refused; '' when it
   // can), 'wishGive:…' (its words) and 'wishGiveWhy:…'; a product's page's status 'wishMissing' and free line 'freeLess',
-  // 'freeMore', 'freeAdd' (rects) and 'free' ("off ×1", "on ×2"), 'freeAdd' (words).
+  // 'freeMore', 'freeAdd' (rects) and 'free' ("off ×1", "on ×2"), 'freeAdd' (words). The ingredient wishes (decisions-log
+  // 323): their group "parts" ('wishRow:parts:gemRing'), each row's part by 'wishPart:<row key>:<part>' (where its icon is,
+  // a tap there opening a forgeable one's page), a product page's Back after a link ('back') and how many steps back
+  // there are ([smithyTrail]), and in its Give row's place 'kept' (where, and its words: "Needed for Royal Ring").
+  int get smithyTrail => _smithy.trail.length;
   List<(String, Enum, Rect)> get smithyWishCells => [..._smithy.wishCells];
   List<(String, Rect)> get smithyWishHeads => [..._smithy.wishHeads]; // each group heading drawn: its group, where
   int get smithyWishPage => _smithy.wishes.page;
