@@ -41,10 +41,11 @@ void main() {
       expect(b.relics, [Relic.guard]);
       expect(g.relicBag[Relic.guard], 0);
       expect(g.takeOff(Relic.guard, b), isTrue);
-      final gold = g.gold;
       g.inTown = true; // the Shop buys only in a Town
+      // Its price read before the sale: the market prices the next piece lower once one is sold (decisions-log 326).
+      final gold = g.gold, price = g.sellPrice(Relic.guard);
       expect(g.sell(Relic.guard), 1); // or sold
-      expect((g.gold, g.relicBag[Relic.guard]), (gold + g.sellPrice(Relic.guard), 0));
+      expect((g.gold, g.relicBag[Relic.guard]), (gold + price, 0));
     });
 
     test('mid-wave it is refused and nothing changes: between waves only', () {
