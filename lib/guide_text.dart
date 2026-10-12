@@ -130,11 +130,13 @@ final guideEn = guideFor();
 /// The guide built from the rules loaded now ([loadedTownRules]): [guideEn], or a test's after it patched them.
 GuideText guideFor() => GuideText(
   intro: [
+    // A monster over the back line costs half a heart; the whole army down, a heart and the wave again (decisions-log
+    // 322, 329); no hearts left, the game is over.
     const GuidePage('Path of Hero', [
       'Monsters come from the right.',
-      'A monster past the line',
-      'takes half a heart.',
-      'No hearts or troops: game over.',
+      'Past the line: half a heart.',
+      'Army down: a heart, wave again.',
+      'No hearts left: game over.',
     ]),
     const GuidePage('Gold and troops', [
       'Gold buys troops.',

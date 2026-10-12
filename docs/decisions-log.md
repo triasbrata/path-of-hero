@@ -11529,3 +11529,19 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        `_hurt` calls name `on`); test/probe_shot_through_shots.dart's frames at 1600×947 (`<agents>/shots/shot-through/`:
        the fireball and Arcane Blast fly on past the fall and burst at the spot, the splash taking 22 and 33 off each orc
        beside it). Balance (the splash lands more often) is measured after the merge, by replaying saved waves.
+329. **An audit of what no longer matters, and its cleanups** (the owner, 2026-10-12: "sama coba cek feature feature
+     yang deprecated ada apa saja ya, seperti monster yang bisa ke garis belakang pertahanan, karna pasti para enemy
+     sudah bantai troops player dan sudah selesai duluan gamenya", check which features are deprecated, such as monsters
+     that can reach the back line: surely the monsters will have slaughtered the troops and the game is over first). By
+     obsolete-audit, in two phases; the report with every item is `<agents>/reports/obsolete-audit.md`.
+     - **Measured first** (nothing changed; main 7deb8354, one batch of 397 waves: the owner's wave-71 and wave-58 saves
+       played forward, new games, and one-wave replays of the balance pass's saved waves, by its careful and owner-style
+       players with Auto Buy on). No monster crossed the back line while 2 or more troops stood outside a stall march,
+       and none at all in waves 1-40. 8 waves leaked: 3 in an army's last seconds, while Auto Buy's one fresh troop kept
+       it from counting as wiped (322's wipe needs none alive), so that wave cost up to 2.5 hearts instead of 1; 4 that
+       began with no troop because the gold could rebuy nothing (how 4 of the 5 runs ended); and 1 stall-marched boss
+       wave whose 5 crossers cost 2.5 hearts and still counted as won. The owner's own waves 1-74 lost no life. What the
+       back line becomes is the owner's call (asked); until then 322's rule stands.
+     - **The guide's first page** said "No hearts or troops: game over.", wrong since 322 (an army wiped costs a heart
+       and the wave is played again). Now (guide_text.dart, 4 lines of at most 6 words): "Monsters come from the right.
+       / Past the line: half a heart. / Army down: a heart, wave again. / No hearts left: game over."
