@@ -62,8 +62,10 @@ void main() {
     expect((g.bestWon, g.townAt), (26, null));
     final events = <GameEvent>[];
     g.listeners.add(events.add);
+    soldier(g);
     final gold = g.gold;
-    loseNext(g); // wave 27
+    g.startWave(); // wave 27
+    wipe(g);
     expect((g.lives, g.over, g.wave, g.lostWave, g.bestWon, g.weakened), (Game.startLives - wipeLives, false, 20, 27, 26, 1));
     expect((g.townAt, g.townLast, g.townAgain, g.townDue, g.canStartWave, g.townCount), (21, 21, true, true, false, 1));
     expect(g.gold, gold, reason: 'what was earned stays');

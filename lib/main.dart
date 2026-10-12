@@ -1403,6 +1403,15 @@ class Board extends PositionComponent
   /// The boosts' chips under the wave meter as last drawn, in [Game.boosts]' order (tavern_look.dart; none: empty). For
   /// tests.
   List<Rect> get boostChips => [..._boostChipsAt];
+
+  /// The "Weakened foes" chip as last drawn (wipe_ask.dart; empty while the monsters are themselves). For tests.
+  Rect get weakChip => _weakChipAt;
+
+  /// After a wipe, the "Try again / Give up" dialog as last drawn (wipe_ask.dart; empty while it doesn't show): its
+  /// panel, its ribbon and its buttons by name ('tryAgain', 'giveUp'). For tests.
+  Rect get wipeAskPanel => _wipeAsk.panel;
+  Rect get wipeAskRibbon => _wipeAsk.ribbon;
+  Map<String, Rect> get wipeAskButtons => {..._wipeAsk.buttons};
   String get townChipLabel => _townChipLabel(state);
 
   /// The wave meter's words in a Town as last drawn ("In town", "next wave 7": [Board._inTownMeter]; '' out of one). For
