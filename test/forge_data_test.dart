@@ -209,7 +209,9 @@ void main() {
       }
       expect(r.relics['cleave']!['targets'], 1, reason: 'one more monster, as Sweep hits today');
       expect([for (final i in droppedItems) r.items[i]!.effect], [swordDmg, shieldDef, bootsSpeed, bowRange, glovesRate, potionRegen, staffDmg]);
-      for (final k in ['schedule', 'parts', 'tiers']) {
+      // The schedule as version 2's but its autoLeave, Auto's wait in a Town, gone since decisions-log 328.
+      expect(r.toJson()['schedule'], {...old['schedule'] as Map<String, dynamic>}..remove('autoLeave'), reason: 'schedule');
+      for (final k in ['parts', 'tiers']) {
         expect(r.toJson()[k], old[k], reason: k);
       }
       for (final k in ['necromancerSlot', 'forge']) {
