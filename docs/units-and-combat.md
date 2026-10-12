@@ -1363,10 +1363,10 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
     the monsters come (they from the right, the troops backing off left) it never binds: 0 troop-ticks in 17
     replayed waves (w12–99). After a near-wipe it binds often, and it took the last troops' way out: on 14437d0 two
     of qa-3's three stalled waves ended with the army wiped (game over) instead of won, so it is off.
-- **Melee keep their supports in reach** (decisions-log 312): a melee troop walks no further than `leashCap` 1.5
-  tiles past the line its healers still reach and its long range still cover (`supportLine`), taking a monster within
-  that, and one more than `leashOut` 3 tiles past it drops back to it, facing its foe and striking what it reaches
-  (formation-and-navigation.md "Melee keep their supports in reach").
+- **The front stops at the view's right edge** (decisions-log 324; 312's leash before it): mid-wave no troop walks
+  past a tile inside the view's right edge (`frontCap`); one there stands facing its foe and fights what it reaches,
+  never stepping back for it; the view centres the fight and the healers rest at most 2.5 tiles behind the melee in it
+  (formation-and-navigation.md "The front stops at the view's right edge", "Healers mid-battle").
 - **Hurt troops fall back:** at or below `retreatAt` 50% HP a troop falls back to the nearest troop
   healer and fights on at `returnAt` 80%, only while a troop healer lives; it doesn't chase meanwhile,
   but still hits a foe in reach. When heals don't come (`healWait` 3 s at the healer without one) the one
@@ -1376,7 +1376,8 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
   - Mid-battle a troop healer heals the ally it can reach that falls back to be healed, else the most
     hurt (`_heal`). The healing necromancer has its own rules (`_mend`, above).
   - Out of sight left of the view it walks into it before it heals, and more than a tile behind the army it walks up
-    between heals (decisions-log 312; formation-and-navigation.md "Healers mid-battle").
+    between heals (decisions-log 312), healing on the way only an ally falling back or at half its HP or less
+    (decisions-log 324; formation-and-navigation.md "Healers mid-battle").
   - **A heal costs MP** (decisions-log 297; the owner: "army/enemy healer harusnya ketika melakukan heal itu akan
     menggunakan mp-nya"): `healMp` 6 MP a heal (`_castHeal`), the healing necromancer's way (it pays
     `necroHealCost` 8 of its 40). It is 10% of a priest's base pool; awakening, a Hero and the aura raise the pool

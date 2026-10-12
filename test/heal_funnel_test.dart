@@ -399,7 +399,9 @@ void main() {
   });
 
   test('the funnel returns the heal past full HP: none while it lacks more, the rest beyond', () {
-    final g = plain(), heard = listen(g);
+    // The heal alone: with keepSupports the priest, far behind the knight walking on, would walk up before a light heal
+    // (decisions-log 324).
+    final g = plain()..keepSupports = false, heard = listen(g);
     final p = placeNow(g, 'priest', 0, 3);
     final k = idle(g, 'knight', 2, 3)..hp = 50;
     foeAt(g, 'orc', const Point(250, 60));

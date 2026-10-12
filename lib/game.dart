@@ -1804,10 +1804,8 @@ class Unit {
   Unit? spotOf;
   Spot? spot;
   bool waiting = false;
-  // Melee troops mid-wave: dropping back toward the supports after getting too far past their line
-  // ([Game.supportLine], decisions-log 312), until back inside it. Not saved.
-  bool leashed = false;
-
+  // Mid-wave, when it last walked forward to a spot or its foe ([Game.turnHold]). Not saved.
+  double forwardAt = double.negativeInfinity;
   Unit(this.side, this.type, this.stats, this.pos)
       : maxHp = stats.hp,
         hp = stats.hp.toDouble(),
@@ -1957,20 +1955,18 @@ class Game {
   /// How far ahead of the foremost heavy-armored melee walking in the light melee may get ([paceLimit]).
   static const paceLead = 2.5 * tile;
 
-  /// [supportLine]: the line sits this far inside its supports' reach, and never further from a support than this share
-  /// of the view's width ([viewW]), so the support stays on screen (the view shows the fight about half way across: on
-  /// the owner's wave-30 save 155 units from its left edge of 324).
-  static const supportSlack = tile / 2, supportView = 0.4;
+  /// The front's cap (decisions-log 324): mid-wave no troop walks past [capInset] inside the view's right edge
+  /// ([frontCap]), so it stays on the screen with its sprite and bar. The view centres the fight, so it seldom binds.
+  static const capInset = tile;
 
-  /// The leash on [supportLine] (decisions-log 312): a melee troop walks to its foe or spot up to [leashCap] past the
-  /// line; one more than [leashOut] past it (a fight that drifted on, a shove, the line going back) drops back to
-  /// [leashBack] inside it (the line itself), facing its foe and striking what it reaches, so the monsters follow it
-  /// into the supports' reach; then it is free again. The 1.5 tiles between [leashCap] and [leashOut] keep a shove at
-  /// the leash from setting the drop back off: with half a tile it turned the melee back and forth.
-  static const leashCap = 1.5 * tile, leashOut = 3 * tile, leashBack = 0.0;
+  /// Mid-wave a troop healer rests no further than this behind the rearmost melee in the fight (decisions-log 324),
+  /// so the supports follow the melee and the army stays together round the fight the view centres ([_heal]).
+  static const healBehind = 2.5 * tile;
 
-  /// How fast [supportLine] goes back at most, a second.
-  static const leashEase = tile / 2;
+  /// A melee troop that walked forward less than this long ago doesn't turn back to a spot or a wait point behind it
+  /// (more than [turnSlack] behind): it stands facing its foe meanwhile, so a spot taken and freed again, or a step
+  /// aside, doesn't send it back and forth (decisions-log 324).
+  static const turnHold = 0.6, turnSlack = 1.0;
 
   /// A troop whose centre is this far left of the view's edge is out of sight ([leftOfView]): the tiny
   /// sprites' bodies are about a tile wide.
@@ -3590,9 +3586,10 @@ class Game {
   /// ([speedTo]); a probe or test can turn either off to compare (#56).
   bool heavyPace = true, meleeCatchUp = true;
 
-  /// Melee keep their supports in reach on an elastic leash ([supportLine], [leashCap], decisions-log 312), a troop
-  /// healer out of sight walks into view before it heals, and one left behind the army walks up between heals; a probe
-  /// or test can turn it off to compare.
+  /// Nobody is left off the screen: no troop walks past the view's right edge ([frontCap]), the healers rest close
+  /// behind the melee ([healBehind]), and the melee don't turn back and forth ([turnHold], decisions-log 324); a troop
+  /// healer out of sight walks into view before it heals, and one left behind the army walks up between heals
+  /// (decisions-log 312). A probe or test can turn it off to compare.
   bool keepSupports = true;
 
   /// On: a kiting troop past its foe (the foe between it and the base) keeps its x and only steps aside, so a kite
@@ -4467,51 +4464,23 @@ class Game {
     return front == null ? null : front + paceLead;
   }
 
-  /// The supports' line for melee troop [u] (decisions-log 312; the owner: "make sure jangan sampai support teringgal dan
-  /// membuat heal mereka tidak masuk dan off screen", then "mereka dinamis bisa maju tapi ketika terlalu maju mereka akan
-  /// turun lagi ke belakang dan jangan pasif dan berdiam saja"): for every troop healer and long range that has marched
-  /// in, alive and not falling back nor carried, its x plus its working reach (a healer's heal reach, a long range's
-  /// hold, [holdAt]) but never more than [supportView] × the view's width, less [supportSlack]; the least of them. A
-  /// long range with a foe in its reach already works (and a kiting one's steps back would only tug the line), so it
-  /// doesn't count. A melee troop past the line is out of a healer's reach, or fights a foe the long range don't
-  /// cover. [u] keeps to it on a leash ([leashCap], [leashOut], [leashBack]). Null (no leash) with [keepSupports] off,
-  /// for anyone but a melee troop on the field mid-wave, during the stall march ([marching]) and with no support. The
-  /// supports walk up at their catch-up pace ([speedTo]).
-  double? supportLine(Unit u) {
-    if (!keepSupports || !waveActive || marching || u.side != Side.troop || u.line != 2 || !u.entered || u.retreating) return null;
-    if (_lineAt != t) {
-      // The same for every melee troop: once a tick. It comes forward at once and goes back at [leashEase] at most, so
-      // a support's step back (a healer going to the hurt, a long range losing its foe) doesn't yank the melee.
-      final view = supportView * viewW, was = _line, dt = t - _lineAt;
-      double? line;
-      for (final s in troops) {
-        if (!s.alive || !s.entered || s.joining || s.retreating || s.move != null) continue;
-        final reach = s.stats.heals ? s.stats.range : (s.stats.shotSpeed > 0 ? holdAt(s) : null);
-        if (reach == null || (!s.stats.heals && _foesNear(s.pos, s.stats.range).isNotEmpty)) continue;
-        final x = s.pos.x + min(reach, view) - supportSlack;
-        line = line == null ? x : min(line, x);
-      }
-      _line = line == null || was == null || !(dt > 0) || line >= was ? line : max(line, was - leashEase * dt);
-      _lineAt = t;
-    }
-    return _line;
-  }
+  /// How far a troop may walk mid-wave (decisions-log 324; the owner: "yang troops maju mundur ini mungkin batas maksimal
+  /// maju adalah sejauh kanan kamera, jadi yang paling depan akan iddle atau attack saja tapi tida bisa maju lagi jika
+  /// troops di belakang ada yang ketinggalan"): [capInset] inside the view's right edge. A troop whose way runs past it
+  /// walks as far as the cap and stands there facing its foe, striking what it reaches; one already past it (the view
+  /// went back) stands where it is: it never steps back for the cap ([_capWay]), and a shove doesn't push it past it.
+  /// The view centres the fight (the owner: "battle harus tetap di tengah layar"), so the cap is a safety that seldom
+  /// binds. Null (no cap) with [keepSupports] off, before a wave and after a win, and in the stall march ([marching]).
+  double? get frontCap => keepSupports && waveActive && !marching ? cam + viewW - capInset : null;
 
-  /// The nearest monster melee troop [u] may fight without standing past [keep] (its left side within it), if any.
-  Unit? _foeInLeash(Unit u, double keep) {
-    Unit? best;
-    var bestD = double.infinity;
-    for (final m in enemies) {
-      if (!m.alive || t < m.downUntil || m.pos.x - spotRing(u, m) > keep) continue;
-      final d = m.pos.distanceTo(u.pos);
-      if (d < bestD) (best, bestD) = (m, d);
-    }
-    return best;
+  /// Troop [u]'s way to [to] cut at [frontCap]: the point on it level with the cap when it runs past it, where [u]
+  /// stands when it is at or past the cap already; else [to].
+  Point<double> _capWay(Unit u, Point<double> to) {
+    final cap = u.side == Side.troop && u.entered ? frontCap : null;
+    if (cap == null || to.x <= cap || to.x <= u.pos.x) return to;
+    if (u.pos.x >= cap) return u.pos;
+    return u.pos + (to - u.pos) * ((cap - u.pos.x) / (to.x - u.pos.x));
   }
-
-  /// [supportLine]'s line this tick, and the tick it was found at.
-  double? _line;
-  double _lineAt = double.nan;
 
   /// The back line or the view's left edge ([keepUpShift] inside it once the wave has shown a fight), whichever
   /// is further on: mid-wave the supports don't settle behind it (a healer's rest, a kiting archer), so they keep
@@ -4532,6 +4501,7 @@ class Game {
       u.moving = false;
       return;
     }
+    if (u.side == Side.troop) to = _capWay(u, to); // mid-wave never past the view's right edge (decisions-log 324)
     final d = to - u.pos, len = d.magnitude;
     u.moving = len > 1;
     u.goal = to;
@@ -5100,11 +5070,13 @@ class Game {
   }
 
   /// Mid-battle a troop healer keeps to the back line: it follows the army a tile behind the rearmost
-  /// fighter and never steps past that line. From there it patches up the most hurt ally it can reach, for [healMp]
+  /// fighter, but never more than [healBehind] behind the rearmost melee in the fight (decisions-log 324), and never
+  /// steps past that line. From there it patches up the most hurt ally it can reach, for [healMp]
   /// MP a heal (decisions-log 297); with nobody to heal, or short of the MP ([healMp], or what a skill of its that is
   /// ready and has a target needs first: [_healWaits]), it smites the weakest dark monster already in its range
-  /// ([_smite]), never stepping up for one, or waits. The first heal that finds it short of [healMp] pops "No MP"
-  /// over it ([noMp]), once until it has the MP again.
+  /// ([_smite]), never stepping up for one, or waits. More than a tile behind that line it walks up first, healing only
+  /// one falling back or at [retreatAt] of its HP or less on the way (decisions-log 324). The first heal that finds it
+  /// short of [healMp] pops "No MP" over it ([noMp]), once until it has the MP again.
   void _heal(Unit u, double dt) {
     final all = troops.where((o) => o.alive && !o.stats.heals).toList();
     // Once the fighting has started, only those in it count: a fresh troop dropped at the back mid-battle
@@ -5115,7 +5087,11 @@ class Game {
     // It waits a tile behind the rearmost fighter. To heal it may go up as far as it takes to reach the
     // melee line (the long range stand back at their own reach, so from behind them it could never heal
     // the front), and once nobody needs it, it falls back again.
-    final rest = fighters.isEmpty ? double.infinity : max(_rearEdge + tile / 2, fighters.map((o) => o.pos.x).reduce(min) - tile);
+    // With [keepSupports] (decisions-log 324) never more than [healBehind] behind the rearmost melee of those, so it
+    // follows the melee rather than the long range standing back at their hold.
+    final front = [for (final o in fighters) if (o.line == 2 && !o.retreating) o.pos.x];
+    final behind = keepSupports && front.isNotEmpty ? front.reduce(min) - healBehind : double.negativeInfinity;
+    final rest = fighters.isEmpty ? double.infinity : max(max(_rearEdge + tile / 2, fighters.map((o) => o.pos.x).reduce(min) - tile), behind);
     final limit = melee.isEmpty ? rest : max(rest, melee.reduce(min) - u.stats.range * 0.8);
     // Troops falling back to be healed first, then the most hurt.
     bool before(Unit a, Unit b) => a.retreating != b.retreating ? a.retreating : a.hp / a.maxHp < b.hp / b.maxHp;
@@ -5142,8 +5118,13 @@ class Game {
     // Out of sight left of the view (decisions-log 312), it walks up into it before it heals or smites, so no heal of its
     // comes from off the screen (a Hero priest's ×3 reach healed the whole field from the back line, never seen).
     final away = keepSupports && keepUpWithView && fighters.isNotEmpty && u.pos.x < cam + keepUpShift - offViewBy;
+    // More than a tile behind its rest (decisions-log 324) it walks up first: it stops only to heal one falling back or
+    // at [retreatAt] of its HP or less, and not to smite. A heal holds it [healCast] s, so stopping for every one left the
+    // healers 6 to 9 tiles behind a melee that walks on as the view centres the fight.
+    final lagging = keepSupports && fighters.isNotEmpty && u.pos.x < rest - tile;
+    if (lagging && worst != null && !worst.retreating && worst.hp > worst.maxHp * retreatAt) worst = null;
     if (worst == null || away) {
-      if (!away && smote()) return;
+      if (!away && !lagging && smote()) return;
       if (fighters.isEmpty) return _rest(u, dt);
       // Back to the rear, keeping up with the army; the healers spread a lane apart around its middle
       // so they don't all head for the same spot, top to bottom as they stand, so none crosses another's way (#82).
@@ -5154,9 +5135,17 @@ class Game {
       if (!u.moving) u.dir = 1;
     } else if (worst.pos.distanceTo(u.pos) > u.stats.range) {
       _moveToward(u, Point(min(worst.pos.x, limit), worst.pos.y), dt, catchUp: true);
-    } else if (keepSupports && u.cd > 0 && fighters.isNotEmpty && u.pos.x < rest - tile) {
-      // Between heals one left behind the army walks up behind it (decisions-log 312): a long reach (a Hero priest's)
-      // healed the field from where it stood, and held the melee on their leash ([supportLine]) the whole wave.
+    } else if (keepSupports && fighters.isNotEmpty && u.pos.x < rest - tile && (u.cd > 0 || u.mp < healMp || _healWaits(u))) {
+      // One left behind the army walks up behind it whenever no heal of its is due (decisions-log 312, 324): between
+      // heals, short of the MP or saving it for a skill. A long reach (a Hero priest's) healed the field from where it
+      // stood, and a healer short of MP stood there too, so the healers fell behind the melee and off the screen.
+      if (u.cd <= 0 && u.mp < healMp) {
+        if (!u.dry) {
+          u.dry = true;
+          noMp.add(u);
+        }
+        if (smote()) return;
+      }
       _moveToward(u, Point(rest, u.pos.y), dt, catchUp: true);
     } else if (u.cd <= 0 && (u.mp < healMp || _healWaits(u))) {
       // Short of the MP (decisions-log 297): no heal. A smite costs nothing; else it waits where it stands.
@@ -5612,18 +5601,6 @@ class Game {
         }
         continue;
       }
-      final line = supportLine(u);
-      u.leashed = line != null && (u.leashed ? u.pos.x > line - leashBack + 1 : u.pos.x > line + leashOut);
-      if (u.leashed) {
-        // Too far past its supports' line: back toward it, facing its foe and striking what it reaches, so the
-        // monsters follow it into their reach (decisions-log 312).
-        _moveToward(u, Point(line! - leashBack, u.pos.y), dt);
-        if (foe != null) {
-          _face(u, foe.pos.x - u.pos.x, 0);
-          if (inReach && u.cd <= 0) _strike(u, foe);
-        }
-        continue;
-      }
       if (inReach) {
         final d = foe.pos.distanceTo(u.pos), hold = holdAt(u);
         if (u.side == Side.troop && u.stats.shotSpeed > 0 && d < kiteAt(u)) {
@@ -5647,30 +5624,24 @@ class Game {
       } else if (foe != null) {
         // A melee troop walks to its spot round a monster, or to where it waits for one (engage.dart).
         final to = u.side == Side.troop ? _meleeGoal(u) ?? foe.pos : _reachPoint(u, foe);
-        final keep = line == null ? null : line + leashCap;
-        if (paceLimit(u) case final limit? when to.x > limit && (keep == null || limit <= keep)) {
+        if (paceLimit(u) case final limit? when to.x > limit) {
           // Too far ahead of the heavies: it stops at the limit on its way, or steps back to it, still facing
           // the foe.
           final d = to - u.pos;
           _moveToward(u, u.pos.x < limit ? u.pos + d * ((limit - u.pos.x) / d.x) : Point(limit, u.pos.y), dt);
           _face(u, foe.pos.x - u.pos.x, 0);
-        } else if (keep != null && to.x > keep) {
-          // Further than the leash lets it go (decisions-log 312): it takes the nearest foe it may reach without going
-          // further (already past the leash, one level with it or behind it); with none, it goes as far as the leash
-          // lets it on its way, at its pace, and stays there facing the foe until its supports have come up.
-          if (_foeInLeash(u, max(keep, u.pos.x)) case final m?) {
-            _moveToward(u, Point(m.pos.x - spotRing(u, m), m.pos.y), dt, catchUp: true);
-          } else {
-            if (u.pos.x < keep) {
-              final d = to - u.pos;
-              _moveToward(u, u.pos + d * ((keep - u.pos.x) / d.x), dt, catchUp: true);
-            } else {
-              u.moving = false;
-            }
-            _face(u, foe.pos.x - u.pos.x, 0);
-          }
         } else {
-          _moveToward(u, to, dt, catchUp: true); // only one that fell behind speeds up
+          // Only one that fell behind speeds up. A way past the view's right edge ends at the cap ([frontCap]), where it
+          // stands facing its foe until the view moves on.
+          final way = _capWay(u, to);
+          if (keepSupports && u.side == Side.troop && way.x < u.pos.x - turnSlack && t - u.forwardAt < turnHold) {
+            u.moving = false; // it walked forward a moment ago: it holds before it turns back ([turnHold])
+            _face(u, foe.pos.x - u.pos.x, 0);
+          } else {
+            _moveToward(u, way, dt, catchUp: true);
+            if (way != to) _face(u, foe.pos.x - u.pos.x, 0);
+            if (u.moving && u.heading.x > 0) u.forwardAt = t;
+          }
         }
       } else if (u.side == Side.enemy) {
         _moveToward(u, Point(baseX - tile, u.pos.y), dt);
@@ -5711,7 +5682,11 @@ class Game {
           final away = yielder.pos - keeper.pos, gap = _personalSpace - len;
           final dy = away.y.abs() > 0.5 ? away.y.sign : (yielder.pos.y < fieldH / 2 ? 1.0 : -1.0);
           // Setting up, only melee may be nudged forward; in battle nobody keeps a spot.
-          final dx = yielder.line == 2 || waveActive ? away.x.sign : min(0.0, away.x.sign);
+          // Mid-wave the x part goes as the two stand apart in x, not a whole half gap either way for a hair: shoved
+          // between allies above and below, a troop went back and forth (decisions-log 324).
+          final dx = keepSupports && waveActive
+              ? away.x / max(len, 0.01)
+              : (yielder.line == 2 || waveActive ? away.x.sign : min(0.0, away.x.sign));
           yielder.pos += Point(dx * gap / 2, dy * gap);
           continue;
         }
@@ -5731,6 +5706,11 @@ class Game {
         u.entered |= u.pos.x >= min(u.post.x, baseX + tile);
         if (u.pos.distanceTo(u.post) < 1 || (waveActive && u.entered)) u.arriving = false;
         if (u.entered && u.pos.x < baseX + clearOfLine) u.pos = Point(baseX + clearOfLine, u.pos.y); // left behind the line
+        // A shove never pushes it past the front's cap, and the view gliding left leaves it where it is (decisions-log 324):
+        // carried (a leap, a charge) it lands where its move takes it.
+        if (frontCap case final cap? when u.entered && u.move == null && u.pos.x > cap) {
+          u.pos = Point(max(cap, min(u.pos.x, start[u]?.x ?? u.pos.x)), u.pos.y);
+        }
         if (start[u] case final from?) _watchStuck(u, from, dt);
       }
       if (u.side == Side.enemy) {

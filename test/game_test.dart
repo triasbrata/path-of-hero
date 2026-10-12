@@ -267,7 +267,11 @@ void main() {
   });
 
   test('a priest a tile behind an archer heals melee well ahead of the archer without passing it', () {
-    final g = bare()..gold = 1000;
+    // The rest a tile behind the rearmost fighter, long range too: with keepSupports a healer comes up to healBehind
+    // behind the rearmost melee in the fight instead (decisions-log 324, front_cap_test).
+    final g = bare()
+      ..gold = 1000
+      ..keepSupports = false;
     placeNow(g, 'priest', 3, 3);
     placeNow(g, 'archer', 4, 3);
     placeNow(g, 'knight', 5, 3);
@@ -326,7 +330,11 @@ void main() {
   });
 
   test('mid-battle a healer goes up to reach hurt melee past the archers, then falls back', () {
-    final g = bare()..gold = 1000;
+    // The rest a tile behind the rearmost fighter, long range too: with keepSupports a healer comes up to healBehind
+    // behind the rearmost melee in the fight instead (decisions-log 324, front_cap_test).
+    final g = bare()
+      ..gold = 1000
+      ..keepSupports = false;
     placeNow(g, 'priest', 0, 3);
     placeNow(g, 'archer', 2, 2);
     placeNow(g, 'archer', 2, 5);
@@ -357,7 +365,11 @@ void main() {
   });
 
   test('mid-battle a healer keys off the engaged fighters, and a fresh troop at the back does not pull it back', () {
-    final g = bare()..gold = 1000;
+    // The rest a tile behind the rearmost fighter, long range too: with keepSupports a healer comes up to healBehind
+    // behind the rearmost melee in the fight instead (decisions-log 324, front_cap_test).
+    final g = bare()
+      ..gold = 1000
+      ..keepSupports = false;
     placeNow(g, 'priest', 0, 3);
     placeNow(g, 'archer', 2, 2);
     placeNow(g, 'knight', 2, 4);
@@ -403,7 +415,10 @@ void main() {
 
   test('mid-battle a healer rests no further back than half a tile inside the keep-up floor, [keepUpInset] inside the view, '
       'walking up to it at the catch-up pace', () {
-    final g = bare()..gold = 1000;
+    // The floor alone: with keepSupports the healer's rest follows the knight's fight (decisions-log 324's healBehind).
+    final g = bare()
+      ..gold = 1000
+      ..keepSupports = false;
     placeNow(g, 'priest', 0, 3);
     placeNow(g, 'archer', 2, 2);
     placeNow(g, 'knight', 5, 3);
@@ -3677,7 +3692,8 @@ void main() {
     final g = bare()
       ..gold = 1000
       ..upgrades['priest'] = [Item.potion, Item.potion]
-      ..upgrades['soldier'] = [Item.potion];
+      ..upgrades['soldier'] = [Item.potion]
+      ..keepSupports = false; // the heal's size alone (with it, far behind the knight walking on, it walks up first: 324)
     expect((g.statsOf('priest').dmg, g.statsOf('priest').regen), (18.0, 10.0));
     expect((g.statsOf('soldier').dmg, g.statsOf('soldier').regen), (10.0, 5.0));
 
@@ -4812,9 +4828,9 @@ void main() {
 
   test('a priest stands still while it smites, then walks on to its line', () {
     final (g, p) = holy();
-    g.units.add(Unit(Side.troop, 'knight', troopTypes['knight']!, p.pos + const Point(5 * tile, 0))
+    g.units.add(Unit(Side.troop, 'knight', troopTypes['knight']!, p.pos + const Point(1.5 * tile, 0))
       ..entered = true
-      ..busyUntil = hold); // its line is a tile behind the knight: it wants to walk
+      ..busyUntil = hold); // its line is a tile behind the knight: it wants to walk (from further back it walks first, 324)
     final skeleton = g.monster('skeleton', Tier.normal, const Point(100, 110))..busyUntil = hold;
     g.units.add(skeleton);
     final at = p.pos;
