@@ -47,6 +47,10 @@ abstract final class Words {
   static const town = 'Town', smithy = 'Smithy', tavern = 'Tavern', leaveTown = 'Leave town', townAfter = 'Town after wave';
   static const inTown = 'In town', nextWave = 'next wave';
 
+  /// The market's words (decisions-log 326, market.dart): on the Sell page a kind the Town wants ("Hot in Millbrook") and
+  /// a product sold so much its price falls; the Town chip's tooltip, what the next Town pays well for.
+  static const hotIn = 'Hot in', flooded = 'Flooded: price falling', paysWellFor = 'Pays well for';
+
   /// The Smithy's Craft (decisions-log 233): its button, and what is said once a relic is made ("Sweep crafted!"); what
   /// the Smithy's page lists under a relic (decisions-log 235); and the forge's late step, its strip's third tab
   /// (decisions-log 254), and what is said once an item goes a step up ("Royal Sword enhanced to +4!", decisions-log 255).

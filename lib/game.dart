@@ -36,6 +36,7 @@ part 'engage.dart';
 part 'heal.dart';
 part 'cleanse.dart';
 part 'town.dart';
+part 'market.dart';
 part 'relics.dart';
 part 'enhance.dart';
 part 'tavern.dart';
@@ -2467,6 +2468,14 @@ class Game {
   /// apart so the [loot] dice and the rest of the game roll as they did. Not saved; a probe seeds it with seed + 700.
   Random matDice = Random();
 
+  /// The market's memory (decisions-log 326, market.dart): each product's pressure ([Market.marketKey] -> 1 ..
+  /// [MarketRules.most]), a piece sold or a material bought, less [MarketRules.recover] at each new Town. Saved.
+  final market = <String, int>{};
+
+  /// The Towns gone into this run, the one the player is in counted ([Towns.enterTown]): the Town's number, which picks
+  /// its identity ([identityOf]). Saved in `town`.
+  int townCount = 0;
+
   /// The rolls' chance once one moved it ([Towns.townChance]), the last Town's slot once one was left or a save set it
   /// ([Towns.townLast]), and the game time the player went into the Town ([Towns.enterTown]). Saved (the first two).
   double? _townChance;
@@ -3262,6 +3271,7 @@ class Game {
         if (serpihan > 0) 'serpihan': serpihan,
         ..._omenJson, // the Bayangan (omen.dart): no key while they are off
         ..._townJson, // the Towns (town.dart)
+        ..._marketJson, // the market's memory (market.dart): no key while it is fresh
         ..._boostsJson, // the Tavern's boosts running (tavern.dart): no key while none runs
         ..._enhanceJson, // Enhance's pluses (enhance.dart): no key with nothing enhanced
         ..._wishJson, // the Wishlist (wishlist.dart): no key with no wish
@@ -3446,6 +3456,7 @@ class Game {
     _loadChests(j); // the boss chests waiting, or an old save's catch-up ones (draft.dart)
     _loadOmens(j); // the Bayangan, or an old save's catch-up (omen.dart)
     _loadTown(j); // the Towns' chance, last slot and mark (town.dart)
+    _loadMarket(j); // the market's memory (market.dart): fresh in a save without it
   }
 
   /// A monster of [type] and [tier] of this wave at [at], its stats through the Bayangan's hooks ([Omens.spawnStats];

@@ -93,21 +93,24 @@ void shopBasketFit(Game g, Map<BagLoot, int> basket) {
   }
 }
 
-/// How many pieces [basket] holds, and the gold they sell for: each piece at its stack's price ([shopSellPrice]).
+/// What [n] of [loot] sell for together: the Smithy's goods each piece at its own step of the market ([Market.marketSum],
+/// decisions-log 326), the rest [n] times [shopSellPrice].
+int shopSubtotal(Game g, BagLoot loot, int n) =>
+    g.marketed(loot.kind) ? g.marketSum(loot.kind, loot.plus, n) : n * shopSellPrice(g, loot);
+
+/// How many pieces [basket] holds, and the gold they sell for ([shopSubtotal] a stack).
 int shopBasketPieces(Map<BagLoot, int> basket) => basket.values.fold(0, (n, v) => n + v);
-int shopBasketGold(Game g, Map<BagLoot, int> basket) => [for (final MapEntry(key: l, value: n) in basket.entries) n * shopSellPrice(g, l)].fold(0, (s, v) => s + v);
+int shopBasketGold(Game g, Map<BagLoot, int> basket) => [for (final MapEntry(key: l, value: n) in basket.entries) shopSubtotal(g, l, n)].fold(0, (s, v) => s + v);
 
 /// Sells every stack in [basket] at its count ([Store.sell], an item's at its plus [Enhance.sellAt]), in its order: the
 /// pieces sold and the gold they brought. The rules are the Shop's own; the basket only adds them up.
 ({int pieces, int gold}) shopSellBasket(Game g, Map<BagLoot, int> basket) {
-  var pieces = 0, gold = 0;
+  var pieces = 0;
+  final before = g.gold;
   for (final MapEntry(key: loot, value: n) in basket.entries) {
-    final each = shopSellPrice(g, loot);
-    final sold = switch (loot.kind) { final Item i => g.sellAt(i, loot.plus, n), final kind => g.sell(kind, n) };
-    pieces += sold;
-    gold += sold * each;
+    pieces += switch (loot.kind) { final Item i => g.sellAt(i, loot.plus, n), final kind => g.sell(kind, n) };
   }
-  return (pieces: pieces, gold: gold);
+  return (pieces: pieces, gold: g.gold - before);
 }
 
 /// The Town's Shop's pages between frames.
@@ -134,6 +137,7 @@ class _ShopView {
   final at = <String, Rect>{};
   final texts = <String, String>{};
   final lines = <(BagLoot, Rect, String)>[];
+  final arrows = <BagLoot, (MarketWord, Rect)>{}; // the Sell grid's market arrows drawn (decisions-log 326)
 
   /// The tab's grid.
   _BagGrid get grid => tab == ShopTab.buy ? buy : sell;
@@ -199,6 +203,7 @@ extension on Board {
     final turnTo = pick == v.sellTurned ? null : pick;
     v.sellTurned = pick;
     _bagBoard(c, g, area, turnTo, ts, ps);
+    _shopSellArrows(c, g);
     _shopSellPage(c, g, pick, right, ts, ps);
   }
 
@@ -341,7 +346,7 @@ extension on Board {
     final x = _assign.detail['name']!.left.roundToDouble(), w = area.right - x, said = <String>[];
 
     // The kind line, its parts one after another, the last cut to the room left.
-    final parts = _shopKindLine(g, kind);
+    final parts = _shopKindLine(g, kind, plus);
     if (parts.isNotEmpty) {
       var at = x;
       final shown = StringBuffer();
@@ -383,15 +388,45 @@ extension on Board {
   /// item", grey); a small relic's tier ("Strong relic", in its tier's ink, [Relics.relicTierLine]);
   /// a Pusaka's rarity and where it is ([_pusakaWhere]: "Epic · in Vault"); a material none (what drops it says what it
   /// is, [Town.matSource]).
-  List<(String, Color)> _shopKindLine(Game g, Enum kind) {
+  List<(String, Color)> _shopKindLine(Game g, Enum kind, [int plus = 0]) {
     const ink = Color(0xFF4A2C17), grey = Color(0xFF9E9080);
+    final word = _marketWord(g, kind, plus);
     return switch (kind) {
-      final Item i => [('${gradeName(i.grade).substring(0, 1).toUpperCase()}${gradeName(i.grade).substring(1)} item', grey)],
+      final Item i => [('${gradeName(i.grade).substring(0, 1).toUpperCase()}${gradeName(i.grade).substring(1)} item', grey), ...word],
       final Relic r when r.pusaka && g.pusaka.containsKey(r) => _pusakaWhere(g, r),
-      final Relic r when !r.pusaka => [(g.relicTierLine(r), _relicTierInk[g.relicTier(r)] ?? ink)],
+      final Relic r when !r.pusaka => [(g.relicTierLine(r), _relicTierInk[g.relicTier(r)] ?? ink), ...word],
       _ => const [],
     };
   }
+
+  /// The market's word after the kind line (decisions-log 326, [Market.marketWord]): " · Hot in Millbrook" in green, or
+  /// " · Flooded: price falling" in red; none else.
+  List<(String, Color)> _marketWord(Game g, Enum kind, int plus) => switch (g.marketWord(kind, plus)) {
+        MarketWord.hot => [(' · ', const Color(0xFF9E9080)), ('${Words.hotIn} ${g.townIdentity.name}', _haveInk)],
+        MarketWord.flooded => [(' · ', const Color(0xFF9E9080)), (Words.flooded, _blockedInk)],
+        null => const [],
+      };
+
+  /// The Sell grid's market marks (decisions-log 326): a hot or flooded product's cell shows its arrow ([_marketArrow]) at
+  /// its top left, half the cell wide, over the slot's corner (the NEW "!" never shows on Sell).
+  void _shopSellArrows(Canvas c, Game g) {
+    final v = _shop..arrows.clear();
+    for (final (loot, r) in v.sell.cells) {
+      final word = g.marketWord(loot.kind, loot.plus), arrow = _marketArrow(g, loot.kind, loot.plus);
+      if (word == null || arrow == null) continue;
+      final a = math.max(16.0, (r.width / 2).roundToDouble()), to = Rect.fromLTWH((r.left - a / 8).roundToDouble(), (r.top - a / 8).roundToDouble(), a, a);
+      _uiIcon(c, arrow, to);
+      v.arrows[loot] = (word, to);
+    }
+  }
+
+  /// The market's arrow for [kind] at +[plus] ([Market.marketWord]): ui_icons.png's middle green up arrow (16, 144) when
+  /// hot, its middle red down arrow (64, 160) when flooded (mapped: each in its own 16-px cell, decisions-log 326).
+  Offset? _marketArrow(Game g, Enum kind, int plus) => switch (g.marketWord(kind, plus)) {
+        MarketWord.hot => const Offset(16, 144),
+        MarketWord.flooded => const Offset(64, 160),
+        null => null,
+      };
 
   /// The price row of [loot] ([n] of it in the basket) in [row] (decisions-log 278; the owner's "`<harga>` * `<+ jumlah - >` =
   /// `<sub total harga item>`"), left to right: the coin and what one sells for ([shopSellPrice], [shortPrice]), "x", the
@@ -402,17 +437,25 @@ extension on Board {
     const ink = Color(0xFF4A2C17), soft = Color(0xFF8A6A4A);
     final a = _assign, v = _shop, each = shopSellPrice(g, loot), held = shopHeld(g, loot), cy = row.center.dy;
     final sp = math.max(3.0, (4 * ts).roundToDouble()), coin = (fs * 1.1).roundToDouble(), all = bagCategoryNames[BagCategory.all]!;
-    final unit = shortPrice(each), sub = shortPrice(n * each), count = '$n';
+    final unit = shortPrice(each), sub = shortPrice(shopSubtotal(g, loot, n)), count = '$n';
+    final arrow = _marketArrow(g, loot.kind, loot.plus);
     double capW(String label) => capsuleSize(_textWidth(label, fs), fs).width;
     final unitW = _textWidth(unit, fs), xW = _textWidth('x', fs), countW = _textWidth(count, fs, bold: true);
     final subW = _textWidth(sub, fs, bold: true), eqW = _textWidth('=', fs);
-    final bare = unitW + sp + xW + sp + capW(' - ') + sp + countW + sp + capW(' + ') + sp + capW(all) + sp + subW;
+    final bare = unitW + sp + xW + sp + capW(' - ') + sp + countW + sp + capW(' + ') + sp + capW(all) + sp + subW +
+        (arrow == null ? 0 : coin + ts);
     final withCoin = bare + eqW + sp + coin + 2 * ts <= row.width, withEq = bare + eqW + sp <= row.width;
 
     var x = row.left;
     if (withCoin) {
       _uiIcon(c, Board._icCoin, Rect.fromLTWH(x, (cy - coin / 2).roundToDouble(), coin, coin));
       x += coin + 2 * ts;
+    }
+    if (arrow != null) {
+      // The market's arrow before the price (decisions-log 326): hot or flooded.
+      _uiIcon(c, arrow, Rect.fromLTWH(x, (cy - coin / 2).roundToDouble(), coin, coin));
+      v.at['arrow'] = Rect.fromLTWH(x, (cy - coin / 2).roundToDouble(), coin, coin);
+      x += coin + ts;
     }
     _text(c, unit, Offset(x, cy), size: fs, color: ink);
     v.at['unit'] = Rect.fromLTRB(row.left, row.top, x + unitW, row.bottom);
@@ -466,7 +509,9 @@ extension on Board {
     final pad = _shopLinePad(ps), side = bagHeadIcon(ps), sp = math.max(4.0, (6 * ts).roundToDouble()), cy = r.center.dy;
     final box = _whole(Rect.fromLTWH(r.left + pad, cy - side / 2, side, side));
     _icon(c, kind, box, null, plus);
-    final each = shopSellPrice(g, loot), sub = shortPrice(n * each), end = r.right - pad, subW = _textWidth(sub, fs, bold: true);
+    // The Smithy's goods fall in price piece by piece (decisions-log 326): the line says their average, the subtotal the sum.
+    final total = shopSubtotal(g, loot, n), each = n > 0 ? (total / n).round() : shopSellPrice(g, loot);
+    final sub = shortPrice(total), end = r.right - pad, subW = _textWidth(sub, fs, bold: true);
     _text(c, sub, Offset(end, cy), size: fs, color: ink, anchor: Anchor.centerRight, bold: true);
 
     // Between the name and the subtotal: "2 x 1500" (or a carved Artifact's loss) where a name of a few letters still fits.

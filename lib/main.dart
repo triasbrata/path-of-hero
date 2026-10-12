@@ -948,6 +948,7 @@ class Board extends PositionComponent
   Rect shopAt(String key) => _shop.at[key] ?? Rect.zero;
   String? shopText(String key) => _shop.texts[key];
   Rect shopCountAt(BagLoot loot) => _shop.sell.counts[loot] ?? Rect.zero; // a Sell cell's count capsule (none: Rect.zero)
+  Map<BagLoot, (MarketWord, Rect)> get shopArrows => {..._shop.arrows}; // the Sell grid's market arrows (decisions-log 326)
 
   /// The Smithy's pages this frame (smithy_page.dart, decisions-log 235): the relic picked (null: none yet), its board's
   /// cells in order and what [relic]'s shows ([BagMarks]: its count from 1, the ▲, faded, lit; null: no cell); where a part

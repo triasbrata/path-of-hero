@@ -47,6 +47,7 @@ class TownRules {
     this.awaken = const AwakenRules(),
     this.enhance = const EnhanceRules(),
     this.tavern = const TavernRules(),
+    this.market = const MarketRules(),
     this.skipped = const [],
   });
 
@@ -100,6 +101,9 @@ class TownRules {
 
   /// The Tavern's boosts (decisions-log 266; the file's `tavern`, lib/tavern.dart): read with the Tavern on.
   final TavernRules tavern;
+
+  /// The market for forged goods (decisions-log 326; the file's `market`, lib/market.dart).
+  final MarketRules market;
 
   /// What [parse] left out of the file, one line each (a name it doesn't know, a number out of range): main.dart
   /// prints them. Not in [toJson].
@@ -203,6 +207,7 @@ class TownRules {
       awaken: AwakenRules.fromJson(block(j, 'awaken'), skipped),
       enhance: EnhanceRules.fromJson(block(j, 'enhance'), skipped),
       tavern: TavernRules.fromJson(block(j, 'tavern'), skipped),
+      market: MarketRules.fromJson(block(j, 'market'), skipped),
       skipped: skipped,
     );
   }
@@ -292,6 +297,7 @@ class TownRules {
         'awaken': awaken.toJson(),
         'enhance': enhance.toJson(),
         'tavern': tavern.toJson(),
+        'market': market.toJson(),
       };
 }
 
@@ -1039,11 +1045,12 @@ extension Towns on Game {
   bool enterTown({bool auto = false}) {
     if (!townDue || inTown || over) return false;
     inTown = true;
+    _marketNewTown(); // its number and the market's recovery (market.dart)
     _townSince = t;
     _townCrafts.clear();
     _townCraftSpent = 0;
     _rollTavern(); // the Tavern's offers (tavern.dart), on its own dice
-    _emit(TownEntered(wave, t, slot: townAt!, gold: gold, auto: auto));
+    _emit(TownEntered(wave, t, slot: townAt!, gold: gold, auto: auto, n: townCount, identity: townIdentity.key));
     return true;
   }
 
@@ -1095,7 +1102,7 @@ extension Towns on Game {
   /// The save's `town`: the chance, the last Town's slot, the marked slot and whether the player is in it; the Tavern's
   /// keys (tavern.dart), none while unused.
   Map<String, Object> get _townJson => {
-        'town': {'chance': townChance, 'last': townLast, 'at': ?townAt, if (inTown) 'in': true, ..._tavernTownJson},
+        'town': {'chance': townChance, 'last': townLast, 'at': ?townAt, if (inTown) 'in': true, if (townCount > 0) 'n': townCount, ..._tavernTownJson},
       };
 
   /// [j]'s `town` (a save without it is from before the Towns: it counts as a Town before its own
@@ -1108,10 +1115,17 @@ extension Towns on Game {
       townAt = switch (town['at']) { final int at when at > wave => at, _ => null };
       inTown = town['in'] == true && townAt == wave + 1;
       _loadTavern(town); // the Tavern's (tavern.dart)
+      townCount = switch (town['n']) { final int n when n >= 0 => n, _ => _townCountGuess };
     } else if (wave > 0) {
       _townLast = max(wave, townRules.schedule.firstTownAfter);
+      townCount = _townCountGuess;
     }
   }
+
+  /// The Towns a save without its count (`town.n`, decisions-log 326) has been through: one each [townGapGuess] waves
+  /// from the run's first count to its last Town's slot, and the one it is in.
+  int get _townCountGuess =>
+      max(0, ((townLast - townRules.schedule.firstTownAfter) / townGapGuess).round()) + (inTown ? 1 : 0);
 
   /// The wave meter chip's tooltip ([townMarked]): "Town after wave 12" and what a Town holds, in the street's order (its
   /// Smithy crafts the items too, decisions-log 272; the Tavern, decisions-log 268).
@@ -1214,6 +1228,11 @@ extension Materials on Game {
   /// price ([MatInfo.sell]) rounded up to 5, as shipped (Slime Gel 25, Wolf Claw 65, Soul Orb 1,500). Its shelf holds
   /// only the kinds in [Game.matsSeen] (decisions-log 246).
   int shopMatPrice(Mat m, [int bought = 0]) => townRules.shop.matPrice(townRules.materials[m]?.sell ?? 0, bought);
+
+  /// What the Shop asks for the next [m] after [ahead] more ([Store.buyPrice]): [shopMatPrice] at its [bought] count,
+  /// times the market's [Market.matFactor] (decisions-log 326: dearer for each one bought, back over 2-3 Towns), rounded
+  /// up to 5.
+  int marketMatPrice(Mat m, [int bought = 0, int ahead = 0]) => ((shopMatPrice(m, bought) * matFactor(m, ahead)) / 5 - 1e-9).ceil() * 5;
 
 }
 
