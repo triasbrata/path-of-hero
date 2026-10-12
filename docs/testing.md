@@ -2961,22 +2961,33 @@ The shots come from `test/probe_shot_through_shots.dart` (a probe, not in the su
 from it, with two orcs 14 above and below it, a frame every 48 ms; it prints the screen box round them and the HP the
 splash took.
 
-## The Pusaka's ring in the sprites' pixels (decisions-log 325)
+## The field's rings in the sprites' pixels (decisions-log 325)
 
-`test/pixel_rings_test.dart`: `pixelRingCells` at 20 × 8 is the stepped oval drawn out row by row, and at five sizes
-fills its box, mirrors both ways, is one closed line with no 2×2 block. On a booted board, `Board.paintPusakaRing` (the
-field's own draw, for tests) at four zooms that are no whole number, off the screen's pixels, read back pixel by
-pixel: every pixel is nothing or the Pusaka's colour at 90% (no anti-alias), lit exactly on the cells one world unit
-each (a pixel whose middle is within a hair of a cell's edge is skipped), the box 20 × 8 centred 1 above the feet to
-a screen pixel; every Pusaka's colour as before, and Moonwell's cream for one without its own. On the field at
-1600×947 and 915×412, an archer drawn before and after its type takes God's Thunder differs round its feet only on
-the ring's cells, at least half of them showing round the body. The shots and the frame time are
-`test/probe_pixel_rings.dart` (not part of the suite): the owner's wave-30 save (`SAVE`), 8 s into its wave at
-1600×947 and 915×412, the whole frame and 6× close-ups round a plain troop, a Hero and an awakened troop of bound
-types; the rings still drawn smooth (a guard's, Spear Wall's brace, a monster's effect rings, a Hero's halo, a dragged
-troop's reach disc) put on for one frame, with their close-ups; then 40 s of the wave at 1600×947, each frame's
-`Board.render` timed and every 10th rasterised. Queue it on the branch (`TAG=after`) and on a mirror of main with the
-file copied in (`TAG=before`).
+`test/pixel_rings_test.dart` (ui-hud.md "The field's rings in pixels"):
+- **The cells:** `pixelRingCells` at 20 × 8 is the stepped oval drawn out row by row, and at five sizes fills its box,
+  mirrors both ways, is one closed line with no 2×2 block. `pixelDashCells` at the effects' four sizes stays on its
+  ring and shows every cell at some step; from 14 × 6 up about half of it at each step, turning from the last.
+  `pixelHaloCells` at radii 13-16 holds exactly the four band alphas, each cell its band's, inside the circle,
+  mirrored, the area of a disc. `pixelDiscCells` at seven ranges is one centred run a row, mirrored, a disc's area.
+- **Drawn, read back pixel by pixel** on a booted board, at zooms that are no whole number and off the screen's
+  pixels (a pixel whose middle is within a hair of a cell's edge is skipped), through the field's own draws (for
+  tests: `Board.paintPusakaRing`, `paintHeroHalo`, `paintReachDisc`): the Pusaka's ring is nothing or its colour at 90%
+  (no anti-alias), on its cells one world unit each, its box 20 × 8 centred 1 above the feet to a screen pixel, every
+  Pusaka's colour as before and Moonwell's cream for one without its own; the halo is white at one of its band alphas
+  or nothing, each cell its own band's; the reach at ranges 12, 64 and 96 is white at 12% or nothing, on the disc's
+  cells.
+- **On the field:** at 1600×947 and 915×412 an archer drawn before and after its type takes God's Thunder differs
+  round its feet only on the ring's cells, at least half of them showing round the body. At 1600×947, drawn with no
+  step between: a knight under Holy Shield's guard differs only on the guard ring's 16 × 7 cells; a werebear with a slow
+  and a Barrier only on the effects' 18 × 8 and 14 × 6 cells; a braced knight (a monster on the field, so the wave is
+  on) only on the brace ring's cells in its rows under the feet (its body takes the thrust), 80% of them showing.
+
+The shots and the frame time are `test/probe_pixel_rings.dart` (not part of the suite): the owner's wave-30 save
+(`SAVE`), 8 s into its wave at 1600×947 and 915×412, the whole frame and 6× close-ups round a plain troop, a Hero and an
+awakened troop of bound types (at their drawn bodies, `Board.drawnAt`); a guard, Spear Wall's brace, a monster's slow
+and Barrier, a Hero's halo and a dragged troop's reach put on for one frame (`others-<size>`), with their close-ups;
+then 40 s of the wave at 1600×947, each frame's `Board.render` timed and every 10th rasterised. Queue it on the branch
+(`TAG=after`) and on a mirror of main (`TAG=before`, the file copied in if main lacks it).
 
 ## The packs' looks: the shot probes (decisions-log 173)
 
