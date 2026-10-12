@@ -11357,3 +11357,15 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        waves, and a wipe (322) cleared every shot at once.
      - **Cost:** nothing made a tick (`to` keeps the target's own `Point`); the spot's search runs once a landing, over
        the units, without a list.
+     - **The w89 identity** (test/probe_pusaka_w89_identity.dart; main's dump the same as the 2f0e8de7 golden, byte for
+       byte): every stat, text, tooltip and preview line the same; only the fights move, since shots that were dropped
+       now land and roll their dice. In the seven 45 s fights of wave 90 the kills at 45 s are +0 to +5 each (+17 in
+       all) and the gold +153 to +7,416; in the three arms that play waves 90 and 91, wave 90 ends 1-6% sooner (175.1,
+       162.6, 184.0 s to 164.6, 159.3, 182.2) and wave 91 6.5% sooner (127.9, 126.3, 139.5 s to 119.7, 118.1, 130.4),
+       with the same kills (wave 90's 217 to 215 in two arms: fewer skeletons raised); the troops fallen move both
+       ways (5 to 7, 1 to 0, 1 to 2, 2 to 1), and one Hero rolled after wave 90 is another (the dice moved on). The new
+       golden: `<agents>/probes/shot-through/w89-on-f6c7feb7.txt`.
+     - **Checks:** test/shots_test.dart (the cases above, a wave's end, a wipe), hit_source_test's list (the landing's
+       `_hurt` calls name `on`); test/probe_shot_through_shots.dart's frames at 1600×947 (`<agents>/shots/shot-through/`:
+       the fireball and Arcane Blast fly on past the fall and burst at the spot, the splash taking 22 and 33 off each orc
+       beside it). Balance (the splash lands more often) is measured after the merge, by replaying saved waves.
