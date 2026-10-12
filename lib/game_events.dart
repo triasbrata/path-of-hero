@@ -401,8 +401,8 @@ final class GrailSaved extends GameEvent {
 }
 
 /// What a won wave's Pusaka did (decisions-log 149), for the battle log and the "MENANG!" line ([Game.lastPusaka]):
-/// each bound one's counter ([lines], [PusakaDone]), what the forge's small relics did ([relics], [RelicDone]; with the
-/// Towns on, decisions-log 250), and the small relics that went back to the bag as their troops fell ([returned], by
+/// each bound one's counter ([lines], [PusakaDone]), what the forge's small relics did ([relics], [RelicDone];
+/// decisions-log 250), and the small relics that went back to the bag as their troops fell ([returned], by
 /// kind). The telemetry has the same in the wave record's `pusaka` and `relics`.
 final class PusakaReport extends GameEvent {
   PusakaReport(super.wave, super.t, {required this.lines, this.relics = const [], this.returned = const {}});

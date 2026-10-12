@@ -81,8 +81,7 @@ class TownRules {
   /// The Town Shop's opening wave and the items' prices.
   final TownShop shop;
 
-  /// Every item's Smithy recipe and what one does (decisions-log 245; the file's `items`), by [Item]: read only with the
-  /// Towns on.
+  /// Every item's Smithy recipe and what one does (decisions-log 245; the file's `items`), by [Item].
   final Map<Item, ItemRecipe> items;
 
   /// The relics whose recipe the forge changes (decisions-log 245; a `relics` entry's `forge`), by save key: the whole

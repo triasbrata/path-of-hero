@@ -1,32 +1,25 @@
 part of 'game.dart';
 
-// The store, "Toko" (#63; docs/loot-items-relics.md, "The store"): from wave [storeFrom] on, gold buys every
-// item and relic the monsters drop at very high prices that rise with each one bought, and, while its shelf is open
-// ([shelfOpen]: not beside the boss's chest, draft.dart), the five epik Pusaka ([Relic.store]; pusaka.dart): one of
-// each, a copy of one owned is refused; what is in the bag (and a Pusaka in the Gudang) sells back for a small share. Every choice the owner may still change is one constant or
-// switch below. It deals only in a Town ([StoreRefusal.town], decisions-log 230; the field's Toko page went in
-// decisions-log 296, its rules in 321): the Town's Shop page, on the Bag's own code (lib/bag.dart), buys and
-// sells there, the Towns' materials too (each at its own price, [TownRules.materials]). Its prices are then town.json's
-// ([TownRules], decisions-log 233): a small relic costs its tier's price ([TierPrices.shop], +[TierPrices.shopRise] of
-// it a buy) and sells back for half its craft gold ([Recipe.gold], [TierPrices.sellShare]); an item the [TownShop]'s.
-// The forge's Shop (decisions-log 248): its shelf holds only the materials that have dropped
-// ([Game.matsSeen]), each at [Materials.shopMatPrice], and no item or small relic; it still buys them all.
+// The store, the Town's Shop (#63, the "Toko" until decisions-log 230; docs/loot-items-relics.md, "The store"): while its
+// shelf is open ([shelfOpen]: not beside the boss's chest, draft.dart) it sells the five epik Pusaka ([Relic.store];
+// pusaka.dart), one of each, a copy of one owned refused; what is in the bag (and a Pusaka in the Gudang) sells back for
+// a small share. Every choice the owner may still change is one constant or switch below. It deals only in a Town
+// ([StoreRefusal.town], decisions-log 230; the field's Toko page went in decisions-log 296, its prices and rules in 321):
+// the Town's Shop page, on the Bag's own code (lib/bag.dart), buys and sells there, the Towns' materials too (each at its
+// own price, [TownRules.materials]). Its prices are town.json's ([TownRules], decisions-log 233): a small relic sells
+// back for half its craft gold ([Recipe.gold], [TierPrices.sellShare]), an item for the [TownShop]'s share. The forge's
+// Shop (decisions-log 248): its shelf holds only the materials that have dropped ([Game.matsSeen]), each at
+// [Materials.shopMatPrice], and no item or small relic (their tier's and the [TownShop]'s buy prices stay in town.json,
+// unused); it still buys them all.
 
-/// The store opens once wave [storeFrom] is won (the owner: "hanya dibuka ketika player sudah melewati wave 15"); with the
-/// Towns on, a Town's Shop opens at the wave town.json's `shop.from` names ([Store.shopFrom]: 1, every Town's Shop open,
+/// The store opened once wave [storeFrom] was won (the owner: "hanya dibuka ketika player sudah melewati wave 15"); a
+/// Town's Shop opens at the wave town.json's `shop.from` names ([Store.shopFrom]: 1, every Town's Shop open,
 /// decisions-log 253; 237 read it, at 15), while Awaken 4-5, Forge and Recall keep this wave ([Store.armyBuysOpen]).
 const storeFrom = 15;
 
 /// Whether the store deals during a wave too, or only between waves (false, the owner's pick: mid-wave its buttons
 /// grey out, "Hanya di antara gelombang"). Either way the book's Shop page holds the auto start while it is open.
 const storeMidWave = false;
-
-/// What an item costs ([base]), and how much more each one of that kind bought makes the next (the owner: twice
-/// the design's 1,000 +100).
-const itemPrice = (base: 2000, rise: 200);
-
-/// What a dropped relic costs, and how much more each one of that kind bought makes the next (twice 4,000 +800).
-const relicPrice = (base: 8000, rise: 1600);
 
 /// What each store Pusaka costs (twice the design's); one bought again after selling it costs ×[artefactRise] the one
 /// before.
@@ -134,8 +127,7 @@ extension Store on Game {
         Relic(rarity: Rarity.epik, pusaka: true) => epikPrice, // the chest's new Epik (owner: its own price), sold to it, never bought (draft.dart)
         Relic(pusaka: true) => langkaPrice, // the chest's Langka (owner 3c: sold to it, never bought), never sold here (draft.dart)
         final Relic r => _tierPrices(r).shop,
-        Item() => townRules.shop.itemPrice,
-        _ => itemPrice.base,
+        _ => townRules.shop.itemPrice, // an item
       };
 
   /// What the next [kind] costs: its base price, risen by every one of it the store sold this game (and by
@@ -148,9 +140,8 @@ extension Store on Game {
       final Mat m => shopMatPrice(m, n),
       Relic(store: true) => (artefactPrice[kind]! * pow(artefactRise, n)).round(),
       final Relic r when !r.pusaka => _tierPrices(r).priceAfter(n),
-      Relic() => relicPrice.base + relicPrice.rise * n,
-      Item() => townRules.shop.itemPrice + townRules.shop.itemRise * n,
-      _ => itemPrice.base + itemPrice.rise * n,
+      Relic() => basePrice(kind), // the chest's Pusaka: never sold here ([StoreRefusal.shelf])
+      _ => townRules.shop.itemPrice + townRules.shop.itemRise * n, // an item
     };
   }
 
