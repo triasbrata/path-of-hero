@@ -15,6 +15,7 @@ import 'package:tower_defense/main.dart' show logLine;
 import 'package:tower_defense/telemetry.dart';
 
 import 'hero_skill_helpers.dart';
+import 'real_rules.dart';
 
 /// Dice that give [rolls] in turn (the last one again once they run out) and count their draws.
 class _Seq implements Random {
@@ -454,11 +455,8 @@ void main() {
 
     test('the ease: each full eighth of the starting troops fallen takes the newest level, at most 2 a wave', () {
       Game army(int n) {
-        final g = chested(wave: 30) // the archers at Awaken 1: the ease counts an awakened type's falls (decisions-log 318)
-          ..upgrades['archer'] = [
-            for (final MapEntry(key: item, value: k) in awakenRecipe['archer']!.entries)
-              for (var i = 0; i < k; i++) item,
-          ];
+        final g = chested(wave: 30); // the archers at Awaken 1: the ease counts an awakened type's falls (decisions-log 318)
+        g.upgrades['archer'] = awakenItems('archer', 1, g);
         for (var i = 0; i < n; i++) {
           placeNow(g, 'archer', i ~/ rows, i % rows);
         }

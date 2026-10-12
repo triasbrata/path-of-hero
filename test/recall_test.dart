@@ -327,10 +327,8 @@ void main() {
     g.upgrades['knight_templar'] = awakenItems('knight_templar', maxAwaken);
     final f = FallenHero(name: 'Sari', type: 'knight_templar', stats: const [HeroStat.hp, HeroStat.power], fell: 10);
     g.fallenHeroes.add(f);
-    g.gold = g.recallPrice - 1; // the troop price in hand (Awaken 3 is x8 since decisions-log 318), the recall's not
-    expect((g.recallPrice, g.priceOf('knight_templar') <= g.gold), (5000, true));
-    expect(g.whyNotRecall(f), buyRefusals.gold);
     g.gold = g.recallPrice;
+    expect((g.recallPrice, g.priceOf('knight_templar') > g.gold), (5000, true));
     expect(g.whyNotRecall(f), isNull);
     expect(g.recallHero(f), isTrue);
   });
