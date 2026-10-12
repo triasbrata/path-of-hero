@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
 
-import 'awaken_items.dart';
+import 'real_rules.dart';
 
 
 // The Tas tab's dot (#92 part 2, lib/ascend_page.dart), as the player gets it: one TdGame (its own file: a second TdGame

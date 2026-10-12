@@ -10,7 +10,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 
-import 'awaken_items.dart';
+import 'real_rules.dart';
 import 'hero_skill_helpers.dart';
 
 /// A heal the funnel heard: the troop, its tag, what it was to Wound then, the heal asked and the heal past full HP.

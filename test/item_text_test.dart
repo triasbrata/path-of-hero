@@ -32,7 +32,6 @@ Map<String, (String, List<String>)> tooltips() {
   }
   for (final r in Relic.values.where((r) => !r.pusaka)) {
     out['$r'] = g.relicInfo(r);
-    out['$r, Towns on'] = (w86()..towns = true).relicInfo(r); // its tier and who it suits (decisions-log 227)
   }
   for (final r in Relic.values.where((r) => r.pusaka && !r.oath)) {
     final fresh = Game();

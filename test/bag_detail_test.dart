@@ -78,7 +78,6 @@ Future<void> pick(WidgetTester tester, Board b, Enum kind) async {
 /// beside the free priest, standing at their posts.
 Game bagGame() {
   final g = Game(Random(1)).boardRules()
-    ..towns = false // the Towns off (tests only, decisions-log 296: the rules from before them; the book is the Towns' still)
     ..armyMax = null
     ..gold = 5000000
     ..wave = 30;
@@ -171,9 +170,9 @@ Future<Rect> rowOf(WidgetTester tester, Board b, Object who) async {
 
 /// Checks the facing page of the pick shown at [at]: every part inside the page; the heading's icon, name and count
 /// apart on one band; under it the where line and the description one after another, then the action list (inside the
-/// page, under them) and its rows, in [acts]' order from the top, apart, inside the list, the first two whole. Wheeled
-/// to its end, the list shows the last row whole. Returns the lines shown.
-Future<Map<String, Rect>> laidOut(WidgetTester tester, Board b, String at, List<BagAction> acts) async {
+/// page, under them) and its rows, in [acts]' order from the top, apart, inside the list, the first [whole] whole.
+/// Wheeled to its end, the list shows the last row whole. Returns the lines shown.
+Future<Map<String, Rect>> laidOut(WidgetTester tester, Board b, String at, List<BagAction> acts, {int whole = 2}) async {
   final page = b.bagDetail('page'), icon = b.bagDetail('icon'), name = b.bagDetail('name'), count = b.bagDetail('count');
   expect(page, isNot(Rect.zero), reason: at);
   for (final r in [name, count, if (icon.width > 0) icon]) {
@@ -195,7 +194,7 @@ Future<Map<String, Rect>> laidOut(WidgetTester tester, Board b, String at, List<
   final h = shown.first.$2.height;
   for (final (i, (act, r, _)) in shown.indexed) {
     expect(inside(r, list), isTrue, reason: '$at: $act $r in the list $list');
-    if (i < 2) expect(r.height, closeTo(h, 0.5), reason: '$at: $act whole');
+    if (i < whole) expect(r.height, closeTo(h, 0.5), reason: '$at: $act whole');
     if (i > 0) expect(r.top, greaterThan(shown[i - 1].$2.bottom), reason: '$at: $act apart from the one over it');
   }
   if (shown.length < acts.length || shown.last.$2.height < h - 0.5) {
@@ -241,7 +240,9 @@ void main() {
             [BagAction.equip, BagAction.takeOff]),
       ]) {
         await pick(tester, b, kind);
-        final parts = await laidOut(tester, b, '$at $kind', acts);
+        // At 915x412 a small relic's text (its tier's best type, decisions-log 227) leaves one row whole over the list's
+        // fold; the wheel brings the next.
+        final parts = await laidOut(tester, b, '$at $kind', acts, whole: kind is Relic && size == wide ? 1 : 2);
         expect(parts.keys, ['desc'], reason: '$at $kind');
         expect(b.bagDetail('icon').size, Size(side, side), reason: '$at $kind: crisp, a whole multiple of the art');
         expect((fitted(b.bagDetailText('name'), nameOf(kind)), b.bagDetailText('count')), (true, count), reason: '$at $kind');

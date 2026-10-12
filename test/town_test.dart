@@ -12,6 +12,8 @@ import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart' show logLine;
 import 'package:tower_defense/telemetry.dart';
 
+import 'real_rules.dart';
+
 /// A die that gives [draws] in turn (and counts them).
 class _Dice implements Random {
   _Dice(this.draws);
@@ -277,9 +279,9 @@ void main() {
     expect(run(4, 12), isNot(run(4, 11)));
   });
 
-  test('the boss schedule is untouched: the same queue every wave with the Towns on and off (a mini boss every 3rd, the '
-      'boss every 5th), and the same Boss Chests', () {
-    final on = towns(rules: always)..offers = true, off = towns()..towns = false..offers = true;
+  test('the boss schedule is untouched: the same queue every wave with a Town every 5 waves and with none (a mini boss '
+      'every 3rd, the boss every 5th), and the same Boss Chests', () {
+    final on = towns(rules: always)..offers = true, off = towns(rules: noTowns)..offers = true;
     for (var w = 1; w <= 30; w++) {
       final a = winWave(on), b = winWave(off);
       expect(a, b, reason: 'wave $w');
@@ -291,9 +293,9 @@ void main() {
     expect(on.chests, isNotEmpty);
   });
 
-  test('a Town changes nothing else: a seeded 8-wave run played with the Towns on (a probe going through the Town before '
-      'wave 7) and off is the same, wave by wave, but for the drops (with the Towns on no relic or item drops, the forge\'s '
-      'rule: materials do, decisions-log 221, 246)', () {
+  test('a Town changes nothing else: a seeded 8-wave run played through a Town (a probe going through it before wave 7) '
+      'and with none is the same, wave by wave; no relic or item drops, the forge\'s rule: materials do (decisions-log '
+      '221, 246)', () {
     String digest(Game g) => [
           'wave ${g.wave} t ${g.t} gold ${g.gold} lives ${g.lives} kills ${g.kills} score ${g.score}',
           for (final u in g.units) '${u.side.name} ${u.type} ${u.tier.name} ${u.alive} ${u.hp} ${u.pos}',
@@ -321,15 +323,16 @@ void main() {
       ..capacity = 12;
     // The Bag aside: with the Towns on the forge drops no item (forge_drops_test.dart pins that it draws the same loot dice
     // and throws the items away), and no item is given here.
-    final on = rich(towns(rules: always))..townPolicy = 'leave', off = rich(towns())..towns = false;
+    final on = rich(towns(rules: always))..townPolicy = 'leave', off = rich(towns(rules: noTowns));
     expect(play(on), play(off));
-    expect((on.over, on.wave, on.townLast), (false, 8, 7), reason: 'the Town before wave 7 came');
-    expect((on.relicBag.isEmpty, on.inventory.isEmpty, on.materials.isNotEmpty, off.materials.isEmpty), (true, true, true, true),
-        reason: 'with the Towns on materials drop and relics and items don\'t');
+    expect((on.over, on.wave, on.townLast, off.townLast), (false, 8, 7, 2), reason: 'the Town before wave 7 came, and none');
+    for (final g in [on, off]) {
+      expect((g.relicBag.isEmpty, g.inventory.isEmpty, g.materials.isNotEmpty), (true, true, true),
+          reason: 'materials drop and relics and items don\'t');
+    }
   });
 
-  test('telemetry: the Town events go out as they happen; a won wave record says what the roll after it did; none of it '
-      'with the Towns off', () {
+  test('telemetry: the Town events go out as they happen; a won wave record says what the roll after it did', () {
     expect(telemetryVersion, greaterThanOrEqualTo(9)); // 9 brought the Towns'; later versions keep it (10: the forge's, 11: the Tavern's)
     final sink = _Kept();
     final g = towns(rules: always)..townPolicy = 'leave';
@@ -353,15 +356,6 @@ void main() {
         [('townMarked', 7), ('townEntered', 7), ('townLeft', 7)]);
     expect(sink.records.where((r) => r['rec'] == 'event' && (r['event'] as Map)['kind'] == 'townRolled'), isEmpty,
         reason: 'the roll goes into the wave record only');
-
-    final quiet = _Kept();
-    final h = towns()..towns = false;
-    TelemetryAdapter([quiet], installId: 'i', session: 's', platform: 'test', now: () => DateTime.utc(2026, 10, 4)).attach(h);
-    for (var w = 1; w <= 8; w++) {
-      winWave(h);
-    }
-    expect(quiet.of('wave'), hasLength(8));
-    expect(quiet.of('wave').any((r) => r.containsKey('town')), isFalse);
   });
 
   test("the chip's tooltip: the wave after which the Town comes, the Smithy, the Tavern (decisions-log 268), and the "

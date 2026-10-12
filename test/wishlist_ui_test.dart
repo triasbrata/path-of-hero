@@ -368,19 +368,4 @@ void main() {
       await frames(tester, 5);
     });
   }
-
-  testWidgets('the Towns off (tests only): no Wishlist on the Army detail', (tester) async {
-    final b = await boot(tester);
-    b.state = forgeGame(inTown: false)..towns = false;
-    await frames(tester, 40);
-    await tapOn(tester, b.troopRow('knight'));
-    for (var i = 0; i < 30; i++) {
-      b.troopDetailScroll = 20.0 * i;
-      await frames(tester, 2);
-      expect(b.troopDetail('wishlist'), Rect.zero, reason: 'scrolled ${20 * i}');
-      expect(b.troopDetailWords('wishlist'), isEmpty, reason: 'scrolled ${20 * i}');
-    }
-    b.state = Game();
-    await frames(tester, 5);
-  });
 }

@@ -2,8 +2,8 @@
 // dan di battle ground tabnya di hilangkan"; ui-hud.md "Town", loot-items-relics.md "The store"): the shipped town.json's
 // `shop.from` 1 opens a Town's Shop from the first Town, while Awaken 4-5, Forge and Recall keep wave 15
 // ([Store.armyBuysOpen]); no "VICTORY!" line for a Shop that never was shut ([Store.shopJustOpened]); the book's tabs on
-// the field and in a Town (no Shop tab on the field at any wave, the Towns off too: the Toko's tab went in decisions-log
-// 296), at the desk (1266x713) and a phone (915x412).
+// the field and in a Town (no Shop tab on the field at any wave: the Toko's tab went in decisions-log 296), at the desk
+// (1266x713) and a phone (915x412).
 import 'dart:io';
 import 'dart:math';
 
@@ -49,13 +49,13 @@ void main() {
 
   for (final size in const [Size(1266, 713), Size(915, 412)]) {
     final tag = '${size.width.round()}x${size.height.round()}';
-    testWidgets("the book's tabs at $tag: with the Towns on no Shop tab on the field at any wave, the Shop's in a Town "
-        'open from the first; with the Towns off (tests only) none either', (tester) async {
+    testWidgets("the book's tabs at $tag: no Shop tab on the field at any wave, the Shop's in a Town open from the first",
+        (tester) async {
       final b = await boot(tester, size);
       b.autoStart.set(false);
       List<String> tabs() => [for (final (name, _) in b.bookTabs) name];
 
-      // The Towns on, on the field: Army, Bag, Settings, whatever the wave.
+      // On the field: Army, Bag, Settings, whatever the wave.
       final g = b.state = townGame()..townRules = shipped;
       for (final w in [0, 1, 14, 15, 40]) {
         g.wave = w;
@@ -71,16 +71,6 @@ void main() {
       await tester.tapAt(b.bookTabs.firstWhere((x) => x.$1 == 'store').$2.center);
       await frames(tester, 40);
       expect((b.bookPage, b.storeShown), ('store', true), reason: 'the Shop open in the first Town');
-
-      // The Towns off (tests only): no Shop tab either, before wave 15 or after (the Toko's went in decisions-log 296).
-      final off = b.state = townGame()
-        ..towns = false
-        ..wave = storeFrom - 1;
-      await frames(tester, 40);
-      expect(tabs(), ['troops', 'bag', 'settings']);
-      off.wave = storeFrom;
-      await frames(tester, 3);
-      expect(tabs(), ['troops', 'bag', 'settings']);
     });
   }
 }

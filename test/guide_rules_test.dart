@@ -123,11 +123,9 @@ void main() {
   });
 
   test('K11 Shop: from the Shop\'s opening (every Town\'s, from wave 1\'s win, once a Town is marked, decisions-log 253; '
-      'the Towns off never: no Town, and the field\'s Toko went in decisions-log 296); K14 Hero fell: from wave 15\'s win, '
-      'when Recall opens', () {
+      'the field\'s Toko went in decisions-log 296); K14 Hero fell: from wave 15\'s win, when Recall opens', () {
     FallenHero fell() => FallenHero(name: 'Hera Quill', type: 'priest', stats: const [], fell: 12);
     expect((isDue('K11', at(0)..townAt = 2), isDue('K11', at(6)), isDue('K11', at(6)..townAt = 8)), (false, false, true));
-    expect((isDue('K11', at(storeFrom - 1)..towns = false), isDue('K11', at(storeFrom)..towns = false)), (false, false));
     expect(isDue('K14', at(storeFrom)), isFalse);
     expect(isDue('K14', at(storeFrom - 1)..fallenHeroes.add(fell())), isFalse);
     expect(isDue('K14', at(storeFrom)..fallenHeroes.add(fell())), isTrue);

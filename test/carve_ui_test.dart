@@ -123,7 +123,6 @@ Future<void> wheelUntil(WidgetTester tester, Board b, Rect Function() at) async 
 /// bar) and Dawn Star in the Vault, God's Thunder on the soldier, Oath of One.
 Game carved({int wave = 45}) {
   final g = Game(Random(1)).boardRules()
-    ..towns = false // the Towns off (tests only, decisions-log 296: the rules from before them; the book is the Towns' still)
     ..armyMax = null
     ..gold = 5000000
     ..wave = wave;

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
 
-import 'awaken_items.dart';
+import 'real_rules.dart';
 import 'hud_font.dart';
 
 // Tempa on the board (decisions-log 163, lib/ascend_page.dart): the "+n" after a Bangkit 5 type's stars on the Army
@@ -19,8 +19,8 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
   }
 }
 
-/// After wave 87, rich: the knight at Bangkit 5 and Tempa +3 with one fielded, the archer at Bangkit 2 with one too. A
-/// plain Game() (the Towns off, tests only): its Awaken by the item recipe gets the knight to Bangkit 3 at once.
+/// After wave 87, rich: the knight at Bangkit 5 and Tempa +3 with one fielded, the archer at Bangkit 2 with one too: its
+/// grade sets ([awakenItems]) get the knight to Bangkit 3 at once.
 Game forger() {
   final g = Game()..wave = 87;
   g.upgrades['knight'] = awakenItems('knight', 3);

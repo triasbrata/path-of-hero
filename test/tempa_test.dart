@@ -10,7 +10,7 @@ import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart' show logLine;
 import 'package:tower_defense/telemetry.dart';
 
-import 'awaken_items.dart';
+import 'real_rules.dart';
 import 'hero_skill_helpers.dart';
 import 'hud_font.dart';
 

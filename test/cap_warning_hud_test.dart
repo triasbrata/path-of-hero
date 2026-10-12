@@ -27,7 +27,6 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
 /// knights, 10 swordsmen and 10 lancers (each at its type's cap) and a soldier last.
 Game atCap({int won = 63}) {
   final g = Game().boardRules()
-    ..towns = false // the Towns off (tests only, decisions-log 296: the rules from before them; the book is the Towns' still)
     ..gold = 1 << 30
     ..wave = won
     ..victoryAt = -victoryTime
@@ -64,7 +63,7 @@ Game overCap() {
       ..entered = true);
   }
   g.notes.add('army');
-  return g.boardRules()..towns = false; // the Towns-off board's warning (decisions-log 237)
+  return g.boardRules();
 }
 
 void main() {
@@ -88,10 +87,10 @@ void main() {
       ..miniMapOpen = false;
     b.autoStart.set(false);
 
-    final warning = capWarningText(armyMaxBoard, tidePercent(64));
+    final warning = capWarningText(armyMaxBoard, tidePercent(64), towns: true);
     expect(warning, startsWith('${Words.army} full: cap 36 - ${Words.tide} +'));
     final font = fontChars();
-    for (final line in [capWarningText(armyMaxBoard, 999), capTip(armyMaxBoard), overTip(60, 60), overNote(armyMaxBoard), capsNote(['Soldier 47/10'])]) {
+    for (final line in [capWarningText(armyMaxBoard, 999, towns: true), capTip(armyMaxBoard), overTip(60, 60), overNote(armyMaxBoard), capsNote(['Soldier 47/10'])]) {
       expect(line.runes.where((c) => c != 10 && !font.contains(c)).map(String.fromCharCode), isEmpty, reason: line);
     }
 
@@ -122,7 +121,7 @@ void main() {
     }
     g.wave = 68;
     await frames(tester, 3);
-    expect(b.message, capWarningText(armyMaxBoard, tidePercent(69)));
+    expect(b.message, capWarningText(armyMaxBoard, tidePercent(69), towns: true));
     await tester.tapAt(b.messageBox.center);
     await frames(tester, 3);
 
@@ -133,7 +132,7 @@ void main() {
     expect(b.message, Words.notEnoughGold);
     await tester.tapAt(b.messageBox.center);
     await frames(tester, 3);
-    expect(b.message, capWarningText(armyMaxBoard, tidePercent(74)));
+    expect(b.message, capWarningText(armyMaxBoard, tidePercent(74), towns: true));
     await tester.tapAt(b.messageBox.center);
     await frames(tester, 3);
 
@@ -147,7 +146,7 @@ void main() {
       await frames(tester, 1);
     }
     await frames(tester, 3);
-    expect(b.message, capWarningText(armyMaxBoard, tidePercent(79)));
+    expect(b.message, capWarningText(armyMaxBoard, tidePercent(79), towns: true));
 
     // The meter's tooltip ends with the cap's line while the army is full.
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
@@ -166,7 +165,7 @@ void main() {
     tester.view.physicalSize = const Size(915, 412);
     g.wave = 83;
     await frames(tester, 40);
-    expect(b.message, capWarningText(armyMaxBoard, tidePercent(84)));
+    expect(b.message, capWarningText(armyMaxBoard, tidePercent(84), towns: true));
     final phone = b.messageBox;
     expect((phone.left >= 8, phone.right <= 915 - 8, phone.bottom <= 412 - 8), (true, true, true), reason: '$phone');
     await tester.tapAt(phone.center);
@@ -184,7 +183,7 @@ void main() {
     await frames(tester, 3);
     // Then the cap's warning, with wave 87's tide counted from 42: +56%.
     expect(tidePercent(87, 42), 56);
-    expect(b.message, capWarningText(armyMaxBoard, 56));
+    expect(b.message, capWarningText(armyMaxBoard, 56, towns: true));
     await tester.tapAt(b.messageBox.center);
     await frames(tester, 3);
     // The meter shows it, and its tooltip has Beban's line before the cap's, inside the screen.

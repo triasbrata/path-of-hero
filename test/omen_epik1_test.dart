@@ -15,7 +15,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 
-import 'awaken_items.dart';
+import 'real_rules.dart';
 import 'hero_skill_helpers.dart';
 
 const darkHymn = OmenKind.darkHymn, boneArrows = OmenKind.boneArrows, arrowWard = OmenKind.arrowWard;

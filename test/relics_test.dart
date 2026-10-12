@@ -1,7 +1,7 @@
 // The Smithy's seven small relics (decisions-log 227; lib/relics.dart; docs/loot-items-relics.md "Relics"): Sweep (save
 // key cleave), Venom, Mana Siphon, Spirit Ward (Strong), Iron Will (lastStand), Giant Slayer, Holy Charm (blessing)
 // (Mighty). One group a relic, its numbers from the rules (town.json `relics`) at their edges and patched; a Hero holding
-// two; the save's names; the tiers and their words; with the Towns off none of the seven ever shows or drops.
+// two; the save's names; the tiers and their words.
 import 'dart:convert';
 import 'dart:math';
 

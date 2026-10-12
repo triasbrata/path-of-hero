@@ -50,7 +50,6 @@ Future<TdGame> boot(WidgetTester tester, [Size size = const Size(1266, 713)]) as
 /// The owner's wave-89 save (six Pusaka: two in the Gudang, three bound, an oath), between waves, the chests put away.
 Game w89() => Game.fromJson(jsonDecode(File('test/fixtures/save-20261002-2222-w89-sellbug.json').readAsStringSync()) as Map<String, dynamic>)
     .boardRules()
-  ..towns = false // the Towns off (tests only, decisions-log 296: the rules from before them; the book is the Towns' still)
   ..chests.clear()
   ..omenCaughtUp = false; // no Shadows' catch-up note over the book (decisions-log 319), as this test always played
 

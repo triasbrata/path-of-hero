@@ -7,7 +7,7 @@ import 'package:tower_defense/game.dart';
 import 'package:tower_defense/save.dart';
 import 'package:tower_defense/scores.dart';
 
-import 'awaken_items.dart';
+import 'real_rules.dart';
 
 void run(Game g, {void Function(Game)? each}) {
   for (var i = 0; i < 6000 && g.waveActive; i++) {

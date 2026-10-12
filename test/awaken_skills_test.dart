@@ -12,7 +12,7 @@ import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
 import 'package:tower_defense/telemetry.dart';
 
-import 'awaken_items.dart';
+import 'real_rules.dart';
 import 'hero_skill_helpers.dart';
 
 /// A wave on with nothing to spawn, [type] awakened to [level], and a troop of it at cell (2, 3), full of MP, that

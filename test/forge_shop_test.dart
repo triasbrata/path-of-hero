@@ -1,8 +1,7 @@
 // The forge's Town Shop (decisions-log 248; loot-items-relics.md "The forge: the Town Shop", ui-hud.md "The Town's Shop"):
-// with the forge and the Towns on ([Store.forgeShop]) the shelf holds every material that has dropped ([Game.matsSeen], in
-// first-drop order) at 2.5x its sell price rounded up to 5, and no item or small relic ("Not for sale"); a bought
-// material goes in the Bag for its price and never joins matsSeen; the Shop still buys everything at today's prices, and
-// still opens from wave 15. With the forge off, or the Towns off, the shelf is today's and no material is sold. Its Buy
+// the shelf holds every material that has dropped ([Game.matsSeen], in first-drop order) at 2.5x its sell price rounded
+// up to 5, and no item or small relic ("Not for sale"); a bought material goes in the Bag for its price and never joins
+// matsSeen; the Shop still buys everything at today's prices, and opens in a Town (town.json `shop.from`). Its Buy
 // sections, only those with goods (decisions-log 269 and 280), and Sell grid. The page: forge_shop_ui_test.dart,
 // shop_tabs_ui_test.dart.
 import 'dart:convert';
@@ -14,12 +13,11 @@ import 'package:tower_defense/main.dart' show BagCategory, onShopShelf, shopBuyK
 
 import 'hero_skill_helpers.dart';
 
-/// A rich game in a Town after wave 20 with the Towns on (or off, [towns]: tests only), holding a Sword, a small relic, Wolf
-/// Claws and a Skull and a Vault Artifact; the materials seen ([Game.matsSeen]) in drop order: Wolf Claw, Slime Gel, Lich
-/// Orb, Evil Eye, Soul Orb (the Skull held but never dropped: say a save's).
-Game forgeShopGame({bool towns = true, bool inTown = true}) {
+/// A rich game in a Town after wave 20, holding a Sword, a small relic, Wolf Claws and a Skull and a Vault Artifact; the
+/// materials seen ([Game.matsSeen]) in drop order: Wolf Claw, Slime Gel, Lich Orb, Evil Eye, Soul Orb (the Skull held but
+/// never dropped: say a save's).
+Game forgeShopGame({bool inTown = true}) {
   final g = bareGame(Random(1))
-    ..towns = towns
     ..wave = 20
     ..gold = 100000;
   if (inTown) {
@@ -166,11 +164,5 @@ void main() {
     expect((later.whyNotBuy(Mat.wolfClaw), later.whyNotSell(Mat.wolfClaw)), (StoreRefusal.locked, StoreRefusal.locked));
     final field = forgeShopGame(inTown: false);
     expect((field.whyNotBuy(Mat.wolfClaw), field.buy(Mat.wolfClaw)), (StoreRefusal.town, false));
-  });
-
-  test('with the Towns off (tests only) no forge Shop: the store sells as before the Towns', () {
-    final noTowns = forgeShopGame(towns: false, inTown: false);
-    expect(noTowns.forgeShop, isFalse);
-    expect(noTowns.whyNotBuy(Item.sword), isNull, reason: "the Towns-off store's shelf");
   });
 }

@@ -1,10 +1,9 @@
 // The forge's drops (decisions-log 246; lib/town.dart, lib/game.dart's kill block; docs/loot-items-relics.md "The forge:
-// drops"): with the Towns on (the forge-off build is gone, decisions-log 296). No item ever drops (the loot dice
-// drawing as with the Towns off), each rank drops its list of town.json's `drops.forge` (the
-// design's table, ~3x), the Necromancer its Lich Orb; the kinds dropped are remembered in drop order ([Game.matsSeen],
-// saved only with the forge and the Towns on, a save without it starting from the materials held, a buy never adding);
-// the Shop's material price ([Materials.shopMatPrice]). With the Towns off (a plain Game(), tests only) items fall as
-// before the forge.
+// drops"): in every game (the Towns' rules, decisions-log 296, 321). No item ever drops (the loot dice drawing as
+// before the forge), each rank drops its list of town.json's `drops.forge` (the design's table, ~3x), the Necromancer
+// its Lich Orb; the kinds dropped are remembered in drop order ([Game.matsSeen], saved once any was seen, a save
+// without it starting from the materials held, a buy never adding); the Shop's material price
+// ([Materials.shopMatPrice]).
 import 'dart:convert';
 import 'dart:math';
 
@@ -69,14 +68,13 @@ class _Counted implements Random {
 /// The monster types that drop parts: the twelve, the healer and the Necromancer.
 final types = [...enemyTypes.keys, necroHealer, boss];
 
-/// A game with no skills cast, the Towns [towns], its materials on [mats] and its loot on [loot].
-Game forgeGame({bool towns = true, Random? mats, Random? loot}) {
+/// A game with no skills cast, its materials on [mats] and its loot on [loot].
+Game forgeGame({Random? mats, Random? loot}) {
   final g = bareGame(Random(1))
     ..skills = false
     ..heroSkills = false
     ..awakenSkills = false
     ..monsterSkills = false
-    ..towns = towns
     ..matDice = mats ?? Random(5)
     ..loot = loot ?? Random(9);
   return g;
@@ -240,8 +238,8 @@ void main() {
     }
   });
 
-  test('with the Towns on no item ever drops, the loot dice drawing exactly as with them off (items and relics drawn and '
-      'thrown away); the materials are the forge\'s; nothing reaches the bag at the win but materials', () {
+  test('no item ever drops, the loot dice drawing exactly as before the forge (items and relics drawn and thrown away); '
+      'the materials are the forge\'s; nothing reaches the bag at the win but materials', () {
     const foes = [
       ('slime', Tier.normal, false),
       ('bat', Tier.elite, false),
@@ -250,17 +248,19 @@ void main() {
       ('skeleton', Tier.boss, false),
       ('skeleton', Tier.normal, true),
     ];
-    (Game, List<String>) run(bool towns) {
-      final loot = _Counted(_Dice([], 0.0)); // every roll drops: the most items there can be
-      final g = forgeGame(towns: towns, loot: loot, mats: _Dice([], 0.0));
-      kill(g, foes);
-      return (g, loot.calls);
-    }
-
-    final (off, offCalls) = run(false);
-    final (on, onCalls) = run(true);
-    expect(onCalls, offCalls, reason: 'the same loot draws, in the same order');
-    expect(off.drops.length, 1 + 1 + 1 + 1 + bossDrops + 1, reason: 'with the Towns off the items fall (the raised one rolls)');
+    final loot = _Counted(_Dice([], 0.0)); // every roll drops: the most items there can be
+    final on = forgeGame(loot: loot, mats: _Dice([], 0.0));
+    kill(on, foes);
+    final (item, relic) = ('i$droppedItemKinds:0', 'i${droppedRelics.length}:0');
+    // In the order they fell.
+    expect(loot.calls, [
+      'd0.0', item, 'd0.0', // the slime: its item's roll and kind, its relic's roll (none at its rank)
+      'd0.0', item, // the raised one rolls its item, never a relic
+      item, 'd0.0', relic, // the mini boss: its sure item's kind, then the relic and its kind
+      'd0.0', item, 'd0.0', // the elite bat
+      for (var i = 0; i < bossDrops; i++) item, 'd0.0', relic, // the boss: its sure items' kinds, then the relic
+      'd0.0', item, 'd0.0', relic, // the high elite orc
+    ], reason: 'the loot draws as before the forge, in the same order');
     expect(on.drops, isEmpty);
     expect(on.relicDrops, isEmpty, reason: 'the Towns take the relics');
     expect(on.waveMaterials, {
@@ -275,14 +275,10 @@ void main() {
       Mat.skull: 4,
       Mat.soulOrb: 1,
     });
-    expect(off.waveMaterials, isEmpty, reason: 'no materials with the Towns off');
     winNow(on);
     expect(on.inventory, isEmpty);
     expect(on.lastLoot, isEmpty);
     expect(on.materials[Mat.boneShard], 4);
-    winNow(off);
-    expect(off.lastLoot, hasLength(off.inventory.values.fold<int>(0, (a, n) => a + n)));
-    expect(off.lastLoot, hasLength(1 + 1 + 1 + 1 + bossDrops + 1));
   });
 
   test('matsSeen: each kind once, in the order it first dropped (a raised monster adds none); one come into the bag another '
@@ -307,7 +303,7 @@ void main() {
     expect(g.matsSeen, [Mat.batWing, Mat.slimeGel, Mat.orcTooth, Mat.orcTusk, Mat.evilEye]);
   });
 
-  test('the save: matsSeen by name in drop order, only with the Towns on (and any seen); loaded in its order, '
+  test('the save: matsSeen by name in drop order (once any was seen); loaded in its order, '
       'an unknown name skipped; a save without it starts from the materials held, in Mat order', () {
     final g = forgeGame()
       ..wave = 9
@@ -319,13 +315,7 @@ void main() {
     expect(Game.fromJson({...j, 'matsSeen': ['dragonScale', 'batFang', 'skull', 3]}).matsSeen, [Mat.batFang, Mat.skull]);
     expect(Game.fromJson({...j}..remove('matsSeen')).matsSeen, [Mat.slimeGel, Mat.lichOrb], reason: 'seeded from the bag, in Mat order');
     expect(Game.fromJson({...j}..remove('matsSeen')..remove('materials')).matsSeen, isEmpty);
-    // Not written with the Towns off (tests only), nor when none was seen: those saves are as before.
-    final h = forgeGame(towns: false)
-      ..wave = 9
-      ..materials.addAll({Mat.slimeGel: 4});
-    final before = jsonEncode(h.toJson());
-    h.matsSeen.addAll([Mat.skull, Mat.slimeGel]);
-    expect(jsonEncode(h.toJson()), before);
+    // Not written when none was seen: those saves are as before.
     expect(forgeGame().toJson().containsKey('matsSeen'), isFalse);
   });
 

@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart' show logLine, logLines, shortPrice;
 
-import 'awaken_items.dart';
+import 'real_rules.dart';
 import 'hero_skill_helpers.dart';
 
 /// A game between waves, wave [wave] won (the store open), with [gold] and a 6-column zone.

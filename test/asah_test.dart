@@ -289,7 +289,7 @@ void main() {
   testWidgets('the Asah button on a Pusaka\'s facing page: two taps raise it and say what was taken; the next one says '
       'why not; mid-wave it is greyed', (tester) async {
     final b = await boot(tester);
-    final g = b.state = w86().boardRules()..towns = false..chests.clear(); // its catch-up chests' popup would take the taps
+    final g = b.state = w86().boardRules()..chests.clear(); // its catch-up chests' popup would take the taps
     g.dismissPusakaNote();
     await frames(tester, 50);
     await openBag(tester, b);
@@ -303,7 +303,7 @@ void main() {
     expect((b.asahArmed, g.pusaka[Relic.dragonHeart]!.stars, g.gold), (Relic.dragonHeart, 1, gold));
     await tapOn(tester, b.asahButton.center);
     expect((b.asahArmed, g.pusaka[Relic.dragonHeart]!.stars, g.gold), (null, 2, gold - 60000));
-    expect(b.message, 'Dragon Heart ★2! -60k, ${relicNames[Relic.thorns]} 8, ${relicNames[Relic.fury]} 2');
+    expect(b.message, 'Dragon Heart ★2! -60k, ${relicNames[Relic.thorns]} 10'); // the cheapest first (Fang, Thorns)
     expect(g.troops.where((u) => u.alive && u.type == 'knight_templar').map((u) => u.maxHp).toSet(), {g.fieldStats('knight_templar').hp});
     // Another Pusaka in the same boss interval: a tap says why, and arms nothing.
     await tapOn(tester, b.bagSlot(Relic.grail).center);
@@ -329,7 +329,7 @@ void main() {
     final b = await boot(tester);
     for (final size in const [Size(1266, 713), Size(915, 412)]) {
       tester.view.physicalSize = size;
-      final g = b.state = w86().boardRules()..towns = false..chests.clear();
+      final g = b.state = w86().boardRules()..chests.clear();
       g.dismissPusakaNote();
       await frames(tester, 50);
       await openBag(tester, b);

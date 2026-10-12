@@ -4,7 +4,7 @@
 // have read live); a type's whole next Awaken in one go, on and off; a wish met shown done until the type's Awaken drops
 // it (a Cap's or a Ring's at once); the Items board's order (open wishes first in their grade); what a wish still lacks
 // and the materials the open wishes take; the save's `wishlist` (a round trip with the counts, a 282 save's lists as
-// held + 1, an old save without it, unknown names skipped, no key with nothing wished or the Towns off); free lines
+// held + 1, an old save without it, unknown names skipped, no key with nothing wished); free lines
 // (decisions-log 302: any item or relic the Smithy makes, for the Bag to hold a count of it; met by a craft or on leaving
 // the Town, it drops off; its recipe's parts for the rest; the save's `free`); and nothing crafts or gives by itself. No game is ever drawn here: the pages are wishlist_ui_test.dart's.
 import 'dart:convert';
@@ -306,9 +306,6 @@ void main() {
         'slime': {'sword': 1},
       };
     expect(Game.fromJson(goals).wishlist, {'knight': {Item.royalSword: 2}});
-    // The Towns off (tests only) write none (their game has no Wishlist).
-    g.towns = false;
-    expect(g.toJson().containsKey('wishlist'), isFalse);
     expect(Game.saveVersion, 3, reason: 'an added key, its value read in both shapes: no new format');
   });
 

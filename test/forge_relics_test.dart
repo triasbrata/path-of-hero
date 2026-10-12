@@ -2,7 +2,7 @@
 // docs/loot-items-relics.md "The forge's nine relics"): each relic alone at its town.json numbers (the bosses' halves,
 // Reaper on a boss), the four hidden pairings on and off, the relics' cap (combos.relicMost 3.0: Giant Slayer + the Fury
 // beat, under Relic Altar), the design's combos C1-C9, the cards (each its own effect only), the report's and the
-// telemetry's counters, and the Towns off (tests only): the nine do nothing and the eleven are as before the forge.
+// telemetry's counters, and the save.
 import 'dart:convert';
 import 'dart:math';
 
@@ -13,15 +13,12 @@ import 'package:tower_defense/telemetry.dart';
 
 import 'hero_skill_helpers.dart';
 
-/// A [bareGame] with no skills of any kind and no monster skills, the Towns (and with them the forge) on: what happens is
-/// the relics' doing. [towns] false: the Towns off (a plain Game()'s rules, tests only; the forge-off build is gone,
-/// decisions-log 296).
-Game plain({bool towns = true}) => bareGame(Random(1))
+/// A [bareGame] with no skills of any kind and no monster skills: what happens is the relics' doing.
+Game plain() => bareGame(Random(1))
   ..skills = false
   ..heroSkills = false
   ..awakenSkills = false
-  ..monsterSkills = false
-  ..towns = towns;
+  ..monsterSkills = false;
 
 /// A troop of [type] at cell ([c], [r]) holding [relics] (a Hero when [hero]), standing until told to strike.
 Unit holder(Game g, String type, int c, int r, List<Relic> relics, {bool hero = false}) => placeNow(g, type, c, r)
@@ -290,7 +287,6 @@ void main() {
         (plain(), [Relic.venom, Relic.sharkTooth], 0.30),
         (plain(), [Relic.venom], 0.20),
         (noSecrets(), [Relic.venom, Relic.sharkTooth], 0.20),
-        (plain(towns: false), [Relic.venom, Relic.sharkTooth], 0.20),
       ]) {
         final h = holder(g, 'knight', 2, 3, relics, hero: true), f = dummy(g, next(h.pos));
         expect(g.relicKOf(h, Relic.venom, 'share'), share);
@@ -342,9 +338,9 @@ void main() {
 
   group("the relics' cap (combos.relicMost): their factors on one blow, the Artifacts' outside", () {
     /// The multiples of [n] blows of a knight Hero holding [relics] on a [tier] dummy (its type holding [artifacts]).
-    List<double> blows(List<Relic> relics, {int n = 3, Tier tier = Tier.boss, List<Relic> artifacts = const [], bool towns = true,
-        void Function(Game g, Unit h)? before}) {
-      final g = plain(towns: towns);
+    List<double> blows(List<Relic> relics,
+        {int n = 3, Tier tier = Tier.boss, List<Relic> artifacts = const [], void Function(Game g, Unit h)? before}) {
+      final g = plain();
       for (final a in artifacts) {
         g.givePusaka(a, type: 'knight');
       }
@@ -358,9 +354,7 @@ void main() {
       expect(x, [closeTo(1.5, 1e-9), closeTo(1.5, 1e-9), closeTo(3.0, 1e-9)]);
     });
 
-    test('under Relic Altar (the beat x2.5): 3.75 with the Towns off (tests only), capped to 3.0 with them', () {
-      final off = blows([Relic.giantSlayer, Relic.fury], artifacts: [Relic.relicAltar], towns: false);
-      expect(off.last, closeTo(3.75, 1e-9), reason: "today's rules");
+    test('under Relic Altar (the beat x2.5, 3.75): capped to 3.0', () {
       final on = blows([Relic.giantSlayer, Relic.fury], artifacts: [Relic.relicAltar]);
       expect(on, [closeTo(1.5, 1e-9), closeTo(1.5, 1e-9), closeTo(3.0, 1e-9)]);
     });
@@ -565,49 +559,9 @@ void main() {
         'chill+ambush@snareCord': {'troops': 1, 'dealt': 300},
       });
     });
-
-    test('the Towns off (tests only): no relics, no pairs in the record; the report has none of the nine', () {
-      final g = plain(towns: false);
-      final kept = _Kept();
-      TelemetryAdapter([kept], installId: 'i', session: 's', platform: 'test', now: () => DateTime.utc(2026, 10, 4)).attach(g);
-      final h = holder(g, 'knight', 2, 3, [Relic.chill, Relic.fury], hero: true)..busyUntil = double.negativeInfinity;
-      g
-        ..startWave()
-        ..queue.clear();
-      foeAt(g, 'orc', next(h.pos)).hp = 300;
-      for (var n = 0; n < 400 && g.waveActive; n++) {
-        g.tick(0.05);
-      }
-      final w = kept.records.lastWhere((r) => r['rec'] == 'wave');
-      expect(w.containsKey('relics') || w.containsKey('relicPairs'), isFalse);
-      expect(g.lastPusaka?.relics ?? const [], isEmpty);
-      expect(h.comboKey, isNull);
-    });
   });
 
-  group('the Towns off (tests only): the nine do nothing, the eleven as before the forge', () {
-    test('a troop holding all nine (a test\'s) strikes, marks, slows and ends nothing more', () {
-      final g = plain(towns: false), k = holder(g, 'knight', 2, 3, nine), f = dummy(g, next(k.pos), hp: 1000);
-      k
-        ..hp = k.maxHp * 0.3
-        ..glow = 3;
-      g.addEffect(f, Status.bleed, 30, k: 0.001, n: 30);
-      g.addEffect(f, Status.slow, 30, k: 0.9);
-      f.hp = 169;
-      final hits = [for (var i = 0; i < 3; i++) blow(g, k, f)];
-      expect(hits, [20, 20, 20]);
-      expect((g.effectOn(f, Status.vulnerable), g.effectOn(f, Status.slow)!.k, f.alive, k.glow), (null, 0.9, true, 3));
-      expect(g.relicWorth, isEmpty);
-    });
-
-    test('the eleven: Giant Slayer + Fury uncapped, Venom 20%, Sweep one monster, whatever they hold', () {
-      final g = plain(towns: false);
-      final h = holder(g, 'knight', 2, 3, [Relic.venom, Relic.sharkTooth], hero: true), f = dummy(g, next(h.pos));
-      strikeOnce(g, h);
-      expect(bleedLeft(g, f), closeTo(h.stats.dmg * 0.2, 1e-9));
-      expect(g.relicKOf(h, Relic.cleave, 'targets'), 1);
-    });
-
+  group('the save', () {
     test('the save never writes their state: a Hero holding two of the nine round-trips as before', () {
       final g = Game(Random(1))
         ..boardRules()

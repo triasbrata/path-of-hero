@@ -22,6 +22,7 @@ import 'package:tower_defense/main.dart';
 import 'package:tower_defense/save.dart';
 
 import 'hud_font.dart';
+import 'real_rules.dart';
 import 'town_hud_test.dart' show frames, townGame;
 import 'town_life_test.dart' show ScriptDice, troop;
 import 'town_scene_test.dart' show intoTown, settle;
@@ -221,7 +222,6 @@ void main() {
       expect(guideNext(g, seen), isNull);
       g.materials[Mat.slimeGel] = 1;
       expect(guideNext(g, seen), 'K24');
-      expect(guideNext(g..towns = false, seen), isNull, reason: 'with the Towns off no materials card');
     });
 
     test('the Shop, Recall and spend-gold cards tell a Town\'s game: no Shop tab, the Army tab\'s dot, Recall', () {
@@ -305,22 +305,12 @@ void main() {
     }
   });
 
-  test('the Shop texts with the Towns on: the cap warning and the awakening tooltip send to the Army page', () {
+  test('the Shop texts: the cap warning and the awakening tooltip send to the Army page', () {
     expect(capWarningText(32, 50, towns: true), endsWith('in the ${Words.army} page (${Words.awaken})'));
-    expect(capWarningText(32, 50), endsWith('in the ${Words.shop} (${Words.awaken})'));
-    // At Awaken 3 from its items, by the game's own rule (by grade with the Towns and the forge on, decisions-log 272):
-    // the next is bought.
-    Game atThree({required bool towns}) {
-      final g = Game()..towns = towns;
-      g.upgrades['priest'] = [
-        for (final MapEntry(key: item, value: n) in g.awakenNeeds('priest', maxAwaken).entries) ...List.filled(n, item),
-      ];
-      expect(g.awakenLevel('priest'), maxAwaken);
-      return g;
-    }
-
-    expect(atThree(towns: true).awakenInfo('priest').$2.last, (null, '${awakenName(maxAwaken + 1)}: buy on the ${Words.army} page'));
-    expect(atThree(towns: false).awakenInfo('priest').$2.last, (null, '${awakenName(maxAwaken + 1)}: buy in the ${Words.shop}'));
+    // At Awaken 3 from its items, by the game's own rule (by grade, decisions-log 272): the next is bought.
+    final g = Game()..upgrades['priest'] = awakenItems('priest', maxAwaken);
+    expect(g.awakenLevel('priest'), maxAwaken);
+    expect(g.awakenInfo('priest').$2.last, (null, '${awakenName(maxAwaken + 1)}: buy on the ${Words.army} page'));
   });
 
   testWidgets('the Recall tag always says Recall: "Recall 6k" where "6000" won\'t fit, a swap only where it fits whole',

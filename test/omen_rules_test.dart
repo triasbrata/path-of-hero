@@ -9,7 +9,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 
-import 'awaken_items.dart';
+import 'real_rules.dart';
 import 'hero_skill_helpers.dart';
 
 const armor = OmenKind.armor, haste = OmenKind.haste, mend = OmenKind.mend, wound = OmenKind.wound;

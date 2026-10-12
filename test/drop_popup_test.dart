@@ -285,9 +285,8 @@ void main() {
     final b = await boot(tester);
     // The owner's wave-86 save (a copy): five Pusaka ★1.
     final save = jsonDecode(File('test/fixtures/save-20261001-2005-pre-awaken.json').readAsStringSync()) as Map<String, dynamic>;
-    // Its catch-up chests' popup would take the taps; the Towns off (tests only, decisions-log 296), as it always played.
+    // Its catch-up chests' popup would take the taps.
     final g = b.state = Game.fromJson(save).boardRules()
-      ..towns = false
       ..chests.clear();
     g.dismissPusakaNote();
     await frames(tester, 50);

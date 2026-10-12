@@ -1,9 +1,9 @@
 // The forge's items and Awaken by grade (decisions-log 249; lib/game.dart's awaken rules, lib/town.dart's Craft;
-// docs/loot-items-relics.md "The forge: Awaken by grade, items crafted"), with the Towns on (the forge comes with them;
-// its off switch is gone, decisions-log 296): each type's grade sets (its recipe + its own new kind, grade III at two thirds rounded up), Awaken L from exactly
+// docs/loot-items-relics.md "The forge: Awaken by grade, items crafted"), in every game (the forge comes with the Towns;
+// its off switch is gone, decisions-log 296, 321): each type's grade sets (its recipe + its own new kind, grade III at two thirds rounded up), Awaken L from exactly
 // the grade-L set, the caps per kind and grade and when a grade opens, the Cap's and the Ring's chain and swap at the cap,
 // every item's recipe and gold, the Stats each grade gives (Knight swords 3 + 3 + 2 = x7.137), the event and its
-// telemetry; with the Towns off (a plain Game(), tests only) everything as before the forge.
+// telemetry.
 import 'dart:convert';
 import 'dart:math';
 

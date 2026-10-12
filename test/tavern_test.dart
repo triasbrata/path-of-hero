@@ -2,7 +2,7 @@
 // `tavern` block, the prices by wave, the roll (the first Feast, different kinds, a kind running left out, Legendary from
 // wave 30, the pity, the Plate's type, the odds), buying with no limit and the refusals, the reroll, the stats step (the
 // oath under it, the Hero aura over it, the cap), damage taken through a blow, the countdown, Lucky Toast's gold,
-// Watchman's Brew's leak, the save, the events and the telemetry, the probe policy, and the Tavern off: nothing.
+// Watchman's Brew's leak, the save, the events and the telemetry, and the probe policy.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -13,18 +13,6 @@ import 'package:tower_defense/main.dart' show logLine;
 import 'package:tower_defense/telemetry.dart';
 
 import 'hero_skill_helpers.dart';
-
-/// A die that throws on any draw: nothing may roll.
-class _NoDice implements Random {
-  @override
-  double nextDouble() => throw StateError('no draw expected');
-
-  @override
-  int nextInt(int max) => throw StateError('no draw expected');
-
-  @override
-  bool nextBool() => throw StateError('no draw expected');
-}
 
 /// A sink that keeps what it gets, through JSON as a file would.
 class _Kept implements TelemetrySink {
@@ -532,25 +520,6 @@ void main() {
       expect(g0(g.boosts.first.kind), g0(best));
       expect(g.boosts.length, policy == 'top' ? 1 : 3);
     }
-  });
-
-  test('the Towns off (a plain Game(), tests only; the Tavern-off build is gone, decisions-log 296): no roll, no draw, '
-      'no offer, no key; statsOf untouched', () {
-    final g = tavern()
-      ..towns = false
-      ..tavernDice = _NoDice();
-    g
-      ..wave = 6
-      ..townAt = 7;
-    expect(g.enterTown(), isFalse);
-    expect(g.tavernOffers, isEmpty);
-    expect((g.whyNotBuyBoost(0), g.whyNotRerollTavern()), (BoostWhy.town, BoostWhy.town));
-    final j = jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>;
-    expect(j.containsKey('boosts'), isFalse);
-    expect(j.containsKey('town'), isFalse);
-    final (s, plain) = (g.statsOf('knight'), Game().statsOf('knight'));
-    expect((s.dmg, s.hp, s.taken, s.rate), (plain.dmg, plain.hp, plain.taken, plain.rate));
-    expect(Game().boosts, isEmpty);
   });
 }
 

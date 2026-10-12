@@ -6,7 +6,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 
-import 'awaken_items.dart';
+import 'real_rules.dart';
 
 void main() {
   setUp(() => omensOn = true);
