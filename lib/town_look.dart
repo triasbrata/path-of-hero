@@ -3,11 +3,13 @@ part of 'main.dart';
 // The Towns on the HUD (decisions-log 216; lib/town.dart; the scene is
 // town_scene.dart's, decisions-log 224): a due Town is gone into once nothing of the win is left on screen (the
 // "VICTORY!" cheer, the Hero splash, a Boss Chest: taken or skipped first), the book opening on its Smithy; the Start/Pause
-// toggle's Start says "Leave town" there ([Words.leaveTown], start_button.dart) and leaves it, and Auto leaves after
-// [TownSchedule.autoLeave] s unless a press in the Town stopped it, the wave starting right after the fade back (one
-// wait, the Auto hold of the field still applying). From the mark until the Town opens, the wave meter shows the chip "Town after wave
+// toggle's Start says "Leave town" there ([Words.leaveTown], start_button.dart) and leaves it. Auto never leaves a Town
+// (decisions-log 328): it is left by hand, Auto staying as set, and once left Auto Wave counts down as after a win (the
+// wait of the fade back and the field's Auto hold applying). From the mark until the Town opens, the wave meter shows the chip "Town after wave
 // 12" under it ([Board._townChip]), with the Town's hammer (town_mark.png, Kenmi's Tools 351) and its tooltip; in the
-// Town the meter itself says it's safe ([Board._inTownMeter]: a beer mug, town_mug.png, Kenmi's Food 3, and "In town").
+// Town the meter itself says it's safe ([Board._inTownMeter]: a beer mug, town_mug.png, Kenmi's Food 3, and "In town",
+// the Town's name since decisions-log 326: "In Millbrook"). As a Town comes up its name shows on a ribbon under the
+// HUD's band for a moment ([Board._townArrival]).
 
 /// town_mark.png: Kenmi's 16-px hammer, doubled into its 32x32 file (tool/import_fx.py's LOOT); town_mug.png, the
 /// wave meter's beer mug in a Town, likewise.
@@ -15,6 +17,10 @@ const _townMarkSrc = Rect.fromLTWH(0, 0, 32, 32);
 
 /// "In town" on the wave meter: the battle log's green for a won wave, a safe time.
 const _townSafeInk = Color(0xFF9BE37A), _townNextInk = Color(0xFFFFF1D6);
+
+/// The Town's name as it comes up ([Board._townArrival]): its seconds on screen from the fade's middle, the last
+/// [_townArrivalOut] of them fading out.
+const _townArrivalFor = 3.0, _townArrivalOut = 0.5;
 
 extension _TownLook on Board {
   /// The Town's hammer over [to].
@@ -27,11 +33,33 @@ extension _TownLook on Board {
   void _inTownMeter(Canvas c, Rect inside, double pad, double icon, double ts, int next) {
     final y = inside.center.dy, x = inside.left + icon + pad;
     c.drawImageRect(_img('town_mug.png'), _townMarkSrc, Rect.fromLTWH(inside.left, inside.top + pad, icon, icon), _px);
-    _text(c, Words.inTown, Offset(x, y), size: ts, color: _townSafeInk);
-    final room = inside.right - x - _textWidth(Words.inTown, ts) - 2 * pad;
+    // The Town's name (decisions-log 326): "In Millbrook"; "In town" where it doesn't fit.
+    final named = '${Words.inPlace} ${state.sceneIdentity.name}';
+    final safe = _textWidth(named, ts) <= inside.right - x - pad ? named : Words.inTown;
+    _text(c, safe, Offset(x, y), size: ts, color: _townSafeInk);
+    final room = inside.right - x - _textWidth(safe, ts) - 2 * pad;
     final label = ['${Words.nextWave} $next', '$next'].firstWhere((l) => _textWidth(l, ts) <= room, orElse: () => '');
     _text(c, label, Offset(inside.right, y), size: ts, color: _townNextInk, anchor: Anchor.centerRight);
-    _townMeterText = [Words.inTown, if (label.isNotEmpty) label].join(' · ');
+    _townMeterText = [safe, if (label.isNotEmpty) label].join(' · ');
+  }
+
+  /// The Town's name as it comes up (decisions-log 326): ui_ribbons' flat ribbon (the signs' [_ribbonTitle]) at 1.5
+  /// times the scene's scale (the signs' [sk] at the least: on a phone as big as they are), under the HUD's band over
+  /// the middle of the scene's room (left of the book when it is open), the name on it ("Millbrook") and under it "Town 1 · Farming village" in cream with a dark outline; for
+  /// [_townArrivalFor] s from the fade's middle, fading out over its last [_townArrivalOut]. Never for a game loaded in
+  /// a Town (no fade), nor as the Town is left.
+  void _townArrival(Canvas c, Game g, double sk) {
+    final t = _clock - _town.fadeAt - _townFade;
+    _townArrivalAt = Rect.zero;
+    if (!g.inTown || !_town.fadeAt.isFinite || t < 0 || t >= _townArrivalFor) return;
+    final a = math.min(1.0, (_townArrivalFor - t) / _townArrivalOut), rk = math.max(sk, (1.5 * _town.k).roundToDouble());
+    final room = _town.book ? _bookFit().rest.left : size.x, who = g.sceneIdentity;
+    if (a < 1) c.saveLayer(null, Paint()..color = Color.fromRGBO(0, 0, 0, a));
+    final ribbon = _townArrivalAt =
+        _ribbonTitle(c, who.name, Offset((room / 2).roundToDouble(), _meterBottom + 8 + 10 * rk), rk, room - 16);
+    _text(c, '${Words.town} ${g.townCount} · ${who.line}', Offset(ribbon.center.dx, ribbon.bottom + 4 * rk),
+        size: math.max(11.0, 5 * rk), color: _townNextInk, anchor: Anchor.center, outline: const Color(0xFF3C1E0A));
+    if (a < 1) c.restore();
   }
 
   /// The chip's words: "Town after wave 12".
@@ -75,36 +103,32 @@ extension _TownLook on Board {
 
   /// The Towns' turn in the Board's update: a due Town is gone into once nothing of the win is left on screen (the
   /// cheer's [victoryTime], the Hero splash, the chest's popup or a chest due, a monster skill's splash, a guide card),
-  /// never under the welcome screen; the game is saved there (a reload reopens it) and the book opens on the Smithy. With
-  /// Auto on, its countdown runs [TownSchedule.autoLeave] s in the Town ("Leave town 5" … "1"), holding as the start's
-  /// does while paused, behind a card or splash or a chest due; a press in the Town stops it for the visit
-  /// (town_scene.dart's [_townPress]); at 0 it leaves and the start's countdown is left at 0, so the wave starts once the
-  /// fade back is over unless the field's Auto hold waits ([Game.autoHeld]). True while in a Town (the start's countdown
-  /// is then this one's).
+  /// never under the welcome screen; the game is saved there (a reload reopens it) and the book opens on the Smithy. No
+  /// countdown runs in a Town, whatever Auto is (decisions-log 328): it stays until "Leave town" ([_leaveTown]). True
+  /// while in a Town.
   bool _townTick(Game g, double dt) {
     final calm = !holdAutoStart && !_chestHolds(g) && !_foeSplashBusy && !_coach.showing && g.t - g.victoryAt >= victoryTime;
     if (welcome == null && g.townDue && !g.inTown && calm && g.enterTown(auto: autoStart.on)) {
       saveGame(g);
       _open(_Page.smithy); // the book opens on the Smithy (town_scene.dart)
       _town.book = true;
-      if (autoStart.on) autoStart.left = g.townRules.schedule.autoLeave;
     }
     if (!g.inTown) return false;
-    if (autoStart.tick(math.min(dt, 0.1), held: g.paused || !calm)) {
-      _leaveTown(g, auto: true);
-      autoStart.left = 0; // the start's countdown, done: the wave starts now, or once the Auto hold lets it
-    }
+    autoStart.cancel();
     return true;
   }
 
-  /// Leaves the Town ([Towns.leaveTown]; [auto]: Auto left it) and saves, so a reload doesn't reopen it. The start
-  /// button's press in a Town.
-  void _leaveTown(Game g, {bool auto = false}) {
-    if (g.leaveTown(auto: auto)) saveGame(g);
+  /// Leaves the Town by hand ([Towns.leaveTown]) and saves, so a reload doesn't reopen it; with Auto on, its countdown
+  /// starts as after a win ([AutoStart.won]: the wave once the fade back is over and it has run). The start button's
+  /// press in a Town.
+  void _leaveTown(Game g) {
+    if (!g.leaveTown()) return;
+    saveGame(g);
+    autoStart.won();
   }
 
-  // The Start/Pause toggle's hooks (start_button.dart reads them): in a Town its Start shows,
-  // says "Leave town", counts Auto's [TownSchedule.autoLeave] down, and a press is [_leaveTown].
+  // The Start/Pause toggle's hooks (start_button.dart reads them): in a Town its Start shows, says "Leave town" with no
+  // countdown, and a press is [_leaveTown].
 
   /// The toggle shows Start: a wave can start, or the player is in a Town.
   bool _startShows(Game g) => g.canStartWave || g.inTown;
@@ -112,8 +136,8 @@ extension _TownLook on Board {
   /// Its word: "Leave town" in a Town, else "Start".
   String _startWord(Game g) => g.inTown ? Words.leaveTown : Words.start;
 
-  /// The most seconds Auto's countdown shows on it (its width keeps room for them).
-  int _startMost(Game g) => (g.inTown ? g.townRules.schedule.autoLeave : autoStartDelay).ceil();
+  /// Its widest words: with Auto's most seconds on the field ("Start 5"); in a Town its word alone, no countdown there.
+  String _startMost(Game g) => g.inTown ? _startWord(g) : '${_startWord(g)} ${autoStartDelay.ceil()}';
 }
 
 /// How long a dropped material hops from the kill onto its pile on the ground (decisions-log 221, 262).

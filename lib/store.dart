@@ -6,8 +6,8 @@ part of 'game.dart';
 // a small share. Every choice the owner may still change is one constant or switch below. It deals only in a Town
 // ([StoreRefusal.town], decisions-log 230; the field's Toko page went in decisions-log 296, its prices and rules in 321):
 // the Town's Shop page, on the Bag's own code (lib/bag.dart), buys and sells there, the Towns' materials too (each at its
-// own price, [TownRules.materials]). Its prices are town.json's ([TownRules], decisions-log 233): a small relic sells
-// back for half its craft gold ([Recipe.gold], [TierPrices.sellShare]), an item for the [TownShop]'s share. The forge's
+// own price, [TownRules.materials]). Its prices are town.json's ([TownRules], decisions-log 233); an item and a small
+// relic sell back at the market's price (decisions-log 326, market.dart: their cost times the Town's demand). The forge's
 // Shop (decisions-log 248): its shelf holds only the materials that have dropped ([Game.matsSeen]), each at
 // [Materials.shopMatPrice], and no item or small relic (their tier's and the [TownShop]'s buy prices stay in town.json,
 // unused); it still buys them all.
@@ -137,7 +137,7 @@ extension Store on Game {
   int buyPrice(Enum kind, [int ahead = 0]) {
     final n = (storeBought[kind] ?? 0) + ahead;
     return switch (kind) {
-      final Mat m => shopMatPrice(m, n),
+      final Mat m => marketMatPrice(m, n, ahead), // dearer for each bought, by the market (market.dart)
       Relic(store: true) => (artefactPrice[kind]! * pow(artefactRise, n)).round(),
       final Relic r when !r.pusaka => _tierPrices(r).priceAfter(n),
       Relic() => basePrice(kind), // the chest's Pusaka: never sold here ([StoreRefusal.shelf])
@@ -146,20 +146,18 @@ extension Store on Game {
   }
 
   /// What one [kind] from the bag sells for: [sellShare] of its base price; a material ([Mat]) its own price
-  /// ([MatInfo.sell], town.json `materials`). A small relic sells for its tier's [TierPrices.sellShare]
-  /// of its craft gold ([Recipe.gold]: half, 150 to 1,750) and an item for the [TownShop]'s share of its price.
+  /// ([MatInfo.sell], town.json `materials`). An item and a small relic, the Smithy's goods, sell at the market's price
+  /// for the next piece ([Market.marketPrice], decisions-log 326: 1.3x-4x their cost by grade and the Town's demand,
+  /// lower the more of that exact product was sold); until then a small relic sold for half its craft gold and every
+  /// item for a flat 1,000 (the [TownShop]'s share of its price).
   int sellPrice(Enum kind) => switch (kind) {
         Mat() => townRules.materials[kind]?.sell ?? 0,
-        final Relic r when !r.pusaka => (_craftGold(r) * _tierPrices(r).sellShare).round(),
-        Item() => (townRules.shop.itemPrice * townRules.shop.itemSellShare).round(),
+        Item() || Relic(pusaka: false) => marketPrice(kind),
         _ => (basePrice(kind) * sellShare).round(),
       };
 
   /// Small relic [relic]'s tier prices ([Relics.relicTier], town.json `tiers`).
   TierPrices _tierPrices(Relic relic) => townRules.tiers[relicTier(relic)] ?? _townTiers[relicTier(relic)]!;
-
-  /// The gold small relic [relic]'s recipe takes ([Recipe.gold]); 0 without one.
-  int _craftGold(Relic relic) => townRules.recipes[relic.name]?.gold ?? 0;
 
   /// How many [kind] are in the bag; a Pusaka: 1 while it waits in the Gudang (an oath never does: it never sells); a
   /// material ([Mat]): how many are held.
@@ -223,6 +221,7 @@ extension Store on Game {
     final price = buyPrice(kind);
     gold -= price;
     storeBought[kind] = (storeBought[kind] ?? 0) + 1;
+    if (kind is Mat) _marketSold(kind, 0, 1); // the next one dearer (market.dart)
     _toBag(kind, 1);
     _emit(StoreBought(wave, t, loot: kind, cost: price));
     sfx.add(Sfx.kill); // the coin
@@ -236,10 +235,14 @@ extension Store on Game {
       sfx.add(Sfx.error);
       return 0;
     }
-    final sold = min(n, inBag(kind));
+    final sold = min(n, inBag(kind)), market = marketed(kind);
+    // The Smithy's goods sell each piece at its own step of the market (market.dart), the rest at one price.
+    final gain = market ? marketSum(kind, 0, sold) : sold * sellPrice(kind);
+    final margin = market ? marginOf(kind) : null, pressure = market ? pressureOf(kind) : null;
     _toBag(kind, -sold);
-    gold += sold * sellPrice(kind);
-    _emit(StoreSold(wave, t, loot: kind, n: sold, gain: sold * sellPrice(kind)));
+    gold += gain;
+    if (market) _marketSold(kind, 0, sold);
+    _emit(StoreSold(wave, t, loot: kind, n: sold, gain: gain, margin: margin, pressure: pressure));
     sfx.add(Sfx.kill);
     return sold;
   }

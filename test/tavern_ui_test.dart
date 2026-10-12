@@ -194,14 +194,14 @@ void main() {
       expect([for (final e in b.tavernEffects) (e.what, e.value)],
           [('Damage', '+20%'), ('Damage taken', '-15%'), ('Troops', 'All troops'), ('Waves', '2')]);
       final price = g.boostPrice(Boost.feast);
-      expect(price, 800, reason: 'the Feast after wave 20 (decisions-log 266)');
-      expect(b.tavernText('buy'), anyOf('Buy (800 gold)', 'Buy (800)', 'Buy'));
+      expect(price, 700, reason: 'the Feast after wave 20 (decisions-log 266; 800 before 318)');
+      expect(b.tavernText('buy'), anyOf('Buy (700 gold)', 'Buy (700)', 'Buy'));
 
       // Buy: it runs, the message says so, the row is sold and the boost shows under Active with its waves left.
       await tapOn(tester, await seen(tester, b, () => b.tavernAt('buy')), 'Buy');
       await frames(tester, 2);
       expect(b.message, 'Feast! 2 waves');
-      expect(g.gold, 40000 - 800);
+      expect(g.gold, 40000 - 700);
       expect([for (final x in g.boosts) (x.kind, x.left)], [(Boost.feast, 2)]);
       expect(b.tavernRows.first.price, 'Sold');
       expect(b.tavernText('buy'), 'Sold');
@@ -212,7 +212,7 @@ void main() {
       await shutMessage(tester, b);
       await tapOn(tester, await seen(tester, b, () => b.tavernAt('buy')), 'Buy sold');
       expect(b.message, 'Sold');
-      expect(g.gold, 40000 - 800, reason: 'nothing bought');
+      expect(g.gold, 40000 - 700, reason: 'nothing bought');
 
       // Another offer picked: its page; short of gold its price is red, Buy and Reroll say why.
       await shutMessage(tester, b);

@@ -47,6 +47,7 @@ class TownRules {
     this.awaken = const AwakenRules(),
     this.enhance = const EnhanceRules(),
     this.tavern = const TavernRules(),
+    this.market = const MarketRules(),
     this.skipped = const [],
   });
 
@@ -100,6 +101,9 @@ class TownRules {
 
   /// The Tavern's boosts (decisions-log 266; the file's `tavern`, lib/tavern.dart): read with the Tavern on.
   final TavernRules tavern;
+
+  /// The market for forged goods (decisions-log 326; the file's `market`, lib/market.dart).
+  final MarketRules market;
 
   /// What [parse] left out of the file, one line each (a name it doesn't know, a number out of range): main.dart
   /// prints them. Not in [toJson].
@@ -203,6 +207,7 @@ class TownRules {
       awaken: AwakenRules.fromJson(block(j, 'awaken'), skipped),
       enhance: EnhanceRules.fromJson(block(j, 'enhance'), skipped),
       tavern: TavernRules.fromJson(block(j, 'tavern'), skipped),
+      market: MarketRules.fromJson(block(j, 'market'), skipped),
       skipped: skipped,
     );
   }
@@ -292,6 +297,7 @@ class TownRules {
         'awaken': awaken.toJson(),
         'enhance': enhance.toJson(),
         'tavern': tavern.toJson(),
+        'market': market.toJson(),
       };
 }
 
@@ -428,7 +434,6 @@ class TownSchedule {
     this.chanceCap = 1.00,
     this.minGap = 5,
     this.firstTownAfter = 2,
-    this.autoLeave = 5.0,
   });
 
   /// The first roll's chance, and again after each Town.
@@ -443,11 +448,9 @@ class TownSchedule {
   /// A Town's slot is at least this many after the last Town's: that many waves fought between two Towns.
   final int minGap;
 
-  /// A new run counts as if a Town had come before this wave.
+  /// A new run counts as if a Town had come before this wave. (An older file's `autoLeave`, the seconds Auto waited in a
+  /// Town before it left, is read as nothing: a Town is left by hand, decisions-log 328.)
   final int firstTownAfter;
-
-  /// Seconds Auto waits in a Town before it leaves (and the next wave starts).
-  final double autoLeave;
 
   factory TownSchedule.fromJson(Map<String, dynamic> j) {
     const d = TownSchedule();
@@ -461,7 +464,6 @@ class TownSchedule {
       chanceCap: cap,
       minGap: atLeast('minGap', 1, d.minGap),
       firstTownAfter: atLeast('firstTownAfter', 0, d.firstTownAfter),
-      autoLeave: switch (j['autoLeave']) { final num v when v >= 0 && v.isFinite => v.toDouble(), _ => d.autoLeave },
     );
   }
 
@@ -471,7 +473,6 @@ class TownSchedule {
         'chanceCap': chanceCap,
         'minGap': minGap,
         'firstTownAfter': firstTownAfter,
-        'autoLeave': autoLeave,
       };
 }
 
@@ -699,8 +700,9 @@ class Secret {
       };
 }
 
-/// A relic tier's prices (town.json `tiers`): a sale pays [sellShare] of its recipe's gold; the Town's Shop sells one
-/// at [shop] gold, [shopRise] of it more after each bought.
+/// A relic tier's prices (town.json `tiers`): the Town's Shop sells one at [shop] gold, [shopRise] of it more after each
+/// bought. A sale paid [sellShare] of its recipe's gold until decisions-log 326 (the market's price since, market.dart):
+/// kept, read by nothing.
 class TierPrices {
   const TierPrices(this.shop, {this.sellShare = 0.5, this.shopRise = 0.2});
 
@@ -721,7 +723,8 @@ class TierPrices {
 
 /// The Town's Shop (town.json `shop`): open from wave [from]'s win (1, the owner's 2026-10-07 "shop juga harusnya di buka
 /// ketika masuk kota": open in every Town, decisions-log 253; it was 15) — OWNER-MAY-CHANGE KNOB; an item costs
-/// [itemPrice], [itemRise] more after each bought, and sells back for [itemSellShare] of its price. It sells (decisions-log 246) the materials
+/// [itemPrice], [itemRise] more after each bought (it sold back for [itemSellShare] of its price until decisions-log 326,
+/// the market's price since: kept, read by nothing). It sells (decisions-log 246) the materials
 /// that have dropped ([Game.matsSeen]) at [matMarkup] times their sell price, and [matRise] of that more a buy ([matPrice]).
 class TownShop {
   const TownShop({
@@ -1039,16 +1042,17 @@ extension Towns on Game {
   bool enterTown({bool auto = false}) {
     if (!townDue || inTown || over) return false;
     inTown = true;
+    _marketNewTown(); // its number and the market's recovery (market.dart)
     _townSince = t;
     _townCrafts.clear();
     _townCraftSpent = 0;
     _rollTavern(); // the Tavern's offers (tavern.dart), on its own dice
-    _emit(TownEntered(wave, t, slot: townAt!, gold: gold, auto: auto));
+    _emit(TownEntered(wave, t, slot: townAt!, gold: gold, auto: auto, n: townCount, identity: townIdentity.key));
     return true;
   }
 
-  /// Leaves the Town ([auto]: Auto left it): its slot becomes [townLast] and the mark goes, so the next wave can start.
-  /// False (nothing changes) when not in one.
+  /// Leaves the Town ([auto]: a probe's [Game.townPolicy] left it; the player leaves by hand, decisions-log 328): its
+  /// slot becomes [townLast] and the mark goes, so the next wave can start. False (nothing changes) when not in one.
   bool leaveTown({bool auto = false}) {
     if (!inTown) return false;
     final slot = townAt!;
@@ -1095,7 +1099,7 @@ extension Towns on Game {
   /// The save's `town`: the chance, the last Town's slot, the marked slot and whether the player is in it; the Tavern's
   /// keys (tavern.dart), none while unused.
   Map<String, Object> get _townJson => {
-        'town': {'chance': townChance, 'last': townLast, 'at': ?townAt, if (inTown) 'in': true, ..._tavernTownJson},
+        'town': {'chance': townChance, 'last': townLast, 'at': ?townAt, if (inTown) 'in': true, if (townCount > 0) 'n': townCount, ..._tavernTownJson},
       };
 
   /// [j]'s `town` (a save without it is from before the Towns: it counts as a Town before its own
@@ -1108,18 +1112,30 @@ extension Towns on Game {
       townAt = switch (town['at']) { final int at when at > wave => at, _ => null };
       inTown = town['in'] == true && townAt == wave + 1;
       _loadTavern(town); // the Tavern's (tavern.dart)
+      townCount = switch (town['n']) { final int n when n >= 0 => n, _ => _townCountGuess };
     } else if (wave > 0) {
       _townLast = max(wave, townRules.schedule.firstTownAfter);
+      townCount = _townCountGuess;
     }
   }
 
-  /// The wave meter chip's tooltip ([townMarked]): "Town after wave 12" and what a Town holds, in the street's order (its
-  /// Smithy crafts the items too, decisions-log 272; the Tavern, decisions-log 268).
-  (String, List<String>) get townTip => ('${Words.townAfter} ${(townAt ?? wave + 1) - 1}', [
-        '${Words.smithy}: craft items and relics',
-        '${Words.tavern}: buy boosts',
-        if ((townAt ?? 0) - 1 >= shopFrom) '${Words.shop}: buy and sell',
-      ]);
+  /// The Towns a save without its count (`town.n`, decisions-log 326) has been through: one each [townGapGuess] waves
+  /// from the run's first count to its last Town's slot, and the one it is in.
+  int get _townCountGuess =>
+      max(0, ((townLast - townRules.schedule.firstTownAfter) / townGapGuess).round()) + (inTown ? 1 : 0);
+
+  /// The wave meter chip's tooltip ([townMarked]): "Town after wave 12: Millbrook, a farming village" (the coming
+  /// Town's identity, decisions-log 326) and what a Town holds, in the street's order (its Smithy crafts the items too,
+  /// decisions-log 272; the Tavern, decisions-log 268), with the Shop what it pays well for.
+  (String, List<String>) get townTip {
+    final who = townIdentity, shop = (townAt ?? 0) - 1 >= shopFrom;
+    return ('${Words.townAfter} ${(townAt ?? wave + 1) - 1}: ${who.name}, a ${who.line.toLowerCase()}', [
+      '${Words.smithy}: craft items and relics',
+      '${Words.tavern}: buy boosts',
+      if (shop) '${Words.shop}: buy and sell',
+      if (shop) '${who.wantsLine}.',
+    ]);
+  }
 }
 
 /// The name of the relic of save key [key] ([townRelics]): a recipe's name on the Bag's material page.
@@ -1214,6 +1230,11 @@ extension Materials on Game {
   /// price ([MatInfo.sell]) rounded up to 5, as shipped (Slime Gel 25, Wolf Claw 65, Soul Orb 1,500). Its shelf holds
   /// only the kinds in [Game.matsSeen] (decisions-log 246).
   int shopMatPrice(Mat m, [int bought = 0]) => townRules.shop.matPrice(townRules.materials[m]?.sell ?? 0, bought);
+
+  /// What the Shop asks for the next [m] after [ahead] more ([Store.buyPrice]): [shopMatPrice] at its [bought] count,
+  /// times the market's [Market.matFactor] (decisions-log 326: dearer for each one bought, back over 2-3 Towns), rounded
+  /// up to 5.
+  int marketMatPrice(Mat m, [int bought = 0, int ahead = 0]) => ((shopMatPrice(m, bought) * matFactor(m, ahead)) / 5 - 1e-9).ceil() * 5;
 
 }
 

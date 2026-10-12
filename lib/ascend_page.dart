@@ -1,7 +1,7 @@
 part of 'main.dart';
 
 // Awaken 4-5 and Forge on a button (#92 part 2, decisions-log 143, 163; their rules: lib/ascend.dart, lib/tempa.dart;
-// docs/ui-hud.md "Army"): [Board._upgradeButton], the Army page's detail's (troop_detail.dart): "Awaken 4  100k" or at
+// docs/ui-hud.md "Army"): [Board._upgradeButton], the Army page's detail's (troop_detail.dart): "Awaken 4  40k" or at
 // Bangkit 5 "Forge +5  33k" (purple), or greyed with why not, which a tap also says in the message window; a type below
 // Bangkit 3 whose next awakening the bag holds ([Ascend.bagLevel]) gets "Awaken 2 from the Bag", which turns the book to
 // the Bag with the item it needs picked. Tempa's "+n" after a type's stars ([Board._tempaMark]); the Bag tab's dot and
@@ -33,7 +33,7 @@ extension on Board {
   /// (troop_detail.dart), buying through [_ascend] / [_temper]: a type below Bangkit
   /// 3 whose next awakening the bag holds ([Ascend.bagLevel]) gets an orange "Awaken 2 from the Bag", which turns the
   /// book to the Bag with the first item it needs picked ([_toBagFor]); else at Bangkit 5 the next Tempa level, purple
-  /// with its price ("Forge +5  33k"), or below it the next Bangkit ("Awaken 4  100k"); refused, white with why ([step],
+  /// with its price ("Forge +5  33k"), or below it the next Bangkit ("Awaken 4  40k"); refused, white with why ([step],
   /// the detail's, names the step first: "Awaken 4: Opens after wave 15"), and a tap says it in the message window. The
   /// longest words that fit go on it, and are returned. Its tap goes in [into] ([_hits], on tap down, unless given).
   /// With [tag] (the detail's: inside a section, decisions-log 198) a green tag in place of the button ([_tag]), greyed

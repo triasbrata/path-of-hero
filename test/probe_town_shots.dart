@@ -5,7 +5,7 @@
 // At 1266x713, 915x412 and 412x860 (<size>): chip-<size> (wave 8 won, every roll hitting: a Town marked before wave 10,
 // "Town after wave 9"; the book open), tip-<size> (its tooltip under the mouse), wave-<size> (wave 9 on, the book shut:
 // the chip under the meter, the mini boss's bar under it), town-<size> (wave 9 won, in the Town: the meter's beer mug,
-// "In town", "next wave 10"; "Leave town" in Start's place, no chip), auto-<size> (the same with Auto on: "Leave town 5") and log-<size> (the battle log's Town lines).
+// "In town", "next wave 10"; "Leave town" in Start's place, no chip), auto-<size> (the same with Auto on: still "Leave town", no countdown: decisions-log 328) and log-<size> (the battle log's Town lines).
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
@@ -121,15 +121,13 @@ void main() {
       g.units.add(bear);
       await shot('wave', 40);
 
-      // Won (the mini boss gone): the cheer, then the Town ("Leave town"); with Auto on, "Leave town 5".
+      // Won (the mini boss gone): the cheer, then the Town ("Leave town"); with Auto on, the same (decisions-log 328).
       bear.gone = true;
       for (var i = 0; i < 600 && !g.inTown; i++) {
         await frames(tester, 1);
       }
       await shot('town', 30);
-      b.autoStart
-        ..set(true)
-        ..left = g.townRules.schedule.autoLeave;
+      b.autoStart.set(true);
       await shot('auto', 2);
       b.autoStart.set(false);
       if (b.logPanel == Rect.zero) {

@@ -550,7 +550,7 @@ void main() {
       return out;
     }
 
-    // Bought: Awaken 4 for 100k, "Knight: Awaken 4!".
+    // Bought: Awaken 4 for 40k, "Knight: Awaken 4!".
     expect(await via(shopper()), (1000000 - ascendPrice[0], 4, 0, '${troopTypeNames['knight']}: ${Words.awaken} 4!'));
     // Short of gold: refused, with why.
     expect(await via(shopper()..gold = 1000), (1000, 3, 0, Words.notEnoughGold));

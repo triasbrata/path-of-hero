@@ -144,19 +144,19 @@ void main() {
       table[w] = [for (final b in [Boost.ale, Boost.feast, Boost.plate, Boost.banquet]) g.boostPrice(b)];
     }
     expect(table, {
-      6: [50, 100, 150, 300],
+      6: [50, 100, 150, 250],
       7: [50, 100, 200, 350],
-      12: [150, 250, 500, 800],
-      20: [450, 800, 1400, 2350],
-      30: [1100, 1850, 3300, 5550],
-      50: [4750, 7950, 14000, 24000],
-      70: [18000, 29000, 53000, 88000],
-      86: [47000, 78000, 140000, 234000],
-    });
+      12: [150, 250, 450, 750],
+      20: [450, 700, 1300, 2150],
+      30: [950, 1600, 2900, 4800],
+      50: [3800, 6300, 11000, 19000],
+      70: [13000, 21000, 38000, 63000],
+      86: [31000, 52000, 93000, 156000],
+    }); // the purse grows with the kill gold's 4.5% a wave (5% until decisions-log 318)
     expect(table[6]![1], lessThan(500), reason: 'the Feast well under 500 at the first Towns');
     // A kind's own k prices it over its rarity's.
     final own = inTown(tavern(rules: rules({'boosts': {'ale': {'k': 1.0}}})), 20);
-    expect(own.boostPrice(Boost.ale), 1550);
+    expect(own.boostPrice(Boost.ale), 1400);
     // The rerolls: 0.1 purse at least 50, ×2 each in the visit.
     final g = inTown(tavern(rules: only('common')), 20);
     final prices = <int>[];
@@ -164,7 +164,7 @@ void main() {
       prices.add(g.tavernRerollPrice);
       expect(g.rerollTavern(), isTrue);
     }
-    expect(prices, [150, 300, 600, 1250]);
+    expect(prices, [150, 300, 550, 1150]);
     expect(inTown(tavern(), 7).tavernRerollPrice, 50);
   });
 

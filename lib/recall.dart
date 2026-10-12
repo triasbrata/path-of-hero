@@ -8,7 +8,7 @@ part of 'game.dart';
 // "iya bener duitnya itu aku bingung di buat untuk apa"). Every number the owner may change is a constant below.
 
 /// What a recall costs at wave 1, before [killGoldGrowth] (the kill gold's own growth, so the price stays about one
-/// wave's income): 57k at wave 65, 80k at 72, 118k at 80, 313k at 100.
+/// wave's income): 42k at wave 65, 57k at 72, 81k at 80, 195k at 100.
 const heroRecallK = 2500;
 
 /// The recall's price is rounded to this many gold.

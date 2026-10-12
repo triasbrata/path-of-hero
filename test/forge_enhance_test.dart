@@ -306,17 +306,21 @@ void main() {
     expect((g.upgradePlus['soldier'], g.bagOf(Item.steelHelm, 1)), (null, 1));
   });
 
-  test('the Shop buys an enhanced item for its price plus half of what its steps cost', () {
+  test("the Shop buys an enhanced item at the market's price for that exact product (decisions-log 326): its steps' "
+      "gold and stones in its cost, the enhanced column's margin, each piece at its own step", () {
     final g = forgeInTown();
-    final base = g.sellPrice(Item.royalSword), mithril = g.townRules.materials[Mat.mithril]!.sell;
-    final starmetal = g.townRules.materials[Mat.starmetal]!.sell;
-    expect((mithril, starmetal), (770, 2970));
+    final base = g.sellPrice(Item.royalSword);
     expect(g.sellPriceAt(Item.royalSword, 0), base);
-    expect(g.sellPriceAt(Item.royalSword, 1), base + 250 + 770);
-    expect(g.sellPriceAt(Item.royalSword, 5), base + 9500 ~/ 2 + 3 * 770 + 2 * 2970);
+    // +1 in the first Town: the Royal Sword's 115 of parts and 250 gold, a step's 500 gold and a Mithril (its Evil Eye,
+    // two Iron Scraps and a Grave Steel, 540, and its 1,000 gold); the gold at 1.3, the parts at the enhanced 1.4.
+    expect(g.costOf(Item.royalSword, 1), (parts: 115 + 540, gold: 250 + 500 + 1000));
+    expect(g.sellPriceAt(Item.royalSword, 1), (1750 * 1.3 + 655 * 1.4).round());
+    expect(g.sellPriceAt(Item.royalSword, 5), g.marketPrice(Item.royalSword, 5));
     g.enhancedBag[(Item.royalSword, 2)] = 2;
+    final two = g.marketSum(Item.royalSword, 2, 2);
     expect(g.sellAt(Item.royalSword, 2, 5), 2);
-    expect(g.gold, 2 * g.sellPriceAt(Item.royalSword, 2));
+    expect(g.gold, two);
+    expect(g.pressureOf(Item.royalSword, 2), 2);
     expect(g.enhancedBag, isEmpty);
     expect(g.whyNotSellAt(Item.royalSword, 2), StoreRefusal.none);
     expect(forge().whyNotSellAt(Item.royalSword, 2), StoreRefusal.town);

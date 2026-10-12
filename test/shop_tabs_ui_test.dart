@@ -285,8 +285,8 @@ void main() {
       expect(sold.map((l) => l.kind), isNot(anyOf(contains(Relic.dragonCrown), contains(Relic.oathOfOne), contains(Relic.fury))));
       expect(b.bagMarks(Item.shield)!.count, 12);
 
-      // A tap puts a cell in the basket at 1 and picks it: the top shows it (its heading, its grade), its price row "3290 x
-      // 1 = 3290"; the cell's count turns green; the page's parts in order, the price row under the name's words.
+      // A tap puts a cell in the basket at 1 and picks it: the top shows it (its heading, its grade), its price row "5522 x
+      // 1 = 5522"; the cell's count turns green; the page's parts in order, the price row under the name's words.
       await cell(tester, b, Item.sword, 2);
       expect([b.shopPickAt, b.shopBasket, b.shopText('count')], [sword2, {sword2: 1}, '1'], reason: tag);
       expect((b.bagDetailText('name'), b.shopText('kind')), ('${itemNames[Item.sword]} +2', 'Grade I item'), reason: tag);
@@ -296,7 +296,7 @@ void main() {
       expectSellPage(b, size, tag);
       await tapOn(tester, b.shopAt('all'));
       await tapOn(tester, b.shopAt('plus'));
-      expect([b.shopBasket, b.shopText('count'), b.shopText('subtotal')], [{sword2: 2}, '2', shortPrice(2 * each(g, sword2))],
+      expect([b.shopBasket, b.shopText('count'), b.shopText('subtotal')], [{sword2: 2}, '2', shortPrice(shopSubtotal(g, sword2, 2))],
           reason: 'never past what is held');
 
       // The rest of the basket: two Swords at +0, the small relic, the Vault Artifact (one: + greyed), four Wolf Claws
@@ -333,7 +333,7 @@ void main() {
       await cell(tester, b, droppedRelics.first);
       basket = {sword2: 2, sword0: 2, bane: 1, claw: 3, relic: 1};
       expect(b.shopBasket, basket);
-      final total = [for (final MapEntry(key: l, value: n) in basket.entries) n * each(g, l)].reduce((x, y) => x + y);
+      final total = [for (final MapEntry(key: l, value: n) in basket.entries) shopSubtotal(g, l, n)].reduce((x, y) => x + y);
       expect(shopBasketGold(g, b.shopBasket), total);
       // Sell reads "Sell", the coin and the total (decisions-log 306; the owner: "total coinnya di pindah ke button aja,
       // dan di tabahin icon coin"), at every size.
@@ -370,7 +370,7 @@ void main() {
     final relic = (kind: droppedRelics.first, plus: 0);
     const shield = (kind: Item.shield, plus: 0), claw = (kind: Mat.wolfClaw, plus: 0), bane = (kind: Relic.titanBane, plus: 0);
     expect([each(g, sword3) > each(g, sword2), each(g, sword2) > each(g, sword0)], [true, true], reason: 'a stack its own price');
-    String row(BagLoot loot, int n) => '${shortPrice(each(g, loot))} x $n = ${shortPrice(n * each(g, loot))}';
+    String row(BagLoot loot, int n) => '${shortPrice(each(g, loot))} x $n = ${shortPrice(shopSubtotal(g, loot, n))}';
     for (final loot in [sword0, sword2, sword3, shield, relic, claw, bane]) {
       final held = shopHeld(g, loot);
       await cell(tester, b, loot.kind, loot.plus);
@@ -378,7 +378,7 @@ void main() {
       await tapOn(tester, b.shopAt('plus'));
       expect([b.shopBasket[loot], b.shopText('price')], [min(2, held), row(loot, min(2, held))], reason: '$loot +');
       await tapOn(tester, b.shopAt('all'));
-      expect([b.shopBasket[loot], b.shopText('subtotal')], [held, shortPrice(held * each(g, loot))], reason: '$loot All');
+      expect([b.shopBasket[loot], b.shopText('subtotal')], [held, shortPrice(shopSubtotal(g, loot, held))], reason: '$loot All');
       await tapOn(tester, b.shopAt('plus'));
       expect(b.shopBasket[loot], held, reason: '$loot: never past what is held, ${shopHeld(g, loot)}');
       if (held > 1) {
@@ -394,7 +394,11 @@ void main() {
     expect(b.shopBasket, basket);
     final lines = <BagLoot, String>{};
     await wheelLines(tester, b, seen: lines);
-    expect(lines, {for (final MapEntry(key: l, value: n) in basket.entries) l: '$n x ${shortPrice(each(g, l))} = ${shortPrice(n * each(g, l))}'});
+    // The Smithy's goods fall piece by piece (decisions-log 326): a line says their average and their sum.
+    expect(lines, {
+      for (final MapEntry(key: l, value: n) in basket.entries)
+        l: '$n x ${shortPrice((shopSubtotal(g, l, n) / n).round())} = ${shortPrice(shopSubtotal(g, l, n))}',
+    });
 
     // A line picks its stack: the top shows it, its price row its own.
     for (final loot in [shield, sword2, relic]) {
@@ -463,7 +467,7 @@ void main() {
     final a = tabsGame(), one = tabsGame();
     final gold = shopBasketGold(a, basket), before = a.gold;
     expect(shopBasketPieces(basket), 10);
-    expect(gold, [for (final MapEntry(key: l, value: n) in basket.entries) n * each(a, l)].reduce((x, y) => x + y));
+    expect(gold, [for (final MapEntry(key: l, value: n) in basket.entries) shopSubtotal(a, l, n)].reduce((x, y) => x + y));
     expect(each(a, (kind: Item.sword, plus: 3)), greaterThan(each(a, (kind: Item.sword, plus: 2))));
     expect(shopSellBasket(a, basket), (pieces: 10, gold: gold));
     expect(a.gold, before + gold);

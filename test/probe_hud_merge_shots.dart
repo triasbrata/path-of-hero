@@ -7,7 +7,7 @@
 // As on a touch device (Android), at 1164x777 (the owner's tablet), 1266x713, 915x412, 412x860 and 777x1164, each
 // between waves (the book open, Auto counting down), in a wave and paused in a wave: <tag>-<w>x<h>-<between|wave|paused>.png;
 // and at 1164x777 and 1266x713 the minimap open between waves and in a wave: <tag>-<w>x<h>-map-<between|wave>.png; and
-// in a Town with Auto counting down ("Leave town 4"): <tag>-<w>x<h>-town.png.
+// in a Town with Auto on ("Leave town", no countdown: decisions-log 328): <tag>-<w>x<h>-town.png.
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
@@ -104,14 +104,12 @@ void main() {
           await shot('$name-paused');
           g.paused = false;
         }
-        // In a Town (decisions-log 216) with Auto on: the toggle's Start is "Leave town 4".
+        // In a Town (decisions-log 216) with Auto on: the toggle's Start is "Leave town", no countdown (decisions-log 328).
         final town = b.state = army()
           ..townAt = 4;
         await frames(tester, 3); // the board goes into the due Town by itself once the game is calm
         if (!town.inTown) expect(town.enterTown(auto: true), isTrue);
-        b.autoStart
-          ..set(true)
-          ..left = 5;
+        b.autoStart.set(true);
         await frames(tester, 60);
         await shot('$name-town');
         b.autoStart.set(false);

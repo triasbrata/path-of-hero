@@ -51,13 +51,13 @@ void main() {
     expect((spawnGapOf(200), spawnGapOf(1000)), (tideGapMin, tideGapMin));
   });
 
-  test('wave 65\'s orc has HP 1,952 and damage x6.84 x1.1614; kill gold, speed, reach, defence and MP stay', () {
+  test('wave 65\'s orc has HP 1,982 and damage x6.84 x1.1614; kill gold, speed, reach, defence and MP stay', () {
     final orc = enemyTypes['orc']!, s = enemyStats('orc', Tier.normal, 65);
     expect(waveGrowth(65, waveDmg, waveDmgLate), closeTo(6.84, 1e-9));
-    expect(s.hp, 1952);
+    expect(s.hp, 1982); // waveHp 0.17 (decisions-log 318; 1,952 at 0.15)
     expect(s.dmg, closeTo(orc.dmg * 6.84 * tide(65, tideDmg), 1e-9));
     expect(s.cost, killGold(orc.cost, Tier.normal, 65));
-    expect(untided('orc', Tier.normal, 65).hp, 1448);
+    expect(untided('orc', Tier.normal, 65).hp, 1470);
   });
 
   test('every crowd monster gets the tide, raised minions too; the wave\'s boss and mini boss slots don\'t', () {
@@ -84,7 +84,7 @@ void main() {
         expect((s.hp, s.dmg), (u.hp, u.dmg), reason: '$type ${tier.name}');
       }
     }
-    expect(enemyStats('werebear', Tier.miniBoss, 65).hp, 208512);
+    expect(enemyStats('werebear', Tier.miniBoss, 65).hp, 211738);
   });
 
   test('the game\'s monsters, its summoner\'s minions and its spawn gap follow the game\'s tideStart', () {

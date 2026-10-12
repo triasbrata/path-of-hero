@@ -11,8 +11,8 @@ import 'real_rules.dart';
 void main() {
   setUp(() => omensOn = true);
 
-  test('the knob ships as designed: every fall counts, at most omenEaseMax levels a wave', () {
-    expect((omenEaseCount, omenEaseShare, omenEaseMax), (OmenEaseCount.falls, 0.125, 2));
+  test('the knob ships the owner\'s pick: only an awakened type\'s falls count, at most omenEaseMax levels a wave', () {
+    expect((omenEaseCount, omenEaseShare, omenEaseMax), (OmenEaseCount.awakened, 0.125, 2)); // falls until decisions-log 318
   });
 
   test('falls counts a rebought troop\'s fall again; starters each starter once; awakened an awakened type\'s only', () {
@@ -31,7 +31,7 @@ void main() {
     final rebought = soldiers.last; // as one Auto Buy bought mid-wave: not one the wave started with
     g.omenStarters.remove(rebought);
     g.fallen.addAll([soldiers[0], soldiers[1], rebought, rebought, knights[0]]);
-    expect(g.omenFalls(), 5);
+    expect(g.omenFalls(), 1, reason: 'the knob as shipped: awakened');
     expect(
         [for (final how in OmenEaseCount.values) g.omenFalls(how)], [5, 3, 1],
         reason: 'falls: all five; starters: two soldiers and a knight; awakened: the knight');

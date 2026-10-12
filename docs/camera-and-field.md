@@ -101,6 +101,11 @@ the middle of the screen is where our troops and the monsters actually hit each 
 
 ### What moves with the view
 
+- **The front's cap** (`Game.frontCap = cam + viewW − capInset`, a tile; decisions-log 324): mid-wave no troop that has
+  marched in walks past it, and a shove doesn't push one past it; one past it already (the view went back) stands where
+  it is (formation-and-navigation.md "The front stops at the view's right edge"). The view centres the fight, so it
+  seldom binds: viewW/2 − a tile ahead of a centred fight, 146 world units at 1600×947 (viewW 324.4), 223 at 915×412
+  (477.6).
 - `rightLimit = cam + viewW − 2·tile`: monsters on screen are kept 2 tiles from the right edge. In a
   centred fight that is viewW/2 − 2 tiles ahead of it (8.7 tiles on the Mac). The clamp only
   stops moving **right** past it: an entered monster past `rightLimit` goes to max(rightLimit, min(its x
@@ -162,8 +167,8 @@ the middle of the screen is where our troops and the monsters actually hit each 
     behind max(baseX, cam + `keepUpShift`) + tile/2, and anyone out of sight (once the wave has shown a
     fight, within `keepUpInset` − `offViewBy` of the view's left edge) walking forward goes at the catch-up
     pace (#85's inset, above)
-    (formation-and-navigation.md). Such a healer walks in before it heals, and the melee keep their supports in
-    reach (decisions-log 312: off screen 62 → 0 s a wave on the owner's wave-30 save at 1600×947). With it off (the issue's rule alone, option B), a 36-seed A/B had 40%
+    (formation-and-navigation.md). Such a healer walks in before it heals (decisions-log 312: off screen 62 → 0 s a
+    wave on the owner's wave-30 save at 1600×947), and the healers rest close behind the melee (decisions-log 324). With it off (the issue's rule alone, option B), a 36-seed A/B had 40%
     more troops fallen and 15× the time out of sight. With #79's line it is needed still more (the line no
     longer keeps even the rear in step): off, the probe's runs ended sooner (the auto-player's mean end wave
     28.1 → 24.4; the owner's save sooner on all 6 seeds) with more troops fallen and out of sight (decision 115).

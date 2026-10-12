@@ -179,18 +179,10 @@ extension Enhance on Game {
 
   // The Shop.
 
-  /// What the Shop pays for one [item] at +[plus] (forge-design §12): [Store.sellPrice]'s, plus half of what its steps
-  /// cost: each step's gold at the Shop's item share ([TownShop.itemSellShare]) and its stone at its own sell price
-  /// ([MatInfo.sell], half a stone's worth). +0: [Store.sellPrice].
-  int sellPriceAt(Item item, int plus) {
-    var price = sellPrice(item).toDouble();
-    for (var p = 0; p < plus; p++) {
-      if (enhanceCost(p) case (:final stone, :final gold)) {
-        price += gold * townRules.shop.itemSellShare + (townRules.materials[stone]?.sell ?? 0);
-      }
-    }
-    return price.round();
-  }
+  /// What the Shop pays for the next [item] at +[plus]: the market's price for that exact product ([Market.marketPrice],
+  /// decisions-log 326: its steps' gold and stones are in its cost). Until then the item's price plus half of what its
+  /// steps cost (forge-design §12). +0: [Store.sellPrice].
+  int sellPriceAt(Item item, int plus) => plus <= 0 ? sellPrice(item) : marketPrice(item, plus);
 
   /// Why one [item] at +[plus] can't be sold now, or null: [Store.whyNotSell]'s, by its own stack.
   StoreRefusal? whyNotSellAt(Item item, int plus) =>
@@ -204,10 +196,12 @@ extension Enhance on Game {
       sfx.add(Sfx.error);
       return 0;
     }
-    final sold = min(n, bagOf(item, plus)), price = sellPriceAt(item, plus);
+    final sold = min(n, bagOf(item, plus)), gain = marketSum(item, plus, sold);
+    final margin = marginOf(item, plus), pressure = pressureOf(item, plus);
     _toBagAt(item, plus, -sold);
-    gold += sold * price;
-    _emit(StoreSold(wave, t, loot: item, n: sold, gain: sold * price, plus: plus));
+    gold += gain;
+    _marketSold(item, plus, sold); // each piece at its own step (market.dart)
+    _emit(StoreSold(wave, t, loot: item, n: sold, gain: gain, plus: plus, margin: margin, pressure: pressure));
     sfx.add(Sfx.kill);
     return sold;
   }

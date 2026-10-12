@@ -376,7 +376,7 @@ extension on Board {
   /// [Craft.canMake]) or "Smithy: needs Leather Strap" (grey, [Craft.whyNotMake]; shorter in steps down to "Smithy");
   /// then what it unlocks and the grade after it ([awakenSkillChange]: "Next: Unlocks Unbroken. Awaken 3 needs grade
   /// III."), and while the bag holds it the green "Awaken 2 from the Bag". From Awaken 3: "Next: Awaken 4" (at 5 "Next: Forge +5") over the Shop's own
-  /// step ([Board._upgradeButton]: "Awaken 4  100k", "Forge +5  33k", or greyed with why, "Awaken 4: Opens after wave
+  /// step ([Board._upgradeButton]: "Awaken 4  40k", "Forge +5  33k", or greyed with why, "Awaken 4: Opens after wave
   /// 15"), one tap. First, by grade, a level the type kept from a save before the grades ([Game.keptLevel], decisions-log
   /// 272), in grey: "Awaken 3 (kept from old items)", or "Awaken 3 (kept)" where that doesn't fit.
   List<_DetailLine> _detailNext(Canvas c, Game g, String type, double x0, double x1, _DetailSizes s) {

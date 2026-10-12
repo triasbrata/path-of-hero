@@ -26,7 +26,7 @@ Troops, cheapest first (the order of the troop cards), from `troopTypes`:
 |---|---|---|
 | soldier | front melee | cheapest |
 | knight | front melee | |
-| swordsman | front melee | the owner calls it the "berserk" |
+| swordsman | front melee | the owner calls it the "berserk"; 140 HP (110 until decisions-log 318: it fell ten times as often as a knight) |
 | archer | long range | arrows |
 | lancer | heavy melee | the owner calls it the "cavalry" |
 | priest | healer | range 96 reaches past the long range; the free healer every game starts with |
@@ -144,11 +144,11 @@ For comparison, the priest heals 12 every 1.2 s (10 HP/s) within 96, with hp 60,
 A monster's stats come from `enemyStats(type, tier, wave, raised:, tideStart:)`:
 
 - **Wave** (w = wave−1; every attribute grows on the type's base, decisions-log 32):
-  - HP and damage (`waveGrowth`, no cap): through wave `waveLateFrom` 15 every wave adds `waveHp` 0.15 of
-    the base HP and `waveDmg` 0.06 of the base damage; from wave 16 on every wave adds `waveHpLate` 0.30
-    and `waveDmgLate` 0.10 instead (decisions-log 72, the owner's pick in #36). So HP is ×3.1 at wave 15,
-    ×3.4 at 16, ×7.6 at 30 and ×10.6 at 40 (it was ×5.35 and ×6.85); damage ×1.84, ×1.94, ×3.34, ×4.34
-    (it was ×2.74 and ×3.34). A healer's heal is its damage, so it grows the same way (and with its tier's
+  - HP and damage (`waveGrowth`, no cap): through wave `waveLateFrom` 15 every wave adds `waveHp` 0.17 of
+    the base HP (0.15 until decisions-log 318) and `waveDmg` 0.06 of the base damage; from wave 16 on every wave adds
+    `waveHpLate` 0.30 and `waveDmgLate` 0.10 instead (decisions-log 72, the owner's pick in #36). So HP is ×3.38 at
+    wave 15, ×3.68 at 16, ×7.88 at 30 and ×10.88 at 40 (×3.1, 3.4, 7.6 and 10.6 at 0.15; before #36 ×5.35 and
+    ×6.85); damage ×1.84, ×1.94, ×3.34, ×4.34 (it was ×2.74 and ×3.34). A healer's heal is its damage, so it grows the same way (and with its tier's
     Dmg).
   - Why: on main 91ac392 (Heroes, skills) an auto-player cleared every wave to 40 losing 0.6 troops a
     wave. With this curve, 16 of 18 runs clear wave 40, 2 fall at waves 27 and 30, and troops fall every
@@ -183,14 +183,15 @@ A monster's stats come from `enemyStats(type, tier, wave, raised:, tideStart:)`:
 | elite | ×1.8 | ×1.3 | ×1.05 | ×1.5 | silver (blue before #62: blue means MP) |
 | highElite | ×3 | ×1.7 | ×1.1 | ×2 | gold |
 | miniBoss | ×6 | ×2.2 | ×1 | ×3 | purple |
-| boss | see below | | ×1 | ×4 (the necromancer 160 before growth: 194 in wave 5) | orange |
+| boss | see below | | ×1 | ×4 (the necromancer 160 before growth: 190 in wave 5) | orange |
 
 - **Kill gold** (#83, decisions-log 119): `killGold(cost, tier, wave)` = the type's base `cost` × `Tier.reward`
   × (1 + `killGoldGrowth`)^(wave − 1), **floored once** at the end (not wave by wave: a slime's 3 would
-  otherwise stay 3 forever; floored once it is 4 from wave 7 and 7 at wave 20). Wave 0 pays like wave 1.
-  - `killGoldGrowth` 0.05 is the owner's start and is meant to be tuned (they asked for 30%, which is ×146 at
-    wave 20). At 5% the growth is ×1.22 at wave 5, ×1.55 at 10, ×1.98 at 15, ×2.53 at 20, ×4.12 at 30, ×6.70
-    at 40 and ×10.9 at 50: a werebear pays 20, 31 at wave 10, 50 at 20, 218 at 50.
+  otherwise stay 3 forever; floored once it is 4 from wave 8 and 6 at wave 20). Wave 0 pays like wave 1.
+  - `killGoldGrowth` 0.045 (decisions-log 318; the owner's start was 0.05, meant to be tuned: they asked for 30%,
+    which is ×146 at wave 20). At 4.5% the growth is ×1.19 at wave 5, ×1.49 at 10, ×1.85 at 15, ×2.31 at 20, ×3.58
+    at 30, ×5.57 at 40, ×8.64 at 50 and ×32 at 80 (×47 at 5%: with the troops' prices flat, every rebuy was free past
+    wave 80): a werebear pays 20, 29 at wave 10, 46 at 20, 172 at 50.
   - `enemyStats` sets it as `Stats.cost` when the monster is made, with the wave it comes in. Everything that
     pays or shows kill gold reads that one number: the kill in `_hurt`, Plunder's bonus and its "+N" (Heroes),
     a hexed slime's own gold (Slime Hex), the telemetry's `gold.earned`.
@@ -225,8 +226,8 @@ archer boss shoots from afar. Then:
   slot. It starts from the same reference as the mini boss, the wave's strongest type's HP (not its own 600),
   times the tier's ×3, and has `necroMiniDmg` × 1.7 / 2.2 (≈ 0.46) of its own damage: the mini boss's damage
   share, scaled by the two tiers' damage. Its speed is ×1.1 like any high elite's, and it gets no boss buff
-  (high elites get none). So it has a high-elite werebear's HP: wave 50 13,056 HP and 74 damage every 1.5 s;
-  wave 60 15,936 and 88. Its gold, score and relic chance are a high elite's: 40 × 2, grown with the wave (873
+  (high elites get none). So it has a high-elite werebear's HP: wave 50 13,325 HP and 74 damage every 1.5 s;
+  wave 60 16,205 and 88. Its gold, score and relic chance are a high elite's: 40 × 2, grown with the wave (691
   at wave 50), 50 points and 5% (a roll that drops nothing since the Towns, decisions-log 237, 321: its Dark Gem at
   35% instead, loot-items-relics.md "Town and Smithy: materials"). Like any high elite it casts its type's signature, Curse of Frailty (1.15×, not
   a mini boss's 1.2×; "Monster skills"), and neither Soul Drain nor Death Nova.
@@ -240,9 +241,9 @@ the tier) and of the wave growth:
 - Its mini boss, of any type, has `miniHpK` 6 × its HP, `miniMpK` 3 × its MP pool and `miniDmgK` 1.5 × its
   damage (×2 until the owner softened it, #75). So a full-buff mini boss has ×36 its type's HP and ×3.3 its
   damage.
-- It ramps in with the wave: none up to `bossBuffFrom` (wave 5), in full from `bossBuffFull` (wave 50), in a
-  straight line between (each multiplier is 1 + (full − 1) × the share of the way). The boss's HP is ×2 on
-  wave 10, ×4 on 20, ×6 on 30, ×8 on 40. The MP pool is rounded.
+- It ramps in with the wave: none up to `bossBuffFrom` (wave 5), in full from `bossBuffFull` (wave 60; 50 until
+  decisions-log 318), in a straight line between (each multiplier is 1 + (full − 1) × the share of the way). The boss's
+  HP is ×1.82 on wave 10, ×3.45 on 20, ×5.09 on 30, ×6.73 on 40, ×8.36 on 50. The MP pool is rounded.
 - The necromancer in full, before wave growth: as the boss 6000 HP, 90 damage and 1200 MP; as the mini boss
   (from wave 22) 11,520 HP like any mini boss (1,440 before #89), 27 damage and 360 MP. Another type's boss
   in full: 6000 HP and 39 damage a second (13 × 3), no MP.
@@ -1126,7 +1127,7 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
   gugur" is theirs). Only a recall takes an entry out: Resurrection never raises a Hero (`_revivable`), nor does
   Phoenix Plume, so nothing else brings one back.
 - **The price** (`recallPrice`, `heroRecallPrice(wave)`): `heroRecallK` 2500 × (1 + `killGoldGrowth`)^(wave − 1) of
-  the last wave played, rounded to `heroRecallRound` 1,000: 57k at wave 65, 80k at 72, 118k at 80, 313k at 100,
+  the last wave played, rounded to `heroRecallRound` 1,000: 42k at wave 65, 57k at 72, 81k at 80, 195k at 100,
   about one wave's income since it grows with the kill gold.
 - **Refusals** (`whyNotRecall(f)`), one gate in this order: the store's (`_armyClosed`: "Opens after wave 15", wave 15 whatever town.json's `shop.from`,
   "Game over", "Only between waves"), then `buyRefusal(type, price: recallPrice, hero: true, swap:)`: a full army
@@ -1363,10 +1364,10 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
     the monsters come (they from the right, the troops backing off left) it never binds: 0 troop-ticks in 17
     replayed waves (w12–99). After a near-wipe it binds often, and it took the last troops' way out: on 14437d0 two
     of qa-3's three stalled waves ended with the army wiped (game over) instead of won, so it is off.
-- **Melee keep their supports in reach** (decisions-log 312): a melee troop walks no further than `leashCap` 1.5
-  tiles past the line its healers still reach and its long range still cover (`supportLine`), taking a monster within
-  that, and one more than `leashOut` 3 tiles past it drops back to it, facing its foe and striking what it reaches
-  (formation-and-navigation.md "Melee keep their supports in reach").
+- **The front stops at the view's right edge** (decisions-log 324; 312's leash before it): mid-wave no troop walks
+  past a tile inside the view's right edge (`frontCap`); one there stands facing its foe and fights what it reaches,
+  never stepping back for it; the view centres the fight and the healers rest at most 2.5 tiles behind the melee in it
+  (formation-and-navigation.md "The front stops at the view's right edge", "Healers mid-battle").
 - **Hurt troops fall back:** at or below `retreatAt` 50% HP a troop falls back to the nearest troop
   healer and fights on at `returnAt` 80%, only while a troop healer lives; it doesn't chase meanwhile,
   but still hits a foe in reach. When heals don't come (`healWait` 3 s at the healer without one) the one
@@ -1376,7 +1377,8 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
   - Mid-battle a troop healer heals the ally it can reach that falls back to be healed, else the most
     hurt (`_heal`). The healing necromancer has its own rules (`_mend`, above).
   - Out of sight left of the view it walks into it before it heals, and more than a tile behind the army it walks up
-    between heals (decisions-log 312; formation-and-navigation.md "Healers mid-battle").
+    between heals (decisions-log 312), healing on the way only an ally falling back or at half its HP or less
+    (decisions-log 324; formation-and-navigation.md "Healers mid-battle").
   - **A heal costs MP** (decisions-log 297; the owner: "army/enemy healer harusnya ketika melakukan heal itu akan
     menggunakan mp-nya"): `healMp` 6 MP a heal (`_castHeal`), the healing necromancer's way (it pays
     `necroHealCost` 8 of its 40). It is 10% of a priest's base pool; awakening, a Hero and the aura raise the pool

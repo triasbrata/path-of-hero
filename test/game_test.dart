@@ -267,7 +267,11 @@ void main() {
   });
 
   test('a priest a tile behind an archer heals melee well ahead of the archer without passing it', () {
-    final g = bare()..gold = 1000;
+    // The rest a tile behind the rearmost fighter, long range too: with keepSupports a healer comes up to healBehind
+    // behind the rearmost melee in the fight instead (decisions-log 324, front_cap_test).
+    final g = bare()
+      ..gold = 1000
+      ..keepSupports = false;
     placeNow(g, 'priest', 3, 3);
     placeNow(g, 'archer', 4, 3);
     placeNow(g, 'knight', 5, 3);
@@ -326,7 +330,11 @@ void main() {
   });
 
   test('mid-battle a healer goes up to reach hurt melee past the archers, then falls back', () {
-    final g = bare()..gold = 1000;
+    // The rest a tile behind the rearmost fighter, long range too: with keepSupports a healer comes up to healBehind
+    // behind the rearmost melee in the fight instead (decisions-log 324, front_cap_test).
+    final g = bare()
+      ..gold = 1000
+      ..keepSupports = false;
     placeNow(g, 'priest', 0, 3);
     placeNow(g, 'archer', 2, 2);
     placeNow(g, 'archer', 2, 5);
@@ -357,7 +365,11 @@ void main() {
   });
 
   test('mid-battle a healer keys off the engaged fighters, and a fresh troop at the back does not pull it back', () {
-    final g = bare()..gold = 1000;
+    // The rest a tile behind the rearmost fighter, long range too: with keepSupports a healer comes up to healBehind
+    // behind the rearmost melee in the fight instead (decisions-log 324, front_cap_test).
+    final g = bare()
+      ..gold = 1000
+      ..keepSupports = false;
     placeNow(g, 'priest', 0, 3);
     placeNow(g, 'archer', 2, 2);
     placeNow(g, 'knight', 2, 4);
@@ -403,7 +415,10 @@ void main() {
 
   test('mid-battle a healer rests no further back than half a tile inside the keep-up floor, [keepUpInset] inside the view, '
       'walking up to it at the catch-up pace', () {
-    final g = bare()..gold = 1000;
+    // The floor alone: with keepSupports the healer's rest follows the knight's fight (decisions-log 324's healBehind).
+    final g = bare()
+      ..gold = 1000
+      ..keepSupports = false;
     placeNow(g, 'priest', 0, 3);
     placeNow(g, 'archer', 2, 2);
     placeNow(g, 'knight', 5, 3);
@@ -2072,7 +2087,7 @@ void main() {
     final plain = enemyStats('orc', Tier.normal, 1);
     expect((plain.hp, plain.dmg, plain.speed, plain.rate, plain.range, plain.cost), (orc.hp, orc.dmg, orc.speed, orc.rate, orc.range, orc.cost));
     final elite = enemyStats('orc', Tier.elite, 5);
-    expect((elite.hp, elite.cost), (230, 10)); // 80*1.8*1.6; 6*1.5*1.05^4 = 10.9, floored
+    expect((elite.hp, elite.cost), (242, 10)); // 80*1.8*1.68; 6*1.5*1.045^4 = 10.7, floored
     expect(elite.dmg, closeTo(16.12, 1e-9)); // 10*1.3*1.24
     expect(elite.speed, closeTo(20.412, 1e-9)); // 18*1.05*1.08
     expect(elite.rate, closeTo(1 / 1.04, 1e-9)); // 4% more attacks a second
@@ -2099,22 +2114,23 @@ void main() {
     final archer = enemyTypes['skeleton_archer']!; // long range: its reach grows too, +25% by wave 26
     expect(enemyStats('skeleton_archer', Tier.normal, 11).range, closeTo(archer.range * 1.1, 1e-9));
     expect(enemyStats('skeleton_archer', Tier.highElite, 26).range, closeTo(archer.range * 1.25, 1e-9));
-    expect(enemyStats(boss, Tier.boss, 5).hp, (bossStats.hp * 1.6).round());
+    expect(enemyStats(boss, Tier.boss, 5).hp, (bossStats.hp * 1.68).round());
     expect(enemyStats(boss, Tier.boss, 1).cost, bossStats.cost * 4); // 160: the boss pays four times
   });
 
   test('from wave 16 monsters gain waveHpLate / waveDmgLate of their base a wave instead of waveHp / waveDmg (#36)', () {
-    // The owner's pick: +30% base HP and +10% base damage a wave from wave 16, where it was +15% / +6%.
-    expect((waveHp, waveDmg, waveLateFrom, waveHpLate, waveDmgLate), (0.15, 0.06, 15, 0.30, 0.10));
+    // The owner's pick: +30% base HP and +10% base damage a wave from wave 16, where it was +17% / +6% (+15% HP until
+    // decisions-log 318).
+    expect((waveHp, waveDmg, waveLateFrom, waveHpLate, waveDmgLate), (0.17, 0.06, 15, 0.30, 0.10));
     final orc = enemyTypes['orc']!;
-    // Through wave 15 the old curve: 80 hp and 10 damage grow 15% and 6% a wave.
-    expect(enemyStats('orc', Tier.normal, 15).hp, (orc.hp * (1 + waveHp * 14)).round()); // 248
+    // Through wave 15 the early curve: 80 hp and 10 damage grow 17% and 6% a wave.
+    expect(enemyStats('orc', Tier.normal, 15).hp, (orc.hp * (1 + waveHp * 14)).round()); // 270
     expect(enemyStats('orc', Tier.normal, 15).dmg, closeTo(orc.dmg * (1 + waveDmg * 14), 1e-9)); // 18.4
-    // Wave 16: one late step, 80 × (1 + 2.1 + 0.3) and 10 × (1 + 0.84 + 0.1).
-    expect(enemyStats('orc', Tier.normal, 16).hp, 272);
+    // Wave 16: one late step, 80 × (1 + 2.38 + 0.3) and 10 × (1 + 0.84 + 0.1).
+    expect(enemyStats('orc', Tier.normal, 16).hp, 294);
     expect(enemyStats('orc', Tier.normal, 16).dmg, closeTo(19.4, 1e-9));
-    // Wave 30: 80 × (1 + 2.1 + 0.3 × 15) and 10 × (1 + 0.84 + 0.1 × 15); the old curve made it 80 × 5.35 = 428.
-    expect(enemyStats('orc', Tier.normal, 30).hp, 608);
+    // Wave 30: 80 × (1 + 2.38 + 0.3 × 15) and 10 × (1 + 0.84 + 0.1 × 15); the old curve made it 80 × 5.35 = 428.
+    expect(enemyStats('orc', Tier.normal, 30).hp, 630);
     expect(enemyStats('orc', Tier.normal, 30).dmg, closeTo(33.4, 1e-9));
     for (final wave in [16, 17, 20, 30, 40]) {
       final s = enemyStats('orc', Tier.normal, wave), late = wave - waveLateFrom;
@@ -2292,7 +2308,7 @@ void main() {
       final gold = g.gold;
       g.tick(0.05);
       expect(mini.alive, isFalse);
-      expect(g.gold, gold + 19); // a mini boss pays three times the orc's 6, grown two waves: 18 × 1.1025 = 19.8
+      expect(g.gold, gold + 19); // a mini boss pays three times the orc's 6, grown two waves: 18 × 1.092 = 19.66
     }
   });
 
@@ -2301,15 +2317,15 @@ void main() {
   });
 
   test('kill gold is base × rank × (1 + killGoldGrowth)^(wave − 1), floored once at the end (#83)', () {
-    expect(killGoldGrowth, 0.05); // the owner's start; they will tune it
-    // The werebear's 20 through the waves: 20 × 1.05 = 21, × 1.05^4 = 24.3, × 1.05^9 = 31.03, × 1.05^19 = 50.5.
-    expect([for (final w in [1, 2, 5, 10, 20, 50]) killGold(20, Tier.normal, w)], [20, 21, 24, 31, 50, 218]);
-    // Floored once, not wave by wave: a slime's 3 would stay 3 forever (3 × 1.05 = 3.15 → 3, and again).
-    expect([for (final w in [1, 6, 7, 20]) killGold(3, Tier.normal, w)], [3, 3, 4, 7]);
-    // Each rank on the orc's 6 in wave 10 (× 1.551): 9.3, 13.96, 18.6, 27.9, 37.2.
-    expect([for (final t in Tier.values) killGold(6, t, 10)], [9, 13, 18, 27, 37]);
-    expect(killGold(6, Tier.elite, 5), 10); // 9 × 1.2155 = 10.94
-    expect(killGold(40, Tier.boss, 5), 194); // the necromancer boss's first wave: 160 × 1.2155 = 194.5
+    expect(killGoldGrowth, 0.045); // decisions-log 318 (the owner's start was 0.05)
+    // The werebear's 20 through the waves: 20 × 1.045 = 20.9, × 1.045^4 = 23.85, × 1.045^9 = 29.72, × 1.045^19 = 46.2.
+    expect([for (final w in [1, 2, 5, 10, 20, 50]) killGold(20, Tier.normal, w)], [20, 20, 23, 29, 46, 172]);
+    // Floored once, not wave by wave: a slime's 3 would stay 3 forever (3 × 1.045 = 3.135 → 3, and again).
+    expect([for (final w in [1, 7, 8, 20]) killGold(3, Tier.normal, w)], [3, 3, 4, 6]);
+    // Each rank on the orc's 6 in wave 10 (× 1.486): 8.9, 13.37, 17.8, 26.7, 35.7.
+    expect([for (final t in Tier.values) killGold(6, t, 10)], [8, 13, 17, 26, 35]);
+    expect(killGold(6, Tier.elite, 5), 10); // 9 × 1.1925 = 10.73
+    expect(killGold(40, Tier.boss, 5), 190); // the necromancer boss's first wave: 160 × 1.1925 = 190.8
     // Before any wave (wave 0) it pays like wave 1.
     expect(killGold(20, Tier.miniBoss, 0), 60);
     // The owner's sketch with r = 30%: 1 → 1.3 → 1.69 → 2.197 → 2.8561 → 3.71293, on 100 gold.
@@ -2329,9 +2345,9 @@ void main() {
   test('a kill pays the type\'s base gold times its tier, grown with the wave', () {
     for (final (type, wave, paid) in [
       ('orc', 1, [6, 9, 12, 18]),
-      ('orc', 10, [9, 13, 18, 27]),
+      ('orc', 10, [8, 13, 17, 26]),
       ('werebear', 1, [20, 30, 40, 60]),
-      ('werebear', 10, [31, 46, 62, 93]),
+      ('werebear', 10, [29, 44, 59, 89]),
     ]) {
       for (final tier in [Tier.normal, Tier.elite, Tier.highElite, Tier.miniBoss]) {
         final g = bare();
@@ -2349,7 +2365,7 @@ void main() {
     }
   });
 
-  test('the necromancer comes as the boss tier and its kill pays four times its gold, grown: 194 in wave 5', () {
+  test('the necromancer comes as the boss tier and its kill pays four times its gold, grown: 190 in wave 5', () {
     final g = bare(Random(1))..wave = 4;
     placeNow(g, 'knight', 2, 3);
     g.startWave();
@@ -2358,7 +2374,7 @@ void main() {
       ..add((boss, Tier.boss));
     g.tick(0.05);
     final necro = g.enemies.single;
-    expect((necro.type, necro.tier, necro.stats.cost), (boss, Tier.boss, 194)); // 40 × 4 × 1.05^4 = 194.5
+    expect((necro.type, necro.tier, necro.stats.cost), (boss, Tier.boss, 190)); // 40 × 4 × 1.045^4 = 190.8
     necro
       ..pos = g.troops.single.pos + const Point(10, 0)
       ..hp = 1
@@ -2366,7 +2382,7 @@ void main() {
     final gold = g.gold;
     g.tick(0.05);
     expect(necro.alive, isFalse);
-    expect(g.gold, gold + 194);
+    expect(g.gold, gold + 190);
   });
 
   test('the necromancer\'s raised skeletons pay no gold', () {
@@ -3013,7 +3029,7 @@ void main() {
   });
 
   test('a healer\'s stats grow with its tier and the wave like any monster\'s, and its kill pays its gold', () {
-    for (final (wave, paid) in [(1, [12, 18, 24]), (4, [13, 20, 27]), (10, [18, 27, 37])]) {
+    for (final (wave, paid) in [(1, [12, 18, 24]), (4, [13, 20, 27]), (10, [17, 26, 35])]) {
       for (final tier in [Tier.normal, Tier.elite, Tier.highElite]) {
         final s = enemyStats(necroHealer, tier, wave), w = wave - 1;
         expect(s.hp, (70 * tier.hp * (1 + waveHp * w)).round(), reason: '$tier $wave');
@@ -3412,21 +3428,21 @@ void main() {
     expect((h.awakenLevel('knight'), h.priceOf('knight')), (2, g.priceOf('knight')));
   });
 
-  test('every awakening level triples a type\'s price, and buying charges it', () {
+  test('every awakening level doubles a type\'s price (triples until decisions-log 318), and buying charges it', () {
     final g = bare();
-    // (50 + 5 a held item) x3 a level: its grade sets hold 11, 11 and 9 items (decisions-log 249).
-    for (final (n, price) in [(1, 315), (2, 1440), (3, 5535)]) {
+    // (50 + 5 a held item) x2 a level: its grade sets hold 11, 11 and 9 items (decisions-log 249).
+    for (final (n, price) in [(1, 210), (2, 640), (3, 1640)]) {
       g.upgrades['knight'] = awakenItems('knight', n);
       expect(g.priceOf('knight'), price, reason: '$n');
     }
     g.upgrades['soldier'] = awakenItems('soldier', 1);
-    expect(g.priceOf('soldier'), 171); // (30 + 9 x 3) x 3
-    g.gold = 170;
+    expect(g.priceOf('soldier'), 114); // (30 + 9 x 3) x 2
+    g.gold = 113;
     expect((g.autoPlace('soldier'), g.place('soldier', 2, 3)), (false, false));
-    g.gold = 171;
+    g.gold = 114;
     expect(g.place('soldier', 2, 3), isTrue);
     expect(g.gold, 0);
-    g.gold = 171;
+    g.gold = 114;
     expect(g.autoPlace('soldier'), isTrue);
     expect(g.gold, 0);
   });
@@ -3529,7 +3545,7 @@ void main() {
     expect(g.itemInfo(Item.sword, 'knight').$2, contains('Now: 2/3 on this type, +56%'));
     expect(g.itemInfo(Item.bow, 'knight').$2, contains("This type can't take it"));
     g.upgrades['knight'] = awakenItems('knight', 1);
-    expect(g.itemInfo(Item.sword, 'knight').$2, contains('Cost: troop price +15'));
+    expect(g.itemInfo(Item.sword, 'knight').$2, contains('Cost: troop price +10'));
   });
 
   test('a blow loses the target\'s defence, but always does a tenth of itself and at least 1', () {
@@ -3677,7 +3693,8 @@ void main() {
     final g = bare()
       ..gold = 1000
       ..upgrades['priest'] = [Item.potion, Item.potion]
-      ..upgrades['soldier'] = [Item.potion];
+      ..upgrades['soldier'] = [Item.potion]
+      ..keepSupports = false; // the heal's size alone (with it, far behind the knight walking on, it walks up first: 324)
     expect((g.statsOf('priest').dmg, g.statsOf('priest').regen), (18.0, 10.0));
     expect((g.statsOf('soldier').dmg, g.statsOf('soldier').regen), (10.0, 5.0));
 
@@ -3749,8 +3766,8 @@ void main() {
       final u = make(type, Tier.elite);
       expect((u.stats.mp, u.stats.mpRegen, u.mp), (0, 0.0, 0.0), reason: type);
     }
-    // its gold: 40 × 3, grown 5% a wave; its HP any mini boss's (#89): the wave's strongest type's × 6
-    for (final (w, paid, base) in [(1, 120, 30 * 6), (8, 168, 40 * 6), (20, 303, 220 * 6)]) {
+    // its gold: 40 × 3, grown 4.5% a wave; its HP any mini boss's (#89): the wave's strongest type's × 6
+    for (final (w, paid, base) in [(1, 120, 30 * 6), (8, 163, 40 * 6), (20, 276, 220 * 6)]) {
       final s = enemyStats(boss, Tier.miniBoss, w);
       final (bHp, _, bDmg) = bossBuff(Tier.miniBoss, w);
       expect((s.hp, s.cost), ((base * bHp * waveGrowth(w, waveHp, waveHpLate)).round(), paid), reason: '$w');
@@ -3770,9 +3787,10 @@ void main() {
       expect((necro.mp, necro.mpRegen, necro.cost), ((120 * bMp).round(), 4.0, killGold(bossStats.cost, Tier.miniBoss, w)),
           reason: '$w');
     }
-    // The owner's wave-48 mini boss: ×19 on its bar before (240 base), now ×145 like the werebear's.
+    // The owner's wave-48 mini boss: ×19 on its bar before (240 base), now ×126 like the werebear's (×145 while the
+    // boss buff was full from wave 50, before decisions-log 318).
     final hp48 = enemyStats(boss, Tier.miniBoss, 48).hp;
-    expect((hp48, bossLayers(hp48.toDouble(), hp48).left), (144213, 145));
+    expect((hp48, bossLayers(hp48.toDouble(), hp48).left), (125170, 126));
     // The boss necromancer is untouched.
     final (bHp, _, _) = bossBuff(Tier.boss, 48);
     expect(enemyStats(boss, Tier.boss, 48).hp, (bossStats.hp * bHp * waveGrowth(48, waveHp, waveHpLate)).round());
@@ -3792,21 +3810,22 @@ void main() {
   });
 
   test('the boss buff (#66): a wave\'s boss and mini boss get their HP, MP pool and damage multiplied, not their MP regen or gold; '
-      'it ramps in from wave 5 to 50; raised minions none', () {
+      'it ramps in from wave 5 to 60 (50 until decisions-log 318); raised minions none', () {
     expect((bossHpK, bossMpK, bossDmgK, miniHpK, miniMpK, miniDmgK), (10.0, 5.0, 3.0, 6.0, 3.0, 1.5)); // #75: ×2 → ×1.5
-    expect((bossBuffFrom, bossBuffFull), (5, 50));
+    expect((bossBuffFrom, bossBuffFull), (5, 60));
     for (final tier in [Tier.normal, Tier.elite, Tier.highElite]) {
       expect(bossBuff(tier, 30), (1.0, 1.0, 1.0), reason: '$tier');
     }
     for (final w in [0, 1, 5]) {
       expect((bossBuff(Tier.boss, w), bossBuff(Tier.miniBoss, w)), ((1.0, 1.0, 1.0), (1.0, 1.0, 1.0)), reason: '$w'); // none yet
     }
-    for (final w in [50, 60, 80]) {
+    for (final w in [60, 70, 80]) {
       expect((bossBuff(Tier.boss, w), bossBuff(Tier.miniBoss, w)), ((10.0, 5.0, 3.0), (6.0, 3.0, 1.5)), reason: '$w'); // all of it
     }
-    final (bh, bm, bd) = bossBuff(Tier.boss, 14); // 9 waves of 45 in
+    final (bh, bm, bd) = bossBuff(Tier.boss, 14); // 9 waves of 55 in
     final (mh, mm, md) = bossBuff(Tier.miniBoss, 14);
-    for (final (got, want) in [(bh, 2.8), (bm, 1.8), (bd, 1.4), (mh, 2.0), (mm, 1.4), (md, 1.1)]) {
+    const f = 9 / 55;
+    for (final (got, want) in [(bh, 1 + 9 * f), (bm, 1 + 4 * f), (bd, 1 + 2 * f), (mh, 1 + 5 * f), (mm, 1 + 2 * f), (md, 1 + 0.5 * f)]) {
       expect(got, closeTo(want, 1e-9));
     }
     final bear = enemyTypes['werebear']!;
@@ -3824,12 +3843,12 @@ void main() {
       expect((b.cost, m.cost), (killGold(bossStats.cost, Tier.boss, wave), killGold(bear.cost, Tier.miniBoss, wave)),
           reason: '$wave'); // the buff leaves the kill gold alone
     }
-    expect((enemyStats(boss, Tier.boss, 50).mp, enemyStats(boss, Tier.boss, 14).mp), (1200, 432)); // 240 x 5, x 1.8
+    expect((enemyStats(boss, Tier.boss, 60).mp, enemyStats(boss, Tier.boss, 14).mp), (1200, 397)); // 240 x 5, x 1.65
     // Any type in the boss slot (#58) gets it too, on top of its slot's start (the necromancer's HP, 0.65 of its
     // damage a second); it has no MP to multiply.
-    final orc = enemyTypes['orc']!, ob = enemyStats('orc', Tier.boss, 50);
-    expect(ob.hp, (bossStats.hp * bossTypeHp * bossHpK * waveGrowth(50, waveHp, waveHpLate)).round());
-    expect(ob.dmg, closeTo(bossStats.dmg / bossStats.rate * orc.rate * bossTypeDmg * bossDmgK * waveGrowth(50, waveDmg, waveDmgLate), 1e-9));
+    final orc = enemyTypes['orc']!, ob = enemyStats('orc', Tier.boss, 60);
+    expect(ob.hp, (bossStats.hp * bossTypeHp * bossHpK * waveGrowth(60, waveHp, waveHpLate)).round());
+    expect(ob.dmg, closeTo(bossStats.dmg / bossStats.rate * orc.rate * bossTypeDmg * bossDmgK * waveGrowth(60, waveDmg, waveDmgLate), 1e-9));
     expect(ob.mp, 0);
 
     // A summoner at full MP on wave 50 raises mini-boss skeletons: they keep the tier's stats without the buff.
@@ -3915,7 +3934,7 @@ void main() {
     expect(necros, inInclusiveRange(5, 25)); // about a third of 40
   });
 
-  test('the mini boss necromancer pays 168 in wave 8; a raised mini boss pays nothing', () {
+  test('the mini boss necromancer pays 163 in wave 8; a raised mini boss pays nothing', () {
     for (final roll in [1.0, 0.0]) {
       final g = bare()..wave = 8;
       placeNow(g, 'knight', 2, 3);
@@ -3926,7 +3945,7 @@ void main() {
       g.units.add(necro);
       final gold = g.gold;
       g.tick(0.05);
-      expect((necro.alive, g.gold - gold), (false, 168), reason: '$roll'); // 40 × 3 × 1.05^7 = 168.9
+      expect((necro.alive, g.gold - gold), (false, 163), reason: '$roll'); // 40 × 3 × 1.045^7 = 163.3
     }
     for (final roll in [0.0, dropChance - 0.01, dropChance]) {
       final g = bare();
@@ -4254,8 +4273,8 @@ void main() {
     }
     final g = bare();
     previewStates['upgraded']!(g);
-    expect((g.priceOf('knight'), g.priceWith('knight', Item.gloves)), (50 + 10 * 5, (50 + 11 * 5) * 3)); // it awakens
-    expect((g.priceOf('priest'), g.priceWith('priest', Item.crystalStaff)), ((90 + 35 * 9) * 9, (90 + 36 * 9) * 27)); // level 2 → 3
+    expect((g.priceOf('knight'), g.priceWith('knight', Item.gloves)), (50 + 10 * 5, (50 + 11 * 5) * 2)); // it awakens
+    expect((g.priceOf('priest'), g.priceWith('priest', Item.crystalStaff)), ((90 + 35 * 9) * 4, (90 + 36 * 9) * 8)); // level 2 → 3
     expect(bare().priceWith('soldier', Item.sword), 33);
   });
 
@@ -4444,7 +4463,7 @@ void main() {
     expect(enemyStats(minion, Tier.miniBoss, 30).hp, (enemyTypes['werebear']!.hp * Tier.miniBoss.hp * bossBuff(Tier.miniBoss, 30).$1 * grow30).round());
     // Other ranks, and the necromancer in either slot, are as before.
     expect(enemyStats('slime', Tier.highElite, 9).hp, (slime.hp * Tier.highElite.hp * grow).round());
-    expect(enemyStats(boss, Tier.boss, 5).hp, (bossStats.hp * 1.6).round());
+    expect(enemyStats(boss, Tier.boss, 5).hp, (bossStats.hp * 1.68).round());
   });
 
   test('the loot dice never change a wave\'s queue', () {
@@ -4812,9 +4831,9 @@ void main() {
 
   test('a priest stands still while it smites, then walks on to its line', () {
     final (g, p) = holy();
-    g.units.add(Unit(Side.troop, 'knight', troopTypes['knight']!, p.pos + const Point(5 * tile, 0))
+    g.units.add(Unit(Side.troop, 'knight', troopTypes['knight']!, p.pos + const Point(1.5 * tile, 0))
       ..entered = true
-      ..busyUntil = hold); // its line is a tile behind the knight: it wants to walk
+      ..busyUntil = hold); // its line is a tile behind the knight: it wants to walk (from further back it walks first, 324)
     final skeleton = g.monster('skeleton', Tier.normal, const Point(100, 110))..busyUntil = hold;
     g.units.add(skeleton);
     final at = p.pos;

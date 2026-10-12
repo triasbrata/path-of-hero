@@ -7,8 +7,9 @@ part of 'game.dart';
 // owner's archers, priests and templars were 1-3 items short of Bangkit 3 with 29-48 of each in the bag, and nothing
 // said so.
 
-/// What Bangkit 4 and Bangkit 5 cost, per troop type (decision 6 b: five types to Bangkit 5 cost 1.75M).
-const ascendPrice = [100000, 250000];
+/// What Bangkit 4 and Bangkit 5 cost, per troop type (decision 6 b: 100k and 250k, five types to Bangkit 5 for
+/// 1.75M; 40k and 100k since decisions-log 318, 700k, so Bangkit 4 comes before the late waves' wall).
+const ascendPrice = [40000, 100000];
 
 /// Why a type can't buy its next level, after the store's own refusals ([StoreRefusal]: before wave [storeFrom] is
 /// won, mid-wave, the game over): it isn't at Bangkit 3 yet, it is at [awakenTop], or the gold is short.
