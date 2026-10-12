@@ -1879,6 +1879,13 @@ class Shot {
   final void Function(Unit hit)? onHit; // after its damage, on each unit it hurt
   Point<double> pos;
   bool done = false;
+
+  /// Where it flies once its target fell or left (swept off, gone): the target's place at that moment, frozen there;
+  /// null while it homes on its living target. It lands there as on its target (decisions-log 327, [Game.tick]).
+  Point<double>? to;
+
+  /// In the air when its wave ended or the army was wiped: it lands its look and does nothing (decisions-log 327).
+  bool spent = false;
   bool pummel = false; // a monster's every 3rd under the Bayangan Pummel ([Omens._omenPummel]): set as it is fired
   bool sap = false; // a monster's every 4th under the Bayangan Sap ([Omens._omenSapBlow]): set as it is fired
   Shot(this.from, this.target, this.pos, this.src, [double? dmg, double? splash, this.big = false, this.ring])
@@ -1900,7 +1907,15 @@ class Shot {
       this.onHit,
       this.ring})
       : src = Hit.skill;
+
+  /// Where it flies: its living target, or the spot that target went from ([to]).
+  Point<double> get aim => to ?? target.pos;
 }
+
+/// How near the spot a shot lands on, when its target went ([Shot.to]), a unit of that target's side must stand to take
+/// the shot as its target would have (decisions-log 327): half a tile, a line shot's width ([lineWidth]). Every splash
+/// reaches further, so that unit is always in it.
+const landReach = lineWidth;
 
 const _attackSfx = {'archer': Sfx.dagger, 'wizard': Sfx.magic, 'priest': Sfx.magic, necroHealer: Sfx.magic};
 
@@ -4391,7 +4406,7 @@ class Game {
       if (u.stats.splash > 0) {
         for (final o in units.where((o) => o.side == foe.side && o.pos.distanceTo(foe.pos) <= u.stats.splash).toList()) {
           final dealt = _hurt(o, dmg, o == foe ? Hit.normal : Hit.extra, u); // past its target the splash is extra
-          if (o != foe) _fxSplash(u, foe, o, dealt, u.stats.splash); // Wide Blows' counter (pusaka_engine.dart)
+          if (o != foe) _fxSplash(u, foe.pos, o, dealt, u.stats.splash); // Wide Blows' counter (pusaka_engine.dart)
         }
       } else {
         _hurt(foe, dmg, Hit.normal, u);
@@ -4910,6 +4925,19 @@ class Game {
   List<Unit> _foesNear(Point<double> p, double r) =>
       [for (final o in enemies) if (o.alive && o.entered && o.pos.distanceTo(p) <= r) o]
         ..sort((a, b) => a.pos.distanceTo(p).compareTo(b.pos.distanceTo(p)));
+
+  /// The living unit of [side] nearest [at] within [landReach], which a shot whose target went takes as its target where
+  /// it lands ([Shot.to], decisions-log 327), or null when none stands there.
+  Unit? _standingOn(Point<double> at, Side side) {
+    Unit? on;
+    var best = landReach;
+    for (final o in units) {
+      if (o.side != side || !o.alive) continue;
+      final d = o.pos.distanceTo(at);
+      if (d <= best && (on == null || d < best)) (on, best) = (o, d);
+    }
+    return on;
+  }
 
   /// Living troops on the field within [r] of [p].
   List<Unit> _alliesNear(Point<double> p, double r) =>
@@ -5724,37 +5752,38 @@ class Game {
       }
     }
 
+    // A shot whose target fell or left flies on to where it was, and lands there as on it (decisions-log 327).
     for (final s in shots) {
       final e = s.target;
-      if (!e.alive) {
-        s.done = true;
-        continue;
-      }
-      final dist = s.pos.distanceTo(e.pos), mv = (s.speed ?? s.from.stats.shotSpeed) * dt;
+      if (s.to == null && !e.alive) s.to = e.pos; // frozen where it went
+      final at = s.aim, dist = s.pos.distanceTo(at), mv = (s.speed ?? s.from.stats.shotSpeed) * dt;
       if (dist <= mv) {
         s.done = true;
-        impacts.add((e.pos, _fxOf(s.from, shotHitFx(s))));
-        if (s.ring case final look?) rings.add(Ring(e.pos, radius: max(s.splash, tile), since: t, look: look));
+        impacts.add((at, _fxOf(s.from, shotHitFx(s))));
+        if (s.ring case final look?) rings.add(Ring(at, radius: max(s.splash, tile), since: t, look: look));
+        if (s.spent) continue; // in the air when the wave ended: its look alone
+        final on = s.to == null ? e : _standingOn(at, e.side); // its target, or the unit standing where it was, if any
         _deflected = false;
         _pummeled = s.pummel;
         _sapped = s.sap;
         if (s.splash > 0) {
           for (final o in units.toList()) {
-            if (o.side == e.side && o.alive && o.pos.distanceTo(e.pos) <= s.splash) {
-              final dealt = _hurt(o, s.dmg, o == e || s.src != Hit.normal ? s.src : Hit.extra, s.from); // a normal shot's splash past its target is extra
-              if (o != e && s.src == Hit.normal) _fxSplash(s.from, e, o, dealt, s.splash); // Wide Blows' counter (pusaka_engine.dart)
+            if (o.side == e.side && o.alive && o.pos.distanceTo(at) <= s.splash) {
+              final dealt = _hurt(o, s.dmg, o == on || s.src != Hit.normal ? s.src : Hit.extra, s.from); // a normal shot's splash past its target is extra
+              if (o != on && s.src == Hit.normal) _fxSplash(s.from, at, o, dealt, s.splash); // Wide Blows' counter (pusaka_engine.dart)
               s.onHit?.call(o);
             }
           }
-        } else {
-          _hurt(e, s.dmg, s.src, s.from);
-          s.onHit?.call(e);
+        } else if (on != null) {
+          _hurt(on, s.dmg, s.src, s.from);
+          s.onHit?.call(on);
         }
         _pummeled = _sapped = false;
-        if (!_deflected) _fxLanded(s.from, e, s.dmg); // its type's `landed` Fx: God's Thunder (pusaka_engine.dart); none on a Deflected hit (omen.dart)
-        if (!_deflected && s.src == Hit.normal && s.from.relics.isNotEmpty) _relicLanded(s.from, e, s.dmg, Hit.normal); // relics.dart
+        if (on == null) continue; // nobody where its target was: the splash alone, or its look
+        if (!_deflected) _fxLanded(s.from, on, s.dmg); // its type's `landed` Fx: God's Thunder (pusaka_engine.dart); none on a Deflected hit (omen.dart)
+        if (!_deflected && s.src == Hit.normal && s.from.relics.isNotEmpty) _relicLanded(s.from, on, s.dmg, Hit.normal); // relics.dart
       } else {
-        s.pos += (e.pos - s.pos) * (mv / dist);
+        s.pos += (at - s.pos) * (mv / dist);
       }
     }
     shots.removeWhere((s) => s.done);
@@ -5788,6 +5817,9 @@ class Game {
       }
       waveMaterials.clear();
       zones.clear(); // a Hero skill's ground lasts no longer than its wave
+      for (final s in shots) {
+        s.spent = true; // in the air still: it lands its look and hurts nobody (decisions-log 327)
+      }
       lastFallen = [...fallen];
       final rear = troops.isEmpty ? baseX : troops.map((u) => u.pos.x).reduce(min);
       final shift = max(0.0, (rear / tile).floor() * tile - baseX); // how far the back line moves up, below

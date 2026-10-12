@@ -11386,3 +11386,41 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        lives, so it pays nothing. The battle log adds "Army fell: -1 heart, wave N again".
      - **What a run's end means now:** a run ends after three wipes, or fewer with leaks. The balance pass weighs where
        runs end and how many replays they take (lives-rule's probe plan).
+327. **A shot already fired is never lost mid-flight: it flies on to where its target went and lands there, an area
+     shot hitting the monsters round that spot and a single one the unit standing on it** (the owner, 2026-10-12:
+     "particle yang sudah terkirim jangan hilang di tengah jalan, biarkan tetap terkirim ke tempat posisi monsternya
+     terakhir dan kalau itu attack area maka monster di sekitarnya juga ikut kena", a shot already sent must not vanish
+     halfway: let it fly on to the monster's last place, and if it is an area attack the monsters round it are hit too;
+     asked whether a single shot should then hit a monster standing on that spot: "mau"). Why: until then a shot whose
+     target fell or leaked before it landed was dropped mid-air, so a wizard's fireball vanished whenever another troop
+     took its target first and its splash never came. By shot-through (lib/game.dart's shot loop, `Shot.to`,
+     `Shot.aim`, `landReach`, `_standingOn`; units-and-combat.md "A shot whose target went flies on").
+     - **The flight:** the first tick its target isn't alive (fallen, or gone past the line) the shot keeps that place,
+       frozen (`Shot.to`), and flies on to it at its own speed; the UI draws it towards that spot (`Shot.aim`).
+     - **The landing**, as on a living target: its hit burst and ring at the spot. The unit of the target's side nearest
+       the spot within `landReach` (half a tile, a line shot's `lineWidth`: the owner asked for the shot's own hit
+       radius or tolerance, and a homing shot has neither, it lands on its target's very place) takes the shot as its
+       target would have:
+       its damage and source, `onHit`, the `landed` Fx, the relics' landing, kill gold. A splash shot hurts every unit of
+       that side within its splash of the spot, the rest as splash (`Hit.extra`, a skill's `Hit.skill`). Nobody there: a
+       single shot shows its look alone, a splash shot its splash alone.
+     - **Symmetry:** the monsters' shots at troops do the same (a skeleton archer's arrow, Volley, Barbed Arrow, Spear
+       Throw, Sticky Glob). The instant blows (melee and its splash, the troop skills' rings and thrusts, smites, chains,
+       God's Thunder, zones) and the line shots are unchanged.
+     - **A wave's end and a wipe:** a shot still in the air is `spent`: it flies on and lands its look and ring, and
+       hurts nobody. Until then a monster's shot in the air at a living troop as the wave ended still hurt it between
+       waves, and a wipe (322) cleared every shot at once.
+     - **Cost:** nothing made a tick (`to` keeps the target's own `Point`); the spot's search runs once a landing, over
+       the units, without a list.
+     - **The w89 identity** (test/probe_pusaka_w89_identity.dart, on main with 320 merged, against its fccf102f golden):
+       every stat, text, tooltip and preview line the same; only the fights move, since shots that were dropped now land
+       and roll their dice. In the seven 45 s fights of wave 90 the kills at 45 s are +1 to +6 each (+25 in all) and the
+       gold +230 to +7,533; in the three arms that play waves 90 and 91, five of the six waves end sooner (wave 90 171.7,
+       161.2, 188.6 s to 177.2, 151.6, 180.4; wave 91 130.7, 126.3, 136.1 to 130.2, 121.1, 132.7), the kills alike (wave
+       90's 215 to 221 in one arm, 221 to 219 in another), the troops fallen both ways (8 to 6, 0 to 1), and one Hero
+       rolled after wave 90 is another (the dice moved on). Before 320 (on 1d151d71) it moved the same way: +17 kills in
+       the fights, waves 1-6.5% sooner. The new golden: `<agents>/probes/shot-through/w89-on-e05b6e4b.txt`.
+     - **Checks:** test/shots_test.dart (the cases above, a wave's end, a wipe), hit_source_test's list (the landing's
+       `_hurt` calls name `on`); test/probe_shot_through_shots.dart's frames at 1600×947 (`<agents>/shots/shot-through/`:
+       the fireball and Arcane Blast fly on past the fall and burst at the spot, the splash taking 22 and 33 off each orc
+       beside it). Balance (the splash lands more often) is measured after the merge, by replaying saved waves.
