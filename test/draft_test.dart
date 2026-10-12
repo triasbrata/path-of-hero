@@ -403,7 +403,8 @@ void main() {
     g.chests.last.cards = [Relic.warDrum, null, Relic.grail];
     final j = jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>;
     expect((j['serpihan'], j['draftDry'], j['chestsGiven']), (2, 4, 2));
-    expect((j['chests'] as List).last, {'kind': 'boss', 'wave': 4, 'cards': ['warDrum', 'serpihan', 'grail']});
+    // Its faces too, the Shadows on (decisions-log 319): none before omenFrom, but a roll draws them all the same.
+    expect((j['chests'] as List).last, {'kind': 'boss', 'wave': 4, 'cards': ['warDrum', 'serpihan', 'grail'], 'omens': [null, null, null]});
     final back = Game.fromJson(j);
     expect(jsonEncode(back.toJson()), jsonEncode(g.toJson()));
     expect((back.chests.first.rerolls, back.chests.first.epik), (2, true));

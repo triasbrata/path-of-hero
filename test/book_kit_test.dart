@@ -51,7 +51,8 @@ Future<TdGame> boot(WidgetTester tester, [Size size = const Size(1266, 713)]) as
 Game w89() => Game.fromJson(jsonDecode(File('test/fixtures/save-20261002-2222-w89-sellbug.json').readAsStringSync()) as Map<String, dynamic>)
     .boardRules()
   ..towns = false // the Towns off (tests only, decisions-log 296: the rules from before them; the book is the Towns' still)
-  ..chests.clear();
+  ..chests.clear()
+  ..omenCaughtUp = false; // no Shadows' catch-up note over the book (decisions-log 319), as this test always played
 
 /// [image]'s pixels as 0xAARRGGBB, its colours not premultiplied.
 Future<int Function(int, int)> pixelsOf(WidgetTester tester, ui.Image image) async {

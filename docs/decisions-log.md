@@ -11189,9 +11189,14 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      - **The ease, for the owner:** on his wave-58 save the catch-up landed 2 levels at wave 59's start and the ease
        took both at its end: his army loses ~20 un-awakened fodder troops a wave (Auto Buy buys them back, and each
        fall counts, 107 in that wave against 36 at its start), so every wave eases the most, 2, as many as the
-       catch-up lands, and a chest's 1-3 levels go within a wave or two. It ships as designed; `omenEaseCount`
-       (`OmenEaseCount`: `falls` as now, `starters` each troop that started the wave once, `awakened` only an
-       awakened type's falls) and `omenEaseMax` are the knobs for his answer.
+       catch-up lands, and a chest's 1-3 levels go within a wave or two. Asked, the owner answered "Biarkan, ditimbang
+       balancing" (leave it; the balancing weighs it): it ships as designed, and the balance pass (318) weighs the
+       counts with data through the knob `omenEaseCount` (`OmenEaseCount`: `falls` as now, `starters` each troop that
+       started the wave once, `awakened` only an awakened type's falls) and `omenEaseMax`.
+     - **Measured lightly** (two seeds a side, the balance pass's careful-player policy, no tuning): new games with
+       them on were wiped at waves 47 and 67, off at 60 and 71; the owner's wave-58 save forward at 64 and 63 on, 63
+       and 66 off. The w89 identity dump with the Towns: its texts and stats the same, waves 90 and 91 still won with
+       no life lost, 1-5% longer, a troop or two more fallen.
      - **Replays** (code-audit R1): nothing seeded `Game.omenDice`, so no run with the Shadows on was the same twice.
        `Game.seedDice(seed)` seeds every die after rng and names at the probes' offsets (loot +200, heroes +300, slots
        +400, draft +500, Town +600, materials +700, Tavern +800, Shadows +900), `Game.dice` lists them and

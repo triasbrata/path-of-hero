@@ -88,11 +88,12 @@ void main() {
     final b = await boot(tester);
     final g = b.state = w86().boardRules()..chests.clear(); // its catch-up chests' popup would take the taps (draft_hud_test.dart)
     await frames(tester, 3);
-    // With the tide's news for a save from before it (#92), Beban's (decisions-log 162) and the Pusaka's (decisions-log
-    // 151), in one window.
+    // With the tide's news for a save from before it (#92), Beban's (decisions-log 162), the Pusaka's (decisions-log
+    // 151) and the Shadows' catch-up (decisions-log 319: its Artifacts owe 10), in one window.
     expect(b.message, '${tideNews.$1} ${tideNews.$2}\nThe army cap is now 36. You keep your troops;\n'
         'buy more when under 36.\n${overNote(36)}\n${capsNote(['Priest 17/5', 'Wizard 9/8', 'Templar 13/10'])}\n'
-        '${[...pusakaNoteLines, pusakaNoteSuggested].join('\n')}');
+        '${[...pusakaNoteLines, pusakaNoteSuggested].join('\n')}\n${g.omenCatchUpNote}');
+    expect(g.omenCatchUpNote, 'Monsters answer your ${Words.artifact}s: 10 ${Words.shadow}s come, 2 each wave');
     expect(g.tideCaughtUp, isFalse);
     await frames(tester, 150); // more than a plain message's 2 s
     expect(b.message, isNotNull, reason: 'a note stays longer');

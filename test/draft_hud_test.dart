@@ -185,7 +185,8 @@ void main() {
     await tapOn(tester, b.chestButtons['skip']!.center);
     expect(g.chests.length, 2, reason: 'armed again');
     await tapOn(tester, b.chestButtons['skip']!.center);
-    expect((g.chests.length, g.gold, b.message), (1, gold - 2500 + 2500, 'Chest skipped: +2500 gold'));
+    expect((g.chests.length, g.gold, b.message), (1, gold - 2500 + 2500, 'Chest skipped: +2500 gold\n${g.skipNote()}'),
+        reason: 'from omenFrom a Skip owes the next wave the skip buff, which its message says (decisions-log 319)');
     await frames(tester, 3);
     expect(b.chestOpen, isTrue, reason: 'the next chest due opens');
     await frames(tester, 30);

@@ -366,4 +366,32 @@ void main() {
       expect((b.coachCard, b.chestOpen), (null, true));
     });
   }
+
+  testWidgets('K25 sits over the first chest whose cards hide a Shadow (decisions-log 319), two pages; not over one that '
+      'hides none', (tester) async {
+    final b = await boot(tester);
+    final g = b.state = boardGame(omenFrom);
+    b.guideSeen = {...pastIntro(), for (final r in guideRules) if (r.key != 'K25') r.key}; // K25 alone to show
+    await frames(tester, 10);
+    await endWave(tester, g);
+    g.chests.add(Chest(ChestKind.boss, g.wave, cards: [Relic.grail, Relic.voidEye, Relic.dawnStar]));
+    await cheer(tester, b, g);
+    expect(await cardShown(tester, b), isNull, reason: 'no face, no K25');
+    await tapOn(tester, b.chestCards.first);
+    await tapOn(tester, b.chestButtons['take']!);
+    if (b.messageBox != Rect.zero) await tapOn(tester, b.messageBox);
+    await endWave(tester, g);
+    g.chests.add(Chest(ChestKind.boss, g.wave,
+        cards: [Relic.grail, Relic.voidEye, Relic.dawnStar], omens: [OmenKind.armor, OmenKind.mend, OmenKind.armor]));
+    await cheer(tester, b, g);
+    expect(await cardShown(tester, b), 'K25');
+    expect(b.chestOpen, isTrue, reason: 'over the chest');
+    await tapOn(tester, b.chestCards.first);
+    expect((b.coachCard, b.chestPicked), (('K25', 1), null), reason: 'the tap turned the page only');
+    await tapOn(tester, b.chestCards.first);
+    expect(b.coachCard, isNull);
+    expect(b.guideSeen, contains('K25'));
+    expect(b.chestFaces, ['?!!', '?!!', '?!!'], reason: 'the chest under it, its Epic cards\' marks');
+    await frames(tester, 30); // past the tap's own timer
+  });
 }

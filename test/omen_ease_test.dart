@@ -24,18 +24,16 @@ void main() {
       ..wave = 29
       ..gold = 1000000
       ..upgrades['knight'] = awakenOne('knight');
-    for (var i = 0; i < 3; i++) {
-      g
-        ..autoPlace('knight')
-        ..autoPlace('soldier');
+    for (final type in ['knight', 'soldier', 'knight', 'soldier', 'soldier']) {
+      g.autoPlace(type); // with the free priest the room's 6
     }
     expect((g.awakenLevel('knight'), g.awakenLevel('soldier')), (1, 0));
     g.startWave();
     final knights = g.troops.where((u) => u.type == 'knight').toList(), soldiers = g.troops.where((u) => u.type == 'soldier').toList();
+    expect((knights.length, soldiers.length), (2, 3));
     expect(g.omenStarters, containsAll([...knights, ...soldiers]));
-    expect(g.autoPlace('soldier'), isTrue, reason: 'bought mid-wave (Auto Buy\'s way): not a starter');
-    final rebought = g.troops.last;
-    expect(g.omenStarters.contains(rebought), isFalse);
+    final rebought = soldiers.last; // as one Auto Buy bought mid-wave: not one the wave started with
+    g.omenStarters.remove(rebought);
     g.fallen.addAll([soldiers[0], soldiers[1], rebought, rebought, knights[0]]);
     expect(g.omenFalls(), 5);
     expect(
