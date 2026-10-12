@@ -11554,3 +11554,18 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        as nothing), guide_text_test and town_switch_test (the new lines), auto_names_test and hud_sweep_test (a Town
        with Auto on, no overlap). No balance probe: the waves and fights are as before (the probes go through Towns by
        `townPolicy`, which never used the countdown).
+330. **A Town takes no wave number: pinned by a test; the skip the owner saw is not reproduced yet** (the owner,
+     2026-10-12, playing the develop build: "harusnya kota itu tidak di hitung wave, jadi setelah wave 7 masuk kota,
+     maka ketika keluar kota adalah wave 8 bukan wave 9", a Town shouldn't count as a wave: after wave 7 he goes into a
+     Town, and on leaving it should be wave 8, not wave 9). By the rules a Town is between two waves: it is due when
+     `townAt == wave + 1` after a win, no wave starts while it is due, and leaving it changes no number (`leaveTown`
+     makes its slot `townLast`); the wave count moves only in `startWave` (+1) and in a wipe's replay (−1, decisions-log
+     322). By town-market.
+     - **Checked** with test/town_wave_count_test.dart on main (08c83b36), on the develop build (06c93d64) and on this
+       branch: wave 7 won, "Town after wave 7", the Town gone into, its meter "next wave 8", left by hand with Auto off
+       and on, after a wipe replayed wave 7 first, from a save made in the Town, and with the roll marking it by itself:
+       every time the next wave was 8 (7 for the roll's Town after wave 6). On the develop build Auto leaving the Town
+       by its own countdown (before 328) started wave 8 too. Nothing writes the wave number but `startWave`, the save's
+       load and the wipe, and the saves are made between waves only.
+     - **Open:** what the owner's run did differently (a boss chest, a card, the battle log's lines around that Town).
+       No code change; the test stays, so a fix for what he saw lands against it.

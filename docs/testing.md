@@ -1890,6 +1890,11 @@ turn.
   after the cheer and saved, "Leave town" leaving it (saved) and starting no wave, then Start; with Auto on no
   countdown in the Town (decisions-log 328: 10 s on, still in it, Auto still on), left by hand (saved, `TownLeft.auto`
   false), then Auto Wave's 5 s and the wave; a save made in the Town reopening in it.
+- town_wave_count_test.dart (booted `TdGame`s; decisions-log 330): a Town takes no wave number. Wave 7 won, the Town
+  marked for it ("Town after wave 7") gone into, its meter "next wave 8", left by hand (the same wave, none started)
+  and the next wave started is 8: with Auto off (by Start) and on (by its countdown), after a wipe played wave 7 again
+  first, from a save made in the Town, and with every roll hitting (the first Town after wave 6, wave 5's chest taken
+  at once: then wave 7).
 - Probes: `test/probe_town_shots.dart` (the chip between waves and mid-wave, its tooltip, the Town's "Leave town" and
   with Auto on, still "Leave town", the battle log's lines, at 1266×713, 915×412 and 412×860) and `test/probe_town_slots.dart`
   (the board's Towns, on with no define, over waves 1-30 for 10 seeds, the gaps, seed 7's waves in the design's
