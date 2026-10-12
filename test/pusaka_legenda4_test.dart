@@ -347,7 +347,7 @@ void main() {
       fill(g, 24);
       expect((g.armyLocked, g.full), (false, false), reason: 'no oath yet');
       g.givePusaka(Relic.fewOath);
-      expect((g.armyLocked, g.full, g.armyCap, g.overBy), (true, true, armyMaxBoard, 0));
+      expect((g.armyLocked, g.full, g.armyCap), (true, true, armyMaxBoard));
       expect(g.buyRefusal('knight'), fewOathBar);
       expect(g.place('knight', 3, 0), isFalse);
       expect(g.armySize, 24);

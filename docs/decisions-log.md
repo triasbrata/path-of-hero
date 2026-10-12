@@ -11842,6 +11842,20 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        - What the owner's game loses: nothing he has seen (no crossing in his waves 1-74). A collapse costs one heart
          instead of up to 2.5; a march that can't be won costs a heart instead of half a heart a monster (harsher for
          one crosser, gentler for many), and is never a win.
+     - **Beban goes** (decisions-log 162, the over-cap tide; the owner's pick "Hapus (Recommended)"): an army alive over
+       the cap met a later wave's tide, 2 waves a troop over (at most 60, ramped in over 5 waves from `overFrom`, the
+       pace too). No real game goes over the cap since 141 and 260 (only a Phoenix Plume or Resurrection rise after Auto
+       Buy already rebought, +1 for a wave or two), and the saves from before the cap are deleted at launch, so it acted
+       only in the w89 test fixture (48 troops). Gone: `overTide`, `overTideMax`, `overRamp`, `overPace`,
+       `overTideWaves`, `overTip`, `overNote`, `Game.overFrom` / `waveOver` / `overBy` / `waveTideFrom` / `wavePaceFrom`
+       / `shownOver` / `shownTideFrom`; every monster, the spawn gap, the wave meter and the cap's warning count from
+       `tideStart`. A save's `overFrom` is read as nothing; an old `over` note key stays in `notes`, unread; a wave
+       start's `tide.over` goes (telemetry 16). The Bayangan's own over-cap count (the Beban factor, `omenFactor`) is
+       another rule and stays: a leftover of the same idea, for a later call.
+       - **The w89 identity dump moves by its telemetry alone** (the Pusaka probe on the fixture, 48 troops): its
+         six wave records lose `"over":0` from `start.tide` and its three record hashes change; every stat, text,
+         tooltip, preview and fight is byte for byte the same, since the probe plays with no board cap (Beban never
+         counted there). With the back line's change above and Beban still in, it was byte for byte main's.
      - **Leftovers no player sees go** (the code audit's X1 and X2 of 317, never picked): the Toko-era names of the Army
        tab's dot and K11's picture (`tokoNudge`, `_tokoTabDot`, `'tokoDot'`, `_picToko` are now `armyNudge`,
        `_armyTabDot`, `'armyDot'`, `_picShop`); `Board.carveButton` (a test seam no test read); `To.allTroops` (no Fx

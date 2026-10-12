@@ -26,7 +26,8 @@ part of 'game.dart';
 /// (tests only) sends none. 13: an army wiped mid-wave no longer ends the game ([Wiped]; decisions-log 322). 14: the
 /// Towns' market and identities ([StoreSold] margin and pressure, [TownEntered] n and identity; decisions-log 326). 15: a
 /// Tavern boost's length is its offer's ([BoostBought.waves] 2 to 4, or 0 with [BoostBought.untilTown]; decisions-log 331).
-/// 16: the back line costs nothing (decisions-log 329): a [Wiped]'s `cause`, and Watchman's Brew's `boostSaved` gone.
+/// 16: the back line costs nothing (decisions-log 329): a [Wiped]'s `cause`, and Watchman's Brew's `boostSaved` gone;
+/// Beban went too (329), and with it [WaveStarted.tide]'s `over`.
 const eventVersion = 16;
 
 /// How many events [Game.log] keeps, the oldest going first.
@@ -687,7 +688,7 @@ final class TavernRerolled extends TraceEvent {
 final class WaveStarted extends TraceEvent {
   WaveStarted(super.wave, super.t,
       {required this.army, required this.levels, required this.heroes, required this.gold, required this.capacity,
-      required this.lives, required this.bag, required this.relics, this.tide = const (hp: 1.0, dmg: 1.0, gap: Game.spawnGap, over: 0), this.pusaka = const {},
+      required this.lives, required this.bag, required this.relics, this.tide = const (hp: 1.0, dmg: 1.0, gap: Game.spawnGap), this.pusaka = const {},
       this.omens, this.materials, this.boosts});
 
   final Map<String, int> army, levels, bag, relics;
@@ -706,10 +707,10 @@ final class WaveStarted extends TraceEvent {
   final List<(String, String?)> heroes;
   final int gold, capacity, lives;
 
-  /// The tide on this wave's crowd (#92, [tide]): the HP and damage multipliers, the seconds between two monsters
-  /// coming on ([spawnGapOf]), and how many waves earlier it counts from for an army over the cap ([Game.waveOver],
-  /// Beban, decisions-log 162; 0 at the cap or under it).
-  final ({double hp, double dmg, double gap, int over}) tide;
+  /// The tide on this wave's crowd (#92, [tide]): the HP and damage multipliers and the seconds between two monsters
+  /// coming on ([spawnGapOf]). Its `over` (Beban's waves earlier for an army over the cap, decisions-log 162) went with
+  /// Beban in decisions-log 329.
+  final ({double hp, double dmg, double gap}) tide;
 
   @override
   EventKind get kind => EventKind.waveStarted;
@@ -720,7 +721,6 @@ final class WaveStarted extends TraceEvent {
         'heroes': [for (final (type, skill) in heroes) {'type': type, 'skill': skill}],
         'tide': {
           for (final (k, v) in [('hp', tide.hp), ('dmg', tide.dmg), ('gap', tide.gap)]) k: (v * 10000).round() / 10000,
-          'over': tide.over,
         },
         'pusaka': pusaka,
         'omens': ?omens,

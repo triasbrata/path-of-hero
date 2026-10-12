@@ -158,7 +158,7 @@ void main() {
       if (e is WaveStarted) started.add(e);
     });
     g.startWave();
-    expect(started.single.data['tide'], {'hp': 1.3478, 'dmg': 1.1614, 'gap': 0.7743, 'over': 0});
+    expect(started.single.data['tide'], {'hp': 1.3478, 'dmg': 1.1614, 'gap': 0.7743}); // no `over` since Beban went (329)
   });
 
   group('Ganti yang gugur', () {
@@ -359,9 +359,8 @@ void main() {
     });
   });
 
-  group('Beban, the over-cap tide (decisions-log 162)', () {
-    /// The cap the mechanism's numbers below were worked out at, as decisions-log 162 had it: 48 over 32 is 16 over. The
-    /// board's is 36 since decisions-log 260 (12 over for the same 48: the last test here, army_cap_test, omen_test).
+  group('an army over the cap meets the tide as any army: Beban went (decisions-log 329, 162)', () {
+    /// The cap Beban's numbers were worked out at, as decisions-log 162 had it: 48 over 32 is 16 over.
     const cap = 32;
 
     /// Wave [won] won with the tide from 66 (the owner's w86 save), [n] soldiers on the field (columns of 8), then the
@@ -381,146 +380,35 @@ void main() {
         ..typeCap = null; // the type caps aside (decisions-log 201): an army of one type, the army's cap alone
     }
 
-    /// Ends the wave on: nothing left to come, no monster left (no win: the game stays as it is).
-    void endWave(Game g) {
-      g.queue.clear();
-      g.units.removeWhere((u) => u.side == Side.enemy);
-      expect(g.waveActive, isFalse);
-    }
-
-    /// [n] of [g]'s living troops fall (taken off the field).
-    void fall(Game g, int n) => g.units.removeWhere((u) => u.side == Side.troop && n-- > 0);
-
-    test('its numbers and words', () {
-      expect((overTide, overTideMax, overRamp, overPace), (2, 60, 5, true));
-      expect((overTip(16, 32), overTip(1, 1)), ('16 over the cap: ${Words.tide} +32 waves', '1 over the cap: ${Words.tide} +1 wave'));
-      expect(overNote(32), '${Words.army} cap 32. Each troop over it:\n${Words.tide} +2 waves');
-    });
-
-    test('2 waves a troop over, at most 60, a fifth more each wave from the first over the cap, rounded', () {
-      expect([for (final w in [87, 88, 89, 90, 91, 92, 120]) overTideWaves(16, w, 87)], [6, 13, 19, 26, 32, 32, 32]);
-      expect([for (final over in [0, 1, 2, 16, 30, 31, 40]) overTideWaves(over, 99, 87)], [0, 2, 4, 32, 60, 60, 60]);
-      expect((overTideWaves(3, 87, 87), overTideWaves(1, 87, 87), overTideWaves(-3, 99, 87), overTideWaves(16, 86, 87)),
-          (1, 0, 0, 0)); // one troop over on its first wave rounds to none yet
-    });
-
-    test('48 at the cap of 32 counts the tide from 32 waves earlier, for every monster the wave makes', () {
-      final g = overCap()..overFrom = 82; // ramped in already
-      expect(g.overBy, 16);
-      g.startWave();
-      expect((g.wave, g.waveOver, g.waveTideFrom, g.overFrom), (87, (by: 16, waves: 32), 34, 82));
-      final orc = g.monster('orc', Tier.elite, const Point(250, 60));
-      expect(orc.maxHp, enemyStats('orc', Tier.elite, 87, tideStart: 34).hp);
-      expect(tide(87, tideHp, 34), closeTo(1.6945, 1e-4)); // the crowd's HP at full strength (x1.23 from 66)
-      expect(orc.maxHp, greaterThan(enemyStats('orc', Tier.elite, 87, tideStart: 66).hp));
-      // Each troop less over the cap gives 2 waves back; 30 over is capped at 60.
-      endWave(g);
-      fall(g, 4);
-      g.startWave();
-      expect((g.waveOver, g.waveTideFrom), ((by: 12, waves: 24), 42));
-      final big = overCap(n: 48)..overFrom = 70;
-      for (var i = 0; i < 16; i++) {
-        big.units.add(Unit(Side.troop, 'soldier', troopTypes['soldier']!, const Point(8, 8)));
-      }
-      big.startWave();
-      expect(big.waveOver, (by: 32, waves: 60));
-    });
-
-    test('a summoner\'s minions follow the wave\'s tide', () {
-      final g = bare()
-        ..wave = 87
-        ..tideStart = 66
-        ..waveOver = (by: 16, waves: 48);
-      final u = g.monster(boss, Tier.boss, const Point(250, 60))..summonCd = 0;
-      g.units.add(u..mp = u.stats.mp.toDouble());
-      g.tick(0.05);
-      final raised = g.minionsOf(u).toList();
-      expect(raised, isNotEmpty);
-      for (final m in raised) {
-        final want = enemyStats(minion, m.tier, 87, raised: true, tideStart: 18);
-        expect((m.maxHp, m.stats.dmg), (want.hp, want.dmg));
-      }
-    });
-
-    test('the spawn gap follows the wave\'s tide too (overPace on)', () {
-      final g = overCap()..overFrom = 80;
-      g.startWave();
-      expect((g.waveTideFrom, g.wavePaceFrom), (34, 34));
-      final (type, tier) = g.queue.first;
-      g.tick(0.05);
-      expect(g.waveSpawned, 1);
-      if (tided(tier)) expect(g.enemies.single.maxHp, enemyStats(type, tier, 87, tideStart: 34).hp);
-      // 48 troops: the spawn floor (decisions-log 225) brings the first 6 one a tick, and the gap runs from the last.
-      expect(g.spawnFloor, 6);
-      for (var i = 2; i <= 6; i++) {
-        g.tick(0.05);
-      }
-      expect(g.waveSpawned, 6);
-      g.tick(spawnGapOf(87, 34) - 0.004);
-      expect(g.waveSpawned, 6);
-      g.tick(0.008);
-      expect(g.waveSpawned, 7);
-      expect(spawnGapOf(87, 34), lessThan(spawnGapOf(87, 66)), reason: 'off, it would keep the base pace');
-    });
-
-    test('it ramps in over 5 waves from the first wave started over the cap, which is saved', () {
+    test('48 at the cap of 32: every monster the wave makes, and its pace, count the tide from tideStart', () {
       final g = overCap();
-      expect(g.overFrom, isNull);
-      final ramp = <int>[];
-      for (var i = 0; i < 6; i++) {
-        g.startWave();
-        ramp.add(g.waveOver.waves);
-        endWave(g);
-      }
-      expect(ramp, [6, 13, 19, 26, 32, 32]);
-      expect(g.overFrom, 87);
-      // Saved, and the ramp goes on from it after a load.
-      final l = Game.fromJson(roundTrip(g.toJson()))
-        ..boardRules()
-        ..armyMax = cap;
-      expect((l.overFrom, l.wave), (87, 92));
-      // At the cap it is off, and the first wave stays: back over later, it is at full strength at once.
-      fall(g, 16);
+      final started = <WaveStarted>[];
+      g.listeners.add((e) {
+        if (e is WaveStarted) started.add(e);
+      });
       g.startWave();
-      expect((g.waveOver, g.waveTideFrom, g.overFrom), ((by: 0, waves: 0), 66, 87));
-      endWave(g);
-      g.units.add(Unit(Side.troop, 'soldier', troopTypes['soldier']!, const Point(8, 8)));
-      g.startWave();
-      expect(g.waveOver, (by: 1, waves: 2));
-      // A loaded save without the key sets it on its first wave over the cap.
-      final old = Game.fromJson(roundTrip(overCap().toJson())..remove('overFrom'))
-        ..boardRules()
-        ..armyMax = cap;
-      expect(old.overFrom, isNull);
-      old.startWave();
-      expect((old.overFrom, old.waveOver.waves), (87, 6));
+      final orc = g.monster('orc', Tier.elite, const Point(250, 60));
+      expect(orc.maxHp, enemyStats('orc', Tier.elite, 87, tideStart: 66).hp);
+      final tideData = started.single.data['tide'] as Map;
+      expect(tideData.containsKey('over'), isFalse);
+      expect(tideData['gap'], closeTo(spawnGapOf(87, 66), 1e-4));
+      expect(tideData['hp'], closeTo(tide(87, tideHp, 66), 1e-4));
     });
 
-    test('frozen for the wave: troops falling in it change nothing until the next', () {
-      final g = overCap()..overFrom = 82;
-      g.startWave();
-      final hp = g.monster('orc', Tier.normal, const Point(250, 60)).maxHp;
-      fall(g, 10);
-      expect((g.overBy, g.waveOver, g.waveTideFrom), (6, (by: 16, waves: 32), 34));
-      expect(g.monster('orc', Tier.normal, const Point(250, 60)).maxHp, hp);
-      expect(g.shownOver, (by: 16, waves: 32), reason: 'in a wave the HUD shows the wave\'s own');
-      endWave(g);
-      // Between waves the HUD shows the coming wave's as the army stands now.
-      expect((g.shownOver, g.shownTideFrom), ((by: 6, waves: 12), 54));
-      g.startWave();
-      expect((g.waveOver, g.waveTideFrom), ((by: 6, waves: 12), 54));
+    test('the HUD: the tooltip and the cap\'s warning count from tideStart, and no note for being over', () {
+      final g = overCap();
+      expect(g.tideTip.$2.take(4), tideInfo(87, 66).$2);
+      expect(g.tideTip.$2.where((l) => l.contains('over the cap')), isEmpty);
+      final owner = overCap()..notes.add('army');
+      expect(owner.limitNotes(), isEmpty);
+      expect(overCap().limitNotes(), ['The army cap is now 32. You keep your troops;\nbuy more when under 32.']);
     });
 
-    test('off with no cap (a plain Game()) and for an army at the cap or under it, so nothing is saved', () {
-      final plain = overCap()..armyMax = null;
-      plain.startWave();
-      expect((plain.overBy, plain.waveOver, plain.waveTideFrom, plain.overFrom), (0, (by: 0, waves: 0), 66, null));
-      final at = overCap(n: 32);
-      at.startWave();
-      expect((at.overBy, at.waveOver, at.waveTideFrom, at.overFrom), (0, (by: 0, waves: 0), 66, null));
-      expect(at.toJson().containsKey('overFrom'), isFalse);
-      expect(Game().overFrom, isNull);
-      expect(Game().toJson().containsKey('overFrom'), isFalse);
+    test('an older save\'s overFrom loads, unread, and is not written back', () {
+      final j = roundTrip(overCap().toJson())..['overFrom'] = 82;
+      final l = Game.fromJson(j);
+      expect(l.wave, 86);
+      expect(l.toJson().containsKey('overFrom'), isFalse);
     });
 
     test('a wave at the board\'s cap plays the same with the cap on as with it off', () {
@@ -548,7 +436,7 @@ void main() {
           }
         }
         return [
-          g.wave, g.waveActive || g.over, g.t.toStringAsFixed(6), g.gold, g.kills, g.lives, g.score, g.waveTideFrom, spawned.length,
+          g.wave, g.waveActive || g.over, g.t.toStringAsFixed(6), g.gold, g.kills, g.lives, g.score, g.tideStart, spawned.length,
           for (final u in g.troops) '${u.type} ${u.alive} ${u.hp.toStringAsFixed(6)} ${u.pos.x.toStringAsFixed(4)}',
         ].join('|');
       }
@@ -557,55 +445,6 @@ void main() {
       expect(on, play(false));
       final [wave, going, _, _, kills, ...] = on.split('|');
       expect((wave, going, int.parse(kills) > 10), ('7', 'false', true), reason: on); // the wave fought out, and won
-    });
-
-    test('the HUD\'s words: the tooltip\'s line, the cap\'s warning and the one-time note follow it', () {
-      final g = overCap()..overFrom = 82;
-      expect(g.tideTip.$2, [...tideInfo(87, 34).$2, overTip(16, 32), capTip(cap)]); // its pace too (overPace)
-      expect(g.capWarning(), capWarningText(cap, tidePercent(87, 34)));
-      expect(tidePercent(87, 34), 69);
-      fall(g, 16); // at the cap: the tide as before
-      expect(g.tideTip.$2, [...tideInfo(87, 66).$2, capTip(cap)]);
-      // The note, once, for an army alive over the cap; with the "army" note for a save that hasn't seen it.
-      final owner = overCap()..notes.add('army');
-      expect(owner.limitNotes(), [overNote(32)]);
-      expect(owner.limitNotes(), isEmpty);
-      expect(overCap().limitNotes(), ['The army cap is now 32. You keep your troops;\nbuy more when under 32.', overNote(32)]);
-      final under = overCap(n: 32)..capacity = 48; // capacity over the cap, the army not
-      expect(under.limitNotes(), ['The army cap is now 32. You keep your troops;\nbuy more when under 32.']);
-      expect((overCap()..armyMax = null).limitNotes(), isEmpty);
-    });
-
-    test('WaveStarted tells it: the tide\'s multipliers from the earlier wave, and how many waves earlier', () {
-      final started = <WaveStarted>[];
-      final g = overCap()..overFrom = 82;
-      g.listeners.add((e) {
-        if (e is WaveStarted) started.add(e);
-      });
-      g.startWave();
-      final want = {'hp': tide(87, tideHp, 34), 'dmg': tide(87, tideDmg, 34), 'gap': spawnGapOf(87, 34)};
-      final tideData = started.single.data['tide'] as Map;
-      expect(tideData['over'], 32);
-      for (final MapEntry(:key, :value) in want.entries) {
-        expect(tideData[key], closeTo(value, 1e-4), reason: key);
-      }
-      endWave(g);
-      fall(g, 16);
-      g.startWave();
-      expect((started.last.data['tide'] as Map)['over'], 0);
-    });
-
-    test('at the board\'s 36 (decisions-log 260) the same 48 are 12 over: the tide from 24 waves earlier', () {
-      final g = overCap()
-        ..armyMax = armyMaxBoard
-        ..overFrom = 82;
-      expect((armyMaxBoard, g.overBy), (36, 12));
-      g.startWave();
-      expect((g.waveOver, g.waveTideFrom), ((by: 12, waves: 24), 42));
-      endWave(g);
-      fall(g, 12); // at the cap: the tide as before
-      g.startWave();
-      expect((g.waveOver, g.waveTideFrom), ((by: 0, waves: 0), 66));
     });
   });
 }

@@ -51,8 +51,8 @@ has neither, so tests and probes play as before (`armyMax`, `typeCap` null).
   batas atasnya harusnya memang 36"): `armyCap` = min(`capacity`, `armyMax`), `full` = alive ≥ `armyCap`, and
   capacity can't be bought past 36 (`maxCapacity`), at every screen size (camera-and-field.md: a narrow view's zone
   grows to hold it). Nobody is cut: a save with 48 alive keeps all 48 and its capacity 48, and buys wait until 35 or
-  fewer are alive; but since decisions-log 162 its tide counts from
-  earlier for each troop over the cap ("Beban", in "The tide" below). Resurrection's "the army is under its cap" is
+  fewer are alive (from decisions-log 162 to 329 its tide counted from earlier for each troop over the cap: "Beban",
+  in "The tide" below). Resurrection's "the army is under its cap" is
   the same `full`.
 - **At most a cap of each type alive** (`typeCap` = `typeCapBoard`; decisions-log 201, the owner on 2026-10-03: "user
   tidak bisa beli lebih dari 5 priest, tidak bisa beli 20 archer supaya game tetap balance"). It replaced the roster of
@@ -103,8 +103,8 @@ has neither, so tests and probes play as before (`armyMax`, `typeCap` null).
   type joins or the player presses Start (decisions-log 201 leaves the hold as it was; at 32, 24 to hold, only the
   three with one melee were, 5 + 8 + 10 = 23).
 - **One-time notes** (`limitNotes()`, the saved `notes` set): a save over the cap (capacity or alive) is told
-  "The army cap is now 36. You keep your troops; buy more when under 36." (key `army`), one with more alive than the cap
-  "Army cap 36. Each troop over it: Tide +2 waves" (`over`, `overNote`, decisions-log 162), one with types alive over
+  "The army cap is now 36. You keep your troops; buy more when under 36." (key `army`; Beban's `over` note, decisions-log
+  162, went in 329), one with types alive over
   their caps (`overCaps`) "Each troop type has a cap now. You keep yours; over it: Priest 17/5, Wizard 9/8, Templar
   13/10. Buy more of a type when under its cap." (`caps`, `capsNote`, three types a line), each once, in one message
   window, which fits a phone (`test/cap_warning_hud_test.dart`). An older save's `types` key (the roster's note) stays
@@ -267,7 +267,7 @@ the tier) and of the wave growth:
     doesn't.
   - Below it (`belowSpawnFloor`), `tick` skips the timer and brings the queue's next monster on at once, one a tick
     at most, at the usual spawn point in a random lane. Every spawn starts the gap afresh, so once the floor is met
-    the timer runs again from the spawn that met it (`spawnGapOf(wave, wavePaceFrom)`, the tide's pace included).
+    the timer runs again from the spawn that met it (`spawnGapOf(wave, tideStart)`, the tide's pace included).
   - So a wave's first monsters come one a tick up to the floor (48 troops: six in 0.2 s at 30 ticks a second, not
     over 4.5 s), and a field emptied early gets its next monster on the next tick, not after the gap.
   - Only when they come on moves: the queue's order, the mini boss and boss slots and their escorts, the Guard
@@ -374,10 +374,9 @@ atasi dengan mudah". After wave ~26 the crowd stopped mattering; only the boss a
   wave 73 meets HP ×1.23 (what a new game meets at 56), not ×1.46 at once. `tideCatchUp` 999 would be the full tide
   at once, 0 a start from the load. Such a save whose next wave already has the tide sets `Game.tideCaughtUp`, and
   the UI says so once (ui-hud.md).
-- `enemyStats(…, tideStart:)` defaults to `tideFrom`; the game passes its own `waveTideFrom` (`tideStart`, earlier
-  for an army over the cap: "Beban" below) wherever it makes a monster (`monster`, `_summon`, `_summonChoice`,
-  `_bringIn`, Slime Hex), and the spawn timer reads `spawnGapOf(wave, wavePaceFrom)` (`waveTideFrom` while
-  `overPace` is on, else `tideStart`).
+- `enemyStats(…, tideStart:)` defaults to `tideFrom`; the game passes its own `tideStart` wherever it makes a monster
+  (`monster`, `_summon`, `_summonChoice`, `_bringIn`, Slime Hex), and the spawn timer reads `spawnGapOf(wave,
+  tideStart)`. (From decisions-log 162 to 329 an army over the cap counted from earlier: "Beban" below.)
 - The HUD shows it on the wave meter, the "VICTORY!" popup announces it (ui-hud.md), and the telemetry records it
   (`start.tide`, telemetry.md).
 - **With the army cap** (decisions-log 161, qa-4's finding). An army at the cap (36 since decisions-log 260; 32 when
@@ -393,48 +392,13 @@ atasi dengan mudah". After wave ~26 the crowd stopped mattering; only the boss a
     loses ~0.1 a wave, not the owner's 1-3: Bangkit 5 makes it ~3 times as strong as the army that doesn't spend.
   - The warning: `Game.capPressed` / `capWarning` (the message window every `capWarnEvery` 5 waves) and the wave
     meter tooltip's last line (`capTip`); ui-hud.md "Message window".
-- **Beban, the over-cap tide** (decisions-log 162, amending 141's 3a; reports/late-economy-design.md §2.1, J1). An
-  army alive over the cap (a save from before it: the owner's 48 over 32) used to keep its extra troops for free, and
-  the tide never caught it until it had shrunk to 32. Now each troop over the cap brings a later wave's tide. The
-  numbers below were measured at the cap of 32; over the board's 36 (decisions-log 260) the same 48 are 12 over, wave
-  87's tide from 24 waves earlier (42: +56%):
-  - **The count** (`Game.overBy`): s = max(0, living troops − `armyCap`) while `armyMax` is on (the board's
-    `boardRules`); a plain `Game()` never counts.
-  - **The rule** (`overTideWaves(s, wave, overFrom)`): the wave's tide counts from `waveTideFrom` = `tideStart` −
-    round(min(`overTideMax` 60, `overTide` 2 × s) × min(1, (wave − `overFrom` + 1) / `overRamp` 5)). The owner's 16
-    over: wave 87 meets the tide of 32 waves later at full strength, HP ×1.69 from 34 (+69%) instead of ×1.23 from 66
-    (+23%).
-  - **The ramp:** `Game.overFrom` is the first wave started over the cap, set then when missing and never cleared
-    (saved as `overFrom`, only when set; null in a new game). It brings a fifth of the waves on that wave, all of them
-    5 waves on: 16 over adds 6, 13, 19, 26, then 32.
-  - **The pace too** (`overPace` true, as `overTide` 2 was measured): the spawn gap counts from the earlier wave as
-    well (`Game.wavePaceFrom`). The switch stays for a later tune: off, the gap keeps counting from `tideStart`.
-  - **Why 2, soft** (decisions-log 162; the owner's w86 save, buy-back only, 12 seeds): 2 is the only probed arm with
-    no game over from 0 falls the wave before. With 3 or 4 the crowd piled up: at a tide from 42 on wave 95 it brought
-    1.43× the base's crowd HP a second (HP ×1.69, a monster every 0.69 s instead of 0.78 s), 1 to 61 monsters on the
-    field in 120 s with nobody falling, then the line broke in one wave (1 run in 6 at either). Moving HP and damage
-    only (pace off) saved those runs but not a third. 2 loses 0.65 a wave over w87-96 against the design's 1-3: soft,
-    by the owner's rule "too soft rather than a cliff".
-  - **Not met on the w63 save** (decisions-log 162): there 2 loses 3 runs in 6 by w90 (the base loses none). Beban is
-    off in each collapse: it brings the army down to 32 sooner (all 6 by w89), and the plain 32-troop army breaks
-    over w80-90 (falls, rebuys, an empty bank). That is the 32-troop regime, not the over-cap tide. No player will
-    reach that save again, but it is a known risk for new runs: an army at 32 that doesn't spend can't hold w80-90
-    on the w63 economy (J2 and J3 are for that).
-  - **Frozen for the wave** (`Game.waveOver`: `by` = s at its start, `waves`; not saved): counted at each `startWave`,
-    after `wave++` and before the queue. Troops that fall in the wave change nothing until the next. Every reader in
-    a wave uses `waveTideFrom`: `monster`, `_summon`, `_summonChoice`, `_bringIn` (boss_skills.dart), Slime Hex
-    (hero_skills.dart) and `WaveStarted`'s `tide` (its `gap` from `wavePaceFrom`).
-  - **The HUD reads the coming wave between waves** (`Game.shownOver` / `shownTideFrom`: in a wave the frozen one;
-    between waves s as the army stands now, so a rebuy, a fall or a Lepas jenis shows at once): the wave meter's badge,
-    its tooltip (`tideTip`: its lines from the earlier wave, "A monster every" from `tideStart` with `overPace` off, then
-    "12 over the cap: Tide +24 waves", `overTip`), `capPressed` (the tide on)
-    and `capWarning`'s percent. ui-hud.md "Wave meter".
-  - **It limits itself:** each troop that falls over the cap gives 2 waves back, and Lepas jenis takes a type's
-    troops home (the owner's templar 13 + archer 3 are the 16 over).
-  - **An army at the cap or under it, so every new run, meets the tide exactly as before** (s = 0; no dice drawn;
-    `test/tide_test.dart` plays a wave at the board's cap with it on and off). `tideRising` and `tideCaughtUp` (the tide's
-    news) still read `tideStart`.
-  - The one-time note `over` ("The owner's limits" above); the telemetry's `start.tide.over` (telemetry.md).
+- **An army over the cap meets the tide as any army.** Beban, the over-cap tide (decisions-log 162), counted the tide
+  from 2 waves earlier for each troop alive over the cap (at most 60, ramped in over 5 waves from `overFrom`, the pace
+  too), so a save from before the cap (the owner's 48 over 32) paid for its extra troops. It went in decisions-log 329:
+  no real game goes over the cap since 141 and 260 (only a Phoenix Plume or Resurrection rise after Auto Buy already
+  rebought, +1 for a wave or two), and the saves from before it are deleted at launch. A save's `overFrom` is read as
+  nothing, and its `over` note key stays in `notes`, unread. The Bayangan's own count of an army over the cap (the
+  Beban factor, `omenFactor`, "The Bayangan" below) is a separate rule and stays.
 
 ### Ganti yang gugur (buying the fallen back, #92 part 1)
 
@@ -471,7 +435,7 @@ no guard joins a queue, no skip buff lands and a blow is what it was. A **slot**
 a necromancer or a skill raised.
 
 - **Every monster's stats** come from one wrapper, `spawnStats(type, tier, {raised, skipBuff})`: `enemyStats` with the
-  wave's tide (`waveTideFrom`), then `_omenStats` (Haste, Mend, the skip buff, Dark Hymn, Bone Arrows, Old Bones and Hardy). Its six callers: the queue's spawn (`monster`), the necromancer's
+  wave's tide (from `tideStart`), then `_omenStats` (Haste, Mend, the skip buff, Dark Hymn, Bone Arrows, Old Bones and Hardy). Its six callers: the queue's spawn (`monster`), the necromancer's
   raised minions (`_summon`) and `decideSummon`'s count of them (the two match), a skill's bring-in (`_bringIn`: Split,
   Swarm, Grave Call), Slime Hex's form (it keeps a skip buff the monster had), and the boss's blow the Dragon Crown
   tooltip counts (`bossBlowsLived`, another wave's, `at` and `tideStart`).

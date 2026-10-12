@@ -247,17 +247,14 @@ the owner's ask (decisions-log 172, "Guide" below).
   is no count (the coming wave's size isn't known until it starts). In a Town it shows the Town's name, "In Millbrook",
   instead ("Towns on the HUD" below).
 - **The tide** (#92, units-and-combat.md "The tide"): from the tide's first wave (the wave shown ≥
-  `Game.shownTideFrom`: `tideStart`, earlier for an army over the cap, "Beban", decisions-log 162) the crowd's extra HP
-  follows the number, "+35%" on wave 65 (`tidePercent`, whole percent; "+0%" on the first wave; the owner's 48 over 32
-  on wave 87: "+69%" instead of "+23%"), in light blue (`_tideInk` 0xFF7FC8FF) at the number's size. From then the panel keeps room for
+  `Game.tideStart`; from decisions-log 162 to 329 earlier for an army over the cap, "Beban") the crowd's extra HP
+  follows the number, "+35%" on wave 65 (`tidePercent`, whole percent; "+0%" on the first wave), in light blue (`_tideInk` 0xFF7FC8FF) at the number's size. From then the panel keeps room for
   "+999%" (it grows once, at that wave, and doesn't twitch after). Before it there is no badge and no room.
   - Its tooltip (tooltip.dart, `_Hint.tide`): over the whole meter while the badge shows (`Board.tideBadgeAt`),
     in the loot tooltips' frame with the meter's crossed swords: "Tide", then "Monster HP +35%" (green, as the
     tooltips' first line), "Monster attack +16%", "A monster every 0.77 s" (a dot decimal), "Not the boss or mini boss"
-    (`tideInfo`; `Game.tideTip`). While the army is over the cap (Beban, `Game.shownOver`: between waves the coming
-    wave's as the army stands now, in a wave its own, frozen) its lines count from the earlier wave ("A monster every"
-    from `tideStart` while `overPace` is off), and a line follows: "12 over the cap: Tide +24 waves"
-    (`overTip`: the troops over, the waves earlier its tide counts from). While the army is full at the cap
+    (`tideInfo`; `Game.tideTip`). (Beban's line for an army over the cap, "12 over the cap: Tide +24 waves", went with
+    it in decisions-log 329.) While the army is full at the cap
     (`Game.capPressed`, below) a last line follows: "Army full (36): make types stronger" (`capTip`). Every glyph is in
     Pixelify Sans, and at 915×412 the tooltip stays inside the screen (`Board.tooltipBox`,
     `test/cap_warning_hud_test.dart`). A press on the meter still drops the minimap.
@@ -4316,8 +4313,8 @@ follows the game's position, and never changes the game's positions (fights, the
   on it does nothing else: its tap up and drag are dropped, `_Message.tapped`) or after
   `time` (`_messageTime` 2 s; a one-time note `_noteTime` 8 s). Drawn after the HUD, before the tooltip and cursor.
   The limits' one-time notes (`Game.limitNotes`, decisions-log 141) show there when a save over them comes in, in
-  up to six lines (with Beban's "Army cap 36. Each troop over it:" / "Tide +2 waves", `overNote`, for an
-  army alive over the cap, decisions-log 162; it fits 915×412 8 px or more inside the screen), after the tide's "The Tide rises! Monsters get stronger every wave" when the same save also catches up
+  up to six lines (Beban's "Army cap 36. Each troop over it:" / "Tide +2 waves", decisions-log 162, went in 329; they
+  fit 915×412 8 px or more inside the screen), after the tide's "The Tide rises! Monsters get stronger every wave" when the same save also catches up
   with the tide (`Game.tideCaughtUp`, #92): one window, so neither hides the other. A save from before the Pusaka adds
   their note's three lines after those (`pusakaNotes`, decisions-log 151: "Your Artifacts now work for a whole type,
   / troops bought later too, and are never lost. / Put on for you: change or Undo in the Bag."); the Bag page keeps

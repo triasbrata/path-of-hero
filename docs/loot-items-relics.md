@@ -870,7 +870,7 @@ Legenda pool is thirty, the catalog's whole count (catalog-design §3.3), eight 
     sale or the fight brings them down) and at 24 or fewer works: HP and damage ×1.35. With the board's army cap
     (`armyMax`) a 25th troop can't join while it is held (`armyLocked`, part of `full`: Buy refuses with
     `fewOathBar` "Oath of the Few: up to 24 troops", Resurrection and a recall swap respect it too, `autoHeld` counts
-    against the 24); the cap itself (`armyCap`) stays, so Beban and the Bayangan's over-army count are untouched.
+    against the 24); the cap itself (`armyCap`) stays, so the Bayangan's over-army count is untouched.
     With no board cap (a plain `Game()`) it bars nothing. Its wait words are its own (`oathWaitingOf`: "Waiting: keep
     24 troops or fewer", the Bag's "Waiting: 48/24 troops", the chest note "Oath waits: keep 24 troops or fewer").
   - **Oath of the Wall**, **Blood Oath** and **Oath of the Vanguard** are fixed trades (`_oathStats`): the Wall
@@ -1228,7 +1228,8 @@ constant there.
   enemies get +10% to HP, damage, attack speed and walk speed (units-and-combat.md "Bayangan on the field"); two Lewati
   owe it once.
 - **The levels** (`Game.omens`): one entry a level, oldest first, so a kind's level is its count (`omenLevel`).
-- **The Beban factor** (`Game.omenFactor`), frozen at a wave's start beside Beban's: an army over the cap meets
+- **The Beban factor** (`Game.omenFactor`), frozen at a wave's start (Beban's tide beside it went in decisions-log
+  329; this factor stays, the Bayangan's own rule): an army over the cap meets
   stronger Bayangan, by `armySize / armyCap` (1 at or under it, at most `omenOverMax` 2: 48 troops over a cap of 32 is
   ×1.5), × `omenScale` 1, and × `omenAtCap` 1 at or under the cap. A kind's effective level is E = L × the factor
   (`omenE`); Guard counts by L.

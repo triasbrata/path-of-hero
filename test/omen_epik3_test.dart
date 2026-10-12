@@ -394,21 +394,21 @@ void main() {
         for (final type in skeletonKinds) {
           for (final tier in Tier.values) {
             for (final raised in [false, true]) {
-              final want = enemyStats(type, tier, g.wave, raised: raised, tideStart: g.waveTideFrom), got = g.spawnStats(type, tier, raised: raised);
+              final want = enemyStats(type, tier, g.wave, raised: raised, tideStart: g.tideStart), got = g.spawnStats(type, tier, raised: raised);
               expect(got.hp, (want.hp * (1 + share)).round(), reason: 'L$n ×$factor $type ${tier.name} $raised');
               expect(rest(got), rest(want), reason: '$type ${tier.name}');
             }
           }
-          final skip = g.spawnStats(type, Tier.normal, skipBuff: true), want = enemyStats(type, Tier.normal, g.wave, tideStart: g.waveTideFrom);
+          final skip = g.spawnStats(type, Tier.normal, skipBuff: true), want = enemyStats(type, Tier.normal, g.wave, tideStart: g.tideStart);
           expect(skip.hp, (want.hp * (1 + skipBuffK) * (1 + share)).round(), reason: '$type with the skip buff');
           expect(g.monster(type, Tier.elite, const Point(250, 60)).maxHp, g.spawnStats(type, Tier.elite).hp);
         }
         for (final type in ['orc', 'slime', 'bat', 'werebear', boss, necroHealer]) {
-          expect(g.spawnStats(type, Tier.normal).hp, enemyStats(type, Tier.normal, g.wave, tideStart: g.waveTideFrom).hp, reason: type);
+          expect(g.spawnStats(type, Tier.normal).hp, enemyStats(type, Tier.normal, g.wave, tideStart: g.tideStart).hp, reason: type);
         }
       }
       final g = plain();
-      expect(g.spawnStats('skeleton', Tier.normal).hp, enemyStats('skeleton', Tier.normal, g.wave, tideStart: g.waveTideFrom).hp,
+      expect(g.spawnStats('skeleton', Tier.normal).hp, enemyStats('skeleton', Tier.normal, g.wave, tideStart: g.tideStart).hp,
           reason: 'without it');
     });
 

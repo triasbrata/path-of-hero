@@ -1087,7 +1087,8 @@ count, one fallen and it buys again, nine types fill the army each refused by na
 13 templars and 9 wizards and buys a priest again at 4, the save writes no roster and ignores an old one, `place` and
 `autoPlace` share the gate, Resurrection raises a soldier at 9 and not at 10; "Replace fallen" stops at the army's cap
 and then the type's; Lepas jenis' refund, relics, event and refusals (none alive, a Hero, mid-wave, over); `autoHeld`
-at 75%; the one-time notes (the army, Beban's, the caps' three a line) show once and are saved.
+at 75%; the one-time notes (the army, the caps' three a line; Beban's went in decisions-log 329) show once and are
+saved.
 The save is `test/fixtures/save-20261001-2005-pre-awaken.json`, a copy of the owner's w86 snapshot (5,506 bytes; the
 artefact redesign's parts all load it). `test/army_cap_ui_test.dart` (one `TdGame` per widget test): the board's first
 game and a "New Game" game have the limits; the save's counter "48/36", its list's counts against the caps ("17/5")
@@ -2863,7 +2864,7 @@ still (they neither walk nor fight) and lives to spare; `kill` lays a monster do
 - `belowSpawnFloor`: a raised minion counts as a monster on the field, a dying one doesn't, and an empty queue is never
   below it.
 - With 0/1/8/9/16/33 troops a wave's first monsters come one a tick up to the floor (at least the one the timer brings
-  at once), then the next exactly one gap after the last (`spawnGapOf(wave, wavePaceFrom)`, ±0.004 s).
+  at once), then the next exactly one gap after the last (`spawnGapOf(wave, tideStart)`, ±0.004 s).
 - A field emptied 0.35 s after its first monster: with 8 troops the next comes on the next tick, then the full gap
   again; with none, after the gap as before.
 - Above the floor the tide's gap holds: wave 65 with 8 troops, 0.7744 s.

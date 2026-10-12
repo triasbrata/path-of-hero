@@ -1477,13 +1477,11 @@ bool tided(Tier tier, {bool raised = false}) => raised || (tier != Tier.boss && 
 /// The tide's HP in [wave] (from [from]) as the wave meter's badge shows it: whole percent more.
 int tidePercent(int wave, [int from = tideFrom]) => ((tide(wave, tideHp, from) - 1) * 100).round();
 
-/// The wave meter's tooltip on the tide in [wave] (from [from]; its pace from [paceFrom], [from] unless given: an army
-/// over the cap's HP and damage count from earlier, its pace doesn't, [overPace]): its name, then what it does to the
-/// crowd.
-(String, List<String>) tideInfo(int wave, [int from = tideFrom, int? paceFrom]) => (Words.tide, [
+/// The wave meter's tooltip on the tide in [wave] (from [from]): its name, then what it does to the crowd.
+(String, List<String>) tideInfo(int wave, [int from = tideFrom]) => (Words.tide, [
       'Monster HP +${tidePercent(wave, from)}%',
       'Monster attack +${((tide(wave, tideDmg, from) - 1) * 100).round()}%',
-      'A monster every ${spawnGapOf(wave, paceFrom ?? from).toStringAsFixed(2)} s',
+      'A monster every ${spawnGapOf(wave, from).toStringAsFixed(2)} s',
       'Not the boss or mini boss',
     ]);
 
@@ -1505,32 +1503,6 @@ String capWarningText(int cap, int tidePct) =>
 /// The wave meter tooltip's last line while the army is full at the cap of [cap].
 String capTip(int cap) => '${Words.army} full ($cap): make types stronger';
 
-/// "Beban", the over-cap tide (decisions-log 162, amending 141's 3a: an army over the cap kept every troop for free).
-/// An army alive over the cap (a save from before it: the owner's 48 over 32) meets the tide of a later wave: its tide
-/// counts from [overTide] waves earlier for each troop over, at most [overTideMax] waves, ramped in over [overRamp]
-/// waves from the first wave it started over the cap ([Game.overFrom]) ([overTideWaves]). Counted at each
-/// [Game.startWave] while [Game.armyMax] is on and frozen for the wave ([Game.waveTideFrom]); each troop that falls over
-/// the cap gives [overTide] waves back. An army at the cap or under it, so every new run, meets the tide as before.
-/// [overTide] 2 is the one probed arm (the owner's w86 save, 12 seeds) with no game over from 0 falls the wave before;
-/// 3 and 4 had one in 6 (decisions-log 162). It is soft: 0.65 falls a wave over w87-96 against the design's 1-3.
-const overTide = 2, overTideMax = 60, overRamp = 5;
-
-/// Whether Beban's earlier tide also moves the pace ([spawnGapOf]): on (decisions-log 162), as [overTide] 2 was
-/// measured. Off, it moves HP and damage only and the gap between two monsters keeps counting from [Game.tideStart]:
-/// the switch for a later tune. With overTide 3-4 the pace on piled the crowd up (1 to 61 monsters on the field in
-/// 120 s with nobody falling, 1.43× the base's crowd HP a second at a tide from 42) until the line broke in one wave;
-/// off saved those two runs but not a third.
-const overPace = true;
-
-/// How many waves earlier the tide counts from in [wave] for an army [over] the cap (Beban) whose first wave over it
-/// was [from]: [overTide] a troop, at most [overTideMax], a [overRamp]th of it on [from], all of it from [overRamp]
-/// waves on; rounded to whole waves.
-int overTideWaves(int over, int wave, int from) =>
-    over <= 0 ? 0 : (min(overTideMax, overTide * over) * ((wave - from + 1) / overRamp).clamp(0.0, 1.0)).round();
-
-/// The wave meter tooltip's line while the army is [over] the cap, its tide counting [waves] waves earlier (Beban).
-String overTip(int over, int waves) => '$over over the cap: ${Words.tide} +${_count(waves, 'wave')}';
-
 /// The one-time note ([Game.limitNotes], key "caps") for a game with types alive over their cap ([Game.overCaps]: "Priest
 /// 17/5"), three to a line: they stay, and their buys wait (decisions-log 201).
 String capsNote(List<String> over) => [
@@ -1538,9 +1510,6 @@ String capsNote(List<String> over) => [
       for (var i = 0; i < over.length; i += 3) '${i == 0 ? 'over it: ' : ''}${over.skip(i).take(3).join(', ')}${i + 3 < over.length ? ',' : '.'}',
       'Buy more of a type when under its cap.',
     ].join('\n');
-
-/// The one-time note ([Game.limitNotes], key "over") for a game whose army is over the cap of [cap] (Beban).
-String overNote(int cap) => '${Words.army} cap $cap. Each troop over it:\n${Words.tide} +${_count(overTide, 'wave')}';
 
 /// No unit attacks (or heals) faster than once every [minAttackInterval] s, whatever speeds it up (gloves,
 /// awakening, a Hero, War Cry, Rampage, the wave's growth); the wave's boss may go down to
@@ -2009,43 +1978,12 @@ class Game {
   /// The wave just won is the last before the tide's first ([tideStart]): the "VICTORY!" popup says so ([tideNews]).
   bool get tideRising => wave == tideStart - 1;
 
-  /// Beban (decisions-log 162): the first wave started with the army over the cap ([overBy]), the over-cap tide's ramp
-  /// counting from it ([overTideWaves]). Set then when missing, never cleared; null in a new game. Saved (only when set).
-  int? overFrom;
-
-  /// The troops over the cap when this wave started, and the waves earlier its tide counts from for them
-  /// ([overTideWaves]): frozen for the wave. Not saved (a save holds no wave in progress).
-  ({int by, int waves}) waveOver = (by: 0, waves: 0);
-
-  /// Troops alive over the cap ([armyCap]) with [armyMax] on, else 0: Beban's count.
-  int get overBy => armyMax == null ? 0 : max(0, armySize - armyCap);
-
-  /// The wave the tide counts from in the wave being fought: [tideStart], [waveOver]'s waves earlier for an army over
-  /// the cap (Beban). Every monster made in a wave reads it.
-  int get waveTideFrom => tideStart - waveOver.waves;
-
-  /// The wave the tide's pace counts from in the wave being fought (the spawn gap, [spawnGapOf]): [tideStart], or with
-  /// [overPace] on [waveTideFrom].
-  int get wavePaceFrom => overPace ? waveTideFrom : tideStart;
-
-  /// Beban on the wave the HUD shows: in a wave this one's, frozen ([waveOver]); between waves the coming one's as the
-  /// army stands now, so a rebuy or a Lepas jenis shows at once.
-  ({int by, int waves}) get shownOver {
-    if (waveActive) return waveOver;
-    final by = overBy;
-    return (by: by, waves: overTideWaves(by, wave + 1, overFrom ?? wave + 1));
-  }
-
-  /// The wave the tide counts from in the wave the HUD shows ([shownOver]).
-  int get shownTideFrom => tideStart - shownOver.waves;
-
-  /// The wave meter's tooltip ([tideInfo]) on the wave it shows (this one in a wave, else the next), with Beban's line
-  /// while the army is over the cap ([overTip]), ending with [capTip] while the army is full at the cap ([capPressed],
-  /// decisions-log 161).
+  /// The wave meter's tooltip ([tideInfo]) on the wave it shows (this one in a wave, else the next), ending with [capTip]
+  /// while the army is full at the cap ([capPressed], decisions-log 161). Beban's line for an army over the cap (its tide
+  /// counted from earlier waves, decisions-log 162) went with Beban in decisions-log 329.
   (String, List<String>) get tideTip {
-    final over = shownOver, from = tideStart - over.waves;
-    final (title, lines) = tideInfo(waveActive ? wave : wave + 1, from, overPace ? from : tideStart);
-    return (title, [...lines, if (over.waves > 0) overTip(over.by, over.waves), if (capPressed) capTip(armyMax!)]);
+    final (title, lines) = tideInfo(waveActive ? wave : wave + 1, tideStart);
+    return (title, [...lines, if (capPressed) capTip(armyMax!)]);
   }
 
   /// Points so far ([killScore], [waveScore]) and monsters killed
@@ -3277,7 +3215,6 @@ class Game {
         'asahAt': ?asahAt, // the last Asah's wave
         'lostWave': ?lostWave, // the wave the army was wiped in, played again next (wipe.dart)
         if (ukir.fed) 'ukir': ukir.toJson(), // the run's Ukir, once fed (pusaka.dart)
-        'overFrom': ?overFrom, // Beban's first wave over the cap
         if (legendsFound.isNotEmpty) 'legendsFound': [for (final r in legendsFound) r.name], // never offered again (pusaka.dart)
         if (toReplace.isNotEmpty) 'toReplace': [for (final f in toReplace) {'type': f.type, 'x': f.post.x, 'y': f.post.y}],
         if (autoReplace) 'autoReplace': true, // Auto, the spawn bar's (decisions-log 283)
@@ -3415,7 +3352,7 @@ class Game {
         ..pts = u['pts'] as int? ?? 0
         ..milli = u['milli'] as int? ?? 0;
     }
-    overFrom = j['overFrom'] as int?; // none in saves from before Beban: set by the first wave started over the cap
+    // An older save's `overFrom` (Beban's first wave over the cap, decisions-log 162) is read as nothing since 329.
     autoReplace = j['autoReplace'] == true; // Auto (decisions-log 283): off in saves from before it
     // "Ganti yang gugur"'s fallen troops still to buy back (#92); none in saves from before it.
     for (final f in (j['toReplace'] as List?) ?? const []) {
@@ -3676,11 +3613,7 @@ class Game {
     if (!canStartWave) return;
     if (draftPolicy != null && chests.isNotEmpty) _pickChests(); // a probe's chests still waiting (draft.dart)
     wave++;
-    // Beban (decisions-log 162): an army over the cap meets a later wave's tide, counted now and frozen for the wave.
-    final over = overBy;
-    if (over > 0) overFrom ??= wave;
-    waveOver = (by: over, waves: overTideWaves(over, wave, overFrom ?? wave));
-    _omenWave(); // the Bayangan's factor frozen beside it, Lewati's skip buff, the catch-up landing (omen.dart)
+    _omenWave(); // the Bayangan's factor frozen, Lewati's skip buff, the catch-up landing (omen.dart)
     waveSpawned = 0;
     fallen.clear();
     wipedOut = false; // a new fight (a wave lost to a wipe is played again: wipe.dart)
@@ -3776,7 +3709,7 @@ class Game {
         lives: lives,
         bag: {for (final MapEntry(:key, :value) in inventory.entries) if (value > 0) key.name: value},
         relics: {for (final MapEntry(:key, :value) in relicBag.entries) if (value > 0) key.name: value},
-        tide: (hp: tide(wave, tideHp, waveTideFrom), dmg: tide(wave, tideDmg, waveTideFrom), gap: spawnGapOf(wave, wavePaceFrom), over: waveOver.waves),
+        tide: (hp: tide(wave, tideHp, tideStart), dmg: tide(wave, tideDmg, tideStart), gap: spawnGapOf(wave, tideStart)),
         pusaka: pusakaState,
         omens: _omenState,
         materials: {for (final MapEntry(:key, :value) in materials.entries) key.name: value},
@@ -3940,7 +3873,7 @@ class Game {
   bool get capPressed {
     final cap = armyMax;
     if (cap == null || armyCap < cap || armySize + fallen.length < cap) return false;
-    return (waveActive ? wave : wave + 1) > shownTideFrom && troops.any((u) => u.alive && awakenLevel(u.type) < awakenTop);
+    return (waveActive ? wave : wave + 1) > tideStart && troops.any((u) => u.alive && awakenLevel(u.type) < awakenTop);
   }
 
   /// The cap's warning ([capWarningText]) when it is due between waves, marked shown; else null. Due while
@@ -3948,17 +3881,16 @@ class Game {
   String? capWarning() {
     if (!canStartWave || !capPressed || (capWarnedAt != null && wave - capWarnedAt! < capWarnEvery)) return null;
     capWarnedAt = wave;
-    return capWarningText(armyMax!, tidePercent(wave + 1, shownTideFrom));
+    return capWarningText(armyMax!, tidePercent(wave + 1, tideStart));
   }
 
-  /// The limits' one-time notes due for this game (decisions-log 141, 201; their keys in [notes]: "army", "over",
-  /// "caps"), in the UI's words, each marked shown: an army or capacity over [armyMax] keeps its troops, an army alive
-  /// over the cap pays for it in tide ([overNote], Beban, decisions-log 162), and a type alive over its cap keeps its
-  /// troops ([capsNote]). Empty with the limits off or within them.
+  /// The limits' one-time notes due for this game (decisions-log 141, 201; their keys in [notes]: "army", "caps"), in the
+  /// UI's words, each marked shown: an army or capacity over [armyMax] keeps its troops, and a type alive over its cap
+  /// keeps its troops ([capsNote]). Empty with the limits off or within them. (The "over" note, Beban's tide for an army
+  /// alive over the cap, went with Beban in decisions-log 329; an older save's "over" key stays, unread.)
   List<String> limitNotes() => [
         if (armyMax case final cap? when max(capacity, armySize) > cap && notes.add('army'))
           'The army cap is now $cap. You keep your troops;\nbuy more when under $cap.',
-        if (overBy > 0 && notes.add('over')) overNote(armyCap),
         if (overCaps case final over when over.isNotEmpty && notes.add('caps')) capsNote(over),
       ];
 
@@ -5564,7 +5496,7 @@ class Game {
       _emit(MonsterSpawned(wave, t, type: type, tier: tier));
       if (strongTiers.contains(tier)) _emit(StrongFoe(wave, t, type: type, tier: tier));
       waveSpawned++;
-      _spawnTimer = spawnGapOf(wave, wavePaceFrom); // the tide shortens it from [wavePaceFrom]
+      _spawnTimer = spawnGapOf(wave, tideStart); // the tide shortens it from [tideStart]
     }
     _omenDuskTick(); // Dusk: the crowd all in, and 30 s after it the monsters hit harder (omen.dart)
 

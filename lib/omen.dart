@@ -634,10 +634,10 @@ extension Omens on Game {
   /// wave's queue ([Game.monster]), a necromancer's raised minions ([Game._summon], and [Game.decideSummon]'s count of
   /// them, which must match), a skill's bring-in ([BossSkills._bringIn]), Slime Hex's form, and the boss's blow a
   /// Dragon Crown tooltip counts ([Pusaka.bossBlowsLived]: another wave [at], from [tideStart]). [enemyStats] with this
-  /// wave's tide ([Game.waveTideFrom]), then the Bayangan's stat hooks ([_omenStats]); Lewati's skip buff for one of
+  /// wave's tide (from [Game.tideStart]), then the Bayangan's stat hooks ([_omenStats]); Lewati's skip buff for one of
   /// the wave's first monsters ([skipBuff]). Exactly [enemyStats]'s while [omensOn] is off.
   Stats spawnStats(String type, Tier tier, {bool raised = false, bool skipBuff = false, int? at, int? tideStart}) =>
-      _omenStats(enemyStats(type, tier, at ?? wave, raised: raised, tideStart: tideStart ?? waveTideFrom), type, tier,
+      _omenStats(enemyStats(type, tier, at ?? wave, raised: raised, tideStart: tideStart ?? this.tideStart), type, tier,
           raised: raised, skipBuff: skipBuff);
 
   /// An old save's catch-up ([Game.omensOwed]): every owned Pusaka (the store's too) owes [omenMarks] × its stars

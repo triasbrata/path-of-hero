@@ -12,8 +12,8 @@ import 'hud_font.dart';
 // The army cap's warning on the board (decisions-log 161, docs/ui-hud.md "Message window" and "Wave meter"): the
 // message window between waves while the army is full at the cap and the tide is on, once every 5 waves, held behind
 // the "MENANG!" popup and another message; it fits a phone in the HUD's font, every glyph of it in that font; and the
-// wave meter's tooltip ends with it. Beban's note and tooltip line (decisions-log 162), and the type caps' note under
-// it (decisions-log 201), fit the phone too. One TdGame (its own file: a second TdGame in one file breaks the shared
+// wave meter's tooltip ends with it. The type caps' note (decisions-log 201) fits the phone too (Beban's note and
+// tooltip line, decisions-log 162, went with it in 329). One TdGame (its own file: a second TdGame in one file breaks the shared
 // image cache, docs/testing.md). The rules: tide_test.dart.
 
 /// Advances the game [n] frames.
@@ -46,16 +46,14 @@ Game atCap({int won = 63}) {
   return g;
 }
 
-/// The owner's w86 save after Beban (decisions-log 162): wave 86 won (its popup over), the tide from 66, 48 alive (the
-/// free priest and 47 soldiers) over the board's cap of 36 (decisions-log 260: 12 over; 16 over the 32 it had), over it
-/// since wave 82 (ramped in: wave 87's tide from 42),
-/// and the "army" note seen.
+/// The owner's w86 save: wave 86 won (its popup over), the tide from 66, 48 alive (the free priest and 47 soldiers)
+/// over the board's cap of 36 (decisions-log 260: 12 over), and the "army" note seen. Until Beban went (decisions-log
+/// 329) wave 87's tide counted from 42 for it.
 Game overCap() {
   final g = Game()
     ..gold = 1 << 30
     ..wave = 86
     ..tideStart = 66
-    ..overFrom = 82
     ..victoryAt = -victoryTime
     ..capacity = 48;
   for (var i = 0; g.armySize < 48; i++) {
@@ -90,7 +88,7 @@ void main() {
     final warning = capWarningText(armyMaxBoard, tidePercent(64));
     expect(warning, startsWith('${Words.army} full: cap 36 - ${Words.tide} +'));
     final font = fontChars();
-    for (final line in [capWarningText(armyMaxBoard, 999), capTip(armyMaxBoard), overTip(60, 60), overNote(armyMaxBoard), capsNote(['Soldier 47/10'])]) {
+    for (final line in [capWarningText(armyMaxBoard, 999), capTip(armyMaxBoard), capsNote(['Soldier 47/10'])]) {
       expect(line.runes.where((c) => c != 10 && !font.contains(c)).map(String.fromCharCode), isEmpty, reason: line);
     }
 
@@ -171,28 +169,28 @@ void main() {
     await tester.tapAt(phone.center);
     await frames(tester, 3);
 
-    // Beban (decisions-log 162), on the phone: a save over the cap comes in with its one-time note, and its soldiers
-    // over their type's cap with the type caps' (decisions-log 201) under it; the two fit.
+    // On the phone: a save over the cap comes in with its soldiers over their type's cap, and the type caps' note
+    // (decisions-log 201) fits; no note for the army over the cap (Beban's, decisions-log 162, went in 329).
     final over = b.state = overCap();
     await frames(tester, 5);
-    expect(b.message, [overNote(armyMaxBoard), capsNote(['Soldier 47/10'])].join('\n'));
+    expect(b.message, capsNote(['Soldier 47/10']));
     final note = b.messageBox;
     expect((note.left >= 8, note.right <= 915 - 8, note.top >= 0, note.bottom <= 412), (true, true, true, true), reason: '$note');
-    expect((over.notes.contains('over'), over.notes.contains('caps')), (true, true));
+    expect((over.notes.contains('over'), over.notes.contains('caps')), (false, true));
     await tester.tapAt(note.center);
     await frames(tester, 3);
-    // Then the cap's warning, with wave 87's tide counted from 42: +56%.
-    expect(tidePercent(87, 42), 56);
-    expect(b.message, capWarningText(armyMaxBoard, 56));
+    // Then the cap's warning, with wave 87's tide counted from 66: +21%.
+    final pct = tidePercent(87, 66);
+    expect(b.message, capWarningText(armyMaxBoard, pct));
     await tester.tapAt(b.messageBox.center);
     await frames(tester, 3);
-    // The meter shows it, and its tooltip has Beban's line before the cap's, inside the screen.
-    expect(b.tideBadge, '+56%');
+    // The meter shows it, and its tooltip ends with the cap's line, inside the screen.
+    expect(b.tideBadge, '+$pct%');
     final pointer = await tester.createGesture(kind: PointerDeviceKind.mouse);
     await pointer.addPointer(location: Offset.zero);
     await pointer.moveTo(b.tideBadgeAt.center);
     await frames(tester, 30);
-    expect(b.tooltipShown!.$2, [...tideInfo(87, 42).$2, overTip(12, 24), capTip(armyMaxBoard)]);
+    expect(b.tooltipShown!.$2, [...tideInfo(87, 66).$2, capTip(armyMaxBoard)]);
     final tip = b.tooltipBox;
     expect((tip.left >= 0, tip.right <= 915, tip.top >= 0, tip.bottom <= 412), (true, true, true, true), reason: '$tip');
     await pointer.moveTo(Offset.zero);

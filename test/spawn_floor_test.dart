@@ -59,7 +59,7 @@ void main() {
   test('below the floor the wave\'s first monsters come on one a tick; at it the gap runs again, from the last', () {
     for (final n in [0, 1, 8, 9, 16, 33]) {
       final g = withTroops(n)..startWave();
-      final floor = spawnFloorOf(n), gap = spawnGapOf(g.wave, g.wavePaceFrom);
+      final floor = spawnFloorOf(n), gap = spawnGapOf(g.wave, g.tideStart);
       // The first comes at once with or without troops (the timer starts at 0); then one a tick up to the floor.
       for (var i = 1; i <= max(1, floor); i++) {
         g.tick(0.05);
@@ -76,7 +76,7 @@ void main() {
   test('a field that empties early gets its next monster on the next tick, not after the gap; then the gap again', () {
     for (final n in [0, 8]) {
       final g = withTroops(n)..startWave();
-      final gap = spawnGapOf(g.wave, g.wavePaceFrom);
+      final gap = spawnGapOf(g.wave, g.tideStart);
       g.tick(0.05);
       g.tick(0.3); // the gap runs: one alive, at the floor (1 with 8 troops)
       expect(g.waveSpawned, 1, reason: '$n troops');
@@ -100,7 +100,7 @@ void main() {
 
   test('above the floor the tide\'s gap still applies: a wave-65 queue every 0.7744 s with 8 troops', () {
     final g = withTroops(8, wave: 64)..startWave();
-    expect((g.spawnFloor, g.wavePaceFrom), (1, tideFrom));
+    expect((g.spawnFloor, g.tideStart), (1, tideFrom));
     g.tick(0.05);
     expect(g.waveSpawned, 1);
     g.tick(spawnGapOf(65) - 0.004);

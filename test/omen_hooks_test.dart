@@ -57,6 +57,12 @@ typedef Spawn = ({Unit u, double y, double t});
     ..wave = wave - 1
     ..lives = 100000
     ..skipBuffDue = skipBuff;
+  // A troop far off that neither fights nor falls: a wave with none standing is lost 5 s on (decisions-log 329).
+  g.units.add(Unit(Side.troop, 'soldier', troopTypes['soldier']!, const Point(8, 8))
+    ..entered = true
+    ..busyUntil = hold
+    ..maxHp = 1 << 30
+    ..hp = 1e9);
   final spawns = <Spawn>[];
   g.listeners.add((e) {
     if (e is MonsterSpawned && !e.raised) {
@@ -93,7 +99,7 @@ void main() {
         final (b, base) = spawnAll(wave);
         expect([for (final s in spawns) (s.u.type, s.u.tier, s.y, s.t)], [for (final s in base) (s.u.type, s.u.tier, s.y, s.t)]);
         for (final s in spawns) {
-          expect(fields(s.u.stats), fields(enemyStats(s.u.type, s.u.tier, wave, tideStart: g.waveTideFrom)));
+          expect(fields(s.u.stats), fields(enemyStats(s.u.type, s.u.tier, wave, tideStart: g.tideStart)));
           expect((s.u.shield, s.u.skipBuffed, s.u.guardOf), (0, false, null));
         }
         expect([g.rng.nextDouble(), g.slots.nextDouble()], [b.rng.nextDouble(), b.slots.nextDouble()]);
@@ -109,7 +115,7 @@ void main() {
       expect(blowOn(g, k, orc), blowOn(b, bk, borc));
       for (final tier in Tier.values) {
         for (final raised in [false, true]) {
-          final want = enemyStats('orc', tier, g.wave, raised: raised, tideStart: g.waveTideFrom);
+          final want = enemyStats('orc', tier, g.wave, raised: raised, tideStart: g.tideStart);
           expect(fields(g.spawnStats('orc', tier, raised: raised, skipBuff: true)), fields(want), reason: '${tier.name} $raised');
         }
       }
@@ -142,7 +148,7 @@ void main() {
     test('Haste: a monster\'s attack pause ÷(1 + 0.05 E), a slot\'s at its share, and the floors stay', () {
       final g = plain(omens: levels(haste, 4));
       for (final tier in Tier.values) {
-        final base = enemyStats('orc', tier, g.wave, tideStart: g.waveTideFrom).rate;
+        final base = enemyStats('orc', tier, g.wave, tideStart: g.tideStart).rate;
         expect(g.spawnStats('orc', tier).rate, closeTo(base / (1 + 0.2 * (slot(tier) ? omenSlotShare : 1)), 1e-12), reason: tier.name);
       }
       g.omenFactor = 2;
@@ -259,7 +265,7 @@ void main() {
           expect([for (final e in behind.take(escort)) e.u.escortOf], everyElement(s.u), reason: 'the escort first');
           for (final gd in behind.skip(escort)) {
             expect((gd.u.type, gd.u.tier, gd.u.guardOf, gd.y), (poolOf(wave).last, Tier.highElite, s.u, s.y));
-            expect(gd.u.maxHp, enemyStats(poolOf(wave).last, Tier.highElite, wave, tideStart: g.waveTideFrom).hp, reason: 'tided');
+            expect(gd.u.maxHp, enemyStats(poolOf(wave).last, Tier.highElite, wave, tideStart: g.tideStart).hp, reason: 'tided');
           }
         }
         expect([g.rng.nextDouble(), g.slots.nextDouble()], [b.rng.nextDouble(), b.slots.nextDouble()], reason: 'w$wave');

@@ -21,7 +21,7 @@ import 'settings.dart';
 /// `pusaka` (its start's and what each did), `gold.pusakaSpent` (decisions-log 138). 3: the boss chest's events and
 /// `gold.chestSpent` / `gold.chestEarned` (decisions-log 152). 4: Asah's event and `gold.asahSpent` (decisions-log 154).
 /// 5: a wave start's `tide.over`, the waves earlier its tide counts from for an army over the cap (Beban, decisions-log
-/// 162).
+/// 162; gone in 16).
 /// 6: Tempa's event and `gold.tempaSpent` (decisions-log 163).
 /// 7: Lebur's event and `gold.leburSpent` (decisions-log 164).
 /// 8: the Bayangan's events (`omenGained`, `omenEased`), a chest's faces and a take's levels, and a wave start's
@@ -52,7 +52,7 @@ import 'settings.dart';
 /// 16: the back line costs nothing (decisions-log 329): no monster heads for it, so a wave's `livesLost` is 0 or a lost
 /// wave's heart; a `wipe` has its `cause` (`fell`, `empty`: no troop standing 5 s after the monsters came on, `slow`: its
 /// charge not won within 60 s, with `marched` set), each a wave record's `end` `wiped`; Watchman's Brew and the wave's
-/// `boostSaved` are gone.
+/// `boostSaved` are gone, and so is a wave start's `tide.over` (Beban went).
 const telemetryVersion = 16;
 
 /// Where [HttpSink] posts (`--dart-define=TELEMETRY_SERVER=https://...`). None by default, so nothing is sent.

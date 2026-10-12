@@ -181,11 +181,9 @@ void main() {
     expect(begun(k), isEmpty);
   });
 
-  test('Split\'s slimes have the wave\'s tide, an army over the cap\'s too (Beban, decisions-log 162)', () {
+  test('Split\'s slimes have the wave\'s tide, from the game\'s tideStart', () {
     final (g, slime) = bossAt('slime', Tier.miniBoss, wave: 87);
-    g
-      ..tideStart = 66
-      ..waveOver = (by: 16, waves: 48);
+    g.tideStart = 18;
     slime.skillAt = hold;
     kill(g, slime, standing(g, 'archer', slime.pos - const Point(40.0, 0)));
     expect(g.raised, hasLength(splitK.slimes));
@@ -498,8 +496,10 @@ void main() {
       expect(g.effectOn(o, Status.swift)!.until, closeTo(g.t + howlK.time, 1e-9));
     }
     expect(g.under(far, Status.swift), isFalse);
-    // It walks faster: a step of the orc near it, freed, against its own speed.
+    // It walks faster: a step of the orc near it, freed, against its own speed, toward a troop far off (with none
+    // standing a monster waits, decisions-log 329).
     near.busyUntil = double.negativeInfinity;
+    standing(g, 'soldier', near.pos - const Point(200.0, 0));
     final x = near.pos.x;
     g.tick(0.05);
     expect(x - near.pos.x, closeTo(near.stats.speed * howlK.walk * 0.05, 1e-6));
@@ -710,6 +710,7 @@ void main() {
     lands(g, sk, MonsterSkill.ironMarch);
     expect((g.under(sk, Status.steadfast), g.effectK(sk, Status.swift), sk.guardLook), (true, ironMarchK.walk, RingLook.steel));
     expect(sk.guardUntil, closeTo(g.t + ironMarchK.time, 1e-9));
+    standing(g, 'soldier', sk.pos - const Point(200.0, 0)); // it walks to a troop far off (with none it waits, decisions-log 329)
     final x = sk.pos.x;
     g.tick(0.05);
     expect(x - sk.pos.x, closeTo(sk.stats.speed * ironMarchK.walk * 0.05, 1e-6));

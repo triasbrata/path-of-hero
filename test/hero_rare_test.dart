@@ -109,12 +109,11 @@ void main() {
       expect(strong.hp, closeTo(ownHp / 4, 1e-9)); // back with the share it had left
     });
 
-    test('the slime has the wave\'s tide, an army over the cap\'s too (Beban, decisions-log 162)', () {
+    test('the slime has the wave\'s tide, from the game\'s tideStart', () {
       final (g, h) = heroCaster(HeroSkill.slimeHex);
       g
         ..wave = 87
-        ..tideStart = 66
-        ..waveOver = (by: 16, waves: 48);
+        ..tideStart = 18;
       final elite = foeAt(g, 'elite_orc', h.pos + const Point(60, 0), Tier.elite);
       g.tick(0.05);
       expect(g.under(elite, Status.hex), isTrue);

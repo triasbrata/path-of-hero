@@ -9,8 +9,8 @@ import 'package:tower_defense/main.dart';
 import 'hud_font.dart';
 
 // The tide's HUD (#92 part 1, docs/ui-hud.md): the wave meter's "+35%" from the tide's first wave (an army over the
-// cap's from earlier, Beban), its tooltip's target, the top rows still clear of the wider meter, and "Ganti yang gugur"
-// on the Pasukan page. One TdGame (its own file: a second TdGame in one file breaks the shared image cache,
+// cap's the same since Beban went, decisions-log 329), its tooltip's target, the top rows still clear of the wider
+// meter, and "Ganti yang gugur" on the Pasukan page. One TdGame (its own file: a second TdGame in one file breaks the shared image cache,
 // docs/testing.md). The rules: tide_test.dart.
 
 /// Advances the game [n] frames.
@@ -55,28 +55,19 @@ void main() {
       ..tideStart = 52;
     await frames(tester, 3);
     expect(b.tideBadge, '+22%');
-    // An army over the cap meets a later wave's tide (Beban, decisions-log 162): 48 over the board's 36 (decisions-log
-    // 260; 12 over) with the tide from 66, ramped in, meets wave 87's from 42 (+56%; at 32 it was from 34, +69%); its
-    // first wave over the cap (from 86 on) a fifth of it.
-    final over12 = 48 - armyMaxBoard;
-    expect('+${tidePercent(87, 66 - overTideWaves(over12, 87, 82))}%', '+56%');
-    for (final (from, badge) in [
-      (82, '+${tidePercent(87, 66 - overTideWaves(over12, 87, 82))}%'),
-      (null, '+${tidePercent(87, 66 - overTideWaves(over12, 87, 87))}%'),
-    ]) {
-      final over = Game()
-        ..wave = 86
-        ..tideStart = 66
-        ..overFrom = from
-        ..capacity = 48
-        ..notes.addAll(['army', 'over']); // no one-time note over the field
-      for (var i = 0; over.armySize < 48; i++) {
-        over.units.add(Unit(Side.troop, 'soldier', troopTypes['soldier']!, cellMiddle(i ~/ rows, i % rows))..entered = true);
-      }
-      b.state = over.boardRules();
-      await frames(tester, 3);
-      expect(b.tideBadge, badge, reason: 'over since $from');
+    // An army over the cap meets the tide as any army (Beban, decisions-log 162, went in 329): 48 over the board's 36
+    // with the tide from 66 meets wave 87's from 66 (+21%).
+    final over = Game()
+      ..wave = 86
+      ..tideStart = 66
+      ..capacity = 48
+      ..notes.add('army'); // no one-time note over the field
+    for (var i = 0; over.armySize < 48; i++) {
+      over.units.add(Unit(Side.troop, 'soldier', troopTypes['soldier']!, cellMiddle(i ~/ rows, i % rows))..entered = true);
     }
+    b.state = over.boardRules();
+    await frames(tester, 3);
+    expect(b.tideBadge, '+${tidePercent(87, 66)}%');
 
     // The meter is wider by the badge ("+999%" kept free), and still clear of the rows at the top on every screen.
     for (final size in const [Size(1266, 713), Size(915, 412)]) {
