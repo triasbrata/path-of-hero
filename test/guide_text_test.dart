@@ -69,14 +69,14 @@ void main() {
     expect(_words('Shop, tab "Awaken 4-5":'), 3);
   });
 
-  test('the intro has 7 pages, the pointers P1-P5, the cards K0-K24 as the rules (K4 and K5 two pages, the rest one)', () {
+  test('the intro has 7 pages, the pointers P1-P5, the cards K0-K25 as the rules (K4, K5 and K25 two pages, the rest one)', () {
     expect(guideEn.intro, hasLength(7));
     expect(guideEn.counter(3), '3/7');
     expect(guideEn.pointers.keys, guidePointers);
     expect(guideEn.cards.keys, [for (final r in guideRules) r.key]);
-    expect(guideEn.cards.keys, [for (var i = 0; i <= 24; i++) 'K$i']);
+    expect(guideEn.cards.keys, [for (var i = 0; i <= 25; i++) 'K$i']);
     for (final MapEntry(:key, :value) in guideEn.cards.entries) {
-      expect(value, hasLength(key == 'K4' || key == 'K5' ? 2 : 1), reason: key);
+      expect(value, hasLength(key == 'K4' || key == 'K5' || key == 'K25' ? 2 : 1), reason: key);
     }
     // Only I7's third line differs with a mouse.
     for (final (i, p) in guideEn.intro.indexed) {

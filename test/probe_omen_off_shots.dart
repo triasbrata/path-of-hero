@@ -1,8 +1,9 @@
 // The screens the Shadows touch, with [omensOn] off (catalog step 0h, decisions-log 191): offscreen shots into
 // <probe root>/shots/omens-off/ (`OUT`), to compare byte for byte with the same probe in a mirror of main, so
 // the Shadows' UI is proved dark. It uses only what main had before the UI step, so the one file runs in both. A probe,
-// not part of the suite: queue `["test", "test/probe_omen_off_shots.dart", "--dart-define=OUT=<dir>"]` with each
-// mirror as `dir`, then `cmp` the PNGs. Seeded, so a rerun gives the same shots.
+// not part of the suite: queue `["test", "test/probe_omen_off_shots.dart", "--dart-define=OMENS=false",
+// "--dart-define=OUT=<dir>"]` with each mirror as `dir` (the Shadows are on by default since decisions-log 319), then
+// `cmp` the PNGs. Seeded, so a rerun gives the same shots.
 //
 // At 412x860, 915x412 and 1266x713 (<size>): chest-<size> (a boss chest at wave 90 whose save holds faces, as one
 // written with omens on), armed-<size>, taken-<size> (the take's message), chip-<size> (the second chest's chip in a won

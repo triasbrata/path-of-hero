@@ -11162,3 +11162,40 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        twice (the vault key's file) and 315's last bullet (the two `git config` lines). Found by pairing every
        list item's and paragraph's backticks in order, in every tracked `.md` file and Dart comment, and looking
        for a scrub word inside a code span; the owner's quotes keep the scrub's words.
+
+319. **The Shadows (Bayangan) are on in every build** (the owner, 2026-10-12, asked of the 2,517 lines and 18 test files
+     that were off in every build behind the `OMENS` define, code-audit's O1: ship, park or cut? He picked "Nyalakan",
+     turn them on). By shadows-on.
+     - **Checked first** (phase 1, nothing merged): with `omensOn` forced on, the chest's "Monsters: ?!!" row in the
+       decisions-log 281 layout, the take's flip, reveal and message, Skip's note, the chips (at the left under the
+       troop counter while the book shows, under the wave meter in a fight), their tooltip (291's wrap at 915×412),
+       the chips in a Town with a Tavern boost running, a wave-90 boss's Barrier and Escort, the plate, the battle log
+       under the boss bars, a real wave 90, and the owner's w89 and w58 saves' catch-up notes were shot at 1600×947
+       and 915×412 and looked at: nothing overlaps or reads wrong. Nothing of them is on the Smithy, Bag, Army or Sell
+       pages, the spawn bar or the Wishlist, and the hooks still meet the heals, skills and MP of 297-299 and 314.
+     - **The switch:** `omensOn = bool.fromEnvironment('OMENS', defaultValue: true)`. `--dart-define=OMENS=false`
+       (or a test setting it) keeps the off path: no die, no save key, no event, every hook idle, so it stays tested.
+     - **Saves** (additive, `v` stays 3): every save now writes `omens` (`[]` when none), and `omensOwed`,
+       `skipBuffDue`, `grudgeType` and each chest's `omens` when there are any. A save from before them with a Pusaka
+       owned gets the catch-up the owner chose in 180 (at most 12 levels, 2 a wave, a note once): his wave-58 save of
+       2026-10-12 owes 12. An off build ignores the keys.
+     - **Telemetry:** `eventVersion` and `telemetryVersion` 12, the Bayangan's fields reaching every player's records
+       (as the Tavern's switch-on raised them to 11).
+     - **The guide:** a new card, K25 "Monster Shadows", over the first chest whose cards hide one (gate `omenFrom`
+       20), two pages ("Each card hides a Shadow: / a buff for the monsters. / More "!": a stronger one. / "Take"
+       shows what they got." and "Chips show the ones they hold. / Tap one to read them all. / A wave where many
+       troops fall / takes the newest one away."), its pictures K5's cards with their marks and three chips; it joins
+       the Boss Chest topic. Until now only the chest's hint said it, and only while no Shadow was held.
+     - **The ease, for the owner:** on his wave-58 save the catch-up landed 2 levels at wave 59's start and the ease
+       took both at its end: his army loses ~20 un-awakened fodder troops a wave (Auto Buy buys them back, and each
+       fall counts, 107 in that wave against 36 at its start), so every wave eases the most, 2, as many as the
+       catch-up lands, and a chest's 1-3 levels go within a wave or two. It ships as designed; `omenEaseCount`
+       (`OmenEaseCount`: `falls` as now, `starters` each troop that started the wave once, `awakened` only an
+       awakened type's falls) and `omenEaseMax` are the knobs for his answer.
+     - **Replays** (code-audit R1): nothing seeded `Game.omenDice`, so no run with the Shadows on was the same twice.
+       `Game.seedDice(seed)` seeds every die after rng and names at the probes' offsets (loot +200, heroes +300, slots
+       +400, draft +500, Town +600, materials +700, Tavern +800, Shadows +900), `Game.dice` lists them and
+       test/dice_test.dart holds both to game.dart's `Random` fields; the omen shot probes and the w89 identity probe
+       use it (that probe's dump with the Towns moves: its save's catch-up meets waves 90 and 91; a new golden).
+     - **S5** (code-audit): `OmenKind`, the kinds' data (570 lines), moved from omen.dart to lib/omen_catalog.dart,
+       unchanged.

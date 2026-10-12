@@ -31,12 +31,12 @@ bool isDue(String key, Game g) => guideRules.firstWhere((r) => r.key == key).due
 Game at(int wave) => Game(Random(1)).boardRules()..wave = wave;
 
 void main() {
-  test('a rule per card K0-K24, each gated at the wave a game has met it (none for K14, K15, K18, K20, K21, K22, K23)', () {
-    expect([for (final r in guideRules) r.key], [for (var i = 0; i <= 24; i++) 'K$i']);
+  test('a rule per card K0-K25, each gated at the wave a game has met it (none for K14, K15, K18, K20, K21, K22, K23)', () {
+    expect([for (final r in guideRules) r.key], [for (var i = 0; i <= 25; i++) 'K$i']);
     expect({for (final r in guideRules) r.key: r.gate}, {
       'K0': 1, 'K1': 1, 'K2': 2, 'K3': 3, 'K4': 4, 'K5': 5, 'K6': 5, 'K7': 7, 'K8': 10, 'K9': 10, 'K10': 10,
       'K11': 15, 'K12': 20, 'K13': 1, 'K14': null, 'K15': null, 'K16': 1, 'K17': 34, 'K18': null, 'K19': 49,
-      'K20': null, 'K21': null, 'K22': null, 'K23': null, 'K24': 1,
+      'K20': null, 'K21': null, 'K22': null, 'K23': null, 'K24': 1, 'K25': omenFrom,
     });
     expect([for (final r in guideRules) if (r.passing) r.key], ['K2', 'K3', 'K4', 'K17', 'K19']);
     expect([for (final r in guideRules) if (r.inTown) r.key], ['K23'], reason: 'the first Town\'s, in it (decisions-log 237)');
@@ -233,8 +233,8 @@ void main() {
     expect(guideNext(g, seen), isNull); // mid-wave, never
   });
 
-  test('guideNext with the chest\'s popup open: only K5 and K12 (they sit over it), in order; without it never them', () {
-    expect([for (final r in guideRules) if (r.atChest) r.key], ['K5', 'K12']);
+  test('guideNext with the chest\'s popup open: only K5, K12 and K25 (they sit over it), in order; without it never them', () {
+    expect([for (final r in guideRules) if (r.atChest) r.key], ['K5', 'K12', 'K25']);
     final g = at(bossEvery)
       ..chests.add(Chest(ChestKind.boss, bossEvery, cards: [Relic.dragonCrown, Relic.grail, Relic.voidEye]))
       ..relicBag[Relic.fang] = 1;

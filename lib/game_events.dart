@@ -21,8 +21,10 @@ part of 'game.dart';
 /// 266) came without a raise too: only a game with the Tavern's switch on had them, which no player's game had yet. 10: the
 /// forge's ([ItemCrafted], [StoneCrafted], [ItemEnhanced]; decisions-log 249, 255), sent in every board game since the
 /// forge's cut-over (decisions-log 272); with the Towns off (tests only; the forge-off build is gone, decisions-log 296) none is. 11: the Tavern switched on (decisions-log 268):
-/// the Tavern's, while the Towns are on (its own switch is gone, decisions-log 296).
-const eventVersion = 11;
+/// the Tavern's, while the Towns are on (its own switch is gone, decisions-log 296). 12: the Bayangan switched on
+/// (decisions-log 319): their events and fields (8's, [OmenDusk]) reach every player's records; `--dart-define=OMENS=false`
+/// (tests only) sends none.
+const eventVersion = 12;
 
 /// How many events [Game.log] keeps, the oldest going first.
 const logSize = 200;

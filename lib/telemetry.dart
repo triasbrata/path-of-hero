@@ -43,7 +43,8 @@ import 'settings.dart';
 /// times as many. The forge-off build, whose records were as at 9, is gone (decisions-log 296).
 /// 11: the Tavern switched on (decisions-log 268): its fields and events, while the Towns are on (its own switch is gone,
 /// decisions-log 296).
-const telemetryVersion = 11;
+/// 12: the Bayangan switched on (decisions-log 319): their fields (8's, Dusk's) reach every player's records.
+const telemetryVersion = 12;
 
 /// Where [HttpSink] posts (`--dart-define=TELEMETRY_SERVER=https://...`). None by default, so nothing is sent.
 const telemetryServer = String.fromEnvironment('TELEMETRY_SERVER');

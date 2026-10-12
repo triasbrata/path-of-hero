@@ -968,7 +968,7 @@ loot-items-relics.md "Peti Bos", the code's name). `_ChestView` holds it between
   `_chestDown`, after the message window's).
   - Across the top edge the ribbon (`_ribbonTitle`) with the chest's title (`Chest.title`): "Boss Chest", or "Missed
     Chest 1/3" (`Words.bossChest`, `Words.missedChest`); none
-    while a guide card sits over the popup (K5, K12: "Guide" below), whose own ribbon would sit right under it.
+    while a guide card sits over the popup (K5, K12, K25: "Guide" below), whose own ribbon would sit right under it.
   - **Three cards**, side by side (230·f wide at most, the panel no wider than the screen less the margins). All as tall as the tallest one's lines need. A card
     is the book's plain page card (lit under the mouse, `_rowCard`), the frame itself recoloured by its rarity
     (`_rarityFramePaints`, made once): a colour matrix (`_recolour`) takes ui_all.png's page frame's three colours
@@ -1024,8 +1024,10 @@ loot-items-relics.md "Peti Bos", the code's name). `_ChestView` holds it between
 
 The Shadows (code: Bayangan, `OmenKind`; their rules: loot-items-relics.md "Bayangan", what they do on the field:
 units-and-combat.md "Bayangan on the field") seen: a Boss Chest's Artifact card hides a monster buff, revealed when it
-is taken. **Nothing of it shows while `omensOn` is off** (main today): no marks, hint, reveal, chips, segment, ring,
-plate word or note, and every screen is as before (`test/probe_omen_off_shots.dart` byte for byte against main). Every
+is taken. **On in every build since decisions-log 319**; with `omensOn` off (`--dart-define=OMENS=false`, tests) nothing
+of it shows: no marks, hint, reveal, chips, segment, ring, plate word or note, and every screen is as before them
+(`test/probe_omen_off_shots.dart` with that define, byte for byte against a base from before them). The guide's K25
+explains them over the first chest that hides one ("Guide" below). Every
 picture is a cell of a sheet the game has: ui_icons.png's "?" (192, 48) and "!" (192, 32), cut to their inked columns
 (`_markAsk` (196, 49, 8×14), `_markBang` (198, 33, 4×14)) and tinted `_monsterPop` (0xFFFF6B5E); each kind's
 `OmenKind.icon` (Armor `item_shield.png`, Haste `item_gloves.png`, Mend `item_potion.png`, Spikes `relic_thorns.png`,
@@ -2159,7 +2161,7 @@ maka otomatis game jadi ke pause, kalau window tidak focus juga game tetap berja
 The owner (2026-10-02): "aku perlu ada introduction ke user pertamakali main, untuk menjelaskan semua mekanik game
 ini". The first-time guide comes in four parts: its words, triggers and seen set; the renderer with the intro, the
 pointers and the welcome screen's "How to Play" ("On the screen" below); Settings' "How to Play" page ("How to Play page",
-under the book); and the one-time cards K0-K24 at their breaks. All four are in: the intro and the pointers show,
+under the book); and the one-time cards K0-K25 at their breaks. All four are in: the intro and the pointers show,
 the page holds every page and card, and a one-time card opens at its break ("A one-time card opens" below).
 
 ### On the screen (`lib/coach.dart`, `_Coach`)
@@ -2202,7 +2204,9 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     with three healing necromancers behind it; K20 a Pusaka, a relic and a coin, ▶, a star; K21 a Pusaka, ▶,
     another, the green plus and a star; K22 a potion and a staff, ▶, a Pusaka, the green plus (no star: Carve is never
     one); K23 the Tavern's ale mug (town_mug.png), ▶, the Smithy's hammer (`_townMark`), Sweep; K24 a Slime Gel and a
-    Bat Wing, ▶, the hammer, Fang. Drawn in code there are only looks the game already draws so (the tabs' red
+    Bat Wing, ▶, the hammer, Fang; K25's first page K5's three cards a little shorter, each with the Shadow's "?" and its
+    red "!" marks under it as the popup shows them, its second three Shadow chips (Armor 2, Haste 1, Wound 3: their icons
+    on the red glow, their levels, on the HUD's dark panel) as under the wave meter. Drawn in code there are only looks the game already draws so (the tabs' red
     dot, the ranks' bar fills, the Pusaka ring, the chest's and the store's glows, the Hero portrait's light). A
     picture draws as a still: nothing in it lights under the mouse or takes a press, and the rows' tooltips and chips
     it registers are dropped.
@@ -2264,7 +2268,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     (`counter`);
   - `pointers`: P1-P5's lines between the first waves (buy a troop, "Start", then the first item: "Bag", the item, a
     type's row);
-  - `cards`: K0-K24's pages (K4 and K5 two, the rest one). K4's first page says how to get ready for the boss (fill
+  - `cards`: K0-K25's pages (K4, K5 and K25 two, the rest one). K4's first page says how to get ready for the boss (fill
     the room with troops, "+Room", a second Priest; decisions-log 176), its second what the boss leaves (with the forge
     on "Win it: rare materials", with it off "Win it: 2 items"; decisions-log 272);
   - `topics`: the "How to Play" page's 13 (`GuideTopic`; "Towns", decisions-log 237: K23, K24 and the wave meter's
@@ -2318,17 +2322,18 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   | K22 | Carve (`Words.carve`; "New: spare items make an Artifact / a bit stronger. / "Bag": tap it, then "Carve". / Or pick an item: "Give".", decisions-log 196) | some Pusaka can take Carve now (`whyNotUkir` null: from wave 40, between waves, spare items) | none |
   | K23 | A Town! (""Smithy": craft items and relics. / "Tavern": buy boosts. / "Leave town" goes on.", decisions-log 237 and 272; the Tavern's line decisions-log 268) | in a Town (`inTown`); the only card there | none |
   | K24 | Materials ("Monsters drop materials. / They wait in "Bag". / In a Town, the "Smithy" / makes items and relics.") | the Towns on and a material held (after the first wave that drops one) | 1 |
+  | K25 | Monster Shadows ("Each card hides a Shadow: / a buff for the monsters. / More "!": a stronger one. / "Take" shows what they got." and "Chips show the ones they hold. / Tap one to read them all. / A wave where many troops fall / takes the newest one away.", decisions-log 319) | the chest to open hides a Shadow (`omensOn`, from `omenFrom`); it sits over the popup | `omenFrom` 20 |
 
 - **Which card** (`guideNext(g, seen)`): none mid-wave, while a Town is due and not yet open (`canStartWave` false), or
   before the intro is seen; else the first card not seen whose
   `after` is seen and that is due. A `passing` one (K2, K3, K4, K17, K19: its wave's notice, gone after this break)
   goes before the rest, so K1 (troops fell at wave 2) never pushes "Wave 3 has a mini boss" past wave 3; otherwise the
-  list's order. With `chest` (the boss chest's popup open) only the `atChest` cards (K5, K12, which sit over it), else
+  list's order. With `chest` (the boss chest's popup open) only the `atChest` cards (K5, K12, K25, which sit over it), else
   only the others; in a Town only the `inTown` one (K23: the first Town's, over it, while Auto holds), elsewhere never
   it. One card a break, after the board's own news ("A one-time card opens" above).
 - **The item pointers:** P3-P5 not done in two breaks are dropped (`dropItemPointers`: seen), and K0 then says it once
   an item waits; done (an item given to a type), `itemPointersDone` marks K0 seen with them.
-- **The seen set** (`Settings.seen`, settings.json's `seen`: the keys "intro", "P1"-"P5", "K0"-"K24" shown on this
+- **The seen set** (`Settings.seen`, settings.json's `seen`: the keys "intro", "P1"-"P5", "K0"-"K25" shown on this
   device, and the foe splashes' `foe.<skill>`, "Foe splash" above). settings.json, not save.json, so "New Game"
   never clears it, and neither does "Replay guide" (it only plays the intro again: "How to Play page"). When
   settings.json has none, `main()` gives it one before the board starts (`seenFrom(savedWave())`):

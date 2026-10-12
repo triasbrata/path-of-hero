@@ -35,9 +35,7 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
 /// A board game between waves at wave 89 (the next a boss's), seeded, a mixed army of eight types, gold to spare.
 Game board() {
   final g = Game(Random(seed), Random(seed + 100)).boardRules()
-    ..slots = Random(seed + 300)
-    ..loot = Random(seed + 200)
-    ..draft = Random(seed + 500)
+    ..seedDice(seed) // every die, the Shadows' faces too (decisions-log 319)
     ..armyMax = null
     ..gold = 400000
     ..wave = 89;

@@ -35,7 +35,7 @@ events it listens to are #60's stream (lib/game_events.dart, architecture.md).
 
 ## The records
 
-Every record is one JSON object with `tv` (`telemetryVersion` 11: raise it when a field changes; 2 added the wave's
+Every record is one JSON object with `tv` (`telemetryVersion` 12: raise it when a field changes; 2 added the wave's
 `pusaka` and `gold.pusakaSpent`, decisions-log 138; 3 the boss chest's events and `gold.chestSpent` /
 `gold.chestEarned`, decisions-log 152; 4 Asah's `pusakaAsah` and `gold.asahSpent`, decisions-log 154; 5 the wave
 start's `tide.over`, decisions-log 162; 6 Tempa's `tempa` and `gold.tempaSpent`, decisions-log 163; 7 Lebur's
@@ -52,7 +52,9 @@ player's game had yet; 10 the forge in every board game since its cut-over, deci
 none drops, and `materials` about three times as many (the forge-off build, whose records were as at 9, is gone,
 decisions-log 296); 11 the Tavern switched on, decisions-log 268: its `boostBought`, `tavernRerolled`, a `townLeft`'s
 `tavern`, a wave's `gold.tavernSpent` and `boostSaved` and its start's `boosts` in every board game (`eventVersion`
-11), written only while `Game.towns` is on; the Tavern's own switch is gone, decisions-log 296), `rec`,
+11), written only while `Game.towns` is on; the Tavern's own switch is gone, decisions-log 296); 12 the Bayangan
+switched on, decisions-log 319: 8's Bayangan fields and the Dusk's `omenDusk` in every player's records (`eventVersion`
+12; none with `--dart-define=OMENS=false`), `rec`,
 `install`, `session`, `game` (the number of the game within the session, 0 before the first) and `at` (UTC,
 ISO 8601).
 
@@ -60,7 +62,7 @@ ISO 8601).
 |---|---|---|
 | `session` | once, when the adapter is made (the first game played after launch) | `app` (`APP_VERSION` define, `dev`), `platform` (`Platform.operatingSystem`), `ev` (`eventVersion`) |
 | `game` | each `attach` | `wave` (0 new, more for a loaded save), `gold`, `lives`, `score` |
-| `event` | as it happens, for `passedOn`: fell, drop, heroMade, awakened, bought, itemUsed, relicUsed, storeBought, storeSold, relicTakenOff, typeReleased, pusakaBound, pusakaMoved, ascended, heroRecalled, offerShown, offerPicked, offerRerolled, pusakaAsah, tempa, pusakaLebur, omenGained, omenEased, omenDusk, ukirFed, ukirStep, townMarked, townEntered, townLeft, crafted, itemCrafted, stoneCrafted, itemEnhanced, boostBought, tavernRerolled | `event`: the event's `toJson()` (`v`: `eventVersion` 11 (3: the chest's events; 4: Asah's; 5: heroRecalled's `refund`; 6: Tempa's; 7: Lebur's; 8: the Bayangan's, Ukir's, an Asah's `items`; 9: the Towns'; 10: the forge's, decisions-log 272; 11: the Tavern's, decisions-log 268), `kind`, `wave`, `t`, its fields) without `name`; a `fell` carries the troop's `relics` (names, back in the bag; `eventVersion` 2); `ascended` (#92 part 2, Bangkit 4-5 bought in the Toko, `Ascend.ascend`): `type`, `level` (4 or 5), `cost`; `heroRecalled` (#92 part 3, a fallen Hero called back in the Toko's Hero Gugur, `Recall.recallHero`; no `bought` for it): `type`, `stats` (its 2 attributes), `skill`, `fell` (the wave it fell in), `cost`, `refund` (`eventVersion` 5, decisions-log 167: what the troop a full army's recall sent home paid back, 0 without a swap; the troop's name stays in the battle log; `gold.recallSpent` is the `cost`, the refund not taken off); `offerPicked` (a boss chest closed, lib/draft.dart): `pick` (a Pusaka's name,
+| `event` | as it happens, for `passedOn`: fell, drop, heroMade, awakened, bought, itemUsed, relicUsed, storeBought, storeSold, relicTakenOff, typeReleased, pusakaBound, pusakaMoved, ascended, heroRecalled, offerShown, offerPicked, offerRerolled, pusakaAsah, tempa, pusakaLebur, omenGained, omenEased, omenDusk, ukirFed, ukirStep, townMarked, townEntered, townLeft, crafted, itemCrafted, stoneCrafted, itemEnhanced, boostBought, tavernRerolled | `event`: the event's `toJson()` (`v`: `eventVersion` 12 (3: the chest's events; 4: Asah's; 5: heroRecalled's `refund`; 6: Tempa's; 7: Lebur's; 8: the Bayangan's, Ukir's, an Asah's `items`; 9: the Towns'; 10: the forge's, decisions-log 272; 11: the Tavern's, decisions-log 268; 12: the Bayangan's switched on, decisions-log 319), `kind`, `wave`, `t`, its fields) without `name`; a `fell` carries the troop's `relics` (names, back in the bag; `eventVersion` 2); `ascended` (#92 part 2, Bangkit 4-5 bought in the Toko, `Ascend.ascend`): `type`, `level` (4 or 5), `cost`; `heroRecalled` (#92 part 3, a fallen Hero called back in the Toko's Hero Gugur, `Recall.recallHero`; no `bought` for it): `type`, `stats` (its 2 attributes), `skill`, `fell` (the wave it fell in), `cost`, `refund` (`eventVersion` 5, decisions-log 167: what the troop a full army's recall sent home paid back, 0 without a swap; the troop's name stays in the battle log; `gold.recallSpent` is the `cost`, the refund not taken off); `offerPicked` (a boss chest closed, lib/draft.dart): `pick` (a Pusaka's name,
 `serpihan`, or null when passed over), `rarity`, `stars` (after the take), `type` (where it went; null: the Gudang),
 `skipped`, `gain` (Lewati's gold), `rerolls`, `chest`, `chestWave`, and while the Bayangan are on (loot-items-relics.md
 "Bayangan", decisions-log 180) `omen` (the face the taken card hid; null: none), `levels` (the kinds its levels went to,

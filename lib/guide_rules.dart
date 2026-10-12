@@ -1,5 +1,5 @@
 // When the first-time guide's one-time cards show (their words: lib/guide_text.dart; docs/ui-hud.md "Guide"): each card
-// K0-K24 is due by a pure check on the Game, rechecked at every break, and once shown it is in the device's seen set
+// K0-K25 is due by a pure check on the Game, rechecked at every break, and once shown it is in the device's seen set
 // (`Settings.seen`, settings.json, so "New Game" never brings one back). A device that had a save before the guide
 // (the owner's wave-86 game) starts with every card a game that far has met marked seen ([seenFrom]). Pure Dart.
 //
@@ -18,7 +18,7 @@ const guidePointers = ['P1', 'P2', 'P3', 'P4', 'P5'];
 /// A one-time card's rule: its [key], its [gate] (a save that has fought this many waves has met it: [seenFrom]; null,
 /// never), and when it is [due]. A card shows only once [after] is seen (K0 waits for the item pointers to be dropped). A
 /// [passing] card's moment goes with this break and never comes back (a wave's notice before it comes), so it goes
-/// before the others ([guideNext]). An [atChest] card sits over the boss chest's popup (K5, K12): it shows only while
+/// before the others ([guideNext]). An [atChest] card sits over the boss chest's popup (K5, K12, K25): it shows only while
 /// that is open, and no other card does then. An [inTown] card shows in a Town (K23, decisions-log 237): only there,
 /// and no other card does there.
 class GuideRule {
@@ -33,7 +33,7 @@ class GuideRule {
   final bool inTown;
 }
 
-/// The cards' rules, K0-K24, in the order that breaks ties.
+/// The cards' rules, K0-K25, in the order that breaks ties.
 final guideRules = <GuideRule>[
   // Items: an item waits in the bag and none was ever given, after the item pointers were dropped (P3-P5).
   GuideRule('K0', 1, (g) => g.inventory.values.any((n) => n > 0) && g.upgrades.values.every((l) => l.isEmpty), after: 'P5'),
@@ -86,6 +86,8 @@ final guideRules = <GuideRule>[
   // that drops one.
   GuideRule('K23', null, (g) => g.inTown, inTown: true),
   GuideRule('K24', 1, (g) => g.towns && g.materials.isNotEmpty),
+  // The Shadows (decisions-log 319): the first chest whose cards hide one (from [omenFrom]); the card sits over it.
+  GuideRule('K25', omenFrom, (g) => omensOn && (g.chest?.omens?.any((k) => k != null) ?? false), atChest: true),
 ];
 
 /// The troop types with a troop alive.

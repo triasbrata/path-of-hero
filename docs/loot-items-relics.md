@@ -999,10 +999,12 @@ hidden buff, a Bayangan, revealed on the take. It answers a late game that was f
 fell on 16 waves). The rules are `lib/omen.dart` (a part of game.dart, `extension Omens on Game`); every number is one
 constant there.
 
-- **Off for now:** `omensOn` is false until the owner switches it on, since levels the player can't see would only
-  confuse. Their UI (decisions-log 191) is in, and shows only while on: the cards' marks, the reveal, the chips under the
-  wave meter and their tooltip, the boss bar's Barrier and Escort (ui-hud.md "Shadows"). Off, no Bayangan die is drawn, no save key is written and no event or telemetry field is sent, so a save
-  loads and plays as before. A test switches it on; a probe passes `--dart-define=OMENS=true`.
+- **On in every build** (decisions-log 319; the owner, 2026-10-12, asked to ship, park or cut them: "Nyalakan"):
+  `omensOn` is `bool.fromEnvironment('OMENS', defaultValue: true)`. Their UI (decisions-log 191) shows the cards' marks,
+  the reveal, the chips under the wave meter and their tooltip, the boss bar's Barrier and Escort (ui-hud.md "Shadows"),
+  and the guide's card K25 explains them over the first chest that hides one. Off (`--dart-define=OMENS=false`, or a
+  test setting `omensOn = false`), no Bayangan die is drawn, no save key is written and no event or telemetry field is
+  sent, so a save loads and plays as it did before them: the off path the tests keep checking.
 - **What they do** (decisions-log 188): each kind acts on the field through its hook, units-and-combat.md "Bayangan on
   the field". `omenE(kind)`, the effective level the hooks read (through `omenK`), is 0 while off, so off no hook acts.
 - **The kinds** (`OmenKind`): today's seven, then the data batches' kinds (batch L-1B, decisions-log 204: the first ten
@@ -1231,7 +1233,12 @@ constant there.
   ×1.5), × `omenScale` 1, and × `omenAtCap` 1 at or under the cap. A kind's effective level is E = L × the factor
   (`omenE`); Guard counts by L.
 - **The ease:** at a won wave's end, each full `omenEaseShare` (an eighth) of the troops that started it fallen (6 of
-  48, 4 of 32) takes the newest level away, at most `omenEaseMax` 2 a wave.
+  48, 4 of 32) takes the newest level away, at most `omenEaseMax` 2 a wave. What counts as a fall is the knob
+  `omenEaseCount` (`OmenEaseCount`, `Game.omenFalls`): `falls`, every troop that fell, one Auto Buy bought back and that
+  fell again too (as designed, and shipped); `starters`, only the troops that started the wave (`Game.omenStarters`),
+  each once; `awakened`, only the falls of a type at Awaken 1 or more. Measured when they were switched on (decisions-log
+  319): the owner's wave-58 army loses ~20 un-awakened fodder troops a wave, so with `falls` every wave eases 2, as many
+  as the catch-up lands, and a chest's levels go within a wave or two; the owner decides.
 - **An old save** (one without `omens`, with a Pusaka owned) catches up (the owner's answer): every Pusaka owned, the
   Toko's too, owes `omenMarks` × its stars levels of its counter, dealt one level at a time round-robin in `Relic` order,
   at most `omenCatchUpMax` 12 (`omenCatchUp`). They wait in `Game.omensOwed` and land `omenCatchUpStep` 2 a wave from
@@ -1243,7 +1250,8 @@ constant there.
   catchUp or ukir) and `OmenEased` (both in the battle log's Musuh chip, in simple English like all in-game text:
   "Monsters got Armor 2 (Boss Chest w90)", "Late Shadow: Wound 2", "Carve: monsters got Haste 1", "Shadow eased: Armor
   down to 1"), and `WaveStarted.omens` (telemetry.md;
-  `eventVersion` and `telemetryVersion` 8). Off, none is sent and no field written.
+  `eventVersion` and `telemetryVersion` 8; 12 since they reach every player's records, decisions-log 319). Off, none is
+  sent and no field written.
 
 ## Asah: a Pusaka's star for gold and small relics (P6, decisions-log 154)
 
@@ -2342,7 +2350,7 @@ which gets its catch-up chests; each `{kind, wave, cards?, rerolls?, epik?, n?, 
 `cards` left out until rolled; a card naming no Pusaka loads as a Serpihan), with `draftDry`, `chestsGiven` and
 `serpihan` only when above 0. The draft dice are not saved (decision 112).
 
-The Bayangan ("Bayangan" above) save only while `omensOn` is on: `omens` (the levels by kind name, one a level, oldest
+The Bayangan ("Bayangan" above) save while `omensOn` is on (every build since decisions-log 319, additive: the save's `v` stays 3): `omens` (the levels by kind name, one a level, oldest
 first; always written then, `[]` when none, so its absence marks a save from before them, which gets the catch-up),
 `omensOwed` (the catch-up still to land), `skipBuffDue` (only when owed) and `grudgeType` (Grudge's target, last won
 wave's top killer type, only when there is one; an unknown type is skipped; units-and-combat.md "Bayangan on the

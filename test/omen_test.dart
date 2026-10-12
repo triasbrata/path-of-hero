@@ -110,8 +110,8 @@ const armor = OmenKind.armor, haste = OmenKind.haste, mend = OmenKind.mend, woun
 const thorns = OmenKind.thorns, shield = OmenKind.shield, guard = OmenKind.guard;
 
 void main() {
-  test('off by default (no OMENS define): ship dark until the UI step', () {
-    expect(omensOn, isFalse);
+  test('on by default (no OMENS define): the owner switched them on (decisions-log 319)', () {
+    expect(omensOn, isTrue);
   });
 
   group('off', () {

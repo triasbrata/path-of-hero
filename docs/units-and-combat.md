@@ -464,8 +464,9 @@ owner's wave 70).
 
 What the enemy's Bayangan levels (loot-items-relics.md "Bayangan") do to a wave, in `lib/omen.dart`. Each kind's
 strength is `omenK(kind)` = its per-E share × E, at most its most (`OmenKind.k`), where E = its level × the Beban
-factor (`omenE`). Everything here acts only while `omensOn`: off, a monster's stats are exactly `enemyStats`'s, no
-guard joins a queue, no skip buff lands and a blow is what it was. A **slot** is the wave's boss or mini boss, not one
+factor (`omenE`); the kinds' data is `lib/omen_catalog.dart`. Everything here acts while `omensOn` is on, as in every
+build since decisions-log 319; off (`--dart-define=OMENS=false`, tests), a monster's stats are exactly `enemyStats`'s,
+no guard joins a queue, no skip buff lands and a blow is what it was. A **slot** is the wave's boss or mini boss, not one
 a necromancer or a skill raised.
 
 - **Every monster's stats** come from one wrapper, `spawnStats(type, tier, {raised, skipBuff})`: `enemyStats` with the

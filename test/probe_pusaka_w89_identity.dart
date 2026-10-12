@@ -42,14 +42,10 @@ const _winds = bool.fromEnvironment('WINDS', defaultValue: _towns);
 /// The w89 save with its dice seeded ([seed]), as the probes load it, with the Towns as [_towns] says (on a base from
 /// before decisions-log 237, off) and their dice seeded too.
 Game _load([int seed = 89]) =>
-    Game.fromJson(jsonDecode(File(_save).readAsStringSync()) as Map<String, dynamic>, Random(seed), Random(seed + 100), Random(seed + 300))
-      ..loot = Random(seed + 200)
-      ..slots = Random(seed + 400)
-      ..draft = Random(seed + 500)
+    Game.fromJson(jsonDecode(File(_save).readAsStringSync()) as Map<String, dynamic>, Random(seed), Random(seed + 100))
+      ..seedDice(seed) // every die at the probes' offsets, the Shadows' too (decisions-log 319)
       ..towns = _towns
-      ..skillWinds = _winds
-      ..townDice = Random(seed + 600)
-      ..matDice = Random(seed + 700);
+      ..skillWinds = _winds;
 
 /// The w89 save's five types, in its saved roster's order (decisions-log 141's `runTypes`, no longer read since 201):
 /// the previews run over them in the same order on a base from before it and after.

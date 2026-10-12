@@ -38,9 +38,7 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
 /// A board game between waves at wave 89 (the next a boss's), seeded, a mixed army of eight types, gold to spare.
 Game board() {
   final g = Game(Random(seed), Random(seed + 100)).boardRules()
-    ..slots = Random(seed + 300)
-    ..loot = Random(seed + 200)
-    ..draft = Random(seed + 500)
+    ..seedDice(seed) // every die, the Shadows' faces too (decisions-log 319)
     ..armyMax = null
     ..gold = 400000
     ..wave = 89;
@@ -160,7 +158,7 @@ void main() {
 
       // The owner's w89 save coming in: its catch-up note.
       final save = jsonDecode(File('test/fixtures/save-20261002-2222-w89-sellbug.json').readAsStringSync()) as Map<String, dynamic>;
-      b.state = Game.fromJson(save, Random(seed), Random(seed + 100), Random(seed + 300)).boardRules();
+      b.state = Game.fromJson(save, Random(seed), Random(seed + 100)).boardRules()..seedDice(seed);
       await shot('w89', 10);
     });
   }

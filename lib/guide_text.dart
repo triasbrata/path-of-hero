@@ -1,6 +1,6 @@
 // The first-time guide's words (the owner, 2026-10-02: "aku perlu ada introduction ke user pertamakali main, untuk
 // menjelaskan semua mekanik game ini"; docs/ui-hud.md "Guide"): the intro's pages after a device's first "Main Baru",
-// the pointers of the first breaks, the one-time cards K0-K24 (when each shows: lib/guide_rules.dart) and the
+// the pointers of the first breaks, the one-time cards K0-K25 (when each shows: lib/guide_rules.dart) and the
 // "Cara Main" page's topics. Pure Dart: the board draws them.
 //
 // - Simple English with the item text's glossary (docs/ui-hud.md "In-game text": troop, type, HP, attack, damage, heal,
@@ -63,7 +63,7 @@ typedef GuideLabels = ({
   String sure,
 });
 
-/// The guide in one language: the intro's pages, the pointers' lines by key (P1-P5), the cards' pages by key (K0-K24;
+/// The guide in one language: the intro's pages, the pointers' lines by key (P1-P5), the cards' pages by key (K0-K25;
 /// most one page, K4 and K5 two), the "How to Play" topics and the guide's own [labels].
 class GuideText {
   const GuideText({required this.intro, required this.pointers, required this.cards, required this.topics, required this.labels});
@@ -397,6 +397,21 @@ GuideText guideFor() => GuideText(
         'makes items and relics.',
       ]),
     ],
+    // The Shadows (decisions-log 319): over the first chest whose cards hide one; the chips and the ease.
+    'K25': [
+      GuidePage('Monster ${Words.shadow}s', [
+        'Each card hides a ${Words.shadow}:',
+        'a buff for the monsters.',
+        'More "!": a stronger one.',
+        '"${Words.take}" shows what they got.',
+      ]),
+      GuidePage('Monster ${Words.shadow}s', [
+        'Chips show the ones they hold.',
+        'Tap one to read them all.',
+        'A wave where many troops fall',
+        'takes the newest one away.',
+      ]),
+    ],
   },
   topics: [
     const GuideTopic('Goal', intro: [1, 7], lines: [
@@ -440,7 +455,7 @@ GuideText guideFor() => GuideText(
       'does a big move.',
       'A stun can delay it.',
     ]),
-    GuideTopic('${Words.bossChest} & ${Words.artifact}s', cards: ['K5', 'K6', 'K12'], live: GuideLive.pusaka, lines: [
+    GuideTopic('${Words.bossChest} & ${Words.artifact}s', cards: ['K5', 'K6', 'K12', 'K25'], live: GuideLive.pusaka, lines: [
       '"${Words.equip}": free the first time.',
       '"${Words.move}": costs gold.',
       '"${Words.sell}": pays ${_share(sellShare)}.',

@@ -330,6 +330,8 @@ extension on Board {
         ('K22', _) => (1.7, _picCarve),
         ('K23', _) => (1.7, _picTown),
         ('K24', _) => (1.7, _picMaterials),
+        ('K25', 0) => (1.7, _picShadowCards),
+        ('K25', _) => (1.3, _picShadowChips),
         _ => null,
       };
 
@@ -625,6 +627,33 @@ extension on Board {
     final gap = box.width * 0.05, w = (box.width - 2 * gap) / 3, h = math.min(box.height, w * 1.4);
     for (final (i, relic) in const [Relic.ironBanner, Relic.grail, Relic.dragonCrown].indexed) {
       _picChestCard(c, Rect.fromLTWH(box.left + i * (w + gap), box.center.dy - h / 2, w, h), relic);
+    }
+  }
+
+  /// K25's first page: K5's three cards a little shorter, each with the Shadow it hides under it as the popup shows it:
+  /// "?" and its rarity's red "!" marks ([omenMarks]: Rare 1, Epic 2, Legendary 3; omen_look.dart's [_omenMarks]).
+  void _picShadowCards(Canvas c, Rect box) {
+    final gap = box.width * 0.05, w = (box.width - 2 * gap) / 3, h = math.min(box.height * 0.74, w * 1.4), mark = box.height * 0.16;
+    final top = box.top + (box.height - h - mark * 1.5) / 2;
+    for (final (i, relic) in const [Relic.ironBanner, Relic.grail, Relic.dragonCrown].indexed) {
+      final r = Rect.fromLTWH(box.left + i * (w + gap), top, w, h), n = omenMarks[relic.rarity]!;
+      _picChestCard(c, r, relic);
+      _omenMarks(c, Offset(r.center.dx - omenMarksWidth(n, mark) / 2, r.bottom + mark), mark, n);
+    }
+  }
+
+  /// K25's second page: the Shadows' chips as the HUD shows them ([_omenChips]): three kinds' icons on their red glow,
+  /// each with its level, on the HUD's dark panel.
+  void _picShadowChips(Canvas c, Rect box) {
+    const kinds = [(OmenKind.armor, 2), (OmenKind.haste, 1), (OmenKind.wound, 3)];
+    final icon = math.min(box.height * 0.5, box.width / 5), chipW = icon * 11 / 7, pad = icon * 2 / 7;
+    final w = 2 * pad + kinds.length * chipW, at = Rect.fromCenter(center: box.center, width: w, height: icon + 2 * pad);
+    _panel(c, at);
+    for (final (i, (kind, level)) in kinds.indexed) {
+      final ic = Rect.fromLTWH(at.left + pad + i * chipW, at.top + pad, icon, icon);
+      c.drawCircle(ic.center, icon * 0.5, Paint()..color = _monsterPop.withValues(alpha: 0.3));
+      _omenIcon(c, state, kind, ic);
+      _text(c, '$level', Offset(ic.right + icon / 14, ic.center.dy + icon / 14), size: icon * 5 / 7);
     }
   }
 

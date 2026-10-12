@@ -566,8 +566,8 @@ did, and a version bump changes only the label (the suite's tests pin the versio
 mirror) with `--dart-define=OUT=<file>`, then on the branch with `--dart-define=GOLDEN=<that file>`: it fails at the
 first line that differs. It plays the save with the Towns on (`..towns = _towns`, the probe's own `TOWNS` define, true unless
 `--dart-define=TOWNS=false`: no build of the game reads it since decisions-log 296, when the game's `townsOnBoard` went,
-and a base from before 296 reads the same define; the Town and material dice seeded with seed + 600 and + 700;
-decisions-log 237): since the Towns are on the dump moves with them (the four
+and a base from before 296 reads the same define; every die seeded by `Game.seedDice`, the Town's and the materials'
+at seed + 600 and + 700, the Shadows' at + 900, decisions-log 319; decisions-log 237): since the Towns are on the dump moves with them (the four
 small relics' tooltips gain their tier and "Best on" lines; the telemetry has no small-relic drops, each wave's
 `materials`, `gold.craftSpent` and a blocked `town`), and `--dart-define=TOWNS=false` gives the dump a base from before
 the switch-on gives (a base whose probe file lacks the line copies this one in). With the Towns it plays the forge
@@ -664,7 +664,8 @@ each plain and with each card lifted, at 1266×713 and 412×860.
 ## The Bayangan (decisions-log 180)
 
 `test/omen_test.dart` (plain tests, `bareGame` / `placeNow`, every skill off; dice that give set draws and count them,
-`_Seq`; the owner's wave-86 and wave-89 saves of test/fixtures, read-only). `omensOn` is off by default, and off: a
+`_Seq`; the owner's wave-86 and wave-89 saves of test/fixtures, read-only). `omensOn` is on by default since
+decisions-log 319 (the first test pins it); the `off` group switches it off in `setUp`, and off: a
 chest, a reroll, a take, a Lewati and a wave start draw no Bayangan die, write no key (the game's nor a chest's) and send
 no Bayangan event or field; the owner's saves load with none and no catch-up, and a save written while on loads with its
 Bayangan ignored. The `on` group switches it on in `setUp` (off again in `tearDown`): the seven kinds' pools, numbers,
@@ -677,8 +678,10 @@ level, and the skip buff owed from wave 20, once, saved; the save round trip by 
 catch-up exactly Wear Down 2 / Heal Siphon 2 / Mend 2 / Prey 2 / Armor 2, round-robin, 2 a wave, once, also across a save; w89's 19 owed,
 12 dealt; the Beban factor (48 over 32: ×1.5, at most ×2, 1 at or under the cap or with no cap) and E; the ease (each
 full eighth of the starting troops fallen takes the newest level, at most 2 a wave); telemetry 8's fields; and
-`policyPick` taking the same cards on or off. With the Bayangan off, `test/probe_pusaka_w89_identity.dart` (The Pusaka,
-above) is the same as on the base.
+`policyPick` taking the same cards on or off. With the Bayangan off (`--dart-define=OMENS=false`),
+`test/probe_pusaka_w89_identity.dart` (The Pusaka, above) is the same as on a base from before them; on, the default since
+decisions-log 319, its dump moves: the w89 save owes its catch-up (12, 2 a wave), so waves 90 and 91 meet those Shadows
+(a new golden then).
 
 `test/omen_hooks_test.dart` (decisions-log 188; plain tests, every skill off, the monsters' too) checks the hooks
 (units-and-combat.md "Bayangan on the field"). A blow is one strike from a held pair (`blowOn`: a knight and an orc 12
@@ -1007,8 +1010,18 @@ broken (pixel counts); a reload after a reroll and a take keeping the faces and 
 once and 2 levels in the chips at its next wave; every Shadow line in the HUD's font; and with omens off nothing
 shown, a take's message as before. The shots: `test/probe_omen_shots.dart` (omens on, every screen above at 412×860,
 915×412 and 1266×713, into
-`<agents>/shots/omens/`) and `test/probe_omen_off_shots.dart` (omens off; it uses only what main had before
-the UI step, so the same file runs in a mirror of main and the PNGs compare byte for byte, `cmp`).
+`<agents>/shots/omens/`) and `test/probe_omen_off_shots.dart` (omens off: queue it with `--dart-define=OMENS=false`
+since decisions-log 319; it uses only what main had before the UI step, so the same file runs in a mirror of a base
+from before them and the PNGs compare byte for byte, `cmp`).
+- **Seeded dice for a replay** (decisions-log 319, code-audit R1): a probe or test that must play the same twice seeds
+  every die with `Game.seedDice(seed)` after `Game(Random(seed), Random(seed + 100))` or `Game.fromJson(save,
+  Random(seed), Random(seed + 100))`: loot +200, heroes +300, slots +400, draft +500, townDice +600, matDice +700,
+  tavernDice +800 and the Shadows' `omenDice` +900 (none seeded it before, so a run with the Shadows on was never the
+  same twice). `Game.dice` lists every die; `test/dice_test.dart` holds both to game.dart's `Random` fields. The omen
+  shot probes and the w89 identity probe use it.
+- **The ease's knob** (`test/omen_ease_test.dart`, decisions-log 319): `omenEaseCount` ships `falls`; `omenFalls` with
+  each `OmenEaseCount` on a wave with a troop bought mid-wave and fallen twice, two fodder starters and an awakened
+  knight: 5, 3 and 1.
 
 ## The Legenda (decisions-log 155)
 

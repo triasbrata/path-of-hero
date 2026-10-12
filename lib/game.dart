@@ -30,6 +30,7 @@ part 'pusaka_catalog.dart';
 part 'artifact_icons.dart';
 part 'pusaka_engine.dart';
 part 'omen.dart';
+part 'omen_catalog.dart';
 part 'draft.dart';
 part 'engage.dart';
 part 'heal.dart';
@@ -2381,6 +2382,24 @@ class Game {
   Random draft = Random(); // the boss chest's cards (draft.dart), apart for the same reason
   Random omenDice = Random(); // the cards' Bayangan faces (omen.dart), apart so the cards are the same with them or not
 
+  /// Every die the game rolls ([rng] and [names] first, as [Game] and [Game.fromJson] take them). A new die goes here
+  /// and in [seedDice] (test/dice_test.dart holds both to the `Random` fields).
+  List<Random> get dice => [rng, names, loot, heroes, slots, draft, omenDice, tavernDice, townDice, matDice];
+
+  /// Seeds every die after [rng] and [names] from [seed] for a probe or a test that must replay ([dice]), at the offsets
+  /// the probes have used: [loot] +200, [heroes] +300, [slots] +400, [draft] +500, [townDice] +600, [matDice] +700,
+  /// [tavernDice] +800 and [omenDice] +900 (none seeded it before decisions-log 319, so a run with the Shadows on was
+  /// never the same twice). The game itself never calls it: a player's dice are unseeded.
+  Game seedDice(int seed) => this
+    ..loot = Random(seed + 200)
+    ..heroes = Random(seed + 300)
+    ..slots = Random(seed + 400)
+    ..draft = Random(seed + 500)
+    ..townDice = Random(seed + 600)
+    ..matDice = Random(seed + 700)
+    ..tavernDice = Random(seed + 800)
+    ..omenDice = Random(seed + 900);
+
   /// The Bayangan the enemy holds (omen.dart, decisions-log 180): one entry a level, oldest first, so a kind's level is
   /// its count ([Omens.omenLevel]) and the ease takes the last. Saved, only while [omensOn] is on.
   final omens = <OmenKind>[];
@@ -2401,6 +2420,9 @@ class Game {
   /// counts the falls against [omenTroops]. Not saved.
   double omenFactor = 1;
   int omenTroops = 0;
+
+  /// The troops alive at the wave's start ([Omens._omenWave]), for the ease's [OmenEaseCount.starters]. Not saved.
+  final omenStarters = Set<Unit>.identity();
 
   /// The Bayangan Grudge's target ([Omens._omenTopKiller]): the last won wave's top killer, the troop type whose troops
   /// killed the most monsters in it; null with none (a wave no troop killed in, or none won yet). Set at a won wave's
