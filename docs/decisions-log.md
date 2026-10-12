@@ -11215,6 +11215,67 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        their parameter `s` and `e`) renamed to Flame's `size` and `event`, so a new info stands out; process.md says
        none. A stricter pass (57 more lints, strict casts and inference) found ~22,000, 97% of them style this code
        doesn't follow; none of it is on.
+318. **The balance pass: Awaken ×2 a level, Bangkit 4 and 5 at 40k and 100k, kill gold +4.5% a wave, a 140-HP
+     swordsman, the Shadows eased only by an awakened type's falls, the boss buff in full from wave 60, `waveHp` 0.17**
+     (the owner, 2026-10-12: "jalankan code analyze dan balancing game" (run a code analysis and the game's balancing);
+     317 is the code half, this the balance). By qa-balance: measured first, ten proposals, then the owner's picks
+     "4 1 2 3 5 6 7", 3 at the half step.
+     - **Measured first** (nothing merged): an auto-player on the board's rules (boardRules, the B1 refit of 317, the
+       Shadows off; a wipe ended a run, the rule before 322) played 89 runs: new games from wave 1 and the owner's
+       saves of waves 30 and 58 forward, as a careful player (Auto Buy, +Room, every fielded type awakened at the
+       Smithy, the Tavern, Bangkit 4-5 and Forge with gold to spare) and the owner's own way (his telemetry: soldiers
+       and swordsmen never awakened, rebought by Auto Buy). Then paired one-wave replays of 386 dumped states, the same
+       dice with a rule on and off.
+       - Waves 1-40 were easy with the Smithy (under 1 troop fallen a wave) and a wipe at 16-23 without it. A wall at
+         55-80: 11 of 12 careful runs wiped at 60-80 (median 72); the owner's wave-58 save wiped at 62-75 in all 16
+         runs forward; his way lost 17-43 troops a wave at 41-60.
+       - Why: the army stopped growing at Awaken 3 (a median wave 34). An Awaken-3 troop cost 27× its Awaken-0 price,
+         so from wave 41 its rebuys took all the income, and Bangkit 4 at 100k came to no careful run before the wall;
+         un-awakened fodder cost 30-100, so the owner's way piled up gold (122k at wave 58). Past wave 80 the kill gold
+         (×1.05 a wave) outgrew the flat troop prices and every rebuy was free.
+       - Lives didn't matter: 17 lost in 1,681 waves, every run ended at full hearts (322 changed that rule). The
+         swordsman fell ten times as often as a knight (1.32 falls a troop and wave against 0.13).
+       - The open notes: 297's priests dry 27% of the time at waves 1-20, under 2% after; with the troop skills off
+         58% more falls; with 299's wind-ups off 29% fewer; with 312's leash off 25% more falls in 13% shorter waves;
+         314's stalls none in 1,355 waves; with the awakening skills off 13% fewer falls (their own pass, 320).
+       - The Shadows' ease (319): with every fall counted, the owner's way eased every Shadow away the wave after its
+         chest (0.5 levels held at waves 41-60 against 8-10 for a careful army); counting only the troops that started
+         the wave, or easing at most 1 a wave, changed almost nothing; counting only an awakened type's falls kept 13-19.
+     - **The picks** (old → new): 1 `awakenPrice` 3 → 2 (Awaken 3 at ×8); 2 `ascendPrice` [100000, 250000] →
+       [40000, 100000] (lib/ascend.dart); 3 `killGoldGrowth` 0.05 → 0.045 (×32 by wave 80 instead of ×47; the purse,
+       the Tavern's, Forge's and the recall's prices grow with it); 4 the swordsman's `hp` 110 → 140; 5
+       `omenEaseCount` `falls` → `awakened` (lib/omen.dart, 319's knob); 6 `bossBuffFull` 50 → 60; 7 `waveHp` 0.15 →
+       0.17 (+9% HP at wave 15, +2% at 60). Not picked here: the awakening skills' falls (320), the lives (322), troop
+       prices that grow with the wave.
+     - **Measured after** (main of 319, the Shadows on and seeded, a wipe ending a run; the same seeds before and
+       after; a probe build whose picks are switches):
+       - New games, the careful player: the median end 67 → 104 (paired +42 ± 8 waves, 12 seeds; 3 reached the
+         probe's cap of 150); falls a wave at 21-50 a quarter to a third of before, about the same from 51; Awaken 4 at
+         a median wave 58 (none before the wall), Awaken 5 at 87; 50-56k banked at waves 31-50.
+       - New games, the owner's way: the median end 71 → 60 (paired +1 ± 12: no change); 5 of 12 lost by wave 27
+         against 3 (an Awaken-0 army at the wave-10 or wave-15 boss, a coin flip either way); the Shadows now stay
+         (16-18 levels held at waves 51-70 against under 1), and its late falls are the same as before.
+       - The owner's saves forward, his way: wave 58's median end 72 → 80 (+14 ± 6), wave 30's 102 → 132 (+21 ± 22).
+       - Each fight pick alone in paired one-wave replays (685 states, waves 5-75, every troop at full HP first): 4
+         −17% falls (−63% at 21-40 for the careful army, −14-27% for the owner's way); 6 −2% (−11% at 21-40); 7 +2%
+         (+41% at 1-20 for the careful army, +23% for the owner's way).
+       - Pick 5 alone (the Shadows on, 6 seeds): the careful army no change (its falls are mostly of awakened types,
+         so it eases as before); the owner's way holds 12-18 levels at waves 41-70 against under 1, with 29% more
+         falls at 51-60 and 38% more at 61-70, its end −1 ± 3.5.
+       - Picks 1, 2, 3 alone (the Shadows off, 4 seeds, to wave 100): 1 the careful end +14 ± 3, the owner's way
+         +6 ± 6; 2 Awaken 4 at wave 58 instead of 68, the late falls −20-45%, ends +5 ± 5 and +6 ± 6; 3 the careful
+         end +1 ± 3, the owner's way −16 ± 10 (2.5× the falls at waves 21-30: less gold, so the Smithy's materials
+         come later and fewer of its types reach Awaken 2 and 3). So for the owner's way 3 and 5 take back what 1, 2
+         and 4 give; for a careful army they add up.
+       - Pick 4 with every awakening skill off (the same states): the swordsman is still 71-91% of a careful army's
+         falls and 57-59% of the owner's way's, and 140 HP cuts its falls by about as much as with the skills on
+         (−65/−43/−33% at 21-40/41-60/61-80 careful, −49/−28/−17% the owner's way), so little of it (≤ a tenth, at
+         21-40) overlaps the Phantom Rush deaths of 320; the owner's swordsmen are never awakened and never rush.
+     - **Tests and the identity dump:** the prices, purse, recall, Tavern, kill gold, monster HP, the boss buff's ramp
+       and the ease's knob re-pinned in 14 test files; draft_test's seeded run fields 20 troops (16 were wiped on
+       wave 10, before its second chest). The w89 identity dump moves: the swordsman's stats (138 → 175 HP as
+       saved), the kill gold of waves 90 and 91 ×0.65, a few more or fewer falls; waves 90 and 91 still won with no
+       life lost in every set (a new golden).
 319. **The Shadows (Bayangan) are on in every build** (the owner, 2026-10-12, asked of the 2,517 lines and 18 test files
      that were off in every build behind the `OMENS` define, code-audit's O1: ship, park or cut? He picked "Nyalakan",
      turn them on). By shadows-on.

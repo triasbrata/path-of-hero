@@ -26,7 +26,7 @@ Troops, cheapest first (the order of the troop cards), from `troopTypes`:
 |---|---|---|
 | soldier | front melee | cheapest |
 | knight | front melee | |
-| swordsman | front melee | the owner calls it the "berserk" |
+| swordsman | front melee | the owner calls it the "berserk"; 140 HP (110 until decisions-log 318: it fell ten times as often as a knight) |
 | archer | long range | arrows |
 | lancer | heavy melee | the owner calls it the "cavalry" |
 | priest | healer | range 96 reaches past the long range; the free healer every game starts with |
