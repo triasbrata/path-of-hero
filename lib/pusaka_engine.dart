@@ -1153,13 +1153,13 @@ extension FxEngine on Game {
   /// Shadows' needs read none of its skills ([Omens.omenMet]).
   bool _silent(String type) => pusaka.isNotEmpty && (_bookOfType(type)?[Trig.always].any((b) => b.fx.eff == Eff.skillGate) ?? false);
 
-  /// Troop [by]'s normal attack on [target] with a splash of [reach] px took [dealt] off [o], another monster near it
-  /// ([Game._strike], a shot landing): the counter of its type's `always` splash Fx (Wide Blows'), when [o] stood past the
-  /// splash [by] had without it.
-  void _fxSplash(Unit by, Unit target, Unit o, double dealt, double reach) {
+  /// Troop [by]'s normal attack, its splash of [reach] px round [at] (its target's place, or where a shot whose target
+  /// went landed), took [dealt] off [o], a monster there other than its target ([Game._strike], a shot landing): the
+  /// counter of its type's `always` splash Fx (Wide Blows'), when [o] stood past the splash [by] had without it.
+  void _fxSplash(Unit by, Point<double> at, Unit o, double dealt, double reach) {
     if (pusaka.isEmpty || dealt <= 0) return;
     for (final b in _bookOf(by)?[Trig.always] ?? const <FxBound>[]) {
-      if (b.fx.stat == Stat.splash && o.pos.distanceTo(target.pos) > reach - b.k) {
+      if (b.fx.stat == Stat.splash && o.pos.distanceTo(at) > reach - b.k) {
         _tally(b.relic)
           ..uses += 1
           ..worth += dealt;

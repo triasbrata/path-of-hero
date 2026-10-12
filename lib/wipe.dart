@@ -45,7 +45,11 @@ extension Wipe on Game {
       ..addAll(left);
     units.removeWhere((u) => u.side == Side.enemy);
     queue.clear();
-    shots.clear();
+    for (final s in shots) {
+      s
+        ..to ??= s.target.pos // a swept monster is gone from the field: its shot flies on to where it stood
+        ..spent = true; // and lands its look alone (decisions-log 327)
+    }
     lineShots.clear();
     beams.clear();
     zones.clear();
