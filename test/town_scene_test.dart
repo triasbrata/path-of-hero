@@ -79,6 +79,9 @@ const sizes = [
 /// The Smithy's pieces outside its house, each with its art's columns in its drawn box (world px): the furnace's 10-53
 /// of its 64, the sawmill's 4-60, the rest their whole box. Left to right: the wood corner, then past the house the
 /// furnace and the ore (decisions-log 271).
+/// The first Town's yard, Millbrook's (decisions-log 326; town_scene.dart's `_townYards`), left to right.
+const millbrookYard = ['flowerTree', 'wheat', 'wheat2', 'sack', 'sheaf'];
+
 const smithyArt = {'stumpAxe': (0, 21), 'logPile': (0, 47), 'sawmill': (4, 61), 'furnace': (10, 54), 'ore': (0, 53)};
 
 /// The middle of the Smithy's house's walls and its furnace's art on the screen: what a pan to the Smithy centres
@@ -164,7 +167,7 @@ void main() {
         expect(bounds(drawn).bottom, b.townLane, reason: "$place: on the street's line");
       }
       // Every piece at every size (the Town laid out 1010 world px wide, decisions-log 271).
-      for (final piece in ['tent', 'campfire', 'crates2', 'fruitTable', 'barrels', 'basket', 'pine', 'clothesLine',
+      for (final piece in ['tent', 'campfire', 'crates2', 'fruitTable', 'barrels', 'basket', ...millbrookYard,
         ...smithyArt.keys]) {
         expect(scene[piece], isNotNull, reason: piece);
       }
@@ -175,7 +178,7 @@ void main() {
       // "posisi furnace di sebelah kanan dan sawmill di sebelah kiri dari smithy"): nothing on its ground floor between
       // its walls (the smith's); on its left the wood corner, the stump, the log pile and the sawmill, each piece's art
       // after the last's and the sawmill's clear of the house's eave tip (its door further in); on its right the furnace
-      // against its wall, outside, and the ore past it, short of the yard's pine; none under the Smithy's sign.
+      // against its wall, outside, and the ore past it, short of the yard's first piece; none under the Smithy's sign.
       final smithy = b.townBuilding('smithy');
       Rect cell(List<(String, Rect)> house, String name) => house.firstWhere((c) => c.$1 == name).$2;
       final walls = Rect.fromLTRB(cell(smithy, 'wallL8a').left, cell(smithy, 'wallL8a').top, cell(smithy, 'blockBR').right,
@@ -197,19 +200,22 @@ void main() {
       expect(artL('sawmill') - artR('logPile'), closeTo(3 * k, 0.01), reason: 'the logs by the sawmill');
       expect(artL('furnace'), closeTo(walls.right, 0.01), reason: 'the furnace against the wall, outside, on the right');
       expect(artL('ore') - artR('furnace'), closeTo(2 * k, 0.01), reason: 'the ore by the furnace');
-      expect(scene['pine']!.left - artR('ore'), greaterThanOrEqualTo(2 * k - 0.01), reason: 'the ore clear of the pine');
+      expect(scene['flowerTree']!.left - artR('ore'), greaterThanOrEqualTo(2 * k - 0.01), reason: 'the ore clear of the yard');
       for (final name in work) {
         expect(scene[name]!.overlaps(b.townSign('smithy')), isFalse, reason: '$name under the sign');
       }
       expect(scene['smithy'], scene['stumpAxe']!.expandToInclude(scene['ore']!).expandToInclude(house),
           reason: "the Smithy's place: its wood corner, its house, its furnace and the ore");
-      // The yard (decisions-log 253): the pine at its left and the clothes line beside it, so the pine's first tier
-      // (its widest rows, the whole 50 px across) shows whole, never behind the line's cloths or posts; past the
-      // Smithy's ore, inside the yard.
-      final pine = scene['pine']!, line = scene['clothesLine']!, yard = scene['yard']!;
-      expect(pine.size, Size(50 * k, 128 * k));
-      expect(line.left, greaterThanOrEqualTo(pine.right), reason: 'the line right of the pine: $pine $line');
-      expect(yard, pine.expandToInclude(line));
+      // The yard (decisions-log 253; the first Town's, Millbrook's, since 326): its pieces side by side, left to right,
+      // each its cell's size, past the Smithy's ore; the yard their span, its whole 156 world px.
+      final yard = scene['yard']!;
+      for (final (i, name) in millbrookYard.indexed) {
+        final r = scene[name]!, cell = townYardCells[name == 'wheat2' ? 'wheat' : name]!;
+        expect(r.size, Size(cell.w * k, cell.h * k), reason: name);
+        if (i > 0) expect(r.left, greaterThan(scene[millbrookYard[i - 1]]!.left), reason: '$name after ${millbrookYard[i - 1]}');
+      }
+      expect(yard, millbrookYard.map((p) => scene[p]!).reduce((a, b) => a.expandToInclude(b)));
+      expect(yard.width, closeTo(156 * k, 0.01));
       // The anchors for the troops: on the street's lane, left to right, each at its own thing.
       final lane = b.townLane, spots = ['guard', 'tent', 'smithy', 'tavernDoor', 'talk', 'shop'];
       expect(lane, scene['street']!.top, reason: "the lane on the strip's top edge");

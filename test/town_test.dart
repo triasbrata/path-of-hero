@@ -207,7 +207,10 @@ void main() {
     expect((g.inTown, g.townAt, g.townLast, g.townDue, g.canStartWave), (false, null, 7, false, true));
     final log = g.log.entries;
     final entered = log.whereType<TownEntered>().single, left = log.whereType<TownLeft>().single;
-    expect(entered.toJson(), {'v': eventVersion, 'kind': 'townEntered', 'wave': 6, 't': entered.t, 'slot': 7, 'gold': gold, 'auto': true});
+    expect(entered.toJson(), {
+      'v': eventVersion, 'kind': 'townEntered', 'wave': 6, 't': entered.t, 'slot': 7, 'gold': gold, 'auto': true, //
+      'n': 1, 'identity': 'millbrook',
+    });
     // With the Tavern on (as shipped, decisions-log 268) the visit's `tavern` too: its three offers, nothing bought.
     final leftJson = left.toJson(), tavern = leftJson.remove('tavern') as Map;
     expect(leftJson,
@@ -357,21 +360,30 @@ void main() {
         reason: 'the roll goes into the wave record only');
   });
 
-  test("the chip's tooltip: the wave after which the Town comes, the Smithy, the Tavern (decisions-log 268), and the "
-      'Shop once it is open (in every Town as shipped, decisions-log 253)', () {
+  test("the chip's tooltip: the wave after which the Town comes and which Town it is (decisions-log 326), the Smithy, "
+      'the Tavern (decisions-log 268), and the Shop once it is open (in every Town as shipped, decisions-log 253) with '
+      'what the Town pays well for', () {
     final g = towns()
       ..wave = 10
       ..townAt = 12;
-    expect(g.townTip.$1, 'Town after wave 11');
-    expect(g.townTip.$2, ['Smithy: craft items and relics', 'Tavern: buy boosts', 'Shop: buy and sell'], reason: 'the forge on: items too');
+    const millbrook = 'Pays well for Boots, Potion, Gloves and Prayer Beads.';
+    expect(g.townTip.$1, 'Town after wave 11: Millbrook, a farming village');
+    expect(g.townTip.$2, ['Smithy: craft items and relics', 'Tavern: buy boosts', 'Shop: buy and sell', millbrook],
+        reason: 'the forge on: items too');
     g.townRules = TownRules.patch({
       'shop': {'from': 15},
     });
     expect(g.townTip.$2, ['Smithy: craft items and relics', 'Tavern: buy boosts'], reason: 'a later shop.from: no Shop before it');
     g
       ..wave = 14
-      ..townAt = 16;
-    expect(g.townTip.$1, 'Town after wave 15');
-    expect(g.townTip.$2, ['Smithy: craft items and relics', 'Tavern: buy boosts', 'Shop: buy and sell']);
+      ..townAt = 16
+      ..townCount = 3;
+    expect(g.townTip.$1, 'Town after wave 15: Ironvale, a mining town');
+    expect(g.townTip.$2, [
+      'Smithy: craft items and relics',
+      'Tavern: buy boosts',
+      'Shop: buy and sell',
+      'Pays well for Shield, Leather Cap, Gloves and Amulet.',
+    ]);
   });
 }

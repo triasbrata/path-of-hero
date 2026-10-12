@@ -32,8 +32,7 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
 }
 
 /// A board game after wave 30 with its [n]th Town marked before wave 31 (the Towns and the forge on): a mixed army,
-/// 40,000 gold, items of every grade in the Bag (Boots, Swords I-III, a Sword +2, Tower Shields), the Sword sold
-/// 20 times already.
+/// 40,000 gold, items of every grade in the Bag (Boots, Swords I-III, a Sword +2, Tower Shields).
 Game marketGame(int n) {
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
@@ -53,7 +52,6 @@ Game marketGame(int n) {
   final swords = [for (final i in Item.values) if (i.slot == ItemSlot.sword) i];
   g.inventory.addAll({Item.boots: 3, for (final s in swords) s: 2, Item.towerShield: 2});
   g.enhancedBag[(Item.sword, 2)] = 1;
-  g.market[g.marketKey(Item.sword)] = 20;
   return g;
 }
 
@@ -115,15 +113,15 @@ void main() {
         }
         expect((g.townCount, g.townIdentity.key, g.sceneIdentity.key), (n, who.key, who.key));
         await shot('arrive-${who.key}', 70);
+        // The Sword sold 20 times here already (after the Town's recovery): flooded.
+        g.market[g.marketKey(Item.sword)] = 20;
+        // The Shop's Sell page, by the open book's tab.
         if (b.messageBox != Rect.zero) await tapOn(b.messageBox);
-        await tester.tapAt(Offset(size.width * 0.12, size.height * 0.3)); // the bare sky: the book shuts
-        await shot('town-${who.key}', 200);
-        // The Shop's Sell page, by the book's tab (a tap on the Shop's sign opens the book there).
-        await tapOn(b.townSign('shop'));
-        await frames(tester, 30);
-        if (b.messageBox != Rect.zero) await tapOn(b.messageBox);
+        await tapOn(b.bookTabs.firstWhere((t) => t.$1 == 'store').$2);
         await tapOn(b.shopTabAt(ShopTab.sell));
         await shot('sell-${who.key}', 30);
+        await tester.tapAt(Offset(size.width * 0.12, size.height * 0.5)); // the bare sky: the book shuts
+        await shot('town-${who.key}', 200);
         // ignore: avoid_print
         print('  prices: ${[
           for (final i in g.inventory.keys) '${itemNames[i]} ${g.sellPrice(i)} (x${g.marginOf(i).toStringAsFixed(2)}, '

@@ -37,14 +37,16 @@ void main() {
 
   test('selling pays its price, only from the bag', () {
     final g = openStore(0);
-    final staff = g.sellPrice(Item.staff);
+    // An item at the market's price (decisions-log 326): each piece at its own step, the next a little less.
+    final staff = g.sellPrice(Item.staff), five = g.marketSum(Item.staff, 0, 5);
     g.inventory[Item.staff] = 5;
     expect(g.sell(Item.staff), 1);
     expect((g.gold, g.inventory[Item.staff]), (staff, 4));
+    expect(g.sellPrice(Item.staff), lessThan(staff), reason: 'one sold: the next pays less');
     expect(g.sell(Item.staff, 10), 4); // "Sell all": all there are
-    expect((g.gold, g.inventory[Item.staff]), (5 * staff, 0));
+    expect((g.gold, g.inventory[Item.staff]), (five, 0));
     expect((g.whyNotSell(Item.staff), g.sell(Item.staff)), (StoreRefusal.none, 0));
-    expect(g.gold, 5 * staff);
+    expect(g.gold, five);
 
     // A relic held by a troop isn't in the bag, so it isn't sold; an item given to a type isn't either.
     final k = placeNow(g, 'knight', 2, 3);

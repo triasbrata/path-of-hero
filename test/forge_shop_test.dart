@@ -136,7 +136,7 @@ void main() {
     expect(back.storeBought, {Mat.wolfClaw: 1, Mat.slimeGel: 1, Mat.soulOrb: 1});
   });
 
-  test('the Shop still buys everything at today\'s prices: an item and a small relic at half their worth, a material at '
+  test('the Shop buys everything: an item and a small relic at the market\'s price (decisions-log 326), a material at '
       'its sell price, a Vault Artifact; and opens from town.json\'s shop.from (1 as shipped: every Town, decisions-log '
       '253)', () {
     final on = forgeShopGame();
@@ -144,7 +144,8 @@ void main() {
     for (final kind in [Item.sword, relic, Mat.wolfClaw, Mat.skull, Relic.titanBane]) {
       expect(on.whyNotSell(kind), isNull, reason: '$kind');
     }
-    expect((on.sellPrice(Item.sword), on.sellPrice(Mat.wolfClaw), on.sellPrice(Mat.skull)), (1000, 25, 60));
+    expect((on.sellPrice(Item.sword), on.sellPrice(relic), on.sellPrice(Mat.wolfClaw), on.sellPrice(Mat.skull)),
+        (206, on.marketPrice(relic), 25, 60), reason: 'a Sword in the first Town: 20 x 1.3 + 60 x 3.0');
     final gold = on.gold, worth = [Item.sword, relic, Mat.wolfClaw, Relic.titanBane].fold(0, (n, k) => n + on.sellPrice(k));
     expect([on.sell(Item.sword), on.sell(relic), on.sell(Mat.wolfClaw), on.sell(Relic.titanBane)], [1, 1, 1, 1]);
     expect(on.gold, gold + worth);

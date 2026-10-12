@@ -1,6 +1,6 @@
 // The Towns on the HUD (decisions-log 216; lib/town_look.dart; ui-hud.md "The Town chip"): the wave meter's chip from
 // the mark until the Town opens (its place and words at the three test sizes, its tooltip; a sweep of window sizes),
-// the meter in a Town ("In town", the coming wave, the same panel), the due Town gone into after the win's cheer,
+// the meter in a Town ("In Millbrook": its name, decisions-log 326; the coming wave, the same panel), the due Town gone into after the win's cheer,
 // "Leave town" on the start button, Auto leaving after autoLeave s and the wave starting at once, and a save made in a
 // Town reopening in it. Booted TdGames, the Towns turned on per game (dark on the board).
 import 'dart:math';
@@ -139,8 +139,8 @@ void main() {
 
   for (final size in const [Size(1266, 713), Size(915, 412)]) {
     final tag = '${size.width.round()}x${size.height.round()}';
-    testWidgets('in a Town the wave meter says so at $tag: the beer mug, "In town", the coming wave; the same panel, no '
-        'tide badge; the wave again once left', (tester) async {
+    testWidgets('in a Town the wave meter says so at $tag: the beer mug, "In Millbrook" (its name), the coming wave; '
+        'the same panel, no tide badge; the wave again once left', (tester) async {
       final b = await boot(tester, size);
       b.autoStart.set(false);
       final g = b.state = townGame()..wave = 70; // past the tide's start: the badge's room is kept
@@ -153,7 +153,7 @@ void main() {
       }
       expect(g.inTown, isTrue);
       await frames(tester, 2);
-      expect(b.townMeterText, 'In town · next wave 71');
+      expect(b.townMeterText, 'In Millbrook · next wave 71', reason: "the Town's name (decisions-log 326)");
       expect(b.waveMeter, between, reason: 'the same panel: nothing under it moves');
       expect(b.tideBadge, '', reason: 'no tide badge in a Town');
       await tester.tapAt(b.startButton.center); // "Leave town"

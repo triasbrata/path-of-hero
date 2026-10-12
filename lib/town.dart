@@ -705,8 +705,9 @@ class Secret {
       };
 }
 
-/// A relic tier's prices (town.json `tiers`): a sale pays [sellShare] of its recipe's gold; the Town's Shop sells one
-/// at [shop] gold, [shopRise] of it more after each bought.
+/// A relic tier's prices (town.json `tiers`): the Town's Shop sells one at [shop] gold, [shopRise] of it more after each
+/// bought. A sale paid [sellShare] of its recipe's gold until decisions-log 326 (the market's price since, market.dart):
+/// kept, read by nothing.
 class TierPrices {
   const TierPrices(this.shop, {this.sellShare = 0.5, this.shopRise = 0.2});
 
@@ -727,7 +728,8 @@ class TierPrices {
 
 /// The Town's Shop (town.json `shop`): open from wave [from]'s win (1, the owner's 2026-10-07 "shop juga harusnya di buka
 /// ketika masuk kota": open in every Town, decisions-log 253; it was 15) — OWNER-MAY-CHANGE KNOB; an item costs
-/// [itemPrice], [itemRise] more after each bought, and sells back for [itemSellShare] of its price. It sells (decisions-log 246) the materials
+/// [itemPrice], [itemRise] more after each bought (it sold back for [itemSellShare] of its price until decisions-log 326,
+/// the market's price since: kept, read by nothing). It sells (decisions-log 246) the materials
 /// that have dropped ([Game.matsSeen]) at [matMarkup] times their sell price, and [matRise] of that more a buy ([matPrice]).
 class TownShop {
   const TownShop({

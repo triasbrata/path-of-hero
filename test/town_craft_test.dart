@@ -254,34 +254,37 @@ void main() {
         "old save brought moves it); sold back at half its own recipe's gold", () {
       final g = shop();
       const tiers = {
-        Relic.fang: (12000, 14400, 150),
-        Relic.thorns: (12000, 14400, 150),
-        Relic.fury: (12000, 14400, 200),
-        Relic.guard: (12000, 14400, 200),
-        Relic.cleave: (20000, 24000, 500),
-        Relic.venom: (20000, 24000, 500),
-        Relic.manaSiphon: (20000, 24000, 500),
-        Relic.spiritWard: (20000, 24000, 500),
-        Relic.lastStand: (32000, 38400, 1500),
-        Relic.giantSlayer: (32000, 38400, 1750),
-        Relic.blessing: (32000, 38400, 1500),
+        Relic.fang: (12000, 14400),
+        Relic.thorns: (12000, 14400),
+        Relic.fury: (12000, 14400),
+        Relic.guard: (12000, 14400),
+        Relic.cleave: (20000, 24000),
+        Relic.venom: (20000, 24000),
+        Relic.manaSiphon: (20000, 24000),
+        Relic.spiritWard: (20000, 24000),
+        Relic.lastStand: (32000, 38400),
+        Relic.giantSlayer: (32000, 38400),
+        Relic.blessing: (32000, 38400),
       };
       expect(tiers.keys, smallRelics);
-      for (final MapEntry(key: r, value: (base, next, sell)) in tiers.entries) {
-        expect((g.basePrice(r), g.buyPrice(r), g.buyPrice(r, 1), g.sellPrice(r)), (base, base, next, sell), reason: relicNames[r]);
+      for (final MapEntry(key: r, value: (base, next)) in tiers.entries) {
+        // A sale at the market's price (decisions-log 326; market_test.dart): its cost times the Town's demand.
+        expect((g.basePrice(r), g.buyPrice(r), g.buyPrice(r, 1), g.sellPrice(r)), (base, base, next, g.marketPrice(r)),
+            reason: relicNames[r]);
       }
       // The forge's Shop has none on its shelf (forge_shop_test.dart); a count bought before it (an old save's) still
       // raises that kind's price, per kind, and the save keeps it.
       expect((g.whyNotBuy(Relic.cleave), g.buy(Relic.cleave), g.gold), (StoreRefusal.notSold, false, 1000000));
       g.storeBought[Relic.cleave] = 2;
-      expect((g.buyPrice(Relic.cleave), g.buyPrice(Relic.venom), g.sellPrice(Relic.cleave)), (28000, 20000, 500));
+      expect((g.buyPrice(Relic.cleave), g.buyPrice(Relic.venom), g.sellPrice(Relic.cleave)), (28000, 20000, g.marketPrice(Relic.cleave)));
       final back = Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>);
       expect((back.storeBought[Relic.cleave], back.buyPrice(Relic.cleave)), (2, 28000));
       g.relicBag[Relic.cleave] = 2;
+      final two = g.marketSum(Relic.cleave, 0, 2);
       expect(g.sell(Relic.cleave, 2), 2);
-      expect(g.gold, 1000000 + 1000);
-      // The items: town.json's shop block, today's numbers; the Artifacts as today.
-      expect((g.buyPrice(Item.sword), g.buyPrice(Item.sword, 1), g.sellPrice(Item.sword)), (2000, 2200, 1000));
+      expect(g.gold, 1000000 + two);
+      // The items: town.json's shop block, today's numbers (a sale the market's); the Artifacts as today.
+      expect((g.buyPrice(Item.sword), g.buyPrice(Item.sword, 1), g.sellPrice(Item.sword)), (2000, 2200, g.marketPrice(Item.sword)));
       expect((g.buyPrice(Relic.grail), g.sellPrice(Relic.grail), g.sellPrice(Relic.ironBanner)), (24000, 12000, 8000));
     });
 
@@ -292,8 +295,12 @@ void main() {
           'recipes': {'fang': {'gold': 800}},
           'shop': {'itemPrice': 3000, 'itemRise': 300, 'itemSellShare': 0.4},
         });
-      expect((g.buyPrice(Relic.fang), g.buyPrice(Relic.fang, 2), g.sellPrice(Relic.fang), g.sellPrice(Relic.fury)), (10000, 20000, 200, 100));
-      expect((g.buyPrice(Item.potion), g.buyPrice(Item.potion, 1), g.sellPrice(Item.potion)), (3000, 3300, 1200));
+      // The tier's and the shop's sell shares are read by nothing since the market (decisions-log 326); a recipe's gold
+      // is in the relic's cost, at the floor.
+      expect((g.buyPrice(Relic.fang), g.buyPrice(Relic.fang, 2)), (10000, 20000));
+      expect(g.costOf(Relic.fang).gold, 800);
+      expect((g.sellPrice(Relic.fang), g.sellPrice(Relic.fury)), (g.marketPrice(Relic.fang), g.marketPrice(Relic.fury)));
+      expect((g.buyPrice(Item.potion), g.buyPrice(Item.potion, 1), g.sellPrice(Item.potion)), (3000, 3300, g.marketPrice(Item.potion)));
     });
 
   });

@@ -64,7 +64,7 @@ void main() {
     }
     expect((t.whyNotBuy(Item.sword), t.whyNotBuy(droppedRelics.first), t.whyNotBuy(Mat.wolfClaw)),
         (StoreRefusal.notSold, StoreRefusal.notSold, null));
-    expect(t.sellPrice(Item.sword), 1000);
+    expect(t.sellPrice(Item.sword), 206, reason: "the market's (decisions-log 326): 20 x 1.3 + 60 x 3.0 in the first Town");
     final relic = droppedRelics.first, back = t.sellPrice(relic); // the Craft step's by tier
     expect(t.sell(relic), 1);
     expect(t.gold, 100000 + back, reason: "a small relic at the store's own price");

@@ -44,15 +44,15 @@ extension _TownLook on Board {
   }
 
   /// The Town's name as it comes up (decisions-log 326): ui_ribbons' flat ribbon (the signs' [_ribbonTitle]) at 1.5
-  /// times the signs' scale [sk], under the HUD's band over the middle of the scene's room (left of the book when it is
-  /// open), the name on it ("Millbrook") and under it "Town 1 · Farming village" in cream with a dark outline; for
+  /// times the scene's scale (the signs' [sk] at the least: on a phone as big as they are), under the HUD's band over
+  /// the middle of the scene's room (left of the book when it is open), the name on it ("Millbrook") and under it "Town 1 · Farming village" in cream with a dark outline; for
   /// [_townArrivalFor] s from the fade's middle, fading out over its last [_townArrivalOut]. Never for a game loaded in
   /// a Town (no fade), nor as the Town is left.
   void _townArrival(Canvas c, Game g, double sk) {
     final t = _clock - _town.fadeAt - _townFade;
     _townArrivalAt = Rect.zero;
     if (!g.inTown || !_town.fadeAt.isFinite || t < 0 || t >= _townArrivalFor) return;
-    final a = math.min(1.0, (_townArrivalFor - t) / _townArrivalOut), rk = (1.5 * sk).roundToDouble();
+    final a = math.min(1.0, (_townArrivalFor - t) / _townArrivalOut), rk = math.max(sk, (1.5 * _town.k).roundToDouble());
     final room = _town.book ? _bookFit().rest.left : size.x, who = g.sceneIdentity;
     if (a < 1) c.saveLayer(null, Paint()..color = Color.fromRGBO(0, 0, 0, a));
     final ribbon = _townArrivalAt =

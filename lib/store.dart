@@ -6,8 +6,8 @@ part of 'game.dart';
 // a small share. Every choice the owner may still change is one constant or switch below. It deals only in a Town
 // ([StoreRefusal.town], decisions-log 230; the field's Toko page went in decisions-log 296, its prices and rules in 321):
 // the Town's Shop page, on the Bag's own code (lib/bag.dart), buys and sells there, the Towns' materials too (each at its
-// own price, [TownRules.materials]). Its prices are town.json's ([TownRules], decisions-log 233): a small relic sells
-// back for half its craft gold ([Recipe.gold], [TierPrices.sellShare]), an item for the [TownShop]'s share. The forge's
+// own price, [TownRules.materials]). Its prices are town.json's ([TownRules], decisions-log 233); an item and a small
+// relic sell back at the market's price (decisions-log 326, market.dart: their cost times the Town's demand). The forge's
 // Shop (decisions-log 248): its shelf holds only the materials that have dropped ([Game.matsSeen]), each at
 // [Materials.shopMatPrice], and no item or small relic (their tier's and the [TownShop]'s buy prices stay in town.json,
 // unused); it still buys them all.
