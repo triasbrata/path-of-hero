@@ -37,9 +37,13 @@ but the troops move freely.
    to the next wave (with Auto Wave on, 5 s after coming in).
 5. **Lose.** A monster crossing the back line costs a life, half a heart: a game starts with 3 hearts
    (6 lives). When the whole army falls mid-wave the wave is lost, not the game (decisions-log 322): it costs a heart,
-   the wave's monsters cheer a moment and are swept off, and the same wave is played again after a break to buy the
-   army back ("Your army fell! -1 heart. Wave N again."). Its win's gold, Hero, boss chest and Town come only when it is
-   won. Game over at 0 lives (3 hearts = 3 chances); then the monsters cheer. The score (kills by rank, won waves) goes
+   the wave's monsters cheer a moment and are swept off, and a card asks "Try again" or "Give up" (decisions-log 333).
+   Trying again goes back to the last Town the player went into, as he left it, to gather gold and buy the army back:
+   the waves from there are played again ("Your army fell! -1 heart. Back to Millbrook: waves 21-27 again, foes
+   weakened."); before the first Town the same wave is played again. Until the next new Town the monsters are weakened
+   (-20% HP and -15% damage, -30% and -25% after a second fall). What was earned stays; a wave won again pays its gold
+   and drops again, but its score, Hero and boss chest come only the first time. Giving up ends the game. Game over at
+   0 lives (3 hearts = 3 chances); then the monsters cheer. The score (kills by rank, won waves) goes
    on the scoreboard under the player's name, asked the first time ("Scoreboard", also on the welcome screen).
 
 ## What the player manages

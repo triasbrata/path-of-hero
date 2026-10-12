@@ -5,6 +5,7 @@
 // TdGames (town_hud_test.dart's), the player choosing ([autoTryAgain] off).
 import 'dart:math';
 
+import 'package:flame/game.dart' hide Game;
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show LogicalKeyboardKey;
@@ -12,7 +13,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
 
-import 'town_hud_test.dart' show boot, frames, townGame;
+import 'hud_font.dart';
+import 'town_hud_test.dart' show frames, townGame;
 
 /// A board game at wave 20 whose Town before wave 21 was gone into and left (the checkpoint), a soldier on the field;
 /// wave 21 begun and its army cut down (wipe_test.dart's way).
@@ -40,8 +42,26 @@ Game wipedAfterTown(Board b) {
   return g;
 }
 
-/// The board booted with no guide card nor foe splash over it.
-Future<Board> quietBoot(WidgetTester tester, Size size) async => (await boot(tester, size))..guideSeen = null;
+/// The board booted (town_hud_test.dart's way) with no guide card nor foe splash over it; a game over asks for the
+/// score's name ([main]'s `overlayBuilderMap`): an empty overlay stands in for its text field (mat_loot_test.dart's).
+Future<Board> quietBoot(WidgetTester tester, Size size) async {
+  tester.view
+    ..physicalSize = size
+    ..devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+  await loadHudFont(tester);
+  final game = TdGame();
+  await tester.pumpWidget(GameWidget(game: game, overlayBuilderMap: {'name': (_, TdGame g) => const SizedBox.shrink()}));
+  for (var i = 0; i < 3000 && !game.isLoaded; i++) {
+    await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 20)));
+    await tester.pump();
+  }
+  expect(game.isLoaded, isTrue);
+  return game.board
+    ..welcome = null
+    ..miniMapOpen = false
+    ..guideSeen = null;
+}
 
 void main() {
   setUp(() => autoTryAgain = false);
@@ -91,7 +111,8 @@ void main() {
       addTearDown(mouse.removePointer);
       await mouse.moveTo(chip.center);
       await frames(tester, 30);
-      expect(b.tooltipShown, (Words.weakenedFoes, ['Monsters: -20% HP, -15% damage.', 'Until next Town.']));
+      expect(b.tooltipShown?.$1, Words.weakenedFoes);
+      expect(b.tooltipShown?.$2, ['Monsters: -20% HP, -15% damage.', 'Until next Town.']);
       await mouse.moveTo(Offset.zero);
       // On the field after the Town: the chip stays, under the meter.
       expect(g.leaveTown(), isTrue);

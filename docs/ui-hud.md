@@ -623,7 +623,7 @@ yang mati, troops pakai skill, monster drop item, monster high level appear". It
   | `AwakenSkillCast` (#88) | "<name> uses <skill>" with the level's numeral ("Disarm II") | the full star (48, 0) in the level's colour | cream |
   | `Awakened` | "<type>: Awaken n", and " - <skill>" when the type has a built awakening skill ("Soldier: Awaken 2 - Disarm II") | the full star (48, 0) in the level's colour | the level's colour |
   | `WaveEnded` | "Wave n won" / "Lost at wave n" | the trophy (80, 16) / the dark star (80, 0) | green / light red |
-  | `Wiped` (decisions-log 322) | "Army fell: -1 heart, wave n again" / "Army fell: no hearts left" | the dark heart (32, 0), as a fall's | light red |
+  | `Wiped` (decisions-log 322, 333) | "Army fell: -1 heart, wave n again" / "Army fell: -1 heart, back to Millbrook from wave 21" / "Army fell: no hearts left" | the dark heart (32, 0), as a fall's | light red |
   | `OmenGained` (decisions-log 191, only with the Shadows on) | "Monsters got Armor 2 (Boss Chest w90)" (a chest's), "Late Shadow: Wound 2" (the catch-up), "Carve: monsters got Haste 1" | the kind's icon ("Shadows" below) | cream |
   | `OmenEased` | "Shadow eased: Armor down to 1" | the kind's icon | cream |
 
@@ -4351,11 +4351,32 @@ follows the game's position, and never changes the game's positions (fights, the
   the last troop falls; the monsters left hop for joy where they stood (the game-over hop, `Game.swept`, drawn with the
   units) for `wipeCheer` 2.4 s, then each goes in a summon circle (`tiny_fx_summon.png`, the necromancer's). `update`
   sees `Game.wipedAt` change (`_savedWipe`) and, unless the game is over, saves the game at once (the heart lost stays
-  lost), starts Auto Wave's countdown as a win does, and says in the message window for `_noteTime` 8 s: "Your army
-  fell! -1 heart." / "Wave N again." (`Game.wipeNote`). Between waves the army's fallen are on "Replace fallen" and
+  lost) and starts Auto Wave's countdown as a win does. Between waves the army's fallen are on "Replace fallen" and
   Auto Buy buys them back as the gold allows; the Auto hold waits for the army as after any wave.
+  - **Try again or Give up** (lib/wipe_ask.dart, decisions-log 333; the owner: "apakah dia mau try again atau game
+    over"): once the hop is over (`wipeCheer` from `wipedAt`; at once for a game loaded with the choice waiting) a
+    dialog over everything but a guide card, the screen dimmed (black 60%): the chest popup's tooltip-paper panel
+    (`ui_tooltip.png`, 9-sliced at k 3, 2 under a screen scale of 0.9) under its ribbon (`_ribbonTitle`, "Your army
+    fell!"), the hearts left (the HUD's hearts at 14·k), the way back in the tooltips' ink ("Back to Millbrook: waves
+    21-27 again", `Game.wipeBack`; "Wave 5 again" before the first Town) and the weakened foes in the effect green
+    ("Foes weakened until next Town", "-20% HP, -15% damage"), each line shrunk to fit; under them two buttons side by
+    side, at least 44 px tall (40·f): "Give up" (the light button) and "Try again" (green, the main answer). Enter is
+    Try again, Esc Give up, P does nothing; a press beside the buttons does nothing, nothing under the dialog takes a
+    tap or a tooltip. Try again saves (a reload doesn't ask again), starts Auto Wave's countdown as after a win, and the
+    checkpoint's Town opens as a due Town does (`_townTick`, after the hop too); Give up is the game over below. No
+    message window line then (the dialog says it); with no choice to make (`autoTryAgain` on, the tests) the message
+    window says "Your army fell! -1 heart." / "Back to Millbrook: waves 21-27 again, foes weakened." (`Game.wipeNote`).
+    At 0 hearts no dialog: the game is over. A save made while it shows reopens it.
+  - **The "Weakened foes" chip** (`_weakChip`, wipe_ask.dart) while the monsters are weakened (`Game.weakened`), on
+    the field and in a Town: the Town chip's look (ui_bars.png's dark capsule at `capsuleK`, the icon 16 px from its art
+    at one screen px a pixel, 32 from the meter's k 4) with ui_icons.png's big green down arrow (its 16×16 cell at
+    (48, 144), mapped) and "Weakened foes" in the Town meter's safe green ("Weakened" where the meter is narrower than
+    the chip), right-aligned with the meter under the boosts' chips, else under the Town chip, else 6 px under the
+    meter and what hangs there (`_underMeter`). The battle log, the boss bars and the plates keep clear of it. Its
+    tooltip: "Weakened foes" / "Monsters: -20% HP, -15% damage." / "Until next Town." (and "At its most." at the
+    second step; `Game.weakenedTip`).
 - **Game over** (`_gameOver`, lib/scoreboard.dart): a light dim (the monsters cheer through it), "GAME OVER  -
-  Wave N" (36·u, white), "Score N" (30·u, gold, dark outline) and two buttons side by side, 44·u tall:
+  Wave N" (36·u, white; the furthest wave reached, `Game.waveReached`, after a trip back to a Town too), "Score N" (30·u, gold, dark outline) and two buttons side by side, 44·u tall:
   "Scoreboard" (180·u) and "Play again" (140·u; a fresh game, the save deleted). u as on the welcome screen.
   Hidden while the name panel or the board covers it.
 

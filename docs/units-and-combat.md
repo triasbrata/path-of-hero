@@ -1506,14 +1506,35 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
     rings are cleared, the shots in the air are spent (they fly on and land their look alone, decisions-log 327), the march ends, `_endEffects`, the Grail's watch ends, `WaveEnded(won: false)`, the Tavern's
     boosts count the wave, the wave's materials lying on the field are lost (`waveMaterials` cleared: they come with a
     win), "Replace fallen" lists the fallen (not the Heroes: Recall's), Auto's `_autoWon`, no after-wave heal, Lewati's
-    skip buff it carried is owed again (`skipBuffDue`), `lostWave` = the wave and `wave` goes back one.
+    skip buff it carried is owed again (`skipBuffDue`), then `_backToCheckpoint` (below).
   - No `victoryAt`, wave bonus, wave score, Shadow ease, Grudge target, Hero, boss chest or Town roll: they come when
     the wave is won (the win clears `lostWave`). What the wave paid as it went stays: kill gold, kill score, kills.
+  - **The checkpoint** (decisions-log 333; the owner: "kalau pasukan wipe user di balikkan lagi ke town terakhir yang
+    dia datangin"): `lostWave` becomes the furthest wave lost (`max`), the monsters are weakened a step more
+    (`weakened` + 1, at most `weakenedMost` 2), and once a Town has been gone into (`townCount` > 0) the game goes back
+    to the last one (`checkpoint`: its slot S, `townLast`): `wave` = S − 1, `townAt` = S (that Town due again,
+    `townAgain`: its slot is the last one left), and the schedule rolls from it afresh (a Town marked past it dropped,
+    the chance back at its start, `_townChance` null, as when it was marked). The waves from S to the lost one are
+    played again. Before the first Town: `wave` goes back one (322's same wave). With the player choosing
+    (`autoTryAgain` off: main() turns it off; tests and probes keep it on), `wipeAsk` holds the game until "Try again"
+    (`tryAgain`) or "Give up" (`giveUp`: `lives` = 0, the game over; the hearts left score nothing): no wave starts
+    (`canStartWave`) and no Town opens (`enterTown`) meanwhile.
+  - **A wave won again** (`wave` ≤ `bestWon`, the highest wave won) pays its kill gold, drops and win gold again;
+    its wave score, Hero and boss chest come only on its first win (`first` in the win path), and `_omenWave` lands no
+    catch-up on a wave already begun (`wave` ≤ `bestWon` or `lostWave == wave`). What opens at a wave won goes by the
+    highest won (`wonWave`: the Shop, Awaken 4-5, Forge and Recall, Enhance; Carve by `ukirOpen`), so a trip back
+    locks nothing; one Sharpen and one Carve budget a boss interval, a later interval's counting for an earlier one
+    played again (`asahDone`, `ukirBudget`).
+  - **The monsters weakened** until the next new Town (`weakened`, ended by `enterTown` of a Town that isn't the
+    checkpoint's): every monster's stats through `spawnStats` (the queue, raised minions, bring-ins, Slime Hex's form)
+    take `weakenedHp` ×0.8 HP and `weakenedDmg` ×0.85 damage after one wipe, ×0.7 and ×0.75 after a second (a third
+    ends the game); a healer's heal is its damage, so it heals less; Mend's regen follows the HP; the kill gold stays.
   - Between waves it reads as after the last win: the back line where it was, a Town due by `townAt == wave + 1`
-    (one left before the lost wave isn't due again; one marked after it waits for its win), "from wave 15 won". The next
-    `startWave` rolls the same wave afresh (its number, tide and slots; new dice), and `_omenWave` lands no catch-up
-    on it (`lostWave == wave`).
-  - Saved between waves as `lostWave` (only while set; loaded only when it is `wave` + 1), save version 3.
+    (the checkpoint's; before the first Town one marked after the lost wave waits for its win), "from wave 15 won". The
+    next `startWave` rolls the wave afresh (its number, tide and slots; new dice).
+  - Saved between waves (save version 3, additive): `lostWave` (while set; loaded when past `wave`), `bestWon` (when
+    past `wave`; a save without it reads its `wave`), `weakened` (above 0), `wipeAsk` (true); the checkpoint's Town
+    is `town.at` == `town.last`.
 
 ### Oaths in a fight (decisions-log 155, 247)
 

@@ -2967,7 +2967,8 @@ Pure Dart (lib/wipe.dart). A soldier at 1 HP beside a werebear makes the wipe (`
   the last life in the tick the last troop falls are a game lost on lives (no `Wiped`); a wave begun with no troop only
   leaks.
 - A boss wave (wave 10, a Hero's too) lost: no chest nor Hero; won on the replay: one of each.
-- Towns: one left before the lost wave isn't due again; one marked for after it is due only once the replay is won.
+- Towns: before the first Town one marked for after the lost wave is due only once the replay is won (no checkpoint);
+  once one was gone into, a wipe goes back to it, a later mark dropped (town_checkpoint_test.dart has the rest).
 - The Shadows: the catch-up lands once for the wave number (not on the replay), and Lewati's skip buff owed meets the
   replay.
 - The save between a wipe and its replay (`lostWave`, the lives, "Replace fallen"), a `lostWave` that isn't the next

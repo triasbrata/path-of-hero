@@ -78,7 +78,8 @@ void main() {
     expect(g.enterTown(), isTrue);
     final e = events.whereType<TownEntered>().single;
     expect((e.slot, e.n, e.again, e.toJson()['again']), (21, 1, true, true));
-    expect((g.townCount, g.sceneIdentity.name, g.townIdentity.name, g.market), (1, name, name, market));
+    expect((g.townCount, g.sceneIdentity.name, g.townIdentity.name), (1, name, name));
+    expect(g.market, market);
     expect(g.leaveTown(), isTrue);
     expect((g.townLast, g.townAt, g.canStartWave), (21, null, true));
     g.startWave();

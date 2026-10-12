@@ -154,6 +154,8 @@ extension on Board {
         _barSprite(c, state, type!, titleIcon); // a spawn bar's card: its type's sprite (spawn_bar.dart)
       case _Hint.autoReplace:
         c.drawImageRect(_img('ui_icons.png'), _counterShield, titleIcon, _px); // the army's shield (troop_counter.dart)
+      case _Hint.weak:
+        _uiIcon(c, _icDownGreen, titleIcon); // the weakened foes' chip: its green down arrow (wipe_ask.dart)
       default:
         _icon(c, what, titleIcon, null, plus);
     }

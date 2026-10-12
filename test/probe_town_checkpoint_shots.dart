@@ -75,7 +75,8 @@ void main() {
       await tester.runAsync(loadHudFontNow);
       final game = TdGame();
       final key = GlobalKey();
-      await tester.pumpWidget(RepaintBoundary(key: key, child: GameWidget(game: game)));
+      await tester.pumpWidget(RepaintBoundary(
+          key: key, child: GameWidget(game: game, overlayBuilderMap: {'name': (_, TdGame g) => const SizedBox.shrink()})));
       for (var i = 0; i < 3000 && !game.isLoaded; i++) {
         await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 20)));
         await tester.pump();
