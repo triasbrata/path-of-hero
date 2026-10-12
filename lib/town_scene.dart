@@ -45,12 +45,12 @@ const _townWood = [('stumpAxe', 24.0), ('logPile', 50.0), ('sawmill', 60.0)];
 
 /// The widths along the street in world px: the tent; the Smithy's place: its wood corner ([_townWoodW], [_townWood]),
 /// its house (148) and on its right the furnace against its wall ([_TownLayout.furnaceX], its art 34 past the house)
-/// and the ore by it, 2 clear of the furnace's art, 53 wide with 3 after it (92 in all); the yard, the pine and the
-/// clothes line side by side ([_townPineW] + the line's 106, so the pine's first tier shows whole: decisions-log 253);
+/// and the ore by it, 2 clear of the furnace's art, 53 wide with 3 after it (92 in all); the yard (decisions-log 253: the
+/// pine's 50 and the clothes line's 106 side by side; each identity's pieces since 326, [_townYards]);
 /// the Town's ends, the left one before the tent and the right one after the Shop's seen box (its cells, the eave tip's
 /// clear end, go 6 past it); the least gap between two places.
-const _townTentW = 96.0, _townWoodW = 134.0, _townSmithyW = _townWoodW + 148 + 92, _townPineW = 50.0,
-    _townYardW = _townPineW + 106, _townEdgeL = 2.0, _townEdgeR = 6.0, _townGap = 4.0;
+const _townTentW = 96.0, _townWoodW = 134.0, _townSmithyW = _townWoodW + 148 + 92, _townYardW = 156.0,
+    _townEdgeL = 2.0, _townEdgeR = 6.0, _townGap = 4.0;
 
 /// How far under the screen's top the street runs (its share of the height): low, the owner's "ground levelnya di
 /// turunkan".
@@ -73,15 +73,71 @@ const _townSlop = 8.0;
 /// stands at them, and the troops' rest (the tent and its campfire; decisions-log 301) on the Army.
 const _townPages = [('smithy', _Page.smithy), ('shop', _Page.store), ('tavern', _Page.tavern), ('tent', _Page.troops)];
 
-/// The parallax layers back to front: (file, how far it moves with the street; 0 never), the castle between 4 and 3.
-const _townParallax = [
-  ('town_bg_5.png', 0.0),
-  ('town_bg_4.png', 0.15),
-  (townCastle, 0.2),
-  ('town_bg_3.png', 0.35),
-  ('town_bg_2.png', 0.6),
-  ('town_bg_1.png', 1.0),
-];
+/// A season's backdrop (decisions-log 326): its parallax [layers] (1 the near pines .. 5 the sky), its [castle] and its
+/// street's tile ([ground]): the Normal BG set in summer, the Autumn and the Winter sets after.
+typedef _TownSeasonArt = ({List<String> layers, String castle, String ground});
+
+/// Each [TownSeason]'s art, by the Town's identity ([Market.sceneIdentity]).
+const townSeasonArt = <TownSeason, _TownSeasonArt>{
+  TownSeason.summer: (layers: townLayers, castle: townCastle, ground: townGroundTile),
+  TownSeason.autumn: (layers: townAutumnLayers, castle: townAutumnCastle, ground: townGroundAutumn),
+  TownSeason.winter: (layers: townWinterLayers, castle: townWinterCastle, ground: townGroundWinter),
+};
+
+/// A season's parallax layers back to front: (file, how far it moves with the street; 0 never), the castle between 4
+/// and 3.
+List<(String, double)> _townParallax(_TownSeasonArt art) => [
+      (art.layers[4], 0.0),
+      (art.layers[3], 0.15),
+      (art.castle, 0.2),
+      (art.layers[2], 0.35),
+      (art.layers[1], 0.6),
+      (art.layers[0], 1.0),
+    ];
+
+/// Each identity's yard (decisions-log 326; [townYardCells]), back to front: (its name in the scene, its cell, its left
+/// from the yard's in world px), side by side across the yard's [_townYardW]. Willowmere's willow, wider than the yard,
+/// stands in the middle of it behind the rest, scenery (no place's: a tap there opens nothing, as on the yard).
+const _townYards = <String, List<(String, String, double)>>{
+  'millbrook': [
+    ('flowerTree', 'flowerTree', 0),
+    ('wheat', 'wheat', 88),
+    ('wheat2', 'wheat', 107),
+    ('sack', 'sack', 126),
+    ('sheaf', 'sheaf', 144),
+  ],
+  'willowmere': [
+    ('willow', 'willow', (_townYardW - 216) / 2),
+    ('boat', 'boat', 6),
+    ('potGreen', 'potGreen', 90),
+    ('potOlive', 'potOlive', 116),
+    ('potSmall', 'potSmall', 138),
+  ],
+  'ironvale': [('birch', 'birch', 0), ('oreGold', 'oreGold', 78), ('torch', 'torch', 140)],
+  'ambergate': [
+    ('smallTent', 'smallTent', 0),
+    ('flowerTable', 'flowerTable', 66),
+    ('sunflowers', 'sunflowers', 106),
+    ('grapeBowl', 'grapeBowl', 138),
+  ],
+  'frostgate': [
+    ('cypress', 'cypress', 0),
+    ('urnFern', 'urnFern', 32),
+    ('angel', 'angel', 62),
+    ('urnRed', 'urnRed', 112),
+    ('torch', 'torch', 145),
+  ],
+  'highspire': [
+    ('torch', 'torch', 2),
+    ('bust', 'bust', 16),
+    ('alchemyTable', 'alchemyTable', 40),
+    ('urn', 'urn', 70),
+    ('gardenTree', 'gardenTree', 100),
+  ],
+};
+
+/// The pieces of [_townYards] that are scenery, not the yard's.
+const _townScenery = {'willow'};
 
 /// The house's cells for a house [n] column pairs wider than the sheet's (0 or 1) and [storeys] tall (1 or 2): each
 /// cell's name in [townHouseCells], its column and its row on a 16-px grid from the ridge (row 0); the porch row's cells
@@ -197,7 +253,7 @@ typedef _TownPiece = ({
 /// room past [full] shared out between them. The Smithy and the Shop are the smallest one-storey house; the Tavern n 1,
 /// two storeys from 240 above the street (its 200 and the HUD's band), else one.
 class _TownLayout {
-  _TownLayout(double view, double above) : viewW = math.max(view, full) {
+  _TownLayout(double view, double above, [this.identity = 'millbrook']) : viewW = math.max(view, full) {
     storeys = above >= houseSize(0, 2).$2 + 40 ? 2 : 1;
     final gap = _townGap + (viewW - full) / 4;
     var x = _townEdgeL;
@@ -225,6 +281,9 @@ class _TownLayout {
   static const fit = 582.0;
 
   final double viewW;
+
+  /// The Town's identity's key ([TownIdentity.key]): its yard's pieces ([_townYards]).
+  final String identity;
   final int n = _townTavernN;
   late final int storeys;
   final left = <String, double>{}, width = <String, double>{}; // each place's (and the yard's) span, world px
@@ -262,9 +321,10 @@ class _TownLayout {
       x += w;
     }
     return [
-      // The yard: the pine at its left, the clothes line right of it, clear of its first tier (its widest rows).
-      whole('pine', 'yard', townPine, 50, 128, left['yard']!),
-      prop('clothesLine', 'yard', left['yard']! + _townPineW),
+      // The yard: the identity's pieces side by side, left to right (decisions-log 326).
+      for (final (name, cell, x) in yard)
+        piece(name, _townScenery.contains(name) ? null : 'yard', townYards, townYardCells[cell]!, left['yard']! + x,
+            frames: townYardFrames[cell] ?? 1),
       // The Smithy's, all outside its house (its ground floor the smith's, town_smith.dart; decisions-log 271): on its
       // left the wood corner, each piece's art 3 px after the last's, the sawmill's 3 px before the house; on its right
       // the furnace against its wall and the ore rock by it, its art 2 px past the furnace's.
@@ -285,8 +345,11 @@ class _TownLayout {
     ];
   }
 
-  /// How many of [pieces] stand behind the buildings: the pine and the clothes line.
-  int get behindHouses => 2;
+  /// The identity's yard ([_townYards]; Millbrook's for a key it doesn't know).
+  List<(String, String, double)> get yard => _townYards[identity] ?? _townYards['millbrook']!;
+
+  /// How many of [pieces] stand behind the buildings: the yard's.
+  int get behindHouses => yard.length;
 
   /// The middle of [place] along the street, in world px: what a sign hangs over. A building's is its house's (the
   /// Smithy's wood corner stands on its left, its furnace and the ore on its right).
@@ -478,7 +541,12 @@ extension _TownScene on Board {
     final tall = math.max(2.0, (strip.height / townLayerH).floorToDouble());
     final k = math.max(1.0, math.min(tall, (size.x / _TownLayout.fit).floorToDouble()));
     final street = (strip.height * _townStreetDown).roundToDouble();
-    return (strip: strip, k: k, top: street - _townGround * k, layout: _TownLayout(size.x / k, street / k));
+    return (
+      strip: strip,
+      k: k,
+      top: street - _townGround * k,
+      layout: _TownLayout(size.x / k, street / k, state.sceneIdentity.key),
+    );
   }
 
   /// Draws the Town where the field was, from [_townCam] (render's first part while [_townShown]), and records where
@@ -491,23 +559,24 @@ extension _TownScene on Board {
       ..lane = top + _townGround * k;
     v.at['scene'] = f.strip;
     final lw = townLayerW.toDouble(), lh = townLayerH.toDouble(), w = lw * k;
+    final art = townSeasonArt[g.sceneIdentity.season]!; // the Town's season's (decisions-log 326)
     // The sky over the layers' top: layer 5's top row stretched up (its own colour); from the street down the ground
     // ([_townStreet]) to the view's bottom.
-    if (top > 0) c.drawImageRect(_img(townLayers[4]), Rect.fromLTWH(0, 0, lw, 1), Rect.fromLTRB(0, 0, size.x, top + 1), _px);
-    for (final (file, par) in _townParallax) {
+    if (top > 0) c.drawImageRect(_img(art.layers[4]), Rect.fromLTWH(0, 0, lw, 1), Rect.fromLTRB(0, 0, size.x, top + 1), _px);
+    for (final (file, par) in _townParallax(art)) {
       final img = _img(file), src = Rect.fromLTWH(0, 0, lw, lh), shift = (cam * par * k).roundToDouble();
-      if (file == townCastle) {
+      if (file == art.castle) {
         c.drawImageRect(img, src, Rect.fromLTWH(-shift, top, w, lh * k), _px); // one castle, not a row of them
         continue;
       }
       for (var x = -(shift % w); x < size.x; x += w) {
         c.drawImageRect(img, src, Rect.fromLTWH(x, top, w, lh * k), _px);
       }
-      if (file == townLayers.last) _townClouds(c, cam, top, k); // over the sky, under the mountains
+      if (file == art.layers.last) _townClouds(c, cam, top, k); // over the sky, under the mountains
     }
     // The ground, then the buildings and the pieces standing on it, their bottoms on the street's line.
     final ox = -(cam * k).roundToDouble();
-    _townStreet(c, ox, k);
+    _townStreet(c, ox, k, art.ground);
     final frame = (_fieldClock * _townFps).floor(), pieces = L.pieces;
     void put(_TownPiece p) {
       final s = p.src, n = frame % p.frames;
@@ -536,17 +605,19 @@ extension _TownScene on Board {
       final roof = v.buildings[place]!.first.$2.top, y = math.max(roof - 24 * sk, _meterBottom + 4);
       v.signs[place] = _ribbonTitle(c, word, Offset(ox + (L.mid(place) * k).roundToDouble(), y + 10 * sk), sk, 64 * sk);
     }
+    _townArrival(c, g, sk); // the Town's name as it comes up (town_look.dart)
     for (final MapEntry(key: name, value: x) in L.spots.entries) {
       v.spots[name] = Offset(ox + (x * k).roundToDouble(), v.lane);
     }
   }
 
-  /// The street (decisions-log 279): [townGroundTile] at [k] screen px a px, its top edge on the street's line
+  /// The street (decisions-log 279): [tile] ([townGroundTile], or the Town's season's: decisions-log 326) at [k] screen
+  /// px a px, its top edge on the street's line
   /// ([_TownView.lane]), side by side across the view and moving with the street ([ox]: its left on the screen), so it
   /// runs the Town's whole width as it pans ('street' in [townScene]; 'strip' in [townGround]); under it the tile's
   /// last row, the earth's one colour, down to the view's bottom ('earth').
-  void _townStreet(Canvas c, double ox, double k) {
-    final v = _town, img = _img(townGroundTile), w = townGroundW * k;
+  void _townStreet(Canvas c, double ox, double k, String tile) {
+    final v = _town, img = _img(tile), w = townGroundW * k;
     final strip = Rect.fromLTWH(0, v.lane, size.x, townGroundH * k);
     final src = Rect.fromLTWH(0, 0, townGroundW.toDouble(), townGroundH.toDouble());
     for (var x = ox % w - w; x < size.x; x += w) {

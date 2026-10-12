@@ -7,7 +7,9 @@ part of 'main.dart';
 // [TownSchedule.autoLeave] s unless a press in the Town stopped it, the wave starting right after the fade back (one
 // wait, the Auto hold of the field still applying). From the mark until the Town opens, the wave meter shows the chip "Town after wave
 // 12" under it ([Board._townChip]), with the Town's hammer (town_mark.png, Kenmi's Tools 351) and its tooltip; in the
-// Town the meter itself says it's safe ([Board._inTownMeter]: a beer mug, town_mug.png, Kenmi's Food 3, and "In town").
+// Town the meter itself says it's safe ([Board._inTownMeter]: a beer mug, town_mug.png, Kenmi's Food 3, and "In town",
+// the Town's name since decisions-log 326: "In Millbrook"). As a Town comes up its name shows on a ribbon under the
+// HUD's band for a moment ([Board._townArrival]).
 
 /// town_mark.png: Kenmi's 16-px hammer, doubled into its 32x32 file (tool/import_fx.py's LOOT); town_mug.png, the
 /// wave meter's beer mug in a Town, likewise.
@@ -15,6 +17,10 @@ const _townMarkSrc = Rect.fromLTWH(0, 0, 32, 32);
 
 /// "In town" on the wave meter: the battle log's green for a won wave, a safe time.
 const _townSafeInk = Color(0xFF9BE37A), _townNextInk = Color(0xFFFFF1D6);
+
+/// The Town's name as it comes up ([Board._townArrival]): its seconds on screen from the fade's middle, the last
+/// [_townArrivalOut] of them fading out.
+const _townArrivalFor = 3.0, _townArrivalOut = 0.5;
 
 extension _TownLook on Board {
   /// The Town's hammer over [to].
@@ -27,11 +33,33 @@ extension _TownLook on Board {
   void _inTownMeter(Canvas c, Rect inside, double pad, double icon, double ts, int next) {
     final y = inside.center.dy, x = inside.left + icon + pad;
     c.drawImageRect(_img('town_mug.png'), _townMarkSrc, Rect.fromLTWH(inside.left, inside.top + pad, icon, icon), _px);
-    _text(c, Words.inTown, Offset(x, y), size: ts, color: _townSafeInk);
-    final room = inside.right - x - _textWidth(Words.inTown, ts) - 2 * pad;
+    // The Town's name (decisions-log 326): "In Millbrook"; "In town" where it doesn't fit.
+    final named = '${Words.inPlace} ${state.sceneIdentity.name}';
+    final safe = _textWidth(named, ts) <= inside.right - x - pad ? named : Words.inTown;
+    _text(c, safe, Offset(x, y), size: ts, color: _townSafeInk);
+    final room = inside.right - x - _textWidth(safe, ts) - 2 * pad;
     final label = ['${Words.nextWave} $next', '$next'].firstWhere((l) => _textWidth(l, ts) <= room, orElse: () => '');
     _text(c, label, Offset(inside.right, y), size: ts, color: _townNextInk, anchor: Anchor.centerRight);
-    _townMeterText = [Words.inTown, if (label.isNotEmpty) label].join(' · ');
+    _townMeterText = [safe, if (label.isNotEmpty) label].join(' · ');
+  }
+
+  /// The Town's name as it comes up (decisions-log 326): ui_ribbons' flat ribbon (the signs' [_ribbonTitle]) at 1.5
+  /// times the signs' scale [sk], under the HUD's band over the middle of the scene's room (left of the book when it is
+  /// open), the name on it ("Millbrook") and under it "Town 1 · Farming village" in cream with a dark outline; for
+  /// [_townArrivalFor] s from the fade's middle, fading out over its last [_townArrivalOut]. Never for a game loaded in
+  /// a Town (no fade), nor as the Town is left.
+  void _townArrival(Canvas c, Game g, double sk) {
+    final t = _clock - _town.fadeAt - _townFade;
+    _townArrivalAt = Rect.zero;
+    if (!g.inTown || !_town.fadeAt.isFinite || t < 0 || t >= _townArrivalFor) return;
+    final a = math.min(1.0, (_townArrivalFor - t) / _townArrivalOut), rk = (1.5 * sk).roundToDouble();
+    final room = _town.book ? _bookFit().rest.left : size.x, who = g.sceneIdentity;
+    if (a < 1) c.saveLayer(null, Paint()..color = Color.fromRGBO(0, 0, 0, a));
+    final ribbon = _townArrivalAt =
+        _ribbonTitle(c, who.name, Offset((room / 2).roundToDouble(), _meterBottom + 8 + 10 * rk), rk, room - 16);
+    _text(c, '${Words.town} ${g.townCount} · ${who.line}', Offset(ribbon.center.dx, ribbon.bottom + 4 * rk),
+        size: math.max(11.0, 5 * rk), color: _townNextInk, anchor: Anchor.center, outline: const Color(0xFF3C1E0A));
+    if (a < 1) c.restore();
   }
 
   /// The chip's words: "Town after wave 12".

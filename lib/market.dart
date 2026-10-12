@@ -24,6 +24,12 @@ class TownIdentity {
   final String key, name, line;
   final TownSeason season;
   final List<ItemSlot> wants;
+
+  /// "Pays well for Boots, Potion, Gloves and Prayer Beads": its [wants] by their first grade's names.
+  String get wantsLine {
+    final names = [for (final s in wants) itemNames[Item.values.firstWhere((i) => i.slot == s && i.grade == 1)]!];
+    return '${Words.paysWellFor} ${names.take(names.length - 1).join(', ')} and ${names.last}';
+  }
 }
 
 /// The six identities in the road's order, two a tier ([identityFrom]): the first three Towns' (summer), the middle
@@ -51,6 +57,9 @@ TownIdentity identityOf(int n) {
   final t = identityFrom.lastIndexWhere((from) => max(1, n) >= from);
   return townIdentities[2 * t + (max(1, n) - identityFrom[t]) % 2];
 }
+
+/// The identity of save key [key] (a [TownEntered] event's), or null.
+TownIdentity? identityKeyed(String key) => townIdentities.where((t) => t.key == key).firstOrNull;
 
 /// How many waves apart Towns come on average (the schedule's rolls, decisions-log 216): an old save's Town count is
 /// guessed from its last Town's slot with it ([Towns._loadTown]).
@@ -163,6 +172,9 @@ extension Market on Game {
 
   /// [marketTown]'s identity.
   TownIdentity get townIdentity => identityOf(marketTown);
+
+  /// The identity of the Town last gone into (the Town scene's, as it fades out too; the first's before any).
+  TownIdentity get sceneIdentity => identityOf(townCount);
 
   /// Whether [kind] is one of the market's products: an item or a small relic (the Smithy's goods). A material and an
   /// Artifact keep their own prices.

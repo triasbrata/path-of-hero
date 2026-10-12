@@ -1127,13 +1127,18 @@ extension Towns on Game {
   int get _townCountGuess =>
       max(0, ((townLast - townRules.schedule.firstTownAfter) / townGapGuess).round()) + (inTown ? 1 : 0);
 
-  /// The wave meter chip's tooltip ([townMarked]): "Town after wave 12" and what a Town holds, in the street's order (its
-  /// Smithy crafts the items too, decisions-log 272; the Tavern, decisions-log 268).
-  (String, List<String>) get townTip => ('${Words.townAfter} ${(townAt ?? wave + 1) - 1}', [
-        '${Words.smithy}: craft items and relics',
-        '${Words.tavern}: buy boosts',
-        if ((townAt ?? 0) - 1 >= shopFrom) '${Words.shop}: buy and sell',
-      ]);
+  /// The wave meter chip's tooltip ([townMarked]): "Town after wave 12: Millbrook, a farming village" (the coming
+  /// Town's identity, decisions-log 326) and what a Town holds, in the street's order (its Smithy crafts the items too,
+  /// decisions-log 272; the Tavern, decisions-log 268), with the Shop what it pays well for.
+  (String, List<String>) get townTip {
+    final who = townIdentity, shop = (townAt ?? 0) - 1 >= shopFrom;
+    return ('${Words.townAfter} ${(townAt ?? wave + 1) - 1}: ${who.name}, a ${who.line.toLowerCase()}', [
+      '${Words.smithy}: craft items and relics',
+      '${Words.tavern}: buy boosts',
+      if (shop) '${Words.shop}: buy and sell',
+      if (shop) '${who.wantsLine}.',
+    ]);
+  }
 }
 
 /// The name of the relic of save key [key] ([townRelics]): a recipe's name on the Bag's material page.

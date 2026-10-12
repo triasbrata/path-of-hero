@@ -45,7 +45,7 @@ abstract final class Words {
   /// The Towns (decisions-log 216): a Town between two waves, its Smithy and its Tavern, the button that leaves it, the
   /// wave meter's chip ("Town after wave 12") and the meter in a Town ("In town", "next wave 7").
   static const town = 'Town', smithy = 'Smithy', tavern = 'Tavern', leaveTown = 'Leave town', townAfter = 'Town after wave';
-  static const inTown = 'In town', nextWave = 'next wave';
+  static const inTown = 'In town', inPlace = 'In', nextWave = 'next wave';
 
   /// The market's words (decisions-log 326, market.dart): on the Sell page a kind the Town wants ("Hot in Millbrook") and
   /// a product sold so much its price falls; the Town chip's tooltip, what the next Town pays well for.

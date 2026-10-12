@@ -731,6 +731,7 @@ class Board extends PositionComponent
   final _boostChipsAt = <Rect>[]; // the boosts' chips under it this frame, in [Game.boosts]' order (tavern_look.dart)
   Rect _boostRowAt = Rect.zero; // all of them (none: Rect.zero), what the log, the boss bars and the plates keep clear of
   String _townMeterText = ''; // the wave meter's words in a Town this frame (town_look.dart; '' out of one)
+  Rect _townArrivalAt = Rect.zero; // the Town's name's ribbon this frame (town_look.dart; Rect.zero: none)
   Rect _tideAt = Rect.zero; // the wave meter while it shows the tide's badge (zero: before the tide), its tooltip's target
   String _tideLabel = '';
   Rect _replaceAt = Rect.zero; // "Replace fallen" on the Army page this frame (zero: not shown)
@@ -1387,6 +1388,9 @@ class Board extends PositionComponent
   /// The wave meter's words in a Town as last drawn ("In town", "next wave 7": [Board._inTownMeter]; '' out of one). For
   /// tests.
   String get townMeterText => _townMeterText;
+
+  /// The Town's name's ribbon as the Town comes up, this frame (Rect.zero: none; town_look.dart).
+  Rect get townArrival => _townArrivalAt;
 
   /// The Town scene (town_scene.dart): whether it shows instead of the field this frame; the fade's dim (0: none); the
   /// view's left edge in world px and the screen px per world px; where each piece and place was drawn this frame by
