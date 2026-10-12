@@ -828,7 +828,7 @@ kanan" (a 1×4 column at the right edge). Existing art only: the spawn bar's hot
   Tavern's, its icon and its seconds left ("12s", the chips as wide as "88s" so they don't twitch), its tooltip
   (`_Hint.pocketBoost`, `pocketBoostTip`) "Rage Tonic: 12 s left" and what it does; `Board.pocketChips`.
 - **What hangs under the wave meter keeps left of it** (`_stackRight`): the Shadows' chips, the Town chip, the boosts'
-  chips and the boss bars keep right-aligned with the meter, but one that would come down beside the column (its
+  chips, the weakened foes' chip (decisions-log 333) and the boss bars keep right-aligned with the meter, but one that would come down beside the column (its
   bottom within 6 px of the column's top, or lower) right-aligns 6 px left of it. Only 915×412 needs it: with the map
   open the Town chip is at 733..843 and a boost's chip 801..843, the Shadows' chips end at 116 over the column's 123
   (test/pocket_ui_test.dart). Monsters coming in at the right edge pass under the column (the owner's pick of the right

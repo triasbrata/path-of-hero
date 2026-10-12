@@ -156,7 +156,8 @@ extension _WipeAskLook on Board {
         : !_townChipAt.isEmpty
             ? _townChipAt.bottom + 6
             : _underMeter(left, w);
-    final at = _weakChipAt = Rect.fromLTWH(left, top, w, h);
+    // Left of the pocket bar where it would come down beside it (pocket_look.dart, decisions-log 332).
+    final at = _weakChipAt = Rect.fromLTWH((_stackRight(top, h) - w).roundToDouble(), top, w, h);
     _nine(c, _capsuleSrc, at, ck, l: 1, t: 1, r: 1, b: 1, sheet: 'ui_bars.png', seam: 0); // its corners stay cut
     _uiIcon(c, _icDownGreen, Rect.fromLTWH(at.left + pad, at.top + ck + 1, icon, icon));
     _text(c, label, Offset(at.left + pad + icon + gap, at.center.dy), size: fs, color: _townSafeInk);

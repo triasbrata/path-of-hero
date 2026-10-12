@@ -136,14 +136,16 @@ void main() {
     final g = b.state = pocketGame()
       ..townAt = 13
       ..boosts.add(RunningBoost(Boost.feast, 2));
-    g.omens.addAll([OmenKind.values[0], OmenKind.values[1]]);
+    g
+      ..omens.addAll([OmenKind.values[0], OmenKind.values[1]])
+      ..weakened = 1; // the weakened foes' chip after a wipe (decisions-log 333)
     g.startWave();
     await frames(tester, 10);
     expect(g.usePocket(1), isTrue); // the Rage Tonic: its chip
     await frames(tester, 10);
     final bar = b.pocketBar;
     expect(b.pocketChips, hasLength(1));
-    final hung = {'omens': b.omenRow, 'town': b.townChip, 'boosts': b.boostChips.first, 'pocket': b.pocketChips.first};
+    final hung = {'omens': b.omenRow, 'town': b.townChip, 'boosts': b.boostChips.first, 'pocket': b.pocketChips.first, 'weak': b.weakChip};
     for (final MapEntry(key: name, value: r) in hung.entries) {
       expect(r, isNot(Rect.zero), reason: name);
       expect(r.overlaps(bar), isFalse, reason: '$name $r over the bar $bar');
