@@ -3493,9 +3493,7 @@ class Game {
     // Saves from before names get one now; saves from before defence counted shields as HP, so a troop
     // can't come back with more than it has now. Under a plain Game()'s rules: [boardRules] fits them again under the
     // board's, from the same saved HP ([_loadedHp]).
-    for (final (u, hp) in _loadedHp) {
-      u.hp = min(hp, u.maxHp.toDouble());
-    }
+    _loadedHpBack();
     // A save from before the Pusaka: its artefacts become Pusaka, bound by default (the HP Dragon Heart gives comes
     // with it), and the one-time message waits ([pusakaNote]); one with none has nothing to tell.
     final migrated = _migratePusaka(copies);
@@ -3914,9 +3912,7 @@ class Game {
     skillWinds = true; // and the troops' skill wind-ups (skill_strips.dart)
     if (refit) {
       _refitTroops();
-      for (final (u, hp) in _loadedHp) {
-        u.hp = min(hp, u.maxHp.toDouble());
-      }
+      _loadedHpBack();
     }
     _loadedHp.clear();
     return this;
@@ -3925,6 +3921,15 @@ class Game {
   /// The troops [Game.fromJson] read and the HP each was saved with, for [boardRules]; empty in a new game, and once
   /// the board's rules are on. Not saved.
   final _loadedHp = <(Unit, double)>[];
+
+  /// Each troop [Game.fromJson] read back at the HP it was saved with, at most its max under the rules it is fitted to
+  /// now ([_loadedHp]): at the load, and again when [boardRules] fits it under the board's. A load's restore, not a heal
+  /// (test/heal_funnel_test.dart's `notHeals`).
+  void _loadedHpBack() {
+    for (final (u, hp) in _loadedHp) {
+      u.hp = min(hp, u.maxHp.toDouble());
+    }
+  }
 
   /// Auto's countdown waits (decisions-log 141; qa-1: Auto began w86 5 s after a wave that left 20 of 48): with
   /// [armyMax] on, while fewer than [autoHoldShare] of [armyCap] are alive, until the player buys them back or

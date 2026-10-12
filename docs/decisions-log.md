@@ -11176,7 +11176,9 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        on a wave-58 save from 2026-10-12: 7 of its 8 types differed, a knight's HP 175 against the board's 326, a
        priest's heal 48 against 144, a templar's HP 420 against 588. Now `boardRules()`, turning the Towns on, fits
        every troop again (`_refitTroops`) and puts each loaded one back at its saved HP, capped at its new max
-       (`_loadedHp`); a new game's troops don't change. architecture.md "Key `Game` state". A plain `Game.fromJson`
+       (`_loadedHp`; `_loadedHpBack`, the load's one HP write, which `fromJson` uses too: test/heal_funnel_test.dart's
+       guard lists every HP write outside the heal funnels, and found a second one on main); a new game's troops
+       don't change. architecture.md "Key `Game` state". A plain `Game.fromJson`
        (the tests' and the replay kit's) is as before. Tests: save_test's "a save loaded for the board fights with the
        board's stats" (the w89 save, two templars' swords at +3; it fails on the code before: a templar's damage 171
        against the board's 192) and "a new game on the board: boardRules changes no troop".
