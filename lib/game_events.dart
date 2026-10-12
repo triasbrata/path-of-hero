@@ -23,8 +23,9 @@ part of 'game.dart';
 /// forge's cut-over (decisions-log 272), in every game since decisions-log 321. 11: the Tavern switched on
 /// (decisions-log 268): the Tavern's (its own switch is gone, decisions-log 296). 12: the Bayangan switched on
 /// (decisions-log 319): their events and fields (8's, [OmenDusk]) reach every player's records; `--dart-define=OMENS=false`
-/// (tests only) sends none. 13: an army wiped mid-wave no longer ends the game ([Wiped]; decisions-log 322).
-const eventVersion = 13;
+/// (tests only) sends none. 13: an army wiped mid-wave no longer ends the game ([Wiped]; decisions-log 322). 14: a
+/// Tavern boost's length is its offer's ([BoostBought.waves] 2 to 4, or 0 with [BoostBought.untilTown]; decisions-log 331).
+const eventVersion = 14;
 
 /// How many events [Game.log] keeps, the oldest going first.
 const logSize = 200;
@@ -497,15 +498,24 @@ final class TownLeft extends GameEvent {
 }
 
 /// A Tavern boost was bought ([Tavern.buyBoost], decisions-log 266): its kind ([boost]) and [rarity], the [price], the
-/// [waves] it runs, the [type] it works on (a one-type kind's), the offer's [slot], and what it multiplies ([effects],
-/// [BoostRule.effects]: its own numbers, for the log's line and the telemetry).
+/// [waves] it runs (0 for one [untilTown], which runs until the next Town; decisions-log 331), the [type] it works on (a
+/// one-type kind's), the offer's [slot], and what it multiplies ([effects], [BoostRule.effects]: its own numbers, for the
+/// log's line and the telemetry).
 final class BoostBought extends GameEvent {
   BoostBought(super.wave, super.t,
-      {required this.boost, required this.rarity, required this.price, required this.waves, this.type, required this.slot, this.effects = const {}});
+      {required this.boost,
+      required this.rarity,
+      required this.price,
+      required this.waves,
+      this.untilTown = false,
+      this.type,
+      required this.slot,
+      this.effects = const {}});
 
   final Boost boost;
   final Rarity rarity;
   final int price, waves, slot;
+  final bool untilTown;
   final String? type;
   final Map<String, num> effects;
 
@@ -514,7 +524,8 @@ final class BoostBought extends GameEvent {
 
   @override
   Map<String, Object?> get data => {
-        'boost': boost.name, 'rarity': rarityKeys[rarity], 'price': price, 'waves': waves, 'type': ?type, 'slot': slot, 'effects': effects,
+        'boost': boost.name, 'rarity': rarityKeys[rarity], 'price': price, 'waves': waves, if (untilTown) 'untilTown': true, //
+        'type': ?type, 'slot': slot, 'effects': effects,
       };
 }
 
@@ -691,7 +702,8 @@ final class WaveStarted extends TraceEvent {
   /// The Towns' materials held at the start (town.dart, by name); null in an event made without them (no key).
   final Map<String, int>? materials;
 
-  /// The Tavern's boosts running at the start (tavern.dart, each kind's waves left); null while none runs (no key).
+  /// The Tavern's boosts running at the start (tavern.dart, each kind's waves left, 0 for one until the next Town); null
+  /// while none runs (no key).
   final Map<String, int>? boosts;
   final List<(String, String?)> heroes;
   final int gold, capacity, lives;

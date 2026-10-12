@@ -164,7 +164,7 @@ void main() {
     expect(guideEn.topics.firstWhere((t) => t.title == '${Words.town}s').lines.join(' / '),
         'The wave meter shows / when the next ${Words.town} comes. / There, "Auto Wave" leaves / '
         'after ${loadedTownRules.schedule.autoLeave.round()} seconds. / Tap the tent for "${Words.army}". / '
-        'The "${Words.tavern}" sells boosts / for the next ${loadedTownRules.tavern.waves} waves. / '
+        'The "${Words.tavern}" sells boosts for / 2-4 waves, or until next ${Words.town}. / '
         'A "${Words.wishlist}" marks items to make, / set in "${Words.smithy}" or "${Words.army}".');
     final late = guideEn.topics.firstWhere((t) => t.title == 'Late game').lines.join(' ');
     expect(late, contains('+${pct(tempaHp)}% HP'));

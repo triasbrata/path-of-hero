@@ -5,14 +5,15 @@ part of 'main.dart';
 // gabung saja di dalam book ui juga"), drawn from the book's own pieces: the page frames recoloured by rarity as the Boss
 // Chest's cards, the Bag's slots and capsules, the light tags, the one bevelled button and existing icons. The left page:
 // "Tavern", "Offers" and in grey that new ones come every Town, the offers as inset paper-card rows in their rarity's
-// frame (the pick on the lit card): the boost's icon, its name, its rarity in its ink and in grey its waves and its
-// troops, the coin and the price on the right (red while short), or "Sold" with the icon faded and the words grey.
+// frame (the pick on the lit card): the boost's icon, its name, its rarity in its ink and in grey its length ("3 waves",
+// "Until next Town": each offer's own, decisions-log 331) and its troops, the coin and the price on the right (red while
+// short), or "Sold" with the icon faded and the words grey.
 // Under them Reroll's light tag with its price (greyed while it can't be paid or every offer is sold) and in grey that
 // the bought ones stay; then
 // "Active", the boosts running as the Bag's slots in their rarity's colours with the waves left in the count's capsule
-// (a lone one's effect beside it), or "None yet.". The right page is the pick's, action first: its heading, what it
-// does, in grey its rarity and how long, "Effect" and a row per effect (inset cards that only tell), its troops and its
-// waves, the page's one bevelled button Buy ("Buy (1,550 gold)"; refused, the white one with why, a press saying it
+// ("Town" for one until the next Town; a lone one's effect beside it), or "None yet.". The right page is the pick's,
+// action first: its heading, what it does, in grey its rarity and how long, "Effect" and a row per effect (inset cards
+// that only tell), its troops and how long it lasts, the page's one bevelled button Buy ("Buy (1,550 gold)"; refused, the white one with why, a press saying it
 // again) and "No limit" in grey. Where a page's lines don't all fit (decisions-log 283: the landscape book shorter), the
 // left page's under "Offers" and the right page's under its heading scroll (page_scroll.dart). The first time a visit's offers show, the rows come in one after another; an Epic's or
 // a Legendary's bursts once with the field's upgrade burst (fx_upgrade.png). A reroll's new offers come in the same way.
@@ -21,8 +22,8 @@ part of 'main.dart';
 /// ("1,550", or "Sold" once bought), whether the gold is short of it, and whether it is the pick.
 typedef TavernRow = ({int slot, Boost kind, Rect at, String price, bool short, bool picked});
 
-/// One line of the facing page's Effect as drawn (for tests): where, what ("Damage", "Troops", "Waves") and how much
-/// ("+20%", "All troops", "2").
+/// One line of the facing page's Effect as drawn (for tests): where, what ("Damage", "Troops", "Lasts") and how much
+/// ("+20%", "All troops", "2 waves").
 typedef TavernEffectRow = ({Rect at, String what, String value});
 
 /// The rows' coming in (tavern-design §5): each [_tavernRevealGap] s after the one above, over [_tavernRevealFor] s from
@@ -72,17 +73,17 @@ String boostDoes(Game g, Boost kind, String? type) {
   };
 }
 
-/// The facing page's Effect lines for a boost of [kind] on [type]: (icon, what, how much) for each effect, then its troops
-/// (the crossed swords) when it acts on troops, then its waves (the sword).
-List<(Object, String, String)> boostEffectRows(Game g, Boost kind, String? type) {
+/// The facing page's Effect lines for offer [o]: (icon, what, how much) for each effect of its kind, then its troops (the
+/// crossed swords) when it acts on troops, then how long it lasts (the sword: "3 waves", "Until next Town").
+List<(Object, String, String)> boostEffectRows(Game g, BoostOffer o) {
   String percent(num v) => '${(v.abs() * 100).round()}%';
-  final who = boostWho(g, kind, type);
+  final who = boostWho(g, o.kind, o.type);
   return [
-    for (final MapEntry(:key, :value) in g.boostRule(kind).effects.entries)
+    for (final MapEntry(:key, :value) in g.boostRule(o.kind).effects.entries)
       if (_boostEffectLooks[key] case (final icon, final what))
         (icon, what, switch (key) { 'leaks' => '$value a wave', 'taken' => '-${percent(1 - value)}', _ => '+${percent(value - 1)}' }),
     if (who != null) (Board._icSwords, 'Troops', who),
-    (Board._icSword, 'Waves', '${g.townRules.tavern.waves}'),
+    (Board._icSword, 'Lasts', o.length),
   ];
 }
 
@@ -94,8 +95,9 @@ class _TavernView {
   final since = <double>[]; // when each slot's offer starts coming in ([Board._clock])
   // This frame, for tests: where each part of the pages is by key ('offers', 'reroll', 'stay', 'active', 'none',
   // 'active:<i>' for the i-th boost running, 'icon', 'buy', 'noLimit'), the words drawn by key ('offers', 'reroll',
-  // 'stay', 'none', 'active:<i>' (its waves left, and after a ':' the lone one's label), 'name', 'rarity', 'does',
-  // 'line', 'buy', 'noLimit'), the offers' rows and the Effect's.
+  // 'stay', 'none', 'active:<i>' (its waves left, and after a ':' the lone one's label), 'row:<i>' (offer i's line
+  // under its name: its rarity, length and troops as drawn), 'name', 'rarity', 'does', 'line', 'buy', 'noLimit'), the
+  // offers' rows and the Effect's.
   final at = <String, Rect>{};
   final texts = <String, String>{};
   final rows = <TavernRow>[];
@@ -201,7 +203,7 @@ extension on Board {
       return;
     }
     _tavernSee(g);
-    final pick = _tavernPick(g), waves = g.townRules.tavern.waves;
+    final pick = _tavernPick(g);
 
     // The offers: inset paper cards in their rarity's frame (a Common's the plain one), the pick and the one under the
     // mouse on the lit card; each coming in from below, faded, until it is in.
@@ -226,16 +228,18 @@ extension on Board {
       _card(c, r, picked || _look(r) == ButtonLook.hover ? Board._frameLit : Board._framePlain, _rarityFramePaints[rule.rarity]);
       final box = _whole(Rect.fromLTWH(r.left + pad, r.center.dy - side / 2, side, side));
       _boostIcon(c, o.kind, o.type, box, o.sold ? _ghost : null);
-      final x = box.right + 8 * ts, price = g.boostPrice(o.kind), short = !o.sold && g.gold < price;
+      final x = box.right + 8 * ts, price = g.offerPrice(o), short = !o.sold && g.gold < price;
       // On the right the coin and the price (red while short), or "Sold".
       final said = o.sold ? Words.sold : thousands(price), saidW = _textWidth(said, fs), end = r.right - pad;
       _text(c, said, Offset(end, r.center.dy), size: fs, color: o.sold ? grey : (short ? _blockedInk : ink), anchor: Anchor.centerRight);
       if (!o.sold) _uiIcon(c, Board._icCoin, _whole(Rect.fromLTWH(end - saidW - 4 * ts - 16, r.center.dy - 8, 16, 16)));
       final room = end - saidW - (o.sold ? 8 * ts : 26 * ts) - x, top = r.center.dy - (nameFs * 1.3 + small * 1.4) / 2;
       _text(c, _fit(boostNames[o.kind]!, nameFs, room), Offset(x, top + nameFs * 0.65), size: nameFs, color: o.sold ? grey : ink, bold: true);
-      // Under the name its rarity in its ink, then in grey its waves and its troops where they fit.
+      // Under the name its rarity in its ink, then in grey its length and its troops where they fit (the length kept
+      // longest: it sets the price; "Until Town" where "Until next Town" is too long).
       final rarity = rarityNames[rule.rarity]!, rarityW = _textWidth(rarity, small), who = boostWho(g, o.kind, o.type);
-      final rest = _fitFirst([' · $waves waves${who == null ? '' : ' · $who'}', if (who != null) ' · $who', ''], small, room - rarityW);
+      final brief = boostLengthWords(o.waves, untilTown: o.untilTown, short: true);
+      final rest = _fitFirst([' · ${o.length}${who == null ? '' : ' · $who'}', if (who != null) ' · ${o.length}', ' · $brief', ''], small, room - rarityW);
       final lineY = top + nameFs * 1.3 + small * 0.7;
       _text(c, rarity, Offset(x, lineY), size: small, color: o.sold ? grey : _boostInk(rule.rarity));
       if (rest.isNotEmpty) _text(c, rest, Offset(x + rarityW, lineY), size: small, color: grey);
@@ -243,6 +247,7 @@ extension on Board {
       if (t < 1) c.restore();
       _hits.add((r, () => v.pick = i));
       v.rows.add((slot: i, kind: o.kind, at: r, price: said, short: short, picked: picked));
+      v.texts['row:$i'] = '$rarity$rest';
       y += rowH + gap;
     }
 
@@ -303,9 +308,9 @@ extension on Board {
   }
 
   /// "Active" from [top] on [left], and in grey "waves left": each boost running as the Bag's slot in its rarity's
-  /// colours ([_bagRarityPaints]; a Common's the plain one), its icon in it and its waves left in the count's capsule, in
-  /// rows the page's width; a lone one's name and effect beside it. None: "None yet.". All of it is drawn: the left
-  /// page's view clips it ([_tavernPages]).
+  /// colours ([_bagRarityPaints]; a Common's the plain one), its icon in it and its waves left in the count's capsule
+  /// ("Town" for one until the next Town), in rows the page's width; a lone one's name and effect beside it. None: "None
+  /// yet.". All of it is drawn: the left page's view clips it ([_tavernPages]).
   void _tavernActive(Canvas c, Game g, Rect left, double top, double ts, double ps) {
     const ink = Color(0xFF4A2C17), grey = Color(0xFF9E9080);
     final v = _tavernPage, fs = math.max(10.0, 13 * ts), small = math.max(10.0, 11 * ts), lineH = (fs * 1.5).roundToDouble();
@@ -329,8 +334,9 @@ extension on Board {
       final rule = g.boostRule(b.kind);
       _bagSlot(c, at, ps, paint: _bagRarityPaints[rule.rarity]);
       _boostIcon(c, b.kind, b.type, _whole(cell.icon.shift(at.topLeft)));
-      _capsule(c, '${b.left}', small, Offset(at.right - ps, at.bottom - ps), anchor: Anchor.bottomRight);
-      var said = '${b.left}';
+      final waves = b.untilTown ? Words.town : '${b.left}';
+      _capsule(c, waves, small, Offset(at.right - ps, at.bottom - ps), anchor: Anchor.bottomRight);
+      var said = waves;
       if (g.boosts.length == 1) {
         final label = _fit('${boostNames[b.kind]}: ${boostEffectLines(rule.effects).join(', ')}', small, left.right - at.right - 8 * ts);
         _text(c, label, Offset(at.right + 8 * ts, at.center.dy), size: small, color: ink);
@@ -343,7 +349,8 @@ extension on Board {
   }
 
   /// The pick's facing page in [right] ([o], slot [i]), from the top: its heading (icon, name, its rarity in its ink at
-  /// the right), what it does ([boostDoes]), in grey "Rare boost. Lasts the next 2 waves.", "Effect" and a row per line
+  /// the right), what it does ([boostDoes]), in grey "Rare boost. Lasts the next 2 waves." ("Rare boost. Lasts until
+  /// next Town, 5 waves or more."), "Effect" and a row per line
   /// of [boostEffectRows] (inset cards that only tell, the effects' values in green), Buy ([_tavernBuyButton]) and the
   /// grey "No limit" line. Under the heading they scroll where they don't all fit (decisions-log 283: the landscape book
   /// shorter; page_scroll.dart), clear of the bar then; what takes a tap is cut to the view, and so are the parts and rows
@@ -351,7 +358,7 @@ extension on Board {
   /// the rows closer, then fewer lines above them).
   void _tavernFacing(Canvas c, Game g, BoostOffer o, int i, Rect right, double ts, double ps) {
     const ink = Color(0xFF4A2C17), grey = Color(0xFF9E9080);
-    final v = _tavernPage, rule = g.boostRule(o.kind), rarity = rarityNames[rule.rarity]!, waves = g.townRules.tavern.waves;
+    final v = _tavernPage, rule = g.boostRule(o.kind), rarity = rarityNames[rule.rarity]!;
     final fs = math.max(10.0, 13 * ts), lineH = math.max(14.0, (fs * 1.15).roundToDouble());
     // The heading: as the Bag's ([_detailHeading]): the icon 16 px on a phone and 32 on the desk.
     final cy = right.top + (24 * ts).roundToDouble(), side = bagHeadIcon(ps);
@@ -367,10 +374,13 @@ extension on Board {
       ..texts['rarity'] = rarity;
     final head = math.max(right.top + (42 * ts).roundToDouble(), icon.bottom + 4);
 
-    final rows = boostEffectRows(g, o.kind, o.type), n = rows.length;
+    final rows = boostEffectRows(g, o), n = rows.length;
     final gap = math.max(4.0, (6 * ts).roundToDouble()), rowGap = math.max(2.0, (4 * ts).roundToDouble());
     final btnH = math.max(20.0, (32 * ts).roundToDouble()), pad = math.max(3.0, (5 * ts).roundToDouble());
-    final doesText = boostDoes(g, o.kind, o.type), lineText = '$rarity ${Words.boost.toLowerCase()}. Lasts the next $waves waves.';
+    final lasts = o.untilTown
+        ? '${boostLengthWords(0, untilTown: true, inLine: true)}, ${g.townRules.schedule.minGap} waves or more'
+        : 'the next ${boostLengthWords(o.waves)}';
+    final doesText = boostDoes(g, o.kind, o.type), lineText = '$rarity ${Words.boost.toLowerCase()}. Lasts $lasts.';
     // A row: its icon (the heading's: 16 px on a phone, 32 on the desk), a few px over and under it.
     final rowIcon = bagHeadIcon(ps), rowH = math.max(rowIcon + 4, (fs * 1.4 + 12 * ts).roundToDouble());
     (List<String>, List<String>) wrapped(double w) => (this._wrap(doesText, fs, w, 3), this._wrap(lineText, fs, w, 2));
@@ -425,7 +435,7 @@ extension on Board {
   /// "Buy (1,550 gold)" ("Buy (1550)", "Buy" where shorter), while offer [i] can be bought ([Tavern.whyNotBuyBoost]);
   /// else the white one with why ("Not enough gold", "Sold"). A press buys it ([_tavernBuy]) or says why again.
   void _tavernBuyButton(Canvas c, Game g, BoostOffer o, int i, Rect r, double ts) {
-    final why = g.whyNotBuyBoost(i), fs = math.max(10.0, 14 * ts), room = r.width - 12 * ts, price = g.boostPrice(o.kind);
+    final why = g.whyNotBuyBoost(i), fs = math.max(10.0, 14 * ts), room = r.width - 12 * ts, price = g.offerPrice(o);
     final label = why == null
         ? _fitFirst(['${Words.buy} (${thousands(price)} gold)', '${Words.buy} (${shortPrice(price)})', Words.buy], fs, room)
         : _fit(boostRefusals[why]!, fs, room);
@@ -437,15 +447,15 @@ extension on Board {
   }
 
   /// A press on Buy for offer [i]: it runs from now ([Tavern.buyBoost]) and the message window says so ("Feast! 2
-  /// waves"). Refused: the error and why ([boostRefusals]).
+  /// waves", "Feast! Until next Town"). Refused: the error and why ([boostRefusals]).
   void _tavernBuy(int i) {
     final g = state;
     if (g.whyNotBuyBoost(i) case final why?) {
       g.buyBoost(i); // the error
       return showMessage(boostRefusals[why]!);
     }
-    final kind = g.tavernOffers[i].kind;
-    if (g.buyBoost(i)) showMessage('${boostNames[kind]}! ${g.townRules.tavern.waves} waves');
+    final o = g.tavernOffers[i];
+    if (g.buyBoost(i)) showMessage('${boostNames[o.kind]}! ${o.length}');
   }
 
   /// A press on Reroll: the offers not bought are drawn again ([Tavern.rerollTavern]) and come in on the page. Refused:

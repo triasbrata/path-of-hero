@@ -5,12 +5,17 @@ part of 'game.dart';
 // wave atk+ def untuk semua jenis troops, nah ini di buat jadi gacha juga opsi yang di tawarkan di tavern"; and on
 // 2026-10-08 (the design's questions): "500 adalah contoh saja, kalau bisa jangan terlalu mahal untuk di kota kota awal",
 // "Sebanyak gold cukup" (no buy limit), "semua buff tavern adalah temporary buff untuk 2 wave setelahnya" (every boost
-// lasts the next two waves), DEF = damage taken, and the game's existing icons.
+// lasts the next two waves), DEF = damage taken, and the game's existing icons. On 2026-10-12 (decisions-log 331): "buff
+// dari tavern di buat panjang buffnya bisa variasi bisa 2 tapi bisa juga sampai next town. nah ini di random saja dan
+// semakin lama buffnya bertahan harusnya harganya juga ikut naik" (each offer's length is rolled, 2 waves up to the next
+// Town, and the longer it lasts the dearer it is).
 //
 // In every Town the Tavern offers [TavernRules.offers] boosts rolled on [Game.tavernDice] at [Towns.enterTown], each of a
 // rarity ([Rarity]: Common, Rare, Epic, Legendary); every offer can be bought once while the gold lasts, and a reroll
-// rolls the unbought ones again for a price that doubles within the visit. A boost runs from its buy for the next
-// [TavernRules.waves] waves fought, counted down at each wave's end ([Tavern._boostWaveEnd]), and works as one step at the
+// rolls the unbought ones again for a price that doubles within the visit. Each offer has its own length, rolled with it
+// ([TavernRules.lengths]): a boost runs from its buy for that many waves fought, counted down at each wave's end
+// ([Tavern._boostWaveEnd]; a wave lost to a wipe and played again isn't counted), or until the next Town is entered
+// ([Tavern._boostTownEnd]); its price grows with the length ([Tavern.boostPrice]). It works as one step at the
 // end of [Game.statsOf] ([Tavern._boostStats]), on top of the items, awakening, Tempa, the heavies' buff, the Pusaka and
 // the oath; two kinds hook the kill gold ([Tavern._boostGold]) and the leak line ([Tavern._boostLeak]) instead. Every
 // number is town.json's `tavern` block ([TavernRules]). Every Town has its Tavern (decisions-log 296: the Tavern-off
@@ -116,14 +121,17 @@ class BoostMost {
   Map<String, dynamic> toJson() => {'dmg': dmg, 'hp': maxHp, 'rate': rate, 'mpRegen': mpRegen, 'gold': gold, 'taken': taken};
 }
 
-/// The Tavern's numbers (town.json `tavern`, decisions-log 266): [offers] a visit, each boost's [waves] (every kind the
-/// same: the owner's two), the wave a Legendary may first be offered at ([legendFrom]; before it an Epic), the [pity]th
+/// The Tavern's numbers (town.json `tavern`, decisions-log 266): [offers] a visit, the base length [waves] (the owner's
+/// first two: the length a price's k buys, and an offer or a boost saved before decisions-log 331 lasts it), each offer's
+/// length's share of its roll ([lengths]: waves fought → share; [lengthTown]: "until the next Town"; decisions-log 331),
+/// the wave a Legendary may first be offered at ([legendFrom]; before it an Epic), the [pity]th
 /// visit in a row without an Epic or better gets one in its last slot (0: never), the run's first Tavern's first offer the
 /// Feast ([firstFeast]); each rarity's [odds] (a share of their sum); the [price] of a rarity in the Tavern's purses of
 /// the wave won ([purseAt]: the game's purse, [early] of it at wave 0 rising to all of it at [fullFrom], so the first
 /// Towns are cheap: the owner, 2026-10-08), at least [priceLeast], rounded to [round] gold, to [roundBig] from
 /// [bigFrom]; the first reroll's [rerollK] purses (at least [rerollLeast], rounded the same), × [rerollRise] for each one
-/// before it in the visit; the [most] a stat gets from boosts together; and every kind's [boosts] rule.
+/// before it in the visit; an offer "until the next Town" priced at the waves the Town roll's odds give to the next Town
+/// ([townGapMean]) × [priceTown]; the [most] a stat gets from boosts together; and every kind's [boosts] rule.
 class TavernRules {
   const TavernRules({
     this.offers = 3,
@@ -131,11 +139,14 @@ class TavernRules {
     this.legendFrom = 30,
     this.pity = 4,
     this.firstFeast = true,
+    this.lengths = const {2: 0.45, 3: 0.25, 4: 0.18},
+    this.lengthTown = 0.12,
     this.odds = const {Rarity.biasa: 0.55, Rarity.langka: 0.30, Rarity.epik: 0.13, Rarity.legenda: 0.02},
     this.price = const {Rarity.biasa: 0.3, Rarity.langka: 0.5, Rarity.epik: 0.9, Rarity.legenda: 1.5},
     this.early = 0.5,
     this.fullFrom = 20,
     this.priceLeast = 50,
+    this.priceTown = 1.1,
     this.round = 50,
     this.roundBig = 1000,
     this.bigFrom = 10000,
@@ -149,7 +160,8 @@ class TavernRules {
   final int offers, waves, legendFrom, pity, fullFrom, priceLeast, round, roundBig, bigFrom, rerollLeast;
   final bool firstFeast;
   final Map<Rarity, double> odds, price;
-  final double early, rerollK, rerollRise;
+  final Map<int, double> lengths;
+  final double lengthTown, early, priceTown, rerollK, rerollRise;
   final BoostMost most;
   final Map<Boost, BoostRule> boosts;
 
@@ -175,7 +187,18 @@ class TavernRules {
 
     final price = block(j, 'price'), reroll = block(j, 'reroll'), boosts = block(j, 'boosts');
     unknown(j, d.toJson().keys, 'tavern');
-    unknown(price, ['k', 'early', 'fullFrom', 'least', 'round', 'roundBig', 'bigFrom'], 'tavern.price');
+    unknown(price, ['k', 'early', 'fullFrom', 'least', 'round', 'roundBig', 'bigFrom', 'town'], 'tavern.price');
+    // Each length's share, by its waves ("2") or "town": a key that is neither is noted; none above 0 keeps the defaults.
+    final lengthsIn = block(j, 'lengths');
+    skipped.addAll([for (final k in lengthsIn.keys) if (k != 'town' && (int.tryParse(k) ?? 0) < 1) 'tavern.lengths: no $k']);
+    double share(Object? v, double def) => switch (v) { final num n when n >= 0 && n.isFinite => n.toDouble(), _ => def };
+    var lengths = {
+      for (final MapEntry(key: n, value: v) in d.lengths.entries) n: share(lengthsIn['$n'], v),
+      for (final MapEntry(:key, :value) in lengthsIn.entries)
+        if ((int.tryParse(key) ?? 0) >= 1 && !d.lengths.containsKey(int.parse(key)) && share(value, 0) > 0) int.parse(key): share(value, 0),
+    };
+    var lengthTown = share(lengthsIn['town'], d.lengthTown);
+    if (lengthTown <= 0 && !lengths.values.any((v) => v > 0)) (lengths, lengthTown) = (d.lengths, d.lengthTown);
     unknown(reroll, ['k', 'least', 'rise'], 'tavern.reroll');
     unknown(boosts, [for (final b in Boost.values) b.name], 'tavern.boosts');
     return TavernRules(
@@ -184,11 +207,14 @@ class TavernRules {
       legendFrom: atLeast(j, 'legendFrom', 0, d.legendFrom),
       pity: atLeast(j, 'pity', 0, d.pity),
       firstFeast: switch (j['firstFeast']) { final bool b => b, _ => d.firstFeast },
+      lengths: Map.fromEntries(lengths.entries.toList()..sort((a, b) => a.key.compareTo(b.key))),
+      lengthTown: lengthTown,
       odds: byRarity(block(j, 'odds'), d.odds, 'tavern.odds', positive: false),
       price: byRarity(block(price, 'k'), d.price, 'tavern.price.k', positive: true),
       early: switch (price['early']) { final num v when v >= 0 && v <= 1 => v.toDouble(), _ => d.early },
       fullFrom: atLeast(price, 'fullFrom', 1, d.fullFrom),
       priceLeast: atLeast(price, 'least', 0, d.priceLeast),
+      priceTown: above(price, 'town', 0, d.priceTown),
       round: atLeast(price, 'round', 1, d.round),
       roundBig: atLeast(price, 'roundBig', 1, d.roundBig),
       bigFrom: atLeast(price, 'bigFrom', 0, d.bigFrom),
@@ -209,12 +235,16 @@ class TavernRules {
   /// [v] gold rounded the Tavern's way: to [round], to [roundBig] from [bigFrom].
   int rounded(double v) => v >= bigFrom ? (v / roundBig).round() * roundBig : (v / round).round() * round;
 
+  /// The next price up from [price] the Tavern's way: one [round] more, one [roundBig] from [bigFrom].
+  int stepUp(int price) => price + (price >= bigFrom ? roundBig : round);
+
   Map<String, dynamic> toJson() => {
         'offers': offers,
         'waves': waves,
         'legendFrom': legendFrom,
         'pity': pity,
         'firstFeast': firstFeast,
+        'lengths': {for (final MapEntry(:key, :value) in lengths.entries) '$key': value, 'town': lengthTown},
         'odds': {for (final MapEntry(:key, :value) in odds.entries) rarityKeys[key]!: value},
         'price': {
           'k': {for (final MapEntry(:key, :value) in price.entries) rarityKeys[key]!: value},
@@ -224,6 +254,7 @@ class TavernRules {
           'round': round,
           'roundBig': roundBig,
           'bigFrom': bigFrom,
+          'town': priceTown,
         },
         'reroll': {'k': rerollK, 'least': rerollLeast, 'rise': rerollRise},
         'most': most.toJson(),
@@ -231,9 +262,9 @@ class TavernRules {
       };
 }
 
-/// The shipped catalogue (assets/config/town.json writes each one out). Every kind lasts [TavernRules.waves] (the owner:
-/// two waves, every one). Travel Rations was the design's "longer but weaker" (5 waves); with every boost two waves it is
-/// a cheap Common with a little of everything.
+/// The shipped catalogue (assets/config/town.json writes each one out). A kind has no length of its own: each offer rolls
+/// one ([TavernRules.lengths], decisions-log 331). Travel Rations was the design's "longer but weaker" (5 waves); with
+/// every kind's lengths the same it is a cheap Common with a little of everything.
 const _tavernBoosts = {
   Boost.feast: BoostRule(Rarity.langka, dmg: 1.20, taken: 0.85),
   Boost.ale: BoostRule(Rarity.biasa, dmg: 1.15),
@@ -262,30 +293,69 @@ const _boostStatWords = {'dmg': 'damage', 'hp': 'max HP', 'rate': 'attack speed'
 
 int _percent(num share) => (share * 100).round();
 
-/// One offer in the Tavern: its [kind], the [type] it works on (a one-type kind's, rolled with it), and whether it was
-/// bought.
-class BoostOffer {
-  BoostOffer(this.kind, {this.type, this.sold = false});
-
-  final Boost kind;
-  final String? type;
-  bool sold;
-
-  factory BoostOffer.fromJson(Map j) => BoostOffer(Boost.values.byName(j['kind'] as String), type: j['type'] as String?, sold: j['sold'] == true);
-
-  Map<String, Object> toJson() => {'kind': kind.name, 'type': ?type, if (sold) 'sold': true};
+/// The waves fought from one Town to the next on average by [s]'s odds (decisions-log 331): [TownSchedule.minGap], then
+/// each roll from [TownSchedule.chanceStart] (a Town resets it) up by [TownSchedule.chanceStep] to
+/// [TownSchedule.chanceCap] (the shipped 7.42: 5 waves 20%, 6 20%, 7 18%, 8 15%, 9 11%, 10 or more 16%). What a boost
+/// "until the next Town" bought in a Town lasts on average (the next one is never marked yet: it is rolled two waves
+/// ahead, at least [TownSchedule.minGap] on). Odds that may never hit count their 200th roll as the last.
+double townGapMean(TownSchedule s) {
+  var (mean, missed) = (0.0, 1.0);
+  for (var k = 0; k < 200 && missed > 0; k++) {
+    final hit = k == 199 ? 1.0 : min(s.chanceCap, s.chanceStart + s.chanceStep * k);
+    mean += (s.minGap + k) * missed * hit;
+    missed *= 1 - hit;
+  }
+  return mean;
 }
 
-/// A boost running: its [kind], the waves [left] (counted down at each wave's end), the [type] it works on (a one-type
-/// kind's), and the leaks it forgave this wave ([saved]; not saved: a save is between waves).
-class RunningBoost {
-  RunningBoost(this.kind, this.left, {this.type});
+/// A boost's length as the player reads it: "2 waves" ("1 wave"), or "Until next Town" ([untilTown]; "until next Town"
+/// [inLine], inside a sentence; "Until Town" [short], where room is short).
+String boostLengthWords(int waves, {bool untilTown = false, bool inLine = false, bool short = false}) => !untilTown
+    ? '$waves ${waves == 1 ? 'wave' : 'waves'}'
+    : short
+        ? Words.untilTown
+        : inLine
+            ? Words.untilNextTown.replaceRange(0, 1, Words.untilNextTown[0].toLowerCase())
+            : Words.untilNextTown;
+
+/// One offer in the Tavern: its [kind], the [type] it works on (a one-type kind's, rolled with it), how long it lasts
+/// (rolled with it, decisions-log 331: [waves] waves fought, or until the next Town is entered, [untilTown]), and whether
+/// it was bought.
+class BoostOffer {
+  BoostOffer(this.kind, {this.type, this.sold = false, this.waves = 2, this.untilTown = false});
 
   final Boost kind;
   final String? type;
-  int left, saved = 0;
+  final int waves;
+  final bool untilTown;
+  bool sold;
 
-  Map<String, Object> toJson() => {'kind': kind.name, 'left': left, 'type': ?type};
+  /// [j]'s offer; one saved before decisions-log 331 (no `waves`, no `town`) lasts [base] waves, as every offer did.
+  factory BoostOffer.fromJson(Map j, int base) => BoostOffer(Boost.values.byName(j['kind'] as String),
+      type: j['type'] as String?,
+      sold: j['sold'] == true,
+      waves: switch (j['waves']) { final int n when n >= 1 => n, _ => base },
+      untilTown: j['town'] == true);
+
+  /// The length as the player reads it ([boostLengthWords]).
+  String get length => boostLengthWords(waves, untilTown: untilTown);
+
+  Map<String, Object> toJson() => {'kind': kind.name, 'type': ?type, if (untilTown) 'town': true else 'waves': waves, if (sold) 'sold': true};
+}
+
+/// A boost running: its [kind], the waves [left] (counted down at each wave's end; none for one [untilTown], which ends as
+/// the next Town is entered), the waves it was counted ([fought]: 0 for one bought in the Town just left), the [type] it
+/// works on (a one-type kind's), and the leaks it forgave this wave ([saved]; not saved: a save is between waves).
+class RunningBoost {
+  RunningBoost(this.kind, this.left, {this.type, this.untilTown = false, this.fought = 0});
+
+  final Boost kind;
+  final String? type;
+  final bool untilTown;
+  int left, fought, saved = 0;
+
+  Map<String, Object> toJson() =>
+      {'kind': kind.name, if (untilTown) 'town': true else 'left': left, 'type': ?type, if (fought > 0) 'fought': fought};
 }
 
 /// The Tavern in the Town the player is in ([Game._tavern]): its [offers], the rerolls bought, the gold spent on boosts and
@@ -348,22 +418,45 @@ extension Tavern on Game {
   bool boostTouches(RunningBoost b, String type) =>
       (b.type == null || b.type == type) && boostRule(b.kind).effects.keys.any(_boostTroopKeys.contains);
 
-  /// The battle chip's tooltip for running boost [i] ([Game.boosts]; decisions-log 268): "Feast: 2 waves left", then
-  /// what it does, an effect a line, and who it works on.
+  /// The battle chip's tooltip for running boost [i] ([Game.boosts]; decisions-log 268): "Feast: 2 waves left" (one
+  /// until the next Town: "Feast: until next Town", and "Town after wave 12" once that Town is marked), then what it
+  /// does, an effect a line, and who it works on.
   (String, List<String>) boostTip(int i) {
     final b = boosts[i], who = boostWho(this, b.kind, b.type);
     return (
-      '${boostNames[b.kind]}: ${b.left} ${b.left == 1 ? 'wave' : 'waves'} left',
-      [...boostEffectLines(boostRule(b.kind).effects), ?who],
+      b.untilTown
+          ? '${boostNames[b.kind]}: ${boostLengthWords(0, untilTown: true, inLine: true)}'
+          : '${boostNames[b.kind]}: ${boostLengthWords(b.left)} left',
+      [
+        if (b.untilTown && townMarked) '${Words.townAfter} ${townAt! - 1}',
+        ...boostEffectLines(boostRule(b.kind).effects),
+        ?who,
+      ],
     );
   }
 
-  /// What a boost of [kind] costs now: its rarity's purses (or its own [BoostRule.k]) of the wave won
-  /// ([TavernRules.purseAt]), rounded the Tavern's way, at least [TavernRules.priceLeast].
-  int boostPrice(Boost kind) {
-    final r = townRules.tavern, rule = r.boosts[kind]!;
-    return max(r.priceLeast, r.rounded((rule.k ?? r.price[rule.rarity]!) * r.purseAt(max(1, wave))));
+  /// What a boost of [kind] costs now for [waves] waves (the base [TavernRules.waves] when not given), or until the next
+  /// Town ([untilTown]): its rarity's purses (or its own [BoostRule.k]) of the wave won ([TavernRules.purseAt]) for the
+  /// base length, × [waves] / the base (decisions-log 331), rounded the Tavern's way, at least [TavernRules.priceLeast];
+  /// a length over the base at least a step ([TavernRules.stepUp]) over the one a wave shorter, so the longer is always
+  /// dearer (at wave 6 a Common's 2, 3 and 4 waves are 50, 100 and 150, not 50, 100 and 100). Until the next Town: the
+  /// waves to it on average ([townGapMean]) × [TavernRules.priceTown], and at least a step over the longest length rolled.
+  /// The base length's is the price from before decisions-log 331.
+  int boostPrice(Boost kind, {int? waves, bool untilTown = false}) {
+    final r = townRules.tavern, rule = r.boosts[kind]!, base = r.waves;
+    final raw = (rule.k ?? r.price[rule.rarity]!) * r.purseAt(max(1, wave));
+    int priced(double n) => max(r.priceLeast, r.rounded(raw * n / base));
+    var price = priced(base.toDouble());
+    final n = untilTown ? [base, ...r.lengths.keys].reduce(max) : waves ?? base;
+    for (var w = base + 1; w <= n; w++) {
+      price = max(priced(w.toDouble()), r.stepUp(price));
+    }
+    if (!untilTown) return n < base ? priced(n.toDouble()) : price;
+    return max(priced(townGapMean(townRules.schedule) * r.priceTown), r.stepUp(price));
   }
+
+  /// What offer [o] costs now ([boostPrice] for its length).
+  int offerPrice(BoostOffer o) => boostPrice(o.kind, waves: o.waves, untilTown: o.untilTown);
 
   /// What the next reroll costs: [TavernRules.rerollK] purses of the wave won × [TavernRules.rerollRise] for each one
   /// bought in this visit, rounded the Tavern's way, at least [TavernRules.rerollLeast].
@@ -379,27 +472,28 @@ extension Tavern on Game {
     final v = _tavern;
     if (!inTown || v == null || i < 0 || i >= v.offers.length) return BoostWhy.town;
     if (v.offers[i].sold) return BoostWhy.sold;
-    if (gold < boostPrice(v.offers[i].kind)) return BoostWhy.gold;
+    if (gold < offerPrice(v.offers[i])) return BoostWhy.gold;
     return null;
   }
 
-  /// Buys offer [i] ([whyNotBuyBoost]): its price paid, it runs at once for [TavernRules.waves] waves (the troops refit:
-  /// HP gained comes with it), and [BoostBought]. False (and [Sfx.error]) when it can't.
+  /// Buys offer [i] ([whyNotBuyBoost]): its price paid, it runs at once for its waves, or until the next Town (the troops
+  /// refit: HP gained comes with it), and [BoostBought]. False (and [Sfx.error]) when it can't.
   bool buyBoost(int i) {
     if (whyNotBuyBoost(i) != null) {
       sfx.add(Sfx.error);
       return false;
     }
-    final v = _tavern!, o = v.offers[i], rule = boostRule(o.kind), price = boostPrice(o.kind), waves = townRules.tavern.waves;
+    final v = _tavern!, o = v.offers[i], rule = boostRule(o.kind), price = offerPrice(o), waves = o.untilTown ? 0 : o.waves;
     gold -= price;
     o.sold = true;
     v
       ..spent += price
       ..bought.add(o.kind);
-    boosts.add(RunningBoost(o.kind, waves, type: o.type));
+    boosts.add(RunningBoost(o.kind, waves, type: o.type, untilTown: o.untilTown));
     _refitTroops(); // the living troops take it now (pusaka.dart's oath does the same)
     sfx.add(Sfx.clear);
-    _emit(BoostBought(wave, t, boost: o.kind, rarity: rule.rarity, price: price, waves: waves, type: o.type, slot: i, effects: rule.effects));
+    _emit(BoostBought(wave, t,
+        boost: o.kind, rarity: rule.rarity, price: price, waves: waves, untilTown: o.untilTown, type: o.type, slot: i, effects: rule.effects));
     return true;
   }
 
@@ -436,7 +530,7 @@ extension Tavern on Game {
       }
       final kind = _drawBoost(open);
       taken.add(kind);
-      v.offers[i] = BoostOffer(kind, type: boostRule(kind).oneType ? _boostType() : null);
+      v.offers[i] = _boostOffer(kind);
     }
     sfx.add(Sfx.click);
     _emit(TavernRerolled(wave, t, price: price, n: v.rerolls, offers: [for (final o in v.offers) o.kind]));
@@ -448,7 +542,7 @@ extension Tavern on Game {
   /// ([TavernRules.firstFeast]); after [TavernRules.pity] − 1 visits in a row without an Epic or better ([Game.tavernDry])
   /// the last slot is an Epic when none came before it. Each other slot draws a rarity ([TavernRules.odds]) and a kind of
   /// it, stepping down, then up, when that rarity has none left (a Legendary before [TavernRules.legendFrom] has none); a
-  /// one-type kind draws its type among the types alive.
+  /// one-type kind draws its type among the types alive; then every offer its length ([_boostOffer]).
   void _rollTavern() {
     final r = townRules.tavern, first = r.firstFeast && !tavernSeen, pity = r.pity > 0 && tavernDry >= r.pity - 1;
     final offers = <BoostOffer>[];
@@ -463,11 +557,26 @@ extension Tavern on Game {
         final lift = pity && i == r.offers - 1 && !offers.any((o) => epicOrBetter(o.kind));
         kind = _drawBoost(open, lift ? Rarity.epik : null);
       }
-      offers.add(BoostOffer(kind, type: r.boosts[kind]!.oneType ? _boostType() : null));
+      offers.add(_boostOffer(kind));
     }
     _tavern = TavernVisit(offers);
     tavernSeen = true;
     tavernDry = offers.any((o) => epicOrBetter(o.kind)) ? 0 : tavernDry + 1;
+  }
+
+  /// An offer of [kind]: a one-type kind's type drawn among the types alive ([_boostType]), then its length on one
+  /// [Game.tavernDice] draw by [TavernRules.lengths] and [TavernRules.lengthTown] (each a share of their sum; decisions-log
+  /// 331): so many waves, or until the next Town.
+  BoostOffer _boostOffer(Boost kind) {
+    final r = townRules.tavern, type = r.boosts[kind]!.oneType ? _boostType() : null;
+    final total = r.lengths.values.fold(r.lengthTown, (a, b) => a + b);
+    var at = tavernDice.nextDouble() * total;
+    for (final MapEntry(key: waves, value: share) in r.lengths.entries) {
+      if (at < share) return BoostOffer(kind, type: type, waves: waves);
+      at -= share;
+    }
+    if (r.lengthTown > 0) return BoostOffer(kind, type: type, untilTown: true);
+    return BoostOffer(kind, type: type, waves: r.lengths.entries.lastWhere((e) => e.value > 0).key);
   }
 
   /// The kinds that may be offered now, but [taken]: none running, a Legendary only from [TavernRules.legendFrom], a
@@ -559,16 +668,27 @@ extension Tavern on Game {
     return false;
   }
 
-  /// A wave ended (won, or the game lost): each boost running has one wave fewer, its forgiven leaks back to none, and
-  /// those at 0 end ([BoostEnded]): the troops refit, the HP lost only capped ([Game._refit]: it never kills).
-  void _boostWaveEnd() {
+  /// A wave ended (won, or the game lost): each boost running has one wave fewer (none for one until the next Town), its
+  /// forgiven leaks back to none, and those at 0 end ([_boostsEnd]). A wave lost to a wipe ([replay], wipe.dart) is
+  /// played again, so it counts nothing (decisions-log 331: the replay is the same wave, as the wave meter reads it); only
+  /// the leaks forgiven start again.
+  void _boostWaveEnd({bool replay = false}) {
     if (boosts.isEmpty) return;
     for (final b in boosts) {
-      b
-        ..left -= 1
-        ..saved = 0;
+      b.saved = 0;
+      if (replay) continue;
+      b.fought += 1;
+      if (!b.untilTown) b.left -= 1;
     }
-    final ended = [for (final b in boosts) if (b.left <= 0) b];
+    _boostsEnd([for (final b in boosts) if (!b.untilTown && b.left <= 0) b]);
+  }
+
+  /// The next Town was entered ([Towns.enterTown], before its Tavern rolls, so it may offer them again): the boosts until
+  /// it end ([_boostsEnd]).
+  void _boostTownEnd() => _boostsEnd([for (final b in boosts) if (b.untilTown) b]);
+
+  /// The boosts [ended] end ([BoostEnded]): the troops refit, the HP lost only capped ([Game._refit]: it never kills).
+  void _boostsEnd(List<RunningBoost> ended) {
     if (ended.isEmpty) return;
     boosts.removeWhere(ended.contains);
     _refitTroops();
@@ -578,14 +698,15 @@ extension Tavern on Game {
   }
 
   /// A probe's buys in a Tavern ([Game.tavernPolicy], from [Towns._townByPolicy] before it leaves): 'top' the best offer
-  /// it can pay (the highest rarity, then the dearest, then the first slot), 'all' every one it can pay in that order.
+  /// it can pay (the highest rarity, then the dearest, so the longest of a rarity, then the first slot), 'all' every one
+  /// it can pay in that order.
   void _tavernByPolicy() {
     final v = _tavern;
     if (v == null) return;
     int rank(int i) => boostRule(v.offers[i].kind).rarity.index;
     final order = [for (var i = 0; i < v.offers.length; i++) i]
       ..sort((a, b) => switch (rank(b).compareTo(rank(a))) {
-            0 => switch (boostPrice(v.offers[b].kind).compareTo(boostPrice(v.offers[a].kind))) { 0 => a.compareTo(b), final c => c },
+            0 => switch (offerPrice(v.offers[b]).compareTo(offerPrice(v.offers[a]))) { 0 => a.compareTo(b), final c => c },
             final c => c,
           });
     for (final i in order) {
@@ -619,16 +740,21 @@ extension Tavern on Game {
       };
 
   /// [j]'s `boosts` ([Game.fromJson], before the troops come in, so they fit with them), whatever the flags are (the key
-  /// is only written while one runs): an unknown kind, a one-type kind without a troop type, and one with no wave left
-  /// are dropped.
+  /// is only written while one runs): each `{kind, left, type?, fought?}`, or `{kind, town: true, ...}` until the next
+  /// Town (decisions-log 331). An unknown kind, a one-type kind without a troop type, and one with no wave left are
+  /// dropped. One saved before 331 has no `fought`: every boost was [TavernRules.waves] long then, so it fought the rest.
   void _loadBoosts(Map<String, dynamic> j) {
     for (final b in (j['boosts'] as List?) ?? const []) {
       if (b is! Map) continue;
-      final kind = Boost.values.asNameMap()[b['kind']], left = b['left'], type = b['type'];
-      if (kind == null || left is! int || left <= 0) continue;
+      final kind = Boost.values.asNameMap()[b['kind']], left = b['left'], type = b['type'], town = b['town'] == true;
+      if (kind == null || (!town && (left is! int || left <= 0))) continue;
       final oneType = boostRule(kind).oneType;
       if (oneType && !troopTypes.containsKey(type)) continue;
-      boosts.add(RunningBoost(kind, left, type: oneType ? type as String : null));
+      final fought = switch (b['fought']) {
+        final int n when n >= 0 => n,
+        _ => town ? 0 : max(0, townRules.tavern.waves - (left as int)),
+      };
+      boosts.add(RunningBoost(kind, town ? 0 : left as int, type: oneType ? type as String : null, untilTown: town, fought: fought));
     }
   }
 
@@ -643,7 +769,7 @@ extension Tavern on Game {
       _tavern = TavernVisit([
         for (final o in (v['offers'] as List?) ?? const [])
           if (o is Map && Boost.values.asNameMap().containsKey(o['kind']) && (o['type'] == null || troopTypes.containsKey(o['type'])))
-            BoostOffer.fromJson(o),
+            BoostOffer.fromJson(o, townRules.tavern.waves),
       ])
         ..rerolls = switch (v['rerolls']) { final int n when n > 0 => n, _ => 0 }
         ..spent = switch (v['spent']) { final int n when n > 0 => n, _ => 0 }

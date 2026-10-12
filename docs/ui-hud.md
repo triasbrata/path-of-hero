@@ -1193,21 +1193,24 @@ existing art only.
 - **The chips** (`_boostChips`): one per boost running (`Game.boosts`, in the order bought), the Town chip's look
   (ui_bars.png's dark capsule, 9-sliced, its corners cut): the boost's own icon (`_boostIcon`, the Tavern page's: the
   mug for the Feast, the sword for Strong Ale, a Champion's Plate its type's sprite, …; 16 px from its art at one
-  screen px a pixel, 32 from the meter's k 4) and the waves it has left in cream ("2"), all as wide as the widest, 4 px
+  screen px a pixel, 32 from the meter's k 4) and the waves it has left in cream ("2"), or for one until the next Town
+  the Town chip's hammer (`town_mark.png`, as big as the icon; decisions-log 331), all as wide as the widest, 4 px
   apart. Under the Town chip when one is marked, else where it would go (`_underMeter`: 6 px under the wave meter,
   under the open map, the Shadows' chips and the "Chest!" chip in their columns), in rows
   right-aligned with the meter, as many a row as its width takes. In a Town too (a boost bought there shows at once);
   none at game over. The boss bars, the battle log's panel and the units' plates keep under them (`_boostRowAt`).
   `Board.boostChips` for tests.
 - **Tooltip** (`_Hint.boost`, the loot tooltips' frame with the boost's icon; `Tavern.boostTip`): "Feast: 2 waves left"
-  ("1 wave left"), then what it does, an effect a line ("+20% damage", "15% less damage taken"), then who
+  ("1 wave left"; one until the next Town "Feast: until next Town", and once that Town is marked a first line "Town
+  after wave 12"), then what it does, an effect a line ("+20% damage", "15% less damage taken"), then who
   ("All troops", "Knights"; none for the Lucky Toast and the Watchman's Brew).
 - **The troops' burst** (`_boostBursts`): as the field comes back from a Town (the fade's turn, `_townSync`), each living
   troop a boost bought there touches (`Tavern.boostTouches`: one with a troop effect, on every type or on its own; a
-  boost with all its `tavern.waves` left) bursts once with the field's upgrade burst (`fx_upgrade.png`, a chest take's).
+  boost no wave has counted yet, `RunningBoost.fought` 0) bursts once with the field's upgrade burst (`fx_upgrade.png`,
+  a chest take's).
   `Board.fieldBursts` for tests.
-- **The battle log** (its Other chip): "Feast: +20% damage, 15% less damage taken (2 waves)" at the buy, "Feast ended"
-  when it runs out, "Watchman's Brew: no life lost" when it forgives a leak, each with the boost's own icon.
+- **The battle log** (its Other chip): "Feast: +20% damage, 15% less damage taken (2 waves)" ("(until next Town)") at
+  the buy, "Feast ended" when it runs out or the next Town ends it, "Watchman's Brew: no life lost" when it forgives a leak, each with the boost's own icon.
 
 ### The Bag's Materials (decisions-log 221)
 
@@ -1863,15 +1866,17 @@ icons; nothing new drawn). In every Town (since decisions-log 268; the Tavern-of
   it: the page frame (`Board._framePlain`) recoloured by the offer's rarity with the Boss Chest's paints
   (`_rarityFramePaints`; a Common keeps the plain frame), the pick and the row under the mouse on the lit frame
   (`_frameLit`, the same recolour). In a row: the boost's icon, its name (bold, 15·ts), under it its rarity word in its
-  ink (`_rarityInk`; a Common's grey) and in grey " · 2 waves · All troops" (" · Knights" for the Champion's Plate;
-  " · All troops", nothing where shorter; a boost that touches no troop, the Lucky Toast and the Watchman's Brew, only
-  its waves); on the right the coin and the price ("1,550"; red, B0302A, while the gold is short), or once bought "Sold"
+  ink (`_rarityInk`; a Common's grey) and in grey its own length and troops, " · 3 waves · All troops" (" · Until next
+  Town · Knights"; each offer's length, decisions-log 331: " · 2 waves", " · 4 waves", " · Until next Town"; where shorter
+  the length alone, since it sets the price, then "Until Town" for "Until next Town" (`Words.untilTown`; the 915×412
+  rows), then nothing; a boost that touches no troop, the Lucky Toast and the
+  Watchman's Brew, only its length); on the right the coin and the price ("1,550"; red, B0302A, while the gold is short), or once bought "Sold"
   in grey with the icon faded (`_ghost`) and its words grey. A tap picks it (the facing page follows). Under them **Reroll**, a light tag
   (`_tag`, `_TagLook.go`; `.off` while the gold is short or every offer is sold, its press saying why: "Not enough gold",
   "Sold out") with the price in it ("Reroll 150"), and at the right in grey "Bought ones stay". Then "Active" (bold) with
   "waves left" (grey), and the boosts running as **Bag slots** (`bagCellSize`) in their rarity's colours (`_bagSlot` +
   `_bagRarityPaints`; a Common's the plain slot), the page's width a row, the icon in it and the waves left in the
-  count's capsule (`_capsule`, bottom right), in as many rows as they take (`_tavernActiveCols`); a lone one's name and
+  count's capsule (`_capsule`, bottom right; "Town" for one until the next Town), in as many rows as they take (`_tavernActiveCols`); a lone one's name and
   effect beside it ("Feast: +20% damage, 15% less damage taken"); none: "None yet." in grey. Under "Offers" all of it
   (the rows, Reroll, "Active" and its slots) scrolls where it doesn't fit (`_TavernView.list`, lib/page_scroll.dart:
   "A page's scroll" under "The book"; decisions-log 283, the landscape book shorter): the wheel or a drag over it, the
@@ -1886,16 +1891,18 @@ icons; nothing new drawn). In every Town (since decisions-log 268; the Tavern-of
 - **The right page (the pick's, action first):** the heading as the Bag's (`_detailHeading`'s band, 42·ts): the icon
   (`bagHeadIcon`: 16 px at 915×412, 32 on the desk), the name (20·ts) and at the right the rarity word in its ink (bold);
   what it does in ink (`boostDoes`: "Every troop: +20% damage, 15% less damage taken.", "Knights: +40% damage, +15%
-  attack speed.", "A leak a wave costs no life."); in grey "Rare boost. Lasts the next 2 waves."; "Effect" (bold) and a
+  attack speed.", "A leak a wave costs no life."); in grey "Rare boost. Lasts the next 3 waves." ("Lasts until next
+  Town, 5 waves or more.", the schedule's `minGap`); "Effect" (bold) and a
   row per line of `boostEffectRows`, inset paper cards that only tell (the Smithy's recipe rows): the icon (the Army
   page's stat icons where it has one: the sword for "Damage", the shield for "Damage taken", the gloves for "Attack
   speed"; the heart for "Max HP", the bolt for "MP regen", the coin for "Kill gold", the steel shield for "Leaks
   forgiven"), the words and at the right the value in green (2E8B3A: "+20%", "-15%"; "1 a wave"), then "Troops" (the
-  crossed swords: "All troops", "Knights") for a boost that touches troops, and "Waves" (ui_icons.png's sword: "2").
+  crossed swords: "All troops", "Knights") for a boost that touches troops, and "Lasts" (ui_icons.png's sword: "2
+  waves", "Until next Town").
   Then the page's **one bevelled button, Buy** (the page's width, max(20, 32·ts) tall): green "Buy (1,550 gold)" ("Buy
   (1550)", "Buy" where shorter); else the white one with why ("Not enough gold", "Sold"; `boostRefusals`), a press
-  saying it again (`Sfx.error`). A buy runs the boost at once, plays `Sfx.clear` and the message window says "Feast! 2
-  waves". Under it in grey "No limit: buy any you can pay" ("No limit" where shorter; the owner: "Sebanyak gold cukup").
+  saying it again (`Sfx.error`). The price is the offer's length's (`Tavern.offerPrice`). A buy runs the boost at once,
+  plays `Sfx.clear` and the message window says "Feast! 2 waves" ("Feast! Until next Town"). Under it in grey "No limit: buy any you can pay" ("No limit" where shorter; the owner: "Sebanyak gold cukup").
   While it doesn't all fit (the King's Banquet's six rows on a short page) it scrolls under the heading
   (`_TavernView.facing`, as the list; a new pick shows its top): nothing is left out (until decisions-log 283 the rows'
   icons went to 16 px, then the "No limit" line, then the rows drew closer and the lines above them fewer). The rows'
@@ -1909,8 +1916,8 @@ icons; nothing new drawn). In every Town (since decisions-log 268; the Tavern-of
 - **For tests:** `Board.tavernPick`, `tavernRows` (`TavernRow`: the slot, the kind, where, the price as shown, short,
   picked), `tavernEffects` (`TavernEffectRow`: where, what, how much), `tavernAt(key)` ('offers', 'reroll', 'stay',
   'active', 'none', 'active:<i>', 'icon', 'buy', 'noLimit') and `tavernText(key)` ('offers', 'reroll', 'stay', 'none',
-  'active:<i>' (its waves left, then after a ':' a lone one's label), 'name', 'rarity', 'does', 'line', 'buy',
-  'noLimit').
+  'active:<i>' (its waves left or "Town", then after a ':' a lone one's label), 'row:<i>' (offer i's grey line under its
+  name, its rarity first: "Rare · 2 waves · All troops"), 'name', 'rarity', 'does', 'line', 'buy', 'noLimit').
 
 ### The Town's Shop (`lib/shop_page.dart` on `lib/bag.dart`'s code; decisions-log 230 and 269)
 
@@ -2326,9 +2333,9 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     the room with troops, "+Room", a second Priest; decisions-log 176), its second what the boss leaves (with the forge
     on "Win it: rare materials", with it off "Win it: 2 items"; decisions-log 272);
   - `topics`: the "How to Play" page's 13 (`GuideTopic`; "Towns", decisions-log 237: K23, K24 and the wave meter's
-    warning, Auto's `autoLeave` s, "Tap the tent for "Army"." (decisions-log 301), and "The "Tavern" sells boosts / for
-    the next 2 waves." (town.json's `tavern.waves`,
-    decisions-log 268), and with the forge "A "Wishlist" marks items to make, / set in "Smithy" or "Army"."
+    warning, Auto's `autoLeave` s, "Tap the tent for "Army"." (decisions-log 301), and "The "Tavern" sells boosts for /
+    2-4 waves, or until next Town." (town.json's `tavern.lengths`, the shortest and longest with a share;
+    decisions-log 268, 331), and with the forge "A "Wishlist" marks items to make, / set in "Smithy" or "Army"."
     (decisions-log 282); by grade "Items & Awaken" adds "Awaken levels take grade I, / then II, then III. /
     The last level: two thirds.", the share town.json's `awaken.share` for the last level). Each repeats its intro
     pages and cards word for word

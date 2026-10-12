@@ -5,7 +5,8 @@
 // lines, Effect rows and the one bevelled Buy, all inside the book at 1266x713, 1164x777 and 915x412 (the
 // King's Banquet's six rows too); a buy by a tap ("Feast! 2 waves"), the refusals by a tap ("Sold", "Not enough gold"),
 // a reroll by a tap, the Tavern's sign opening its page, leaving the Town shutting it, and the Tavern off: no tab, the
-// sign opens the Bag. One TdGame per widget test.
+// sign opens the Bag; offers until the next Town (decisions-log 331): the row's length, the page's lines, the price,
+// "Feast! Until next Town" and "Town" under Active. One TdGame per widget test.
 //
 // Never let a wave be won or the game end here (the Board then saves).
 import 'dart:math';
@@ -82,14 +83,17 @@ bool inside(Rect r, Rect area) => r.left >= area.left - 0.5 && r.top >= area.top
 
 const sizes = [Size(1266, 713), Size(1164, 777), Size(915, 412)];
 
+/// The `tavern.lengths` block where only [given] have a share (decisions-log 331).
+Map<String, double> lengthsOnly(Map<String, double> given) => {'2': 0.0, '3': 0.0, '4': 0.0, 'town': 0.0, ...given};
+
 /// A board game (the Towns and with them the Tavern on) gone into the Town after wave [wave] ([Towns.enterTown]:
-/// the Tavern rolls its offers, the run's first Town's Feast first), [rules] (the defaults), a soldier, a knight, an
-/// archer and a priest, and [gold].
-Game tavernGame({int wave = 20, int gold = 40000, TownRules rules = const TownRules()}) {
+/// the Tavern rolls its offers, the run's first Town's Feast first), [rules] (the defaults with every offer 2 waves, as
+/// before decisions-log 331), a soldier, a knight, an archer and a priest, and [gold].
+Game tavernGame({int wave = 20, int gold = 40000, TownRules? rules}) {
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
     ..tavernDice = Random(4)
-    ..townRules = rules
+    ..townRules = rules ?? TownRules.patch({'tavern': {'lengths': lengthsOnly({'2': 1})}})
     ..armyMax = null
     ..wave = wave;
   for (final type in ['soldier', 'knight', 'archer', 'priest']) {
@@ -177,6 +181,7 @@ void main() {
       expect([for (final r in b.tavernRows) r.slot], [0, 1, 2]);
       expect([for (final r in b.tavernRows) r.kind], kinds);
       expect([for (final r in b.tavernRows) r.price], [for (final k in kinds) thousands(g.boostPrice(k))]);
+      expect(b.tavernText('row:0'), anyOf('Rare · 2 waves · All troops', 'Rare · 2 waves'), reason: '$tag: the length shows');
       expect([for (final r in b.tavernRows) r.short], [false, false, false]);
       expect(b.tavernPick, 0, reason: 'the first offer not bought');
       expect([for (final r in b.tavernRows) r.picked], [true, false, false]);
@@ -192,7 +197,7 @@ void main() {
       final line = b.tavernText('line')!.replaceAll('\n', ' ').replaceAll('..', '');
       expect('Rare boost. Lasts the next 2 waves.'.startsWith(line), isTrue, reason: line);
       expect([for (final e in b.tavernEffects) (e.what, e.value)],
-          [('Damage', '+20%'), ('Damage taken', '-15%'), ('Troops', 'All troops'), ('Waves', '2')]);
+          [('Damage', '+20%'), ('Damage taken', '-15%'), ('Troops', 'All troops'), ('Lasts', '2 waves')]);
       final price = g.boostPrice(Boost.feast);
       expect(price, 800, reason: 'the Feast after wave 20 (decisions-log 266)');
       expect(b.tavernText('buy'), anyOf('Buy (800 gold)', 'Buy (800)', 'Buy'));
@@ -265,6 +270,7 @@ void main() {
             'tavern': {
               'odds': {'common': 0.0, 'rare': 0.0, 'epic': 0.0, 'legendary': 1.0},
               'firstFeast': false,
+              'lengths': lengthsOnly({'2': 1}),
             },
           }));
       await frames(tester, 40);
@@ -274,7 +280,7 @@ void main() {
       expect(kinds.first, Boost.banquet);
       expect(kinds.skip(1).toSet(), {Boost.plate, Boost.watch});
       expect((b.tavernText('name'), b.tavernText('rarity')), ("King's Banquet", 'Legendary'));
-      expect([for (final e in b.tavernEffects) e.what], ['Damage', 'Damage taken', 'Max HP', 'Attack speed', 'Troops', 'Waves']);
+      expect([for (final e in b.tavernEffects) e.what], ['Damage', 'Damage taken', 'Max HP', 'Attack speed', 'Troops', 'Lasts']);
       await fits(tester, b, '$tag banquet');
       final buy = await seen(tester, b, () => b.tavernAt('buy'));
       expect(buy != Rect.zero && buy.bottom <= b.bookPages.$2.bottom + 0.5, isTrue, reason: '$tag: Buy $buy');
@@ -284,12 +290,39 @@ void main() {
       await tapOn(tester, await seen(tester, b, () => b.tavernRows[plate].at, left: true), 'the Plate');
       expect(b.tavernText('does')!.replaceAll('\n', ' '), '${troopTypePlurals[type]}: +40% damage, +15% attack speed.');
       expect([for (final e in b.tavernEffects) (e.what, e.value)],
-          [('Damage', '+40%'), ('Attack speed', '+15%'), ('Troops', troopTypePlurals[type]!), ('Waves', '2')]);
+          [('Damage', '+40%'), ('Attack speed', '+15%'), ('Troops', troopTypePlurals[type]!), ('Lasts', '2 waves')]);
       await fits(tester, b, '$tag plate');
       await tapOn(tester, await seen(tester, b, () => b.tavernRows[kinds.indexOf(Boost.watch)].at, left: true), 'the Watch');
       expect(b.tavernText('does')!.replaceAll('\n', ' '), 'A leak a wave costs no life.');
-      expect([for (final e in b.tavernEffects) (e.what, e.value)], [('Leaks forgiven', '1 a wave'), ('Waves', '2')]);
+      expect([for (final e in b.tavernEffects) (e.what, e.value)], [('Leaks forgiven', '1 a wave'), ('Lasts', '2 waves')]);
       await fits(tester, b, '$tag watch');
+    });
+
+    testWidgets('the Tavern at $tag: offers until the next Town (decisions-log 331): the length, the price, Buy, "Town" '
+        'under Active; it fits', (tester) async {
+      final b = await boot(tester, size);
+      final g = b.state = tavernGame(rules: TownRules.patch({'tavern': {'lengths': lengthsOnly({'town': 1})}}));
+      await frames(tester, 40);
+      await turnTo(tester, b, 'tavern');
+      await frames(tester, 40);
+      expect(g.tavernOffers.every((o) => o.untilTown), isTrue);
+      expect(g.tavernOffers.first.kind, Boost.feast);
+      expect(b.tavernText('row:0'), anyOf('Rare · Until next Town · All troops', 'Rare · Until next Town', 'Rare · Until Town'),
+          reason: '$tag: the length shows (it sets the price)');
+      final price = g.offerPrice(g.tavernOffers.first);
+      expect(price, 3200, reason: 'the Feast until the next Town after wave 20: 7.42 waves × 1.1');
+      expect(b.tavernRows.first.price, thousands(price));
+      final line = b.tavernText('line')!.replaceAll('\n', ' ').replaceAll('..', '');
+      expect('Rare boost. Lasts until next Town, 5 waves or more.'.startsWith(line), isTrue, reason: line);
+      expect(b.tavernEffects.last.what, 'Lasts');
+      expect(b.tavernEffects.last.value, 'Until next Town');
+      await fits(tester, b, '$tag town');
+      await tapOn(tester, await seen(tester, b, () => b.tavernAt('buy')), 'Buy');
+      await frames(tester, 2);
+      expect(b.message, 'Feast! Until next Town');
+      expect(g.gold, 40000 - price);
+      expect(b.tavernText('active:0')!.split(':').first, Words.town);
+      await fits(tester, b, '$tag town bought');
     });
   }
 

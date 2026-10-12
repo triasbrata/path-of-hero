@@ -3756,7 +3756,7 @@ class Game {
         pusaka: pusakaState,
         omens: _omenState,
         materials: {for (final MapEntry(:key, :value) in materials.entries) key.name: value},
-        boosts: boosts.isEmpty ? null : {for (final b in boosts) b.kind.name: b.left})); // the Tavern's (tavern.dart)
+        boosts: boosts.isEmpty ? null : {for (final b in boosts) b.kind.name: b.untilTown ? 0 : b.left})); // the Tavern's (tavern.dart)
   }
 
   /// Troops are set up in the zone just ahead of the back line, one per cell; mid-battle any cell will do

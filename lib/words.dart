@@ -114,6 +114,7 @@ abstract final class Words {
   /// The rarities, commonest first (an Artifact's: Rare, Epic, Legendary).
   static const common = 'Common', rare = 'Rare', epic = 'Epic', legendary = 'Legendary';
 
-  /// The Tavern's (decisions-log 266): what it sells, an offer bought, and every offer bought (no reroll left to make).
-  static const boost = 'Boost', sold = 'Sold', soldOut = 'Sold out';
+  /// The Tavern's (decisions-log 266): what it sells, an offer bought, and every offer bought (no reroll left to make);
+  /// a boost's longest length (decisions-log 331), as the offer and the running boost say it, and where that is too long.
+  static const boost = 'Boost', sold = 'Sold', soldOut = 'Sold out', untilNextTown = 'Until next $town', untilTown = 'Until $town';
 }

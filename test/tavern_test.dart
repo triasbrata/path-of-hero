@@ -2,7 +2,8 @@
 // `tavern` block, the prices by wave, the roll (the first Feast, different kinds, a kind running left out, Legendary from
 // wave 30, the pity, the Plate's type, the odds), buying with no limit and the refusals, the reroll, the stats step (the
 // oath under it, the Hero aura over it, the cap), damage taken through a blow, the countdown, Lucky Toast's gold,
-// Watchman's Brew's leak, the save, the events and the telemetry, and the probe policy.
+// Watchman's Brew's leak, the save, the events and the telemetry, and the probe policy; each offer's length
+// (decisions-log 331): its odds, its price, its countdown or its end at the next Town, a replay counting nothing, the save.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -13,6 +14,7 @@ import 'package:tower_defense/main.dart' show logLine;
 import 'package:tower_defense/telemetry.dart';
 
 import 'hero_skill_helpers.dart';
+import 'wipe_test.dart' show wipe;
 
 /// A sink that keeps what it gets, through JSON as a file would.
 class _Kept implements TelemetrySink {
@@ -51,11 +53,16 @@ Game inTown(Game g, [int wave = 6]) {
 /// The defaults with the `tavern` block's [p] put in.
 TownRules rules(Map<String, dynamic> p) => TownRules.patch({'tavern': p});
 
-/// Rules whose rolls are all of one [rarity] (no first Feast, no pity unless given).
-TownRules only(String rarity, {bool firstFeast = false, int pity = 0}) => rules({
+/// The `tavern.lengths` block where only [given] have a share (decisions-log 331): `{'2': 1.0}`, every offer 2 waves.
+Map<String, double> lengthsOnly(Map<String, double> given) => {'2': 0.0, '3': 0.0, '4': 0.0, 'town': 0.0, ...given};
+
+/// Rules whose rolls are all of one [rarity] (no first Feast, no pity unless given), every offer of [lengths] (2 waves,
+/// as before decisions-log 331, unless given).
+TownRules only(String rarity, {bool firstFeast = false, int pity = 0, Map<String, double> lengths = const {'2': 1.0}}) => rules({
       'odds': {for (final r in ['common', 'rare', 'epic', 'legendary']) r: r == rarity ? 1.0 : 0.0},
       'firstFeast': firstFeast,
       'pity': pity,
+      'lengths': lengthsOnly(lengths),
     });
 
 List<Boost> kinds(Game g) => [for (final o in g.tavernOffers) o.kind];
@@ -102,6 +109,8 @@ void main() {
       expect([for (final b in Boost.values) if (t.boosts[b]!.oneType) b], [Boost.plate]);
       expect(boostNames.keys, Boost.values);
       expect((t.most.dmg, t.most.maxHp, t.most.rate, t.most.mpRegen, t.most.gold, t.most.taken), (1.8, 1.8, 1.8, 1.8, 2.0, 0.6));
+      expect(t.lengths, {2: 0.45, 3: 0.25, 4: 0.18}, reason: 'decisions-log 331');
+      expect((t.lengthTown, t.priceTown), (0.12, 1.1));
       expect(TownRules.patch({}).tavern.toJson(), t.toJson(), reason: 'a patch round-trips the block');
     });
 
@@ -112,7 +121,8 @@ void main() {
         'pity': -1,
         'firstFeast': 'yes',
         'odds': {'common': -1, 'mythic': 0.5},
-        'price': {'k': {'rare': 0}, 'early': 2, 'fullFrom': 0, 'round': 0, 'least': 10},
+        'price': {'k': {'rare': 0}, 'early': 2, 'fullFrom': 0, 'round': 0, 'least': 10, 'town': -1},
+        'lengths': {'0': 1, 'long': 1, '3': -1, '6': 0.5},
         'reroll': {'rise': 0.5, 'k': 0.2},
         'most': {'dmg': 0.5, 'taken': 1.5, 'gold': 3},
         'boosts': {
@@ -128,9 +138,13 @@ void main() {
       expect((t.early, t.fullFrom, t.round, t.priceLeast), (d.early, d.fullFrom, d.round, 10));
       expect((t.rerollRise, t.rerollK), (d.rerollRise, 0.2));
       expect((t.most.dmg, t.most.taken, t.most.gold), (1.8, 0.6, 3.0));
+      expect(t.lengths, {2: 0.45, 3: 0.25, 4: 0.18, 6: 0.5});
+      expect((t.lengthTown, t.priceTown), (0.12, d.priceTown));
       final feast = t.boosts[Boost.feast]!;
       expect((feast.rarity, feast.dmg, feast.taken, feast.oneType), (Rarity.langka, 1.2, 0.5, false));
-      expect(odd.skipped, containsAll(['tavern: no bar', 'tavern.odds: no mythic', 'tavern.boosts: no pie', 'tavern.boosts.feast.rarity: shiny', 'tavern.boosts.feast.who: some']));
+      expect(odd.skipped, containsAll(['tavern: no bar', 'tavern.odds: no mythic', 'tavern.boosts: no pie', 'tavern.boosts.feast.rarity: shiny', 'tavern.boosts.feast.who: some', 'tavern.lengths: no 0', 'tavern.lengths: no long']));
+      // No length with a share: the defaults.
+      expect(rules({'lengths': lengthsOnly({})}).tavern.lengths, d.lengths);
       // A version-2 file has no block: every default.
       expect(TownRules.parse('{"version": 2}').tavern.toJson(), d.toJson());
     });
@@ -427,7 +441,7 @@ void main() {
       final bought = kinds(g)[2], j = jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>;
       expect(j['boosts'], [{'kind': bought.name, 'left': 2}]);
       expect((j['town'] as Map)['tavern'], {
-        'offers': [for (final o in g.tavernOffers) {'kind': o.kind.name, if (o.sold) 'sold': true}],
+        'offers': [for (final o in g.tavernOffers) {'kind': o.kind.name, 'waves': 2, if (o.sold) 'sold': true}],
         'rerolls': 1,
         'spent': g.tavernSpent,
         'bought': [bought.name],
@@ -490,6 +504,200 @@ void main() {
     final wave = sink.of('wave').single;
     expect((wave['gold']['tavernSpent'], wave['boostSaved'], wave['livesLost']), (reroll + price, 1, 0));
     expect(wave['start']['boosts'], {'watch': 2});
+  });
+
+  group('the lengths (decisions-log 331)', () {
+    test('each offer rolls its own on the Tavern dice: 2 waves 45%, 3 waves 25%, 4 waves 18%, until the next Town 12%; '
+        'the same for the same seed; a reroll rolls the new offers\' afresh', () {
+      final a = inTown(tavern(seed: 3)), b = inTown(tavern(seed: 3));
+      List<(int, bool)> lengths(Game g) => [for (final o in g.tavernOffers) (o.waves, o.untilTown)];
+      expect(lengths(a), lengths(b));
+      final g = tavern(rules: rules({'firstFeast': false, 'pity': 0}));
+      final count = <String, int>{};
+      for (var i = 0; i < 5000; i++) {
+        inTown(g, 40);
+        for (final o in g.tavernOffers) {
+          count[o.length] = (count[o.length] ?? 0) + 1;
+        }
+        g.leaveTown();
+      }
+      final n = count.values.fold(0, (a, b) => a + b);
+      expect(n, 15000);
+      expect(count.keys.toSet(), {'2 waves', '3 waves', '4 waves', 'Until next Town'});
+      expect(count['2 waves']! / n, closeTo(0.45, 0.015));
+      expect(count['3 waves']! / n, closeTo(0.25, 0.015));
+      expect(count['4 waves']! / n, closeTo(0.18, 0.015));
+      expect(count['Until next Town']! / n, closeTo(0.12, 0.012));
+      // A reroll: the bought offer keeps its length, the new ones roll theirs.
+      final r = inTown(tavern(rules: only('common', lengths: {'2': 0.5, '4': 0.5}), seed: 2), 20);
+      expect(r.buyBoost(0), isTrue);
+      final kept = r.tavernOffers.first.waves, seen = <int>{};
+      for (var i = 0; i < 6; i++) {
+        expect(r.rerollTavern(), isTrue);
+        expect(r.tavernOffers.first.waves, kept);
+        seen.addAll([for (final o in r.tavernOffers.skip(1)) o.waves]);
+      }
+      expect(seen, {2, 4});
+    });
+
+    test('the price grows with the length: × waves / 2 over the 2-wave price, a step over the one a wave shorter; '
+        'until the next Town × the 7.42 waves to it on average × 1.1', () {
+      expect(townGapMean(const TownSchedule()), closeTo(7.4243, 1e-3));
+      expect(townGapMean(const TownSchedule(chanceStart: 1, minGap: 3)), 3.0);
+      expect(townGapMean(const TownSchedule(chanceStart: 0, chanceStep: 0)), 5 + 199.0, reason: 'never a hit: the 200th roll');
+      List<int> four(Game g, Boost k) =>
+          [for (final n in [2, 3, 4]) g.boostPrice(k, waves: n), g.boostPrice(k, untilTown: true)];
+      final w6 = inTown(tavern(), 6), w20 = inTown(tavern(), 20), w50 = inTown(tavern(), 50);
+      expect(four(w6, Boost.ale), [50, 100, 150, 250], reason: '4 waves a step over 3 (×2 is 100)');
+      expect(four(w6, Boost.feast), [100, 150, 200, 400]);
+      expect(four(w6, Boost.plate), [150, 250, 350, 700]);
+      expect(four(w20, Boost.ale), [450, 700, 950, 1900]);
+      expect(four(w20, Boost.feast), [800, 1150, 1550, 3200]);
+      expect(four(w20, Boost.plate), [1400, 2100, 2800, 5700]);
+      expect(four(w50, Boost.ale), [4750, 7150, 9550, 19000]);
+      // The 2-wave price is the one from before 331; every longer one dearer, at every wave.
+      for (var w = 1; w <= 100; w++) {
+        final g = tavern()..wave = w;
+        for (final k in Boost.values) {
+          final p = four(g, k);
+          expect(p.first, g.boostPrice(k), reason: 'wave $w $k');
+          for (var i = 1; i < p.length; i++) {
+            expect(p[i], greaterThan(p[i - 1]), reason: 'wave $w $k: $p');
+          }
+        }
+      }
+      // An offer costs its own length's, and buying takes it.
+      final g = inTown(tavern(rules: only('rare', lengths: {'4': 1}), gold: 10000), 20);
+      expect({for (final o in g.tavernOffers.take(2)) o.kind}, {Boost.feast, Boost.mage});
+      expect([for (final o in g.tavernOffers.take(2)) g.offerPrice(o)], [1550, 1550], reason: 'a Rare\'s 4 waves after wave 20');
+      expect(g.buyBoost(0), isTrue);
+      expect((g.gold, g.boosts.single.left, g.boosts.single.untilTown), (10000 - 1550, 4, false));
+    });
+
+    test('a 3-wave boost runs three waves, a 4-wave one four', () {
+      for (final n in [3, 4]) {
+        final g = inTown(tavern(rules: only('common', lengths: {'$n': 1})), 20)..lives = 99;
+        expect(g.buyBoost(0), isTrue);
+        for (var w = 1; w <= n; w++) {
+          expect(g.boosts.single.left, n - w + 1);
+          fight(g);
+          expect(g.boosts.length, w < n ? 1 : 0, reason: '$n waves: after wave $w');
+        }
+      }
+    });
+
+    test('until the next Town: it runs every wave until then, its tip says so (the Town once marked), and it ends as '
+        'that Town is entered, before its Tavern rolls (which may offer it again)', () {
+      final events = <GameEvent>[];
+      final g = inTown(tavern(rules: only('rare', lengths: {'town': 1})), 6)
+        ..lives = 99
+        ..listeners.add(events.add);
+      expect(g.tavernOffers.every((o) => o.untilTown && o.length == Words.untilNextTown), isTrue);
+      final kind = kinds(g).first;
+      expect(g.buyBoost(0), isTrue);
+      expect((g.boosts.single.untilTown, g.boosts.single.fought), (true, 0));
+      expect(g.boostTip(0).$1, '${boostNames[kind]}: until next ${Words.town}');
+      expect(logLine(events.whereType<BoostBought>().single), endsWith('(until next ${Words.town})'));
+      expect(g.leaveTown(), isTrue);
+      var fought = 0;
+      while (!g.townDue) {
+        expect(g.boosts, hasLength(1), reason: 'wave ${g.wave + 1}');
+        fight(g);
+        expect(g.boosts.single.fought, ++fought);
+        if (g.townMarked && !g.townDue) expect(g.boostTip(0).$2.first, '${Words.townAfter} ${g.townAt! - 1}');
+      }
+      expect(fought, greaterThanOrEqualTo(g.townRules.schedule.minGap));
+      expect(events.whereType<BoostEnded>(), isEmpty);
+      expect(g.enterTown(), isTrue);
+      expect(g.boosts, isEmpty);
+      expect(events.whereType<BoostEnded>().single.boost, kind);
+      expect(kinds(g), contains(kind), reason: 'over: offered again (two Rares, both in the roll)');
+    });
+
+    test('a wave lost to a wipe and played again counts nothing: a boost for waves 21 and 22 still covers 21 again and 22', () {
+      final g = inTown(tavern(rules: only('common')), 20);
+      expect(g.buyBoost(0), isTrue);
+      expect(g.buyBoost(1), isTrue);
+      g.boosts.last.saved = 1; // as if it forgave a leak (none here: a Common)
+      g.leaveTown();
+      wipe(g);
+      expect(g.wave, 20, reason: 'wave 21 to play again');
+      expect([for (final b in g.boosts) (b.left, b.fought, b.saved)], [(2, 0, 0), (2, 0, 0)]);
+      fight(g);
+      expect([for (final b in g.boosts) b.left], [1, 1]);
+      fight(g);
+      expect(g.boosts, isEmpty);
+      // Until the next Town: a wipe changes nothing either.
+      final t = inTown(tavern(rules: only('common', lengths: {'town': 1})), 20);
+      expect(t.buyBoost(0), isTrue);
+      t.leaveTown();
+      wipe(t);
+      expect((t.boosts.single.untilTown, t.boosts.single.fought), (true, 0));
+    });
+
+    test('saved: each offer\'s length, a boost until the next Town and the waves it fought; a save from before 331 '
+        'lasts 2 waves', () {
+      final g = inTown(tavern(rules: only('common', lengths: {'town': 1})), 20)..lives = 99;
+      expect(g.buyBoost(0), isTrue);
+      var j = jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>;
+      expect(j['boosts'], [{'kind': kinds(g).first.name, 'town': true}]);
+      expect(((j['town'] as Map)['tavern'] as Map)['offers'],
+          [for (final (i, o) in g.tavernOffers.indexed) {'kind': o.kind.name, 'town': true, if (i == 0) 'sold': true}]);
+      final b = reloaded(g);
+      expect([for (final o in b.tavernOffers) (o.untilTown, b.offerPrice(o))], [for (final o in g.tavernOffers) (true, g.offerPrice(o))]);
+      fight(g);
+      fight(g);
+      j = jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>;
+      expect(j['boosts'], [{'kind': g.boosts.single.kind.name, 'town': true, 'fought': 2}]);
+      final c = reloaded(g);
+      expect([for (final r in c.boosts) (r.kind, r.untilTown, r.fought)], [(g.boosts.single.kind, true, 2)]);
+      // A 3-wave boost: its left and fought.
+      final f = inTown(tavern(rules: only('common', lengths: {'3': 1})), 20)..lives = 99;
+      expect(f.buyBoost(0), isTrue);
+      fight(f);
+      expect([for (final r in reloaded(f).boosts) (r.left, r.fought, r.untilTown)], [(2, 1, false)]);
+      // From before 331: offers without a length and a boost without `fought` (every one was 2 waves).
+      final old = inTown(tavern(rules: only('common')), 20);
+      final o = jsonDecode(jsonEncode(old.toJson())) as Map<String, dynamic>;
+      for (final x in ((o['town'] as Map)['tavern'] as Map)['offers'] as List) {
+        (x as Map).remove('waves');
+      }
+      o['boosts'] = [
+        {'kind': 'stew', 'left': 1},
+      ];
+      final loaded = Game.fromJson(o);
+      expect([for (final x in loaded.tavernOffers) (x.waves, x.untilTown)], [(2, false), (2, false), (2, false)]);
+      expect([for (final r in loaded.boosts) (r.kind, r.left, r.fought, r.untilTown)], [(Boost.stew, 1, 1, false)]);
+    });
+
+    test('the telemetry: an until-Town buy has waves 0 and untilTown; the wave\'s start lists it as 0', () {
+      final sink = _Kept();
+      final g = tavern(rules: only('epic', lengths: {'town': 1}));
+      TelemetryAdapter([sink], installId: 'i', session: 's', platform: 'test', now: () => DateTime.utc(2026, 10, 12)).attach(g);
+      inTown(g, 20);
+      final w = kinds(g).indexOf(Boost.watch);
+      expect(g.buyBoost(w), isTrue);
+      fight(g);
+      final bought = [for (final r in sink.of('event')) r['event'] as Map<String, dynamic>].singleWhere((e) => e['kind'] == 'boostBought');
+      expect((bought['waves'], bought['untilTown']), (0, true));
+      expect(sink.of('wave').single['start']['boosts'], {'watch': 0});
+    });
+
+    test('the probe policy "top": of one rarity the dearest, so the longest', () {
+      for (var seed = 0; seed < 8; seed++) {
+        final g = tavern(rules: only('common', lengths: {'2': 0.5, 'town': 0.5}), seed: seed)
+          ..townPolicy = 'leave'
+          ..tavernPolicy = 'top'
+          ..wave = 20
+          ..townAt = 21;
+        var anyTown = false;
+        g.listeners.add((e) {
+          if (e is TownEntered) anyTown = g.tavernOffers.any((o) => o.untilTown);
+        });
+        g.startWave();
+        expect(g.boosts.single.untilTown, anyTown, reason: 'seed $seed');
+      }
+    });
   });
 
   test('a plate\'s log line names its type; every effect has its words', () {

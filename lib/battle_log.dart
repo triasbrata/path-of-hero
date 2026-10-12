@@ -94,8 +94,9 @@ String logLine(GameEvent e) => switch (e) {
       ItemCrafted(:final item, :final gold) => 'Crafted ${itemNames[item]} (${thousands(gold)} gold)', // the forge's items
       StoneCrafted(:final stone, :final gold) => 'Crafted ${stone.label} (${thousands(gold)} gold)', // Enhance's stones
       ItemEnhanced(:final item, :final plus, :final gold) => '${Words.enhance}d ${itemNames[item]} to +$plus (${thousands(gold)} gold)',
-      BoostBought(:final boost, :final type, :final effects, :final waves) => // the Tavern's (tavern.dart)
-        '${boostNames[boost]}${type == null ? '' : ' (${troopTypePlurals[type] ?? type})'}: ${boostEffectLines(effects).join(', ')} ($waves waves)',
+      BoostBought(:final boost, :final type, :final effects, :final waves, :final untilTown) => // the Tavern's (tavern.dart)
+        '${boostNames[boost]}${type == null ? '' : ' (${troopTypePlurals[type] ?? type})'}: ${boostEffectLines(effects).join(', ')} '
+            '(${boostLengthWords(waves, untilTown: untilTown, inLine: true)})',
       BoostEnded(:final boost) => '${boostNames[boost]} ended',
       BoostSaved(:final boost) => '${boostNames[boost]}: no life lost',
       TraceEvent() => '', // the telemetry's only: never in the log

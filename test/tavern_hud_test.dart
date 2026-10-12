@@ -112,6 +112,31 @@ void main() {
       expect(b.logPanel.top, greaterThanOrEqualTo(chips.map((r) => r.bottom).reduce(max)), reason: '$tag: the log under the chips');
     });
 
+    testWidgets("the boosts' chips at $tag: one until the next Town shows the Town's hammer, as wide as the others; its "
+        'tip names the Town once marked (decisions-log 331)', (tester) async {
+      final b = await boot(tester, size);
+      final g = b.state = fieldGame()
+        ..boosts.addAll([RunningBoost(Boost.feast, 2), RunningBoost(Boost.watch, 0, untilTown: true)]);
+      await frames(tester, 30);
+      final chips = b.boostChips, screen = Offset.zero & size;
+      expect(chips, hasLength(2));
+      expect(chips.first.size, chips.last.size);
+      expect(inside(chips.first, screen) && inside(chips.last, screen) && !chips.first.overlaps(chips.last), isTrue, reason: tag);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(chips.last.center);
+      await frames(tester, 30);
+      expect(b.tooltipShown?.$1, "Watchman's Brew: until next Town");
+      expect(b.tooltipShown?.$2, ['${Words.townAfter} 22', 'a leak a wave costs no life']);
+      g.townAt = null;
+      await mouse.moveTo(Offset.zero);
+      await frames(tester, 3);
+      await mouse.moveTo(b.boostChips.last.center);
+      await frames(tester, 30);
+      expect(b.tooltipShown?.$2, ['a leak a wave costs no life'], reason: 'no Town marked yet');
+    });
+
     testWidgets("the boosts' chips at $tag: under the meter without a Town marked; none without a boost; six in rows",
         (tester) async {
       final b = await boot(tester, size);
