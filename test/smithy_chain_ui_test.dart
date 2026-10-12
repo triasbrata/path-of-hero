@@ -172,8 +172,7 @@ void main() {
       expect(b.smithyTab, SmithyTab.wishlist);
       expect(b.smithyText('wishLines')!.split('|'),
           ['knight:royalRing ×1', 'archer:royalRing ×1', 'free:cleave ×1', 'parts:gemRing ×1', 'parts:ring ×1', 'parts:sword ×1']);
-      expect(b.smithyText('wishType:parts'), Words.ingredients, reason: tag);
-      expect({for (final (gr, _) in b.smithyWishHeads) gr}, containsAll(['knight', 'archer', 'free']));
+      expect({for (final (gr, _) in b.smithyWishHeads) gr}, containsAll(['knight', 'archer']));
 
       // The rows: "for Royal Ring", parts, status, Craft; no Give, no troop's name.
       Future<void> onRow(String key) async {
@@ -188,6 +187,7 @@ void main() {
 
       for (final (key, product) in [('parts:gemRing', 'Royal Ring'), ('parts:ring', 'Gem Ring'), ('parts:sword', relicNames[Relic.cleave]!)]) {
         await onRow(key);
+        expect(b.smithyText('wishType:parts'), Words.ingredients, reason: '$tag $key: under the "Ingredients" heading');
         final words = rowWords(b, key);
         expect(b.smithyText('wishTitle:$key'), anyOf(endsWith('for $product'), isNot(contains('for'))), reason: '$tag $key: $words');
         expect((b.smithyAt('wishGive:$key'), b.smithyText('wishGive:$key')), (Rect.zero, null), reason: '$tag $key: no Give');
@@ -252,7 +252,7 @@ void main() {
       expect(b.message, '${Words.ingredients}: ${Words.wishlist.toLowerCase()} cleared', reason: tag);
       await shutMessage(tester, b);
       expect(g.wishParts, isEmpty, reason: tag);
-      expect((g.wishesOf('knight'), g.wishesOf('archer'), g.freeWishes), ([Item.royalRing], [Item.royalRing], [Relic.cleave]), reason: tag);
+      expect([g.wishesOf('knight'), g.wishesOf('archer'), g.freeWishes], [[Item.royalRing], [Item.royalRing], [Relic.cleave]], reason: tag);
       b.state = Game();
       await frames(tester, 5);
     });
