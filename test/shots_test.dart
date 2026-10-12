@@ -131,11 +131,12 @@ void main() {
   test('a monster\'s shot at a troop that fell flies on: a troop on the spot takes it, else it hits nothing', () {
     for (final standing in [true, false]) {
       final (g, a) = shooter('archer');
-      final knight = troopAt(g, 'knight', 4, 3, a.pos + const Point(16.0, 0.0)), at = knight.pos;
-      final other = troopAt(g, 'soldier', 5, 1, at + const Point(0.0, 30.0));
-      final archer = still(g, 'skeleton_archer', at + const Point(60.0, 0.0));
+      final knight = troopAt(g, 'knight', 4, 3, a.pos + const Point(16.0, 0.0));
+      final other = troopAt(g, 'soldier', 5, 1, knight.pos + const Point(0.0, 30.0));
+      final archer = still(g, 'skeleton_archer', knight.pos + const Point(60.0, 0.0));
       final shot = fire(g, archer, knight);
       g.tick(0.05);
+      final at = knight.pos;
       knight.dying = 0; // it falls before the arrow lands
       if (standing) other.pos = at + const Point(0.0, 5.0); // steps onto its place (two living troops that close make way)
       land(g);
