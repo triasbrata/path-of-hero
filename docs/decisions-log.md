@@ -11437,7 +11437,25 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        its wishes' ingredients on at load as a wish put on now does; one with it loads only what it holds (an ingredient
        taken off by hand stays off). An unknown name, a type that isn't one, a lost root or parent, a part the parent's
        recipe doesn't take: skipped. Additive: a build from before skips the key (no troop type has the name);
-       `Game.saveVersion` stays 3. Save-affecting.
+       `Game.saveVersion` stays 3. Save-affecting (DEV 96247211).
+     - **Tests:** test/wishlist_chain_test.dart (new: the recipes above pinned, the chain one and two deep from a type's
+       wish, a set and a free line, counts read live and two parents', the own wish apart, off by a tap or met, the
+       star and the materials, the save's `parts` with an old save's chain and the skips) and test/smithy_chain_ui_test.dart
+       (new, at 1600×947 and 915×412: the recipe rows' link and Back from an item's and a relic's page, a material's
+       none, a board pick dropping the trail; a Wishlist part's link and Back; the Ingredients rows without Give, "Needed
+       for Royal Ring", Craft, ✕ and Remove). wishlist_test's save shapes gain `'parts': []`; smithy_wish_ui_test's 303
+       fixture (a Royal Helm among its 17 rows) clears its ingredient wishes so 303's rows-a-spread table stays true.
+     - **Checks** (wish-chain on 96247211 = main 18b56bb2 + the change, in a mirror; no whole suite, decisions-log 273):
+       `analyze lib test` no issues (-1791797821-an); wishlist_chain, wishlist, words, english_text +25 −1 (-t1: a test's
+       list-in-record slip, fixed; then wishlist_chain, wishlist, smithy_chain_ui +24 −0 on 35ba91eb, -1791799488-t1, with
+       analyze again no issues); smithy_wish_ui, wishlist_ui, bag_grid +45 −0 (-t3); forge_smithy_ui, town_smithy_ui,
+       forge_enhance_ui, forge_army_detail, forge_shop_ui, town_materials_ui +50 −0 (-t4); bag_detail, bag_actions,
+       bag_chips, troops_detail, save, town_craft, forge_awaken +69 −0 (-t5); the w89 identity SAME against 320's
+       golden `<agents>/probes/awaken-skills/w89-on-fccf102f.txt` (-w89: UI and wish bookkeeping only). Shots
+       (test/probe_wish_chain_shots.dart, -shots) at 1600×947 and 915×412, looked at: the Wishlist tab with its
+       Ingredients group (and its second spread on the phone), the Royal Ring's page with its Gem Ring row's "›" and lit
+       under the mouse, the Gem Ring's page after the link with Back and "Needed for Royal Ring", the Gem Ring crafted
+       from its row. Main be2af703 (327) merged after, no file in common.
 327. **A shot already fired is never lost mid-flight: it flies on to where its target went and lands there, an area
      shot hitting the monsters round that spot and a single one the unit standing on it** (the owner, 2026-10-12:
      "particle yang sudah terkirim jangan hilang di tengah jalan, biarkan tetap terkirim ke tempat posisi monsternya
