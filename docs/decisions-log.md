@@ -11574,4 +11574,7 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        rising at every wave 1-100, 3 and 4 waves run out, until the next Town runs to it and ends as it is entered, a
        wipe's replay, the save and an old save, the telemetry, the probe policy), test/tavern_ui_test.dart and
        test/tavern_hud_test.dart (the row's length, the page's lines, Buy, "Town" under Active and the hammer chip at
-       1266×713, 1164×777 and 915×412), and shots at 1600×947 and 915×412.
+       1266×713, 1164×777 and 915×412), and shots at 1600×947 and 915×412. The w89 identity dump (waves 90 and 91 of
+       the owner's wave-89 save) is byte-identical to 327's golden: that save's next Town comes at wave 94 at the
+       earliest, so no Tavern rolls and no boost runs in it; the golden stands. Balance (more boosted waves a Town, the
+       gold they take) is measured after the merge, by replaying saved waves.
