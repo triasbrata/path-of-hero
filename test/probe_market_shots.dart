@@ -6,8 +6,9 @@
 // At each size (<size>), for each identity's first Town (1 Millbrook, 2 Willowmere, 4 Ironvale, 5 Ambergate,
 // 7 Frostgate, 8 Highspire; <key> its save key): arrive-<key>-<size> (a moment after going in: its name's ribbon, the
 // book open on the Smithy), town-<key>-<size> (the book shut, the ribbon gone: the season's backdrop and street, the
-// yard) and sell-<key>-<size> (the Shop's Sell page: a kind the Town wants "Hot in <name>", the Sword sold 20 times
-// "Flooded"). It prints each Town's chip tooltip, its meter's words and the Sell page's prices.
+// yard), sell-<key>-<size> (the Shop's Sell page: a kind the Town wants marked hot, the Sword sold 20 times flooded),
+// sell-hot-<key>-<size> and sell-flooded-<key>-<size> (each picked: "Hot in <name>" or "Flooded: price falling" on the
+// kind line, the arrow on the price row). It prints each Town's chip tooltip, its meter's words and its prices.
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
@@ -120,6 +121,17 @@ void main() {
         await tapOn(b.bookTabs.firstWhere((t) => t.$1 == 'store').$2);
         await tapOn(b.shopTabAt(ShopTab.sell));
         await shot('sell-${who.key}', 30);
+        // A hot cell, then the flooded one, picked: the kind line's word and the price row's arrow.
+        final marked = b.shopArrows;
+        for (final word in MarketWord.values) {
+          final loot = marked.entries.where((e) => e.value.$1 == word).firstOrNull?.key;
+          final cell = b.bagLootCells.where((c) => c.$1 == loot).firstOrNull;
+          if (cell == null) continue;
+          await tapOn(cell.$2);
+          await shot('sell-${word.name}-${who.key}', 10);
+          // ignore: avoid_print
+          print('  ${word.name}: kind "${b.shopText('kind')}" price "${b.shopText('price')}"');
+        }
         await tester.tapAt(Offset(size.width * 0.12, size.height * 0.5)); // the bare sky: the book shuts
         await shot('town-${who.key}', 200);
         // ignore: avoid_print

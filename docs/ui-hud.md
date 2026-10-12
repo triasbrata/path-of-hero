@@ -1953,8 +1953,8 @@ outside a Town.
   it every frame would hold a paged grid (915×412) on its page.
   The market's marks (decisions-log 326; loot-items-relics.md "Towns: the market"; `_shopSellArrows`): an item or small
   relic the Town wants and pays 2x or more for ("hot") shows ui_icons.png's green up arrow (16, 144), one sold so much
-  its price is past half way to the floor ("flooded") the red down arrow (64, 160), at the cell's top left, half the
-  cell wide, over the slot's corner (`Board.shopArrows`).
+  its price is past half way to the floor ("flooded") the red down arrow (64, 160), at the cell's top right (an
+  enhanced stack's level keeps the top left), half the cell wide, over the slot's corner (`Board.shopArrows`).
 - **The Sell Basket** (the right page on Sell, a page of its own; the owner: "ini adalah page baru yang harus kamu buat.
   dimana user bisa melihat item apa saja yang sudah di masukkan ke dalam "basket sell" terus user bisa mengatur jumlah
   item yang dia jual pada selected item, dan user juga bisa liat total pendapatan dia dari hasil seluruh penjualan items";

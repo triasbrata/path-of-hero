@@ -408,13 +408,15 @@ extension on Board {
       };
 
   /// The Sell grid's market marks (decisions-log 326): a hot or flooded product's cell shows its arrow ([_marketArrow]) at
-  /// its top left, half the cell wide, over the slot's corner (the NEW "!" never shows on Sell).
+  /// its top right, half the cell wide, over the slot's corner (an enhanced stack's "+2" keeps the top left; only a Vault
+  /// Artifact, never marked, puts its basket count there).
   void _shopSellArrows(Canvas c, Game g) {
     final v = _shop..arrows.clear();
     for (final (loot, r) in v.sell.cells) {
       final word = g.marketWord(loot.kind, loot.plus), arrow = _marketArrow(g, loot.kind, loot.plus);
       if (word == null || arrow == null) continue;
-      final a = math.max(16.0, (r.width / 2).roundToDouble()), to = Rect.fromLTWH((r.left - a / 8).roundToDouble(), (r.top - a / 8).roundToDouble(), a, a);
+      final a = math.max(16.0, (r.width / 2).roundToDouble());
+      final to = Rect.fromLTWH((r.right - a + a / 8).roundToDouble(), (r.top - a / 8).roundToDouble(), a, a);
       _uiIcon(c, arrow, to);
       v.arrows[loot] = (word, to);
     }
