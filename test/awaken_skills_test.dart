@@ -1085,7 +1085,7 @@ void main() {
       }
       expect(phantom, greaterThan(40), reason: 'three cuts and the way home');
       expect(foes.any((o) => o.attackedAt >= from), isTrue, reason: 'the orcs swung at it');
-      expect(u.hp, hp, reason: 'no blow landed on the phantom');
+      expect(u.hp, greaterThanOrEqualTo(hp), reason: 'no blow landed on the phantom (only its regen)');
       expect(isPhantom(u), isFalse);
       runFor(g, 1.5);
       expect(u.hp, lessThan(hp), reason: 'home, the orcs\' blows land again');
@@ -1363,7 +1363,8 @@ void main() {
       final (g, [a, b]) = pack('soldier', 1, 2, gap: 2);
       final o = bigFoe(g, a, 10, 0); // in both reaches
       g.tick(0.01);
-      expect((a.troopWind?.claims, b.troopWind), ([o], null));
+      expect(a.troopWind?.claims, [o]);
+      expect(b.troopWind, isNull);
       runFor(g, 0.5);
       expect(awakenCastsOf(g), hasLength(1));
       expect(o.disarmedAt, greaterThan(double.negativeInfinity));
@@ -1377,7 +1378,8 @@ void main() {
         ..hurtAt = g.t;
       foeAt(g, 'orc', o.pos + const Point(12, 0), Tier.elite).hp = 1e4;
       g.tick(0.01);
-      expect((p.troopWind?.claims, q.troopWind), ([o], null));
+      expect(p.troopWind?.claims, [o]);
+      expect(q.troopWind, isNull);
       runFor(g, 0.4);
       expect(awakenCastsOf(g), hasLength(1));
       expect(o.move, isA<Carry>(), reason: 'lifted by the first');
@@ -1400,7 +1402,9 @@ void main() {
       final o = bigFoe(g, a, 100, 0);
       bigFoe(g, a, 110, 10);
       g.tick(0.01);
-      expect((a.troopWind?.claims, a.troopWind?.at, b.troopWind), ([o], o.pos, null));
+      expect(a.troopWind?.claims, [o]);
+      expect(a.troopWind?.at, o.pos);
+      expect(b.troopWind, isNull);
       runFor(g, 0.5);
       expect(g.zones.where((z) => z.look == ZoneLook.singularity), hasLength(1));
       expect(awakenCastsOf(g), hasLength(1));
