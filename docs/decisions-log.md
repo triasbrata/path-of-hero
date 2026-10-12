@@ -11456,6 +11456,31 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        Ingredients group (and its second spread on the phone), the Royal Ring's page with its Gem Ring row's "›" and lit
        under the mouse, the Gem Ring's page after the link with Back and "Needed for Royal Ring", the Gem Ring crafted
        from its row. Main be2af703 (327) merged after, no file in common.
+325. **The Pusaka's ring under a bound type's troops is drawn in the sprites' pixels** (the owner, 2026-10-12: "ring
+     putih atau kuning di bawah troops di buat jadi pixelated", make the white or yellow ring under the troops
+     pixelated). Why: it was the field's one smooth line right under the troops, a 1 px anti-aliased oval among pixel
+     art. The ring the owner sees is the Pusaka's (decisions-log 149), not a mark of Heroes or awakening: every troop of
+     a type with a Pusaka bound wears it, in the Pusaka's colour; on the owner's save God's Thunder's lemon on the
+     archers is the yellow (War Drum's tan on the lancers), and the seven bound Pusaka without a colour of their own (Moonwell, Ember Brand, Aegis Seal,
+     First Cut, Hero's Cloak, Heartbeat, Finishing Blade) ring in cream, the white. The troops' ground shadows,
+     the awakened ones' gold and white among them, were sprites in pixels already. By pixel-rings (lib/pusaka_look.dart;
+     ui-hud.md "The Pusaka in battle").
+     - **The same ring, in pixels:** the same 20 × 8 box centred 1 above the feet, the same colours at 90%, steady. Its
+       cells (`pixelRingCells`) are a stepped line one cell thick, one world unit each like a sprite's pixels, built once
+       at load as a white image with a clear pixel round it and drawn nearest, without anti-aliasing, flat in the
+       Pusaka's colour, a whole number of units from the feet, so at any zoom its steps fall on the shadow's pixels and
+       a screen pixel is the colour or nothing. The guide's K6 picture draws it the same way.
+     - **No dearer:** one image draw per ring in a paint made once per Pusaka, as the oval was one draw. Measured on
+       the owner's wave-30 save at 1600×947, 40 s of its wave with 29 rings a frame (test/probe_pixel_rings.dart): a
+       frame's drawing 1.93 → 1.49 ms on average (95th percentile 3.91 → 2.36), rasterising it in the tests' renderer
+       185 → 160 ms; the two runs shared a busy machine, so read it as no rise, not as a gain.
+     - **Still smooth, for the owner to decide** (unchanged; the shots' others-*.png and other-*.png): the guard ring
+       (`_guardRing`: 16 × 7, Hold Fast's steel blue, Holy Shield's white, a taunt's orange, pulsing), the effects' rings
+       (`_statusRings`: 18 × 8 and smaller inside, a monster's statuses, a Barrier's teal soak ring, the Spree's red,
+       Impale's and Ice Grip's dashed one), Spear Wall's brace ring (`_braceRing`, 18 × 8), a Hero's halo (`_heroHalo`, a
+       soft white glow behind its body) and a dragged troop's reach disc (white at 12%, round the cell it would go to).
+       The zones', the wind-ups', the skills' ground circles and reach rings, Holy Shield's dome and a new Hero's gold
+       ring are the packs' sprites, in pixels already.
 327. **A shot already fired is never lost mid-flight: it flies on to where its target went and lands there, an area
      shot hitting the monsters round that spot and a single one the unit standing on it** (the owner, 2026-10-12:
      "particle yang sudah terkirim jangan hilang di tengah jalan, biarkan tetap terkirim ke tempat posisi monsternya

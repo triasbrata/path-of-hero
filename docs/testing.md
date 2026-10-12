@@ -2961,6 +2961,23 @@ The shots come from `test/probe_shot_through_shots.dart` (a probe, not in the su
 from it, with two orcs 14 above and below it, a frame every 48 ms; it prints the screen box round them and the HP the
 splash took.
 
+## The Pusaka's ring in the sprites' pixels (decisions-log 325)
+
+`test/pixel_rings_test.dart`: `pixelRingCells` at 20 × 8 is the stepped oval drawn out row by row, and at five sizes
+fills its box, mirrors both ways, is one closed line with no 2×2 block. On a booted board, `Board.paintPusakaRing` (the
+field's own draw, for tests) at four zooms that are no whole number, off the screen's pixels, read back pixel by
+pixel: every pixel is nothing or the Pusaka's colour at 90% (no anti-alias), lit exactly on the cells one world unit
+each (a pixel whose middle is within a hair of a cell's edge is skipped), the box 20 × 8 centred 1 above the feet to
+a screen pixel; every Pusaka's colour as before, and Moonwell's cream for one without its own. On the field at
+1600×947 and 915×412, an archer drawn before and after its type takes God's Thunder differs round its feet only on
+the ring's cells, at least half of them showing round the body. The shots and the frame time are
+`test/probe_pixel_rings.dart` (not part of the suite): the owner's wave-30 save (`SAVE`), 8 s into its wave at
+1600×947 and 915×412, the whole frame and 6× close-ups round a plain troop, a Hero and an awakened troop of bound
+types; the rings still drawn smooth (a guard's, Spear Wall's brace, a monster's effect rings, a Hero's halo, a dragged
+troop's reach disc) put on for one frame, with their close-ups; then 40 s of the wave at 1600×947, each frame's
+`Board.render` timed and every 10th rasterised. Queue it on the branch (`TAG=after`) and on a mirror of main with the
+file copied in (`TAG=before`).
+
 ## The packs' looks: the shot probes (decisions-log 173)
 
 The field's effects and the screen's pieces are cut from the packs' sheets (ui-hud.md); no test pins a pixel of them,
