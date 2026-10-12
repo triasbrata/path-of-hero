@@ -1681,9 +1681,9 @@ forge's strip and its Items and Enhance tabs follow them.
     **Kept for a craft** (decisions-log 323; the owner: "jangan sampai item requirement untuk forge ini malah ada cta
     untuk give to troops karna ini di whitelist bukan untuk troops"): a product an ingredient wish holds for its parent's
     craft, made or still to make (`partHeldFor`), with no type's open wish for it, has no Give row on its Smithy page: in
-    its place, in grey, "Needed for Royal Ring" ("Needed for Gem Ring +1" for two; `Words.neededFor`, `_smithyKept`), no
-    tap. Once no parent needs it (the parent made, met or taken off) the Give row is back. The Bag's own item page keeps
-    its rows (the Bag is where any item goes on a troop).
+    its place, in grey, "Needed for Royal Ring" ("Needed for Gem Ring +1" for two; `Words.neededFor`, `_keptFor`,
+    `_keptLine`, `_smithyKept`), no tap. Once no parent needs it (the parent made, met or taken off) the Give row is
+    back. The Bag's item page does the same (below, "The action list").
     **Its free line** (decisions-log 302, 303; `_freeLine`), under the status (or the grade line, the tier line):
     the link tags "-" and "+" with how many more it asks between them in bold ink ("×2": off the Wishlist what "Add" would
     ask, 1 at first, `_SmithyView.freeMore`; on it what is still to make, `wishFreeMore`; "-" greyed at one), and at the
@@ -2874,6 +2874,13 @@ the page holds every page and card, and a one-time card opens at its break ("A o
       'freeAdd')` for tests. Its "Add to wishlist" puts the product's forged ingredients on too (decisions-log 323, the
       Smithy's "Ingredients"). The Bag's pages list no recipe, so they have no ingredient to link (the Smithy's recipe
       rows and Wishlist rows do).
+    - **Kept for a craft** (decisions-log 323; the orchestrator, on the owner's rule: no "Give to troops" for an item kept
+      as an ingredient, the Bag's page too): an item's +0 page whose item an ingredient wish holds for its parent's craft,
+      no type's open wish asking for it (`_keptFor`), has in its **Give to troops** row's place, in grey at the row's
+      left, "Needed for Royal Ring" (`_keptLine`, no tap; `bagDetail('kept')`, `bagDetailText('kept')`); the rows under
+      it as before (Carve's Give). Once no parent needs it, or a type's own wish asks for it, the row is back. An enhanced
+      stack's page keeps its row (a recipe takes the +0 ones). Dragging the item out onto the field still gives it, as
+      any drag does.
     - **The action list** (`_actionList`; `_actionsFor`, `BagAction`): max(4, 6·ts) under the lines (the free line's),
       a row per action,
       max(3, 4·ts) apart on whole pixels, the page's width; scrolled by the wheel or a drag, with the capsule bar

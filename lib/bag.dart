@@ -1559,6 +1559,13 @@ extension on Board {
           _buyRow(c, g, loot, r, m);
         case BagAction.smithy:
           _smithyRow(c, g, loot as Mat, r, m);
+        case BagAction.giveTroops when plus == 0 && !_shopShown && _keptFor(g, loot).isNotEmpty:
+          // Kept for a craft (decisions-log 323): no Give to troops, as on its Smithy page; a recipe takes the +0 ones.
+          final said = _keptLine(_keptFor(g, loot), m.lineFs, r.width - 2 * m.inset);
+          _text(c, said, Offset(r.left + m.inset, r.center.dy), size: m.lineFs, color: grey);
+          a
+            ..detail['kept'] = r.intersect(list)
+            ..texts['kept'] = said;
         default:
           _chooserRow(c, g, loot, act, r, m, plus);
       }

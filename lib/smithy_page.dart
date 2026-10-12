@@ -882,7 +882,7 @@ extension on Board {
     // ingredient wish keeps for its parent's craft, no type's open wish asking for it: in its Give row's place the grey
     // "Needed for Royal Ring" (the owner: no "give to troops" for it).
     final back = item == null && v.trail.isNotEmpty, recipeH = back ? math.max(lineH, chipH) : lineH;
-    final keptFor = item == null && pick is! Mat && (pick is! Item || g.openWishersOf(pick).isEmpty) ? g.partHeldFor(pick) : const <Enum>[];
+    final keptFor = item == null && pick is! Mat ? _keptFor(g, pick) : const <Enum>[];
 
     // A row: its icon (the action rows' [bagHeadIcon]: 16 px on a phone, 32 on the desk), a few px over and under it.
     final icon = bagHeadIcon(ps), rowH = math.max(icon + 4, (fs * 1.4 + 12 * ts).roundToDouble());
@@ -985,13 +985,23 @@ extension on Board {
     }
   }
 
-  /// In a product's Give row's place on its Smithy page while an ingredient wish keeps it for [parents]' craft
-  /// (decisions-log 323; the owner: "jangan sampai item requirement untuk forge ini malah ada cta untuk give to troops"):
-  /// "Needed for Royal Ring" ("Needed for Gem Ring +1" for two) in grey, at the row's middle, no tap.
+  /// The products an ingredient wish keeps [kind] for (decisions-log 323, [Wishlist.partHeldFor]) while no type's open
+  /// wish asks for it (that one's Give is the wish's own); none: its Give row as ever. The Smithy's page and the Bag's
+  /// show "Needed for Royal Ring" in the Give row's place while there are some ([_keptLine]).
+  List<Enum> _keptFor(Game g, Enum kind) => kind is Item && g.openWishersOf(kind).isNotEmpty ? const [] : g.partHeldFor(kind);
+
+  /// What stands in a product's Give row's place while an ingredient wish keeps it for [parents]' craft (decisions-log
+  /// 323; the owner: "jangan sampai item requirement untuk forge ini malah ada cta untuk give to troops"): "Needed for
+  /// Royal Ring" ("Needed for Gem Ring, Royal Ring" for two, "Needed for Gem Ring +1" where that doesn't fit in [w]).
+  String _keptLine(List<Enum> parents, double fs, double w) {
+    final first = '${Words.neededFor} ${_lootName(parents.first)}';
+    return _fitFirst([if (parents.length > 1) ...['${Words.neededFor} ${parents.map(_lootName).join(', ')}', '$first +${parents.length - 1}'] else first], fs, w);
+  }
+
+  /// The Smithy page's [_keptLine] in [r] in grey, at the row's middle, no tap.
   void _smithyKept(Canvas c, List<Enum> parents, Rect r, double fs) {
     const grey = Color(0xFF9E9080);
-    final first = '${Words.neededFor} ${_lootName(parents.first)}';
-    final said = _fitFirst([if (parents.length > 1) ...['${Words.neededFor} ${parents.map(_lootName).join(', ')}', '$first +${parents.length - 1}'] else first], fs, r.width);
+    final said = _keptLine(parents, fs, r.width);
     _text(c, said, Offset(r.left, r.center.dy), size: fs, color: grey);
     _smithy
       ..at['kept'] = r

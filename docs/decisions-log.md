@@ -11427,8 +11427,11 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        parent staying). No Give: no tag, no words, no "for Knight". Its Craft says "Gem Ring crafted!" only, and the one
        made stays in the Bag for the parent. On the made product's own Smithy page, while an ingredient wish keeps it and no
        type's open wish asks for it, the Give row ("Give to troops") gives way to a grey "Needed for Royal Ring"
-       (`Words.neededFor`): the owner's warning taken to the page the link opens. The Bag's own item page keeps its rows.
-       Chosen over listing the ingredient under its parent's type group: that heading is the troop's sprite and name.
+       (`Words.neededFor`): the owner's warning taken to the page the link opens; and on the orchestrator's word, after
+       the first READY, to the Bag's item page too (its +0 page's "Give to troops" row; the rows under it and a drag
+       onto the field as before), Give coming back once no parent needs it or a type's own wish asks for it. Chosen
+       over listing the ingredient under its parent's type group: that heading is the troop's sprite and name; the
+       orchestrator keeps the last group "Ingredients" for now, for the owner to see on develop.
      - **Off:** removing a wish (a row's ✕, a group's Remove, Remove on its page, the Army detail's ✕ and "Remove set")
        takes its ingredient wishes off, recursively, and so does a met parent: a type's wish held in full (a Cap's or a
        Ring's drops at once; an Awaken item's waiting for its Awaken loses its ingredients at once), a free line crafted.

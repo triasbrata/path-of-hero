@@ -6,7 +6,8 @@
 // row's part opens its page, Back returns to the tab; the Wishlist tab's "Ingredients" group, each row "for <product>"
 // with its parts, status, Craft and ✕, and no Give anywhere (no tag, no words, no troop); its Craft says only "crafted",
 // its ✕ and the group's Remove take ingredient wishes off and leave their parents; a product kept for its parent's craft
-// says "Needed for Royal Ring" in its Give row's place. One TdGame per test.
+// says "Needed for Royal Ring" in its Give row's place, on its Smithy page and on its Bag page, until no parent needs it.
+// One TdGame per test.
 //
 // Never let a wave be won or the game end here (the Board then saves).
 import 'dart:math';
@@ -253,6 +254,37 @@ void main() {
       await shutMessage(tester, b);
       expect(g.wishParts, isEmpty, reason: tag);
       expect([g.wishesOf('knight'), g.wishesOf('archer'), g.freeWishes], [[Item.royalRing], [Item.royalRing], [Relic.cleave]], reason: tag);
+      b.state = Game();
+      await frames(tester, 5);
+    });
+
+    testWidgets('the Bag\'s item page at $tag: a product kept for a craft says "Needed for Royal Ring" in its Give row\'s '
+        'place; Give comes back once no parent needs it, or a type\'s own wish asks for it', (tester) async {
+      final b = await boot(tester, size);
+      final g = b.state = townGame()..wish('knight', Item.royalRing);
+      g.inventory[Item.gemRing] = 1;
+      await frames(tester, 40);
+      await shutMessage(tester, b);
+      await tapOn(tester, b.bookTabs.firstWhere((t) => t.$1 == 'bag').$2, 'the Bag');
+      await tapOn(tester, b.bagChip(BagCategory.items));
+      await tapOn(tester, b.bagCells.firstWhere((c) => c.$1 == Item.gemRing).$2);
+      final (_, right) = b.bookPages;
+      expect(b.bagDetailText('name'), 'Gem Ring', reason: tag);
+      expect((b.bagAction(BagAction.giveTroops), b.bagDetailText('title:giveTroops')), (Rect.zero, null), reason: '$tag: no Give to troops');
+      expect(b.bagDetailText('kept'), '${Words.neededFor} Royal Ring', reason: tag);
+      final kept = b.bagDetail('kept');
+      expect(kept.left >= right.left - 0.5 && kept.right <= right.right + 0.5 && kept.height > 0, isTrue, reason: '$tag $kept on the page');
+      // A type's own wish for it: its Give is the wish's, back as ever.
+      g.wish('archer', Item.gemRing);
+      await frames(tester, 3);
+      expect((b.bagAction(BagAction.giveTroops) != Rect.zero, b.bagDetailText('kept')), (true, null), reason: '$tag: a type wishes for it');
+      // The parent off (the archer's wish off too): nothing keeps it, Give is back.
+      g.unwish('archer', Item.gemRing);
+      await frames(tester, 3);
+      expect(b.bagAction(BagAction.giveTroops), Rect.zero, reason: tag);
+      g.unwish('knight', Item.royalRing);
+      await frames(tester, 3);
+      expect((b.bagAction(BagAction.giveTroops) != Rect.zero, b.bagDetailText('kept')), (true, null), reason: '$tag: no parent needs it');
       b.state = Game();
       await frames(tester, 5);
     });

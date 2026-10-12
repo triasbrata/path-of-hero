@@ -2020,7 +2020,8 @@ lib/wishlist.dart's `extension Wishlist on Game`; the pages are ui-hud.md's ("Th
     the counts add up (the knight's and the archer's Royal Rings: Gem Ring ×2, Ring ×2), and it stays while either wants
     it. `partWishes`, `partWished(kind)`: the products still wanted (an ingredient wish is `wished`: the Items board's
     star and order, its materials in `wishMats`); `partHeldFor(kind)`: the products a made one is kept for while a
-    parent still needs it.
+    parent still needs it (its Smithy and Bag pages then say "Needed for Royal Ring" in the Give row's place, ui-hud.md
+    "The Smithy", "The Bag").
   - **Off with the parent** (the owner: "Ikut terhapus"; `_wishPrune`): `unwish`, `unwishAll`, `unwishFree`,
     `unwishFreeAll`, a met type's wish (`_wishGiven`: given in full; a Cap's or a Ring's goes at once, and an Awaken item's
     met wish, waiting for its Awaken, has its ingredients go at once) and a met free line (`_wishSweep`) take their
