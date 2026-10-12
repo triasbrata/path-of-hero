@@ -240,7 +240,9 @@ void main() {
       // The Shop never sells one; one in the Gudang sells to it at its share of legendaPrice; a bound one doesn't.
       expect(storeGoods.where(batch.contains), isEmpty, reason: 'never in the Shop');
       for (final r in batch) {
-        final g = Game()..wave = storeFrom;
+        final g = Game()
+          ..wave = storeFrom
+          ..inTown = true; // the Shop buys only in a Town
         expect(g.basePrice(r), legendaPrice, reason: '$r');
         g.givePusaka(r);
         final gold = g.gold;
@@ -248,7 +250,9 @@ void main() {
         expect((g.sellPrice(r), g.sell(r)), ((legendaPrice * sellShare).round(), 1), reason: '$r');
         expect((g.gold - gold, g.pusaka.containsKey(r), g.legendsFound.contains(r)), ((legendaPrice * sellShare).round(), false, true),
             reason: '$r: sold, it stays found');
-        final bound = Game()..wave = storeFrom;
+        final bound = Game()
+          ..wave = storeFrom
+          ..inTown = true; // the Shop buys only in a Town
         bound.givePusaka(r, type: 'knight');
         expect(bound.whyNotSell(r), StoreRefusal.bound, reason: '$r: equipped');
       }

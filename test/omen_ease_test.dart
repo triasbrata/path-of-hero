@@ -6,11 +6,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 
-/// Every item [type]'s first awakening asks for: the type at Awaken 1.
-List<Item> awakenOne(String type) => [
-      for (final MapEntry(key: item, value: n) in awakenRecipe[type]!.entries)
-        for (var i = 0; i < n; i++) item,
-    ];
+import 'awaken_items.dart';
 
 void main() {
   setUp(() => omensOn = true);
@@ -23,7 +19,7 @@ void main() {
     final g = Game(Random(1), Random(101))
       ..wave = 29
       ..gold = 1000000
-      ..upgrades['knight'] = awakenOne('knight');
+      ..upgrades['knight'] = awakenItems('knight', 1);
     for (final type in ['knight', 'soldier', 'knight', 'soldier', 'soldier']) {
       g.autoPlace(type); // with the free priest the room's 6
     }

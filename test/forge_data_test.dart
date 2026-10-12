@@ -2,8 +2,7 @@
 // recipe and effect, every small relic's numbers and recipe with what the forge changes, the combos, Awaken by grade and
 // Enhance) read beside a version-2 file; [Item] with a kind and a grade per value, [Relic]'s nine new small ones, the
 // two stones ([craftedMats]) and their icons; and the save's version 3, which a version-2 save loads forward into. The
-// forge plays with the Towns (its off switch is gone, decisions-log 296); a game with the Towns off (a plain Game(),
-// tests only) knows the seven items and the four relics monsters drop, and the recipes from before the forge.
+// forge plays in every game, a plain Game() too (its off switch went in decisions-log 296, the Towns' in 321).
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -313,14 +312,11 @@ void main() {
     });
   });
 
-  group('the forge in a board game; a game with the Towns off (tests only)', () {
-    test('a game with the Towns off is the one from before them: the dropped items and relics, the old recipes', () {
-      final g = Game();
-      expect([g.itemsInPlay, g.relicsInPlay], [droppedItems, droppedRelics]);
-      expect(g.craftRecipe(Relic.lastStand)!.items, {Item.boots: 1});
-    });
-
-    test('a board game: every item, the 20 relics and the stones, the forge\'s recipes', () {
+  group('the forge in every game (decisions-log 321)', () {
+    test('a board game: every item, the 20 relics and the stones, the forge\'s recipes; a plain Game() the same', () {
+      final plain = Game();
+      expect([plain.itemsInPlay, plain.relicsInPlay, plain.matsInPlay], [Item.values, [...smallRelics, ...forgeRelics], Mat.values]);
+      expect(plain.craftRecipe(Relic.lastStand)!.items, {Item.towerShield: 1});
       final g = board();
       expect([g.itemsInPlay, g.relicsInPlay, g.matsInPlay], [Item.values, [...smallRelics, ...forgeRelics], Mat.values]);
       expect(g.craftRecipe(Relic.lastStand)!.items, {Item.towerShield: 1});

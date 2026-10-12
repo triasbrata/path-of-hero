@@ -16,17 +16,19 @@ import 'package:tower_defense/telemetry.dart';
 
 /// The owner's w89 save (a copy; never the real save): wave 89, bound God's Thunder ★1 (Penyihir), Grail ★2
 /// (Armored Axeman), Void Eye ★1 (Templar); Dragon Heart ★2 and Dawn Star ★2 in the Gudang; Alliance taken; in the bag
-/// gloves 76, shield 83, potion 83, bow 89, boots 72, staff 91, sword 86. On the field the Templar lack 1 bow and the
-/// Archers 1 glove for their Bangkit 3.
+/// gloves 76, shield 83, potion 83, bow 89, boots 72, staff 91, sword 86. On the field the types' next Awaken is grade
+/// III's set (decisions-log 249), none of it the seven grade-I kinds Ukir takes, so a tap keeps none of the bag back.
 Game w89() => Game.fromJson(jsonDecode(File('test/fixtures/save-20261002-2222-w89-sellbug.json').readAsStringSync()) as Map<String, dynamic>,
     Random(89), Random(189), Random(389));
 
 /// [g] through its save, as a reload has it.
 Game reload(Game g) => Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>);
 
-/// Wins the next wave of [g] at once: begun with nothing to spawn, its one monster gone in the tick (asah_test.dart).
+/// Wins the next wave of [g] at once: begun with nothing to spawn (through a due Town first), its one monster gone in the
+/// tick (asah_test.dart).
 void win(Game g) {
   g
+    ..townPolicy = 'leave'
     ..startWave()
     ..queue.clear()
     ..units.add(g.monster('slime', Tier.normal, const Point(300, 60))..gone = true)
@@ -42,6 +44,13 @@ List<GameEvent> heard(Game g) {
   final out = <GameEvent>[];
   g.listeners.add(out.add);
   return out;
+}
+
+/// A [type] troop on the field at Awaken 0, its type holding no items: its whole grade I set (the seven kinds Ukir takes,
+/// and its own new kind) is what a tap keeps back.
+void field(Game g, String type) {
+  g.upgrades.remove(type);
+  g.units.add(Unit(Side.troop, type, g.statsOf(type), const Point(0, 60)));
 }
 
 /// What one tap on [relic] would take now ([Ukir.ukirTake]): exactly [items] for [points].
@@ -182,9 +191,9 @@ void main() {
     final g = w89();
     expect(g.wave, 89);
     expect(items(g), [86, 83, 72, 89, 76, 83, 91]); // sword, shield, boots, bow, gloves, potion, staff
-    expect(g.ukirKept, {Item.bow: 1, Item.gloves: 1}); // the Templar's bow, the Archers' glove
-    expect(g.ukirSpare, {Item.sword: 86, Item.shield: 83, Item.boots: 72, Item.bow: 88, Item.gloves: 75, Item.potion: 83, Item.staff: 91});
-    // God's Thunder (attack): bow down to sword's 86, then sword and bow in turn down to gloves' 75, then all three.
+    expect(g.ukirKept.keys.where(droppedItems.contains), isEmpty); // grade III's sets next: no grade-I item
+    expect(g.ukirSpare, {Item.sword: 86, Item.shield: 83, Item.boots: 72, Item.bow: 89, Item.gloves: 76, Item.potion: 83, Item.staff: 91});
+    // God's Thunder (attack): bow down to sword's 86, then sword and bow in turn down to gloves' 76, then all three.
     expectTake(g, Relic.godThunder, {Item.bow: 15, Item.sword: 13, Item.gloves: 2}, 60);
     // The Grail (life): staff down to potion's 83, then potion and staff in turn.
     expectTake(g, Relic.grail, {Item.staff: 19, Item.potion: 11}, 60);
@@ -202,7 +211,7 @@ void main() {
     // The share it leaps with now: 0.44.
     expect(g.relicEffect(Relic.godThunder), ['Each hit also hits 2 more monsters', 'within 3 tiles, for 44% damage']);
     expect(g.relicEffect(Relic.godThunder, stars: 1), ['Each hit also hits 2 more monsters', 'within 3 tiles, for 40% damage']);
-    // Void Eye (attack) next: 73 spare of each, so sword, bow and gloves in turn.
+    // Void Eye (attack) next: bow and gloves down to sword's 73, then sword, bow and gloves in turn.
     expectTake(g, Relic.voidEye, {Item.sword: 10, Item.bow: 10, Item.gloves: 10}, 60);
   });
 
@@ -260,17 +269,20 @@ void main() {
     for (final i in Item.values) {
       g.inventory[i] = 0;
     }
+    // The w89 types on the field need grade III's sets next: none of the seven kinds is kept.
+    expect(g.ukirKept.keys.where(droppedItems.contains), isEmpty);
+    field(g, 'soldier'); // its grade I set kept: two swords and shields, a boot, bow, glove and potion
     g
       ..inventory[Item.bow] = 1
       ..inventory[Item.gloves] = 1
       ..inventory[Item.shield] = 5;
-    // Thunder's own kinds are all kept: it takes shields at 1 point each.
-    expectTake(g, Relic.godThunder, {Item.shield: 5}, 5);
-    g.inventory[Item.shield] = 0;
+    // Thunder's own kinds are all kept: it takes the shields past the soldier's two at 1 point each.
+    expectTake(g, Relic.godThunder, {Item.shield: 3}, 3);
+    g.inventory[Item.shield] = 2;
     expect(g.whyNotUkir(Relic.godThunder), ukirRefusals.items);
     // The knight has items but no troop on the field: it keeps nothing.
     expect(g.troops.where((u) => u.alive && u.type == 'knight'), isEmpty);
-    expect(g.ukirKept.keys, unorderedEquals([Item.bow, Item.gloves]));
+    expect(g.ukirKept.keys.where(droppedItems.contains), unorderedEquals([Item.sword, Item.shield, Item.boots, Item.bow, Item.gloves, Item.potion]));
     g.inventory[Item.bow] = 3;
     expectTake(g, Relic.godThunder, {Item.bow: 2}, 4);
   });
@@ -320,7 +332,9 @@ void main() {
     expect(items(g), [86, 83, 12, 89, 76, 83, 91]); // 60 boots, nothing else
     expect(log.whereType<UkirFed>().single.data['items'], {'boots': 60});
     expect((g.pusaka[Relic.grail]!.ukir, g.ukirBudget), (1, 120));
-    // The Bangkit items kept: one bow and one glove stay; a kind with none spare gives nothing.
+    // The Bangkit items kept: a soldier at Awaken 0 on the field keeps one bow and one glove; a kind with none spare gives
+    // nothing.
+    field(g, 'soldier');
     g.inventory
       ..[Item.bow] = 1
       ..[Item.gloves] = 3;
@@ -405,6 +419,7 @@ void main() {
     expect((g.pusaka[Relic.voidEye]!.ukir, g.pusaka[Relic.voidEye]!.feed), (5, 0));
     // A sale: Dragon Heart sells from the Gudang, its Ukir gone with it; the run's worth fed stays.
     final milli = g.ukir.milli;
+    g.inTown = true; // the Shop buys only in a Town
     expect(g.sell(Relic.dragonHeart), 1);
     expect(g.pusaka.containsKey(Relic.dragonHeart), isFalse);
     g.givePusaka(Relic.dragonHeart);

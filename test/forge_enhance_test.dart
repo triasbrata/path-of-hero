@@ -81,8 +81,6 @@ void main() {
     // A patched step share.
     final half = forge()..townRules = TownRules.patch({'enhance': {'per': 0.5}});
     expect(half.itemK(Item.royalSword, 2), closeTo(1.64, 1e-12));
-    // The Towns off (a plain Game(), tests only): an item's constant, whatever the plus.
-    expect(Game().itemK(Item.sword, 5), swordDmg);
   });
 
   test('each step costs its stone and gold: Mithril for +1 to +3, Starmetal for +4 and +5, 20,500 gold in all; none past +5',

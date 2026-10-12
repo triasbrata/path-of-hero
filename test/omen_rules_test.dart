@@ -9,6 +9,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 
+import 'awaken_items.dart';
 import 'hero_skill_helpers.dart';
 
 const armor = OmenKind.armor, haste = OmenKind.haste, mend = OmenKind.mend, wound = OmenKind.wound;
@@ -67,12 +68,6 @@ double blowOn(Game g, Unit u, Unit by) {
   final orc = foeAt(g, 'orc', k.pos + const Point(12, 0));
   return (g, k, orc);
 }
-
-/// Every item [type]'s awakening recipe asks for, [level] times over: the type at awakening [level].
-List<Item> recipe(String type, int level) => [
-      for (final MapEntry(key: item, value: n) in awakenRecipe[type]!.entries)
-        for (var i = 0; i < n * level; i++) item,
-    ];
 
 void main() {
   tearDown(() => omensOn = false);
@@ -241,7 +236,7 @@ void main() {
       g.heroSkills = false;
       expect(g.omenMet.contains(OmenNeed.taunt), isFalse, reason: 'no Hero skills: no Duel');
       expect(g.omenMet.contains(OmenNeed.hero), isTrue);
-      g.upgrades['lancer'] = recipe('lancer', 1);
+      g.upgrades['lancer'] = awakenItems('lancer', 1);
       placeNow(g, 'lancer', 4, 1);
       expect(g.omenMet, containsAll([OmenNeed.hold, OmenNeed.stun]), reason: 'Impale');
       g.awakenSkills = false;

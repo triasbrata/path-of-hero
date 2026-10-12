@@ -10,6 +10,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 
+import 'awaken_items.dart';
 import 'hero_skill_helpers.dart';
 
 /// A heal the funnel heard: the troop, its tag, what it was to Wound then, the heal asked and the heal past full HP.
@@ -59,19 +60,13 @@ void winWave(Game g) {
   g.tick(0.05);
 }
 
-/// Every item [type]'s awakening recipe asks for, [level] times over (awaken_skills_test.dart's).
-List<Item> recipe(String type, int level) => [
-      for (final MapEntry(key: item, value: n) in awakenRecipe[type]!.entries)
-        for (var i = 0; i < n * level; i++) item,
-    ];
-
 /// A wave on with nothing to spawn, [type] awakened to [level], and a troop of it at cell (2, 3), full of MP, that
 /// never strikes on its own (awaken_skills_test.dart's).
 (Game, Unit) awakenScene(String type, int level) {
   final g = bareGame(Random(1))
     ..heroSkills = false
     ..monsterSkills = false;
-  g.upgrades[type] = recipe(type, level);
+  g.upgrades[type] = awakenItems(type, level);
   final u = placeNow(g, type, 2, 3);
   g
     ..startWave()

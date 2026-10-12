@@ -260,10 +260,6 @@ void main() {
     giveRecipe(out, Item.steelSword, 1);
     expect((out.canMake(Item.steelSword), out.whyNotCraftItem(Item.steelSword)!.why), (1, CraftWhy.town));
     expect(out.craftItem(Item.steelSword), isFalse);
-    // The Towns off (tests only): no recipe, nothing to make.
-    final off = Game();
-    expect((off.itemRecipe(Item.sword), off.canMake(Item.sword)), (null, 0));
-    expect(off.smithyItems(1), isEmpty);
     // A craft never shows a material as dropped (the stones least of all).
     final seen = forgeInTown();
     giveRecipe(seen, Item.royalHelm);
@@ -328,19 +324,6 @@ void main() {
       })
       ..upgrades['knight'] = [Item.steelSword];
     expect(tuned.statsOf('knight').dmg / plain.statsOf('knight').dmg, closeTo(1.5, 1e-9));
-    // The forge off: today's constants, whatever the file says.
-    final off = Game()
-      ..townRules = TownRules.patch({
-        'items': {
-          'sword': {'effect': 2.0}
-        }
-      })
-      ..upgrades['knight'] = [Item.sword, Item.potion];
-    expect(off.statsOf('knight').dmg, troopTypes['knight']!.dmg * swordDmg);
-    expect(off.statsOf('knight').regen, potionRegen);
-    expect(off.itemK(Item.sword), swordDmg);
-    expect(troopTypes['knight']!.upgraded(Item.staff).dmg, troopTypes['knight']!.dmg * staffDmg);
-    expect(troopTypes['priest']!.upgraded(Item.potion).dmg, troopTypes['priest']!.dmg + potionHeal);
   });
 
   test("a Cap's cut lands on every blow after the defence", () {
@@ -382,7 +365,7 @@ void main() {
     expect((w['gold'] as Map)['craftSpent'], 60);
   });
 
-  test("the Towns off (a plain Game(), tests only): the recipe, caps, levels, Stats and refusals from before the forge", () {
+  test("the item recipe each type's grade sets build on (forgeAwakenKinds adds its own kind; an old save's level reads it)", () {
     expect(awakenRecipe, {
       'soldier': {Item.sword: 2, Item.shield: 2, Item.boots: 1, Item.bow: 1, Item.gloves: 1, Item.potion: 1},
       'knight': {Item.sword: 3, Item.shield: 3, Item.boots: 2, Item.gloves: 2},
@@ -394,26 +377,5 @@ void main() {
       'wizard': {Item.staff: 2, Item.bow: 3, Item.gloves: 3, Item.potion: 2},
       'knight_templar': {Item.sword: 2, Item.shield: 2, Item.boots: 2, Item.bow: 1, Item.potion: 3},
     });
-    for (final g in [Game()]) {
-      expect(g.byGrade, isFalse);
-      for (final type in troopTypes.keys) {
-        final recipe = awakenRecipe[type]!;
-        for (var level = 0; level <= maxAwaken; level++) {
-          g.upgrades[type] = [for (final MapEntry(key: item, value: n) in recipe.entries) ...List.filled(n * level, item)];
-          expect(g.itemLevel(type), level);
-          for (final MapEntry(key: item, value: n) in recipe.entries) {
-            expect(g.capOf(type, item), n * min(level + 1, maxAwaken));
-            expect(g.awakenProgress(type)[item], (level >= maxAwaken ? n : 0, n));
-          }
-          expect(g.awakenShort(type), level >= maxAwaken ? isEmpty : {for (final MapEntry(key: item, value: n) in recipe.entries) item: n});
-        }
-        expect(g.whyNot(Item.amulet, type), Refusal.notInRecipe);
-        expect(g.whyNot(Item.leatherCap, type), Refusal.notInRecipe);
-      }
-    }
-    // A heal adds the constants, as before.
-    final p = Game()..upgrades['priest'] = [Item.potion, Item.staff];
-    expect(p.statsOf('priest').dmg, troopTypes['priest']!.dmg + potionHeal + staffHeal);
-    expect(p.statsOf('priest').taken, 1);
   });
 }

@@ -101,18 +101,15 @@ void main() {
     expect(isDue('K7', g), isTrue);
   });
 
-  test('K8 item limits and K9 Bangkit: a fielded type at its cap for a kind in the bag; the bag can awaken one', () {
+  test('K8 item limits and K9 Bangkit: a fielded type that must awaken first for an item in the bag; the bag can awaken '
+      'one', () {
     final g = bareGame()..wave = 10;
-    final recipe = g.recipeOf('archer');
-    g.upgrades['archer'] = [for (var i = 0; i < recipe[Item.bow]!; i++) Item.bow]; // at its cap of bows until it awakens
-    g.inventory[Item.bow] = 1;
+    g.inventory[Item.longBow] = 1; // grade II: open from Awaken 1 (decisions-log 249)
     expect((isDue('K8', g), isDue('K9', g)), (false, false)); // no archer on the field
     placeNow(g, 'archer', 0, 0);
-    expect(g.whyNot(Item.bow, 'archer'), Refusal.awakenFirst);
+    expect(g.whyNot(Item.longBow, 'archer'), Refusal.awakenFirst);
     expect((isDue('K8', g), isDue('K9', g)), (true, false));
-    for (final MapEntry(key: item, value: n) in recipe.entries) {
-      if (item != Item.bow) g.inventory[item] = n; // the rest of its recipe in the bag
-    }
+    g.inventory.addAll(g.gradeSet('archer', 1)); // its grade I set in the bag
     expect((g.bagAwakens, isDue('K9', g)), (true, true));
   });
 

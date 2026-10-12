@@ -36,7 +36,7 @@ void main() {
     expect(g.whyNotRecall(g.fallenHeroes.single), 'Opens after wave $storeFrom', reason: 'Recall keeps wave 15');
   });
 
-  test('no "VICTORY!" Shop line while shop.from is 1; a later shop.from has it at its wave; the Towns off at 15', () {
+  test('no "VICTORY!" Shop line while shop.from is 1; a later shop.from has it at its wave', () {
     final on = Game()
       ..towns = true
       ..townRules = shipped;
@@ -45,8 +45,6 @@ void main() {
       ..towns = true
       ..townRules = TownRules.patch({'shop': {'from': 10}});
     expect([for (var w = 0; w <= 40; w++) if ((later..wave = w).shopJustOpened) w], [10]);
-    final off = Game()..townRules = shipped;
-    expect([for (var w = 0; w <= 40; w++) if ((off..wave = w).shopJustOpened) w], [storeFrom]);
   });
 
   for (final size in const [Size(1266, 713), Size(915, 412)]) {

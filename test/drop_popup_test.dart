@@ -114,19 +114,19 @@ void main() {
     await drag.moveTo(at(b, aldo));
     await frames(tester);
     expect(b.dropFor, aldo);
-    expect(b.dropLines, ['Every ${troopTypeNames['knight']} (2)', '${statName(StatKind.dmg)} 20 > 25', '${itemNames[Item.sword]} 0/3 > 1/3', '${awakenName(1)}: 0/10 > 1/10']);
+    expect(b.dropLines, ['Every ${troopTypeNames['knight']} (2)', '${statName(StatKind.dmg)} 20 > 25', '${itemNames[Item.sword]} 0/3 > 1/3', '${awakenName(1)}: 0/11 > 1/11']); // its grade I set: 11
     expect(board, noRing);
     // Over the priest, whose recipe takes no sword: why, and nothing before and after.
     await drag.moveTo(at(b, citra));
     await frames(tester);
     expect(b.dropFor, citra);
     expect(b.dropLines, ['Every ${troopTypeNames['priest']} (1)', refusalNames[Refusal.notInRecipe]]);
-    // The knights at their cap until they awaken: why, their count and how far the awakening is.
+    // The knights at their grade I cap (grade II's swords come with Awaken 1): why, and their count.
     g.upgrades['knight'] = [Item.sword, Item.sword, Item.sword];
     await drag.moveTo(at(b, bima));
     await frames(tester);
     expect(b.dropFor, bima);
-    expect(b.dropLines, ['Every ${troopTypeNames['knight']} (2)', refusalNames[Refusal.awakenFirst], '${itemNames[Item.sword]} 3/3', '${awakenName(1)}: 3/10']);
+    expect(b.dropLines, ['Every ${troopTypeNames['knight']} (2)', refusalNames[Refusal.maxed], '${itemNames[Item.sword]} 3/3']);
     expect(board, noRing);
     // Let go there: refused, the bag keeps it, and it stays in hand.
     await drag.up();
@@ -219,7 +219,7 @@ void main() {
     expect((g.countOf('knight', Item.boots), g.inventory[Item.boots], b.picked), (2, 1, Item.boots));
     await tapOn(tester, at(b, aldo)); // capped: refused, still in hand
     expect((g.countOf('knight', Item.boots), g.inventory[Item.boots], b.picked), (2, 1, Item.boots));
-    expect(b.dropLines, contains(refusalNames[Refusal.awakenFirst]));
+    expect(b.dropLines, contains(refusalNames[Refusal.maxed]));
 
     // Relics the same way, one troop each; one that holds a relic refuses it.
     g.relicBag[Relic.fang] = 2;

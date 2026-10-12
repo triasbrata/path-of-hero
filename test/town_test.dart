@@ -119,19 +119,6 @@ void main() {
     expect((p.chanceStart, p.chanceStep, p.chanceCap, p.minGap, p.firstTownAfter, p.autoLeave), (0.2, 0.5, 1.0, 3, 2, 5.0));
   });
 
-  test('a plain Game() and a board game with the Towns off (tests only) have no Towns: no roll, no mark, no save key; the '
-      'board has them (decisions-log 237, 296)', () {
-    for (final g in [Game(Random(1)), Game(Random(1)).boardRules()..towns = false]) {
-      g.townDice = _Dice([]); // any draw would throw
-      for (var w = 0; w < 12; w++) {
-        winWave(g);
-      }
-      expect((g.towns, g.townAt, g.townDue, g.inTown, g.canStartWave), (false, null, false, false, true));
-      expect(g.toJson().containsKey('town'), isFalse);
-    }
-    expect(Game().boardRules().towns, isTrue);
-  });
-
   test('the roll: blocked (no draw, the chance stays) until wave 5, then 20% and +5% a miss', () {
     final dice = _Dice(List.filled(40, 0.999));
     final g = towns(dice: dice);
@@ -247,7 +234,7 @@ void main() {
     expect((left.auto, g.log.entries.whereType<TownEntered>().single.auto), (true, true));
   });
 
-  test('the save: `town` {chance, last, at, in} only while the Towns are on; a save in the Town reopens in it; a passed '
+  test('the save: `town` {chance, last, at, in}; a save in the Town reopens in it; a passed '
       "mark and a stray `in` are dropped; a save without the key counts a Town before its own wave", () {
     final g = towns(dice: _Dice([0.99, 0.99, 0.1, 0.5]));
     for (var w = 1; w <= 7; w++) {
@@ -276,15 +263,11 @@ void main() {
       'town': {'chance': 0.35, 'last': 2, 'at': 11, 'in': true},
     });
     expect((stray.townChance, stray.townAt, stray.inTown), (0.35, 11, false));
-    // A save from before the Towns (or with them off): no key, so it counts a Town before its own wave.
-    final off = save(g..towns = false);
-    expect(off.containsKey('town'), isFalse);
+    // A save from before the Towns: no key, so it counts a Town before its own wave.
+    final off = save(g)..remove('town');
     expect(load(off).townLast, 8);
     expect(load({...off, 'wave': 0}).townLast, 2, reason: "a new run's start");
     expect(load({...off, 'wave': 1}).townLast, 2);
-    // With the Towns off a loaded mark holds nothing up.
-    final offGame = Game.fromJson(inside, Random(1));
-    expect((offGame.townDue, offGame.canStartWave), (false, true));
   });
 
   test('the dice: the same seeds and the same play give the same Towns; the Town dice alone move them', () {

@@ -110,10 +110,13 @@ void main() {
       ..score = 90;
     expect(kept.flushes, 0);
     send(g, WaveEnded(3, 142.5, won: true));
+    expect(kept.flushes, 0); // a won wave's record waits for the Towns' roll, in the same tick
+    send(g, TownRolled(3, 142.5, town: {'blocked': true}));
     expect(kept.flushes, 1);
 
     final w = kept.of('wave').single;
     expect((w['wave'], w['end'], w['secs'], w['marched'], w['livesLost'], w['kills'], w['score']), (3, 'won', 42.5, 30.25, 2, 5, 90));
+    expect(w['town'], {'blocked': true});
     expect(w['start'], jsonDecode(jsonEncode(start.data)));
     expect(w['spawns'], {
       'orc': {'normal': 2, 'elite': 1},
@@ -151,6 +154,8 @@ void main() {
       'asahSpent': 0, // Asah's (asah_test.dart)
       'tempaSpent': 33000, // between waves: never in what the wave earned
       'leburSpent': 0, // Lebur's (lebur_test.dart)
+      'craftSpent': 0, // the Smithy's (town_craft_test.dart)
+      'tavernSpent': 0, // the Tavern's (tavern_test.dart)
       'bonus': Game.waveBonus(3),
     });
     expect([w['dropped'], w['relicsDropped'], w['used'], w['relicsUsed'], w['relicsTakenOff']], [
@@ -183,7 +188,8 @@ void main() {
     send(g, WaveEnded(4, 160, won: false));
     final lost = kept.of('wave').last;
     expect([lost['wave'], lost['end'], lost['secs'], lost['livesLost'], lost['spawns'], lost['fallen'], lost['bought']], [4, 'lost', 10.0, 8, {}, {}, {}]);
-    expect(lost['gold'], {'start': 1020, 'end': 1020, 'earned': 0, 'spent': 0, 'storeSpent': 0, 'storeEarned': 0, 'ascendSpent': 0, 'recallSpent': 0, 'pusakaSpent': 0, 'chestSpent': 0, 'chestEarned': 0, 'asahSpent': 0, 'tempaSpent': 0, 'leburSpent': 0, 'bonus': 0});
+    expect(lost['gold'], {'start': 1020, 'end': 1020, 'earned': 0, 'spent': 0, 'storeSpent': 0, 'storeEarned': 0, 'ascendSpent': 0, 'recallSpent': 0, 'pusakaSpent': 0, 'chestSpent': 0, 'chestEarned': 0, 'asahSpent': 0, 'tempaSpent': 0, 'leburSpent': 0, 'craftSpent': 0, 'tavernSpent': 0,
+        'bonus': 0});
     expect([lost['storeBought'], lost['storeSold']], [{}, {}]);
   });
 

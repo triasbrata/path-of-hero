@@ -91,13 +91,8 @@ void main() {
       expect(g.relicTierLine(Relic.cleave), 'Mighty relic');
     });
 
-    test('with the Towns off none of the seven shows: the guide, the Bag\'s kinds, the drops; on, all eleven and the '
-        'forge\'s nine', () {
-      final g = Game();
-      expect(g.towns, isFalse);
-      expect(g.relicsInPlay, droppedRelics);
-      g.towns = true;
-      expect(g.relicsInPlay, [...smallRelics, ...forgeRelics]);
+    test('in play: all eleven and the forge\'s nine (the guide, the Bag\'s kinds)', () {
+      expect(Game().relicsInPlay, [...smallRelics, ...forgeRelics]);
     });
   });
 
@@ -444,9 +439,8 @@ void main() {
       expect(g.relicEffect(Relic.venom).single, 'Poisons: +20% of the hit over 4 s');
     });
 
-    test("the tooltip shows the tier and who it suits with the Towns on, and nothing new with them off", () {
-      final off = Game(), on = Game()..towns = true;
-      expect(off.relicInfo(Relic.fang).$2, isNot(contains('Basic relic')));
+    test('the tooltip shows the tier and who it suits', () {
+      final on = Game();
       expect(on.relicInfo(Relic.fang).$2, containsAllInOrder(['Heals 30% of damage dealt', 'Basic relic', 'Best on: Knight, Templar, Lancer, Swordsman']));
       expect(on.relicInfo(Relic.cleave).$2, containsAllInOrder(['Strong relic', 'Best on: Soldier, Knight, Axeman, Templar', relicSlotsLine]));
       expect(on.relicInfo(Relic.lastStand).$2, containsAllInOrder(['Mighty relic', 'Best on: Front melee, Heroes']));

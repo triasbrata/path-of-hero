@@ -2447,13 +2447,11 @@ class Game {
   /// its win, any other at the next wave's start. Not saved.
   String? draftPolicy;
 
-  /// The Towns (lib/town.dart, decisions-log 216): a Town rolled two waves ahead comes between two waves. Every board
-  /// game turns it on ([boardRules], decisions-log 237): the game players play has the Towns, always, and no build or
-  /// player path turns them off (the TOWNS define went, decisions-log 296). TEST-ONLY when off: a plain Game() keeps it
-  /// off, the rules from before the Towns (the field's drops, the old Awaken recipe), so the suite's harness, the
-  /// auto-player and the replay kit play as before and their baselines stay comparable; the UI draws no Towns-off
-  /// version of anything (no Toko, no Sell in the Bag). Not saved. A probe reaches it by name, so it is a member.
-  bool towns = false;
+  /// The Towns (lib/town.dart, decisions-log 216): a Town rolled two waves ahead comes between two waves. Every game
+  /// has them, a plain Game() too (decisions-log 321: the tests play the game players play); no build or player path
+  /// turns them off (the TOWNS define went, decisions-log 296). Off is the rules from before the Towns (the field's
+  /// drops, the old Awaken recipe), which go with this switch. Not saved.
+  bool towns = true;
 
   /// The troops' skill wind-ups (skill_strips.dart, decisions-log 299: the owner's "Ancang-ancang beneran"): a troop's
   /// #10, awakening and Hero skills land on their strip's blow, 0.2-0.3 s after the cast, the troop standing still

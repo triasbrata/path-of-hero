@@ -15,6 +15,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 
+import 'awaken_items.dart';
 import 'hero_skill_helpers.dart';
 
 const darkHymn = OmenKind.darkHymn, boneArrows = OmenKind.boneArrows, arrowWard = OmenKind.arrowWard;
@@ -542,10 +543,7 @@ void main() {
       expect(shieldOn(h, c)!.k, c.maxHp, reason: 'the bigger stays');
       // The awakening skill (Disarm, Hold Fast on its cooldown).
       final (w, wu, [wa, wb]) = scene(top(counterspell));
-      w.upgrades['soldier'] = [
-        for (final MapEntry(key: item, value: n) in awakenRecipe['soldier']!.entries)
-          for (var i = 0; i < n * 2; i++) item,
-      ];
+      w.upgrades['soldier'] = awakenItems('soldier', 2);
       wu.skillAt = w.t;
       w.tick(0.05);
       expect(w.log.entries.whereType<AwakenSkillCast>(), hasLength(1), reason: 'Disarm cast');

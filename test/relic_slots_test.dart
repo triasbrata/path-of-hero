@@ -42,6 +42,7 @@ void main() {
       expect(g.relicBag[Relic.guard], 0);
       expect(g.takeOff(Relic.guard, b), isTrue);
       final gold = g.gold;
+      g.inTown = true; // the Shop buys only in a Town
       expect(g.sell(Relic.guard), 1); // or sold
       expect((g.gold, g.relicBag[Relic.guard]), (gold + g.sellPrice(Relic.guard), 0));
     });

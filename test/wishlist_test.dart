@@ -61,11 +61,6 @@ void main() {
       expect(troopTypes.keys.any((t) => g.canWish(t, item)), isTrue, reason: '$item');
     }
     expect(g.canWish('slime', Item.sword), isFalse, reason: 'not a troop type');
-
-    // The Towns off (a plain Game(), tests only): no Wishlist at all.
-    final noTowns = Game();
-    expect((noTowns.wishOn, noTowns.wish('knight', Item.sword)), (false, false));
-    expect(noTowns.wishlist, isEmpty);
   });
 
   test('wish, unwish, toggle: one list per type, in the order put on, once each', () {
@@ -157,8 +152,6 @@ void main() {
     expect(g.itemLevel('soldier'), maxAwaken);
     expect(g.wishSetOf('soldier'), isEmpty);
     expect((g.wishSet('soldier'), g.setWished('soldier')), (false, false));
-    // The Towns off: none.
-    expect(Game().wishSetOf('knight'), isEmpty);
   });
 
   test('done: a wish met shows done until the type\'s Awaken drops it; a Cap\'s or a Ring\'s drops at once', () {
@@ -324,7 +317,6 @@ void main() {
     final g = forgeGame(inTown: true)..gold = 40000;
     final relic = smithyRelics(g).first;
     expect((g.canWishFree(Item.steelSword), g.canWishFree(relic), g.canWishFree(Mat.wolfClaw)), (true, true, false));
-    expect(Game().canWishFree(Item.sword), isFalse, reason: 'the Towns off');
     // On for two more than the Bag holds, once; its have read live.
     g.inventory[Item.steelSword] = 1;
     expect(g.wishFreeAdd(Item.steelSword, 2), isTrue);

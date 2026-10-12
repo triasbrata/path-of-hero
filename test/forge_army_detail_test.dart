@@ -126,12 +126,11 @@ void main() {
     testWidgets('a level kept from a save before the grades at $size: "Awaken 1 (kept from old items)" first, then the '
         'grade-II needs', (tester) async {
       final b = await boot(tester, size);
-      // A knight at Awaken 1 by the rule from before the grades (its recipe once, all grade I) in a game with the Towns off
-      // (tests only: the forge-off build that wrote such saves is gone, decisions-log 296), saved, then loaded by grade.
+      // A knight at Awaken 1 by the rule from before the grades (its recipe once, all grade I) in a save from before them:
+      // no `awakenKept` (the forge-off build that wrote such saves is gone, decisions-log 296), loaded by grade.
       final old = Game();
       old.upgrades['knight'] = [for (final MapEntry(key: item, value: n) in old.recipeOf('knight').entries) ...List.filled(n, item)];
-      final j = jsonDecode(jsonEncode(old.toJson())) as Map<String, dynamic>;
-      expect(j.containsKey('awakenKept'), isFalse, reason: 'a save from before the grades keeps no level');
+      final j = jsonDecode(jsonEncode(old.toJson())) as Map<String, dynamic>..remove('awakenKept'); // it keeps no level
       final g = b.state = Game.fromJson(j).boardRules()
         ..gold = 5000;
       expect((g.keptLevel('knight'), g.awakenLevel('knight')), (1, 1));

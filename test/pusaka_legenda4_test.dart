@@ -155,7 +155,9 @@ void main() {
       // The Shop never sells one, and an oath is never in the Gudang, so it never sells back either.
       expect(storeGoods.where(batch.contains), isEmpty, reason: 'never in the Shop');
       for (final r in batch) {
-        final g = Game()..wave = storeFrom;
+        final g = Game()
+          ..wave = storeFrom
+          ..inTown = true; // the Shop buys only in a Town
         g.givePusaka(r, type: 'knight'); // a type given is ignored: an oath is the army's
         expect((g.pusaka[r]!.type, g.gudang.isEmpty, g.inBag(r), g.whyNotSell(r), g.sell(r)), (null, true, 0, StoreRefusal.none, 0), reason: '$r');
         expect((g.whyNotBind(r, 'knight'), g.whyNotUnbind(r)), (pusakaRefusals.oath, pusakaRefusals.oath), reason: '$r');

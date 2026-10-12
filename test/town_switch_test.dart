@@ -82,9 +82,8 @@ Game seeded(int seed) => Game(Random(seed), Random(seed + 100)).boardRules()
   ..townPolicy = 'leave';
 
 void main() {
-  test('the board plays with the Towns: boardRules turns them on, always (no define, decisions-log 296); a plain Game() '
-      'keeps them off (tests only)', () {
-    expect(Game().towns, isFalse);
+  test('every game plays with the Towns: the board (no define, decisions-log 296) and a plain Game() (decisions-log 321)', () {
+    expect(Game().towns, isTrue);
     expect(Game().boardRules().towns, isTrue);
   });
 
@@ -277,8 +276,8 @@ void main() {
     });
   });
 
-  test("town.json's shop.from opens the Town's Shop with the Towns on (shipped 1: every Town's, decisions-log 253); Awaken "
-      '4-5, Forge and Recall keep wave 15; off, wave 15 for all as ever', () {
+  test("town.json's shop.from opens the Town's Shop (shipped 1: every Town's, decisions-log 253); Awaken 4-5, Forge and "
+      'Recall keep wave 15', () {
     expect(const TownRules().shop.from, 1);
     final on = Game()
       ..towns = true
@@ -287,30 +286,22 @@ void main() {
     expect((on.shopFrom, on.storeOpen, on.storeWhy(StoreRefusal.locked)), (10, false, 'Opens after wave 10'));
     on.wave = 10;
     expect(on.storeOpen, isTrue);
-    final off = Game()
-      ..townRules = on.townRules
-      ..wave = 10;
-    expect((off.shopFrom, off.storeOpen, off.storeWhy(StoreRefusal.locked)), (storeFrom, false, 'Opens after wave $storeFrom'));
-    // The shipped rules: the Shop open from wave 1's win; the Army page's buys from wave 15's, with the Towns on or off.
-    for (final towns in [true, false]) {
-      final g = Game()
-        ..towns = towns
-        ..gold = 1 << 30;
-      for (var w = 0; w <= 20; w++) {
-        g.wave = w;
-        expect(g.storeOpen, towns ? w >= 1 : w >= storeFrom, reason: 'towns $towns wave $w: the Shop');
-        expect(g.armyBuysOpen, w >= storeFrom, reason: 'towns $towns wave $w: Awaken 4-5, Forge, Recall');
-      }
-      g
-        ..wave = storeFrom - 1
-        ..fallenHeroes.add(FallenHero(name: 'Kael', type: 'knight', stats: const [HeroStat.hp], fell: 3));
-      for (final why in [g.whyNotAscend('knight'), g.whyNotTempa('knight'), g.whyNotRecall(g.fallenHeroes.single)]) {
-        expect(why, 'Opens after wave $storeFrom', reason: 'towns $towns: the Army page\'s buys before wave 15');
-      }
-      g.wave = storeFrom;
-      for (final why in [g.whyNotAscend('knight'), g.whyNotTempa('knight'), g.whyNotRecall(g.fallenHeroes.single)]) {
-        expect(why, isNot('Opens after wave $storeFrom'), reason: 'towns $towns: open from wave 15 (its own refusals then)');
-      }
+    // The shipped rules: the Shop open from wave 1's win; the Army page's buys from wave 15's.
+    final g = Game()..gold = 1 << 30;
+    for (var w = 0; w <= 20; w++) {
+      g.wave = w;
+      expect(g.storeOpen, w >= 1, reason: 'wave $w: the Shop');
+      expect(g.armyBuysOpen, w >= storeFrom, reason: 'wave $w: Awaken 4-5, Forge, Recall');
+    }
+    g
+      ..wave = storeFrom - 1
+      ..fallenHeroes.add(FallenHero(name: 'Kael', type: 'knight', stats: const [HeroStat.hp], fell: 3));
+    for (final why in [g.whyNotAscend('knight'), g.whyNotTempa('knight'), g.whyNotRecall(g.fallenHeroes.single)]) {
+      expect(why, 'Opens after wave $storeFrom', reason: 'the Army page\'s buys before wave 15');
+    }
+    g.wave = storeFrom;
+    for (final why in [g.whyNotAscend('knight'), g.whyNotTempa('knight'), g.whyNotRecall(g.fallenHeroes.single)]) {
+      expect(why, isNot('Opens after wave $storeFrom'), reason: 'open from wave 15 (its own refusals then)');
     }
   });
 

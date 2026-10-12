@@ -1,9 +1,8 @@
 // The Smithy's Craft (decisions-log 233; lib/town.dart `extension Craft`; docs/loot-items-relics.md "Town and Smithy:
-// Craft"), dark behind `Game.towns`: each refusal in the design's order, no limit a visit, the materials, items and
-// gold taken (the forge's gold, decisions-log 245: what every game with the Towns charges), the recipe's rows, every
-// recipe craftable from exactly its own; the Town Shop's prices with the Towns on (the small relics at their tier's
-// price, sold back at half their own recipe's gold; the items town.json's) and today's with them off (tests only);
-// Asah's cheapest-first take; the event, its log lines and the telemetry.
+// Craft"): each refusal in the design's order, no limit a visit, the materials, items and gold taken (the forge's gold,
+// decisions-log 245), the recipe's rows, every recipe craftable from exactly its own; the Town Shop's prices (the small
+// relics at their tier's price, sold back at half their own recipe's gold; the items town.json's); Asah's cheapest-first
+// take; the event, its log lines and the telemetry.
 import 'dart:convert';
 import 'dart:math';
 
@@ -78,11 +77,7 @@ void main() {
       expect(g.sfx, [Sfx.error], reason: text);
     }
 
-    // With the Towns off there is never a Town: whatever the bag holds.
-    final off = Game()..gold = 100000;
-    giveRecipe(off, Relic.fang);
-    refused(off, Relic.fang, CraftWhy.town, 'Only in a Town');
-    // With them on, only in one.
+    // Only in a Town: on the field, whatever the bag holds.
     final field = Game()
       ..towns = true
       ..gold = 100000;
@@ -178,8 +173,9 @@ void main() {
       expect(g.relicBag, {relic: 1}, reason: relicNames[relic]);
     }
     expect(smallRelics, hasLength(11));
+    // town.json's own recipes (their gold is a small relic's sell price and Asah's order) name every dropped material.
     final g = Game();
-    expect({for (final r in smallRelics) ...g.craftRecipe(r)!.materials.keys}, droppedMats.toSet());
+    expect({for (final r in smallRelics) ...g.townRules.recipes[r.name]!.materials.keys}, droppedMats.toSet());
   });
 
   test("a patched recipe is the Smithy's: town.json's numbers", () {
@@ -231,8 +227,7 @@ void main() {
     expect((next.data['craftSpent'], logLine(next)), (0, 'Left town'));
   });
 
-  test("telemetry: the crafted event goes out; the next wave's record has crafted, materialsUsed and gold.craftSpent "
-      '(Towns on only)', () {
+  test("telemetry: the crafted event goes out; the next wave's record has crafted, materialsUsed and gold.craftSpent", () {
     expect(passedOn, contains(EventKind.crafted));
     final sink = _Kept();
     final g = inTown();
@@ -251,22 +246,11 @@ void main() {
     expect((w['wave'], (w['gold'] as Map)['craftSpent']), (1, 600));
     expect(w['crafted'], {'fang': 2, 'thorns': 1});
     expect(w['materialsUsed'], {'batWing': 4, 'slimeGel': 7, 'boneShard': 2});
-
-    final quiet = _Kept();
-    final h = Game(Random(1), Random(101));
-    TelemetryAdapter([quiet], installId: 'i', session: 's', platform: 'test', now: () => DateTime.utc(2026, 10, 4)).attach(h);
-    winWave(h);
-    final r = quiet.of('wave').single;
-    expect((r.containsKey('crafted'), r.containsKey('materialsUsed'), (r['gold'] as Map).containsKey('craftSpent')), (false, false, false));
   });
 
   group('prices', () {
-    /// A game at wave 15 (the Shop open), the Towns [on], in a Town when they are, with plenty of gold.
-    Game shop({bool on = true}) => on
-        ? inTown(gold: 1000000, wave: storeFrom)
-        : (Game()
-          ..wave = storeFrom
-          ..gold = 1000000);
+    /// A game at wave 15 in a Town (the Shop open), with plenty of gold.
+    Game shop() => inTown(gold: 1000000, wave: storeFrom);
 
     test("Towns on: a small relic at its tier price, +20% of it a buy (the forge's Shop sells none, so only a count an "
         "old save brought moves it); sold back at half its own recipe's gold", () {
@@ -314,16 +298,6 @@ void main() {
       expect((g.buyPrice(Item.potion), g.buyPrice(Item.potion, 1), g.sellPrice(Item.potion)), (3000, 3300, 1200));
     });
 
-    test("Towns off: today's prices, the Smithy's seven (never sold then) at the small relics' too", () {
-      final g = shop(on: false);
-      for (final r in smallRelics) {
-        expect((g.basePrice(r), g.buyPrice(r), g.buyPrice(r, 1), g.sellPrice(r)), (8000, 8000, 9600, 4000), reason: relicNames[r]);
-      }
-      expect((g.buyPrice(Item.sword), g.buyPrice(Item.sword, 1), g.sellPrice(Item.sword)), (2000, 2200, 1000));
-      // A patched town.json moves nothing with the Towns off.
-      g.townRules = TownRules.patch({'tiers': {'basic': {'shop': 1}}, 'shop': {'itemPrice': 1}});
-      expect((g.buyPrice(Relic.fang), g.sellPrice(Relic.fang), g.buyPrice(Item.sword)), (8000, 4000, 2000));
-    });
   });
 
   group("Asah's take", () {
@@ -362,17 +336,6 @@ void main() {
       expect(g.log.entries.whereType<PusakaAsah>().single.relics, {Relic.fang: 1, Relic.cleave: 4, Relic.blessing: 5});
     });
 
-    test("Towns off: today's rule over the four (the most held first); the seven, never there then, aren't counted", () {
-      final g = Game();
-      g.relicBag.addAll({Relic.fang: 17, Relic.thorns: 29, Relic.fury: 23, Relic.guard: 21, Relic.cleave: 50});
-      expect(g.asahRelicsInBag, 90);
-      expect(g.asahTake, {Relic.thorns: 8, Relic.fury: 2});
-      g.relicBag
-        ..clear()
-        ..addAll({Relic.guard: 1, Relic.cleave: 50});
-      expect(g.asahRelicsInBag, 1);
-      expect(g.asahTake, {Relic.guard: 1});
-    });
   });
 
   group("the Smithy page's words (decisions-log 235)", () {
@@ -384,41 +347,6 @@ void main() {
       for (final m in droppedMats) {
         expect(g.matFrom(m), isNotEmpty, reason: '$m');
       }
-    });
-
-    test('an item a fielded type still needs for its next Awaken: which type, how many more, which Awaken', () {
-      // The rule from before the forge (its recipe once more a level), kept with the Towns off (tests only; with them
-      // on by grade: forge_awaken_test.dart).
-      final g = Game(Random(1), Random(101))
-        ..armyMax = null
-        ..gold = 10000;
-      expect(g.craftItemNeed(Item.sword), isNull, reason: 'no troop');
-      expect(g.autoPlace('knight'), isTrue);
-      for (final u in g.troops) {
-        if (u.type != 'knight') u.gone = true; // the knights alone
-      }
-      expect(g.craftItemNeed(Item.sword), (type: 'knight', need: 3, level: 1));
-      expect(g.craftItemNeed(Item.staff), isNull, reason: "not in the knight's recipe");
-      // Awakened once (its recipe once over) and two swords more: one short of Awaken 2.
-      g.upgrades['knight'] = [
-        for (final MapEntry(key: i, value: n) in g.recipeOf('knight').entries) ...List.filled(n, i),
-        Item.sword,
-        Item.sword,
-      ];
-      expect(g.craftItemNeed(Item.sword), (type: 'knight', need: 1, level: 2));
-      g.upgrades['knight'] = [...g.upgrades['knight']!, Item.sword];
-      expect(g.craftItemNeed(Item.sword), isNull, reason: 'enough for Awaken 2');
-      // At the items' top Awaken it needs none; a type with none alive needs none.
-      g.upgrades['knight'] = [
-        for (final MapEntry(key: i, value: n) in g.recipeOf('knight').entries) ...List.filled(n * maxAwaken, i),
-      ];
-      expect(g.craftItemNeed(Item.shield), isNull);
-      g.upgrades.remove('knight');
-      for (final u in g.troops) {
-        u.gone = true;
-      }
-      expect(g.troops.any((u) => u.alive), isFalse);
-      expect(g.craftItemNeed(Item.sword), isNull);
     });
   });
 }

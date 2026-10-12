@@ -94,8 +94,8 @@ void main() {
     expect([a?.readAsStringSync(), b?.readAsStringSync()], ['a', 'b']);
   });
 
-  // decisions-log 317: Game.fromJson fits the troops under a plain Game()'s rules (the Towns off); "Continue" turns the
-  // board's on (boardRules), which fits them again, each at its saved HP.
+  // decisions-log 317: a "Continue" fights with the board's stats, each troop at its saved HP (since 321 Game.fromJson
+  // fits them under the board's rules at once: a plain Game() has the Towns).
   test('a save loaded for the board fights with the board\'s stats, at its saved HP', () {
     // The w89 save, two of its templars' swords enhanced to +3 (enhance.dart): pluses only the board's rules count.
     final j = jsonDecode(File('test/fixtures/save-20261002-2222-w89-sellbug.json').readAsStringSync()) as Map<String, dynamic>
@@ -104,12 +104,10 @@ void main() {
           {'item': 'sword', 'plus': 3, 'n': 2},
         ],
       };
-    final g = Game.fromJson(j, Random(1), Random(2), Random(3));
-    final types = {for (final u in g.troops) u.type};
-    final off = {for (final t in types) t: _stats(g.statsOf(t))};
-    g.boardRules();
-    // The two rules part on this save, or the test would prove nothing.
-    expect(types.where((t) => _stats(g.statsOf(t)) != off[t]), isNotEmpty);
+    final g = Game.fromJson(j, Random(1), Random(2), Random(3))..boardRules();
+    // Its +3 swords count: the templars hit harder than the same save's without them.
+    final without = Game.fromJson(jsonDecode(File('test/fixtures/save-20261002-2222-w89-sellbug.json').readAsStringSync()) as Map<String, dynamic>);
+    expect(g.statsOf('knight_templar').dmg, greaterThan(without.statsOf('knight_templar').dmg));
     final saved = [for (final t in j['troops'] as List) (t['hp'] as num).toDouble()];
     expect(g.troops.length, saved.length);
     for (final (i, u) in g.troops.indexed) {
