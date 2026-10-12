@@ -11317,6 +11317,61 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        use it (that probe's dump with the Towns moves: its save's catch-up meets waves 90 and 91; a new golden).
      - **S5** (code-audit): `OmenKind`, the kinds' data (570 lines), moved from omen.dart to lib/omen_catalog.dart,
        unchanged.
+320. **The awakening skills' cost in troops: Phantom Rush's swordsman a phantom while it dashes, a wind-up claims its
+     target, Unbroken lands on a foe in reach** (the owner, 2026-10-12, of the balance pass's finding (318) that the
+     army loses ~13% more troops with the awakening skills than without: "Selidiki skill awakening", look into them).
+     By awaken-skills, in two phases.
+     - **Measured first** (nothing changed): paired one-wave replays of the balance pass's dumps (its careful player's
+       new games, seeds 1-6 at w21-70, and the owner's wave-58 save played forward), each state once per arm on the
+       same dice, the Shadows off as the balance pass measured; a trace of every awakening wind-up and carry. **It is
+       one skill, the swordsman's Phantom Rush**: with it alone off the army lost 0.69 ± 0.19 fewer troops a wave at
+       w41-70 (−15%; b 4.57), more than with every awakening skill off (−0.53 ± 0.18), and w21-40 −0.25 ± 0.08
+       (−33%); every one of those falls a swordsman. The rush hops the swordsman, nearly always at full HP, through
+       the monsters' front to the most wounded foe within 2.5 tiles, cut after cut for about a second, and every
+       monster there makes it its nearest troop: **15% of the rushes (352 of 2,327; 21% on the owner's save) ended
+       with the swordsman dead in the rush**, 295 of them from 75%+ HP, mostly to high elites, elites and mini bosses.
+       Its fall rate in the 3 s after its own rush was 3.9 a fight-minute, 0.5 the rest of the time. The other five
+       skills fielded (Unbroken, Spellbreaker, Lifeline, Singularity, Consecration) cost nothing measurable
+       (Singularity helps late); not the MP (nothing waiting for the awakening skill's MP: −0.19 ± 0.13) and not 299's
+       wind-up (−0.05 ± 0.16). For the rush, a smaller round (+0.53 ± 0.38), at most 2 cuts (±0) or only the foes at
+       the front (+0.21) didn't help, nor would an HP gate (they die from full HP); untouchable while it dashes:
+       −0.99 ± 0.22 (−22%); untargetable (the monsters don't pick it, areas and shots still hit): −0.68 ± 0.18.
+     - **A second defect, no falls but wasted casts**: since 299 a troop's rule is asked again on the wind-up's blow,
+       and the troops of one type raced for one target, each paying its MP and cooldown: 84% of Spellbreaker's
+       wind-ups, 85% of Lifeline's, 72% of Unbroken's and 49% of Consecration's ended with nothing. Unbroken's mostly
+       because the knight was healed back to full in the 0.3 s (its rule, 298: hurt at all).
+     - **The owner's pick for Phantom Rush**, asked between a phantom (no blow lands on it while it dashes and goes
+       home) and untargetable: "Hantu: kebal saat melompat" (a ghost, immune while it leaps). `isPhantom`
+       (awaken_skills.dart): from its first dash until it is home no blow lands on it (`_hurt`), nor a monster's
+       effect (`addEffect`'s `bad` ones) or stun (`stunTroop`), so a bleed or a stun doesn't land where the blow
+       didn't. It bends "a carried troop takes blows" for this one skill (units-and-combat.md "Forced movement" and
+       "The movers"). The board draws its body as a see-through magenta ghost the whole time it is immune: its frame
+       at 55% under the same frame in the afterimages' flat magenta at 40% (ui-hud.md "Skills").
+     - **The two plain bugs fixed with it**: an awakening skill's wind-up claims what it aims at (`TroopWind.claims`
+       and `at`: the foe, the troops Lifeline lifts, a well's foe and spot, a ground, a landing spot) and the others of
+       its type pass over it, or don't start; Unbroken lands on the blow with a foe in reach alone
+       (units-and-combat.md "Skill strips").
+     - **Measured after** (one sweep, one compile: each state once per arm on the same dice, the branch's three fixes on
+       and off by a switch in the probe's copy, whose off arm played main's waves the same; the balance pass's new games
+       seeds 1-12 w21-80, 611 states, and the owner's wave-58 saves forward): the fixes **−0.92 ± 0.10 fell a wave
+       (−27%; the swordsman's −0.81 ± 0.08, −33%)**; w21-40 −0.39 ± 0.07 (−52%), w41-60 −1.23 ± 0.17 (−38%), w61-80
+       −1.31 ± 0.34 (−15%); the owner's w58 save played on by the careful player −2.25 ± 1.06 (−14%); waves' length ±1%,
+       3 lives fewer lost. **The awakening skills now save troops**: all off, the army loses 0.81 ± 0.13 more a wave
+       (+34%; 1.26 at w41-80), where on main they cost 0.11 ± 0.13 (0.57 ± 0.14 at w41-60). The same save played the
+       owner's way doesn't move (−0.35 ± 4.89): it never awakens its swordsmen, so it has no Phantom Rush. A trace: the
+       rushes that ended with the swordsman dead went from 352 of 2,327 to none of 2,427 (w41-70; the w58 save 161 of
+       756 to none), its falls 690 → 450. The wind-ups lost: Spellbreaker 84% → 8%, Unbroken 72% → 24% (the rest: no foe
+       in reach any more), Consecration 49% → 39%, Singularity 24% → 7%. Lifeline lifts a third as often (310 → 106) and
+       loses 91%: with no second priest winding up the same lift, the others heal the claimed troop past 50% in the
+       0.3 s (296 of 340 of its fizzles); falls-neutral (Lifeline off cost nothing before either), left as is.
+     - **With the balance pass's 140 HP swordsman** (318's pick 4, weighed again in the same sweep): on main's rules it
+       saves 0.84 ± 0.09 falls a wave (−25%; the swordsman's 0.84, −33%), on top of the fixes 0.71 ± 0.09 (−28% of
+       what is left; the swordsman's 0.66, −39%), both together 1.61 ± 0.12 (−48%; the swordsman's 1.47, −59%): they
+       overlap by ~0.15 a wave, so they stack. On the owner's army (fodder swordsmen) the 140 HP saves 13.5-17.7 of
+       ~139 falls a wave with or without the fixes.
+     - **The w89 identity guard moves** (319's dump): that army fields Consecration, Singularity, Skyfall,
+       Spellbreaker and Lifeline, so the claims change who casts. Waves 90 and 91 are still won with no life lost in
+       its three plays, up to 3% shorter or longer; 8 troops fallen in all, 9 before.
 321. **The tests play the real rules: the Towns-off rules go, `Game.towns` with them** (the owner, 2026-10-12, asked
      whether the half of the logic tests that still played the rules from before the Towns (a plain `Game()`, which no
      player plays) should move to the real rules, the Towns-off rules then deleted: "Ya, setelah bug B1–B3" (yes, after
@@ -11392,3 +11447,146 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        lives, so it pays nothing. The battle log adds "Army fell: -1 heart, wave N again".
      - **What a run's end means now:** a run ends after three wipes, or fewer with leaks. The balance pass weighs where
        runs end and how many replays they take (lives-rule's probe plan).
+323. **A forged ingredient links to its forge page, and joins the Wishlist with its parent, never for a troop** (the
+     owner, 2026-10-12: "jika material dari item yang mau di forge, adalah hasil forge ketika user click itu akan
+     mengarah ke forge item tersebut, begitu juga kalau user whitelist item yang item untuk forgenya ada item yang perlu
+     di forge dulu maka item itu juga akan langsung ke whitelist. cuma perlu hati hati karna jangan sampai item
+     requirement untuk forge ini malah ada cta untuk give to troops karna ini di whitelist bukan untuk troops", i.e. a
+     material of an item to forge that is itself forged opens that item's forge page when tapped; wishing for an item
+     whose recipe needs an item that must be forged first puts that item on the wishlist too; careful that it never gets
+     a "give to troops" call to action, since it is wished as an ingredient, not for troops. His answers: its row on the
+     Wishlist tab "sama saja seperti whitelist biasa tapi jangan sampai ada tulisan untuk give to trops" (the same as a
+     normal wishlist row, but never any "give to troops" wording); when the parent wish is removed or met, its added
+     ingredient wishes "Ikut terhapus" (go with it), the player's own wishes for them staying). Built by wish-chain.
+     loot-items-relics.md "The Wishlist" ("Ingredient wishes", "Saved") and ui-hud.md "The Smithy" ("A forged ingredient
+     is a link", "Kept for a craft", the Wishlist tab's parts and "Ingredients"), "The Bag" ("The free line") and "Army"
+     hold it.
+     - **Which recipes:** the Cap's and the Ring's grades II and III take the grade below (Steel Helm ← Leather Cap,
+       Royal Helm ← Steel Helm, Gem Ring ← Ring, Royal Ring ← Gem Ring), and ten relics an item: Cleave ← Sword, Venom ←
+       Bow, Mana Siphon ← Staff, Spirit Ward ← Shield, Last Stand ← Tower Shield, Giant Slayer ← Steel Gloves, Blessing ←
+       Big Potion (the last three the forge's changes), Avalanche ← Steel Sword, Afterglow ← Magic Staff, Reaper ← Long
+       Bow. No recipe takes a relic, and no Awaken set item takes an item; the Royal Helm and the Royal Ring chain two
+       deep. Every item has a recipe, so every item part is a link and an ingredient.
+     - **The link:** on a product's Smithy page a recipe row of an item has the action rows' green "›" and is lit under
+       the mouse; its tap (on tap up: a drag over the page still scrolls it) opens that item's page on the Items tab, as
+       picking it on the board. The page then has **Back** on its Recipe line (the Bag chooser's tag), a step at a time
+       along the trail (Royal Ring → Gem Ring → Ring, back twice); a board pick, the strip or the book turning drop the
+       trail. On the Wishlist tab a row's part the Smithy makes opens its page the same way (on tap up through the Bag
+       cell's tap, so a long press keeps the tooltip), Back returning to the tab. The Bag's item page lists no recipe:
+       nothing to link there.
+     - **The chain:** `wish`, `wishSet` and `wishFreeAdd` (the Army detail's picker, "+" and "Wishlist all", the Smithy's
+       and the Bag's free lines) put on an ingredient wish (`WishPart`: the root wish's type or none, its product and the
+       chain down, "knight/royalRing/gemRing/ring") for every forgeable item its recipe takes, recursively, once each.
+       Its count is read live rather than stored: the recipe's count for each of the parent still to make, less the
+       Bag's, the Bag's going to the wishes for it in order (nearer the root first). Asked was "the recipe count × the
+       parent's count, minus nothing (the tab shows have/need)"; a count fixed when wished would ask again, after the
+       Royal Ring's craft, for the Gem Ring that craft used up. Two parents' counts add up; it stays while either needs it. The player's own wish for the same product stays a
+       wish of its own (its own row; kept when the parent goes).
+     - **The rows:** the Wishlist tab's last group, **Ingredients** (`Words.ingredients`; no sprite; its Remove takes
+       every ingredient wish off, the parents staying), a row per product still wanted: "Gem Ring ×1" and in grey "for
+       Royal Ring" (the product it is for, never a troop), its parts, status, Craft and ✕ (it and those under it off, the
+       parent staying). No Give: no tag, no words, no "for Knight". Its Craft says "Gem Ring crafted!" only, and the one
+       made stays in the Bag for the parent. On the made product's own Smithy page, while an ingredient wish keeps it and no
+       type's open wish asks for it, the Give row ("Give to troops") gives way to a grey "Needed for Royal Ring"
+       (`Words.neededFor`): the owner's warning taken to the page the link opens; and on the orchestrator's word, after
+       the first READY, to the Bag's item page too (its +0 page's "Give to troops" row; the rows under it and a drag
+       onto the field as before), Give coming back once no parent needs it or a type's own wish asks for it. Chosen
+       over listing the ingredient under its parent's type group: that heading is the troop's sprite and name; the
+       orchestrator keeps the last group "Ingredients" for now, for the owner to see on develop.
+     - **Off:** removing a wish (a row's ✕, a group's Remove, Remove on its page, the Army detail's ✕ and "Remove set")
+       takes its ingredient wishes off, recursively, and so does a met parent: a type's wish held in full (a Cap's or a
+       Ring's drops at once; an Awaken item's waiting for its Awaken loses its ingredients at once), a free line crafted.
+     - **Save:** `wishlist.parts`, a list of name lists (["knight", "royalRing", "gemRing", "ring"], a free line's type
+       "free"), written with every `wishlist` (empty too) for the wishes saved. A save without the key (before 323) puts
+       its wishes' ingredients on at load as a wish put on now does; one with it loads only what it holds (an ingredient
+       taken off by hand stays off). An unknown name, a type that isn't one, a lost root or parent, a part the parent's
+       recipe doesn't take: skipped. Additive: a build from before skips the key (no troop type has the name);
+       `Game.saveVersion` stays 3. Save-affecting (DEV 96247211).
+     - **Tests:** test/wishlist_chain_test.dart (new: the recipes above pinned, the chain one and two deep from a type's
+       wish, a set and a free line, counts read live and two parents', the own wish apart, off by a tap or met, the
+       star and the materials, the save's `parts` with an old save's chain and the skips) and test/smithy_chain_ui_test.dart
+       (new, at 1600×947 and 915×412: the recipe rows' link and Back from an item's and a relic's page, a material's
+       none, a board pick dropping the trail; a Wishlist part's link and Back; the Ingredients rows without Give, "Needed
+       for Royal Ring", Craft, ✕ and Remove). wishlist_test's save shapes gain `'parts': []`; smithy_wish_ui_test's 303
+       fixture (a Royal Helm among its 17 rows) clears its ingredient wishes so 303's rows-a-spread table stays true.
+     - **Checks** (wish-chain on 96247211 = main 18b56bb2 + the change, in a mirror; no whole suite, decisions-log 273):
+       `analyze lib test` no issues (-1791797821-an); wishlist_chain, wishlist, words, english_text +25 −1 (-t1: a test's
+       list-in-record slip, fixed; then wishlist_chain, wishlist, smithy_chain_ui +24 −0 on 35ba91eb, -1791799488-t1, with
+       analyze again no issues); smithy_wish_ui, wishlist_ui, bag_grid +45 −0 (-t3); forge_smithy_ui, town_smithy_ui,
+       forge_enhance_ui, forge_army_detail, forge_shop_ui, town_materials_ui +50 −0 (-t4); bag_detail, bag_actions,
+       bag_chips, troops_detail, save, town_craft, forge_awaken +69 −0 (-t5); the w89 identity SAME against 320's
+       golden `<agents>/probes/awaken-skills/w89-on-fccf102f.txt` (-w89: UI and wish bookkeeping only). Shots
+       (test/probe_wish_chain_shots.dart, -shots) at 1600×947 and 915×412, looked at: the Wishlist tab with its
+       Ingredients group (and its second spread on the phone), the Royal Ring's page with its Gem Ring row's "›" and lit
+       under the mouse, the Gem Ring's page after the link with Back and "Needed for Royal Ring", the Gem Ring crafted
+       from its row. Main be2af703 (327) merged after, no file in common. The Bag's kept line (after the first READY;
+       main 7deb8354, 325, merged, no file in common) on c4d5ea13: `analyze lib test` no issues (-1791800007-an);
+       smithy_chain_ui (its new Bag test), wishlist_chain, wishlist, smithy_wish_ui, wishlist_ui +50 −0 (-t1); bag_detail,
+       bag_actions, bag_chips, bag_grid, forge_smithy_ui, forge_shop_ui, words, english_text +72 −0 (-t2).
+325. **The Pusaka's ring under a bound type's troops is drawn in the sprites' pixels** (the owner, 2026-10-12: "ring
+     putih atau kuning di bawah troops di buat jadi pixelated", make the white or yellow ring under the troops
+     pixelated). Why: it was the field's one smooth line right under the troops, a 1 px anti-aliased oval among pixel
+     art. The ring the owner sees is the Pusaka's (decisions-log 149), not a mark of Heroes or awakening: every troop of
+     a type with a Pusaka bound wears it, in the Pusaka's colour; on the owner's save God's Thunder's lemon on the
+     archers is the yellow (War Drum's tan on the lancers), and the seven bound Pusaka without a colour of their own (Moonwell, Ember Brand, Aegis Seal,
+     First Cut, Hero's Cloak, Heartbeat, Finishing Blade) ring in cream, the white. The troops' ground shadows,
+     the awakened ones' gold and white among them, were sprites in pixels already. By pixel-rings (lib/pusaka_look.dart;
+     ui-hud.md "The Pusaka in battle").
+     - **The same ring, in pixels:** the same 20 × 8 box centred 1 above the feet, the same colours at 90%, steady. Its
+       cells (`pixelRingCells`) are a stepped line one cell thick, one world unit each like a sprite's pixels, built once
+       at load as a white image with a clear pixel round it and drawn nearest, without anti-aliasing, flat in the
+       Pusaka's colour, a whole number of units from the feet, so at any zoom its steps fall on the shadow's pixels and
+       a screen pixel is the colour or nothing. The guide's K6 picture draws it the same way.
+     - **No dearer:** one image draw per ring in a paint made once per Pusaka, as the oval was one draw. Measured on
+       the owner's wave-30 save at 1600×947, 40 s of its wave with 29 rings a frame (test/probe_pixel_rings.dart): a
+       frame's drawing 1.93 → 1.49 ms on average (95th percentile 3.91 → 2.36), rasterising it in the tests' renderer
+       185 → 160 ms; the two runs shared a busy machine, so read it as no rise, not as a gain.
+     - **Then every other ring, the halo and the reach (325b).** The first pass left the field's other smooth shapes
+       for the owner to decide: the guard ring, the effects' rings (a Barrier's teal among them, Impale's and Ice
+       Grip's dashed one), Spear Wall's brace ring, a Hero's soft halo and a dragged troop's reach disc. The owner asked
+       for all of them, the halo and the disc too, as stepped pixel shapes (a glow as a few stepped bands of alpha, no
+       smooth gradient). By pixel-rings (lib/pixel_shapes.dart; ui-hud.md "The field's rings in pixels"). One module
+       now builds every shape once at load and draws it as the Pusaka's ring is drawn. The guard ring keeps 16 × 7 (an
+       odd height, so its box sits half a unit higher, on whole units); the effects' nested rings go 18 × 8, 14 × 6,
+       10 × 4, 6 × 2 (even, so each stays centred; they shrank by 3 × 1.2 before); the dashed ring turns as before in
+       8 steps a dash; the halo is 4 bands of the old gradient's alpha, its pulse by whole units; the reach is a filled
+       disc at the same 12%. Colours, alphas and pulses are as they were. The zones', the wind-ups', the skills' ground
+       circles and reach rings, Holy Shield's dome and a new Hero's gold ring were the packs' sprites, in pixels already.
+327. **A shot already fired is never lost mid-flight: it flies on to where its target went and lands there, an area
+     shot hitting the monsters round that spot and a single one the unit standing on it** (the owner, 2026-10-12:
+     "particle yang sudah terkirim jangan hilang di tengah jalan, biarkan tetap terkirim ke tempat posisi monsternya
+     terakhir dan kalau itu attack area maka monster di sekitarnya juga ikut kena", a shot already sent must not vanish
+     halfway: let it fly on to the monster's last place, and if it is an area attack the monsters round it are hit too;
+     asked whether a single shot should then hit a monster standing on that spot: "mau"). Why: until then a shot whose
+     target fell or leaked before it landed was dropped mid-air, so a wizard's fireball vanished whenever another troop
+     took its target first and its splash never came. By shot-through (lib/game.dart's shot loop, `Shot.to`,
+     `Shot.aim`, `landReach`, `_standingOn`; units-and-combat.md "A shot whose target went flies on").
+     - **The flight:** the first tick its target isn't alive (fallen, or gone past the line) the shot keeps that place,
+       frozen (`Shot.to`), and flies on to it at its own speed; the UI draws it towards that spot (`Shot.aim`).
+     - **The landing**, as on a living target: its hit burst and ring at the spot. The unit of the target's side nearest
+       the spot within `landReach` (half a tile, a line shot's `lineWidth`: the owner asked for the shot's own hit
+       radius or tolerance, and a homing shot has neither, it lands on its target's very place) takes the shot as its
+       target would have:
+       its damage and source, `onHit`, the `landed` Fx, the relics' landing, kill gold. A splash shot hurts every unit of
+       that side within its splash of the spot, the rest as splash (`Hit.extra`, a skill's `Hit.skill`). Nobody there: a
+       single shot shows its look alone, a splash shot its splash alone.
+     - **Symmetry:** the monsters' shots at troops do the same (a skeleton archer's arrow, Volley, Barbed Arrow, Spear
+       Throw, Sticky Glob). The instant blows (melee and its splash, the troop skills' rings and thrusts, smites, chains,
+       God's Thunder, zones) and the line shots are unchanged.
+     - **A wave's end and a wipe:** a shot still in the air is `spent`: it flies on and lands its look and ring, and
+       hurts nobody. Until then a monster's shot in the air at a living troop as the wave ended still hurt it between
+       waves, and a wipe (322) cleared every shot at once.
+     - **Cost:** nothing made a tick (`to` keeps the target's own `Point`); the spot's search runs once a landing, over
+       the units, without a list.
+     - **The w89 identity** (test/probe_pusaka_w89_identity.dart, on main with 320 merged, against its fccf102f golden):
+       every stat, text, tooltip and preview line the same; only the fights move, since shots that were dropped now land
+       and roll their dice. In the seven 45 s fights of wave 90 the kills at 45 s are +1 to +6 each (+25 in all) and the
+       gold +230 to +7,533; in the three arms that play waves 90 and 91, five of the six waves end sooner (wave 90 171.7,
+       161.2, 188.6 s to 177.2, 151.6, 180.4; wave 91 130.7, 126.3, 136.1 to 130.2, 121.1, 132.7), the kills alike (wave
+       90's 215 to 221 in one arm, 221 to 219 in another), the troops fallen both ways (8 to 6, 0 to 1), and one Hero
+       rolled after wave 90 is another (the dice moved on). Before 320 (on 1d151d71) it moved the same way: +17 kills in
+       the fights, waves 1-6.5% sooner. The new golden: `<agents>/probes/shot-through/w89-on-e05b6e4b.txt`.
+     - **Checks:** test/shots_test.dart (the cases above, a wave's end, a wipe), hit_source_test's list (the landing's
+       `_hurt` calls name `on`); test/probe_shot_through_shots.dart's frames at 1600×947 (`<agents>/shots/shot-through/`:
+       the fireball and Arcane Blast fly on past the fall and burst at the spot, the splash taking 22 and 33 off each orc
+       beside it). Balance (the splash lands more often) is measured after the merge, by replaying saved waves.

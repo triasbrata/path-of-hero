@@ -10,7 +10,8 @@ part of 'main.dart';
 // - the battle log's lines for a save, a relic back in the bag and the wave's report (battle_log.dart), and one line
 //   on "VICTORY!" naming the wave's best counter ([pusakaWinLine]).
 // The field's two are drawn for 32+ troops every frame, so they allocate no Paint: each bound type's Pusaka is looked
-// up once a frame ([_PusakaLook.refresh]) and every ring is one of the paints below.
+// up once a frame ([_PusakaLook.refresh]) and every ring is one draw of pixel_shapes.dart's ring image in a paint made
+// once per colour ([_pixelPaint]).
 
 /// Each Pusaka's colour: its ring on the field and its line in the log. Kept off the awakening's blue, crimson, gold,
 /// violet and white ([_awakeColors]) and off the grass's green, so a ring never reads as an awakened troop's.
@@ -53,18 +54,8 @@ Paint _tintedPaint(Color c) => Paint()
 /// A Pusaka without a colour of its own above: cream on the field, the book's ink on the page.
 const _pusakaColorElse = Color(0xFFFFF1D6), _pusakaInkElse = Color(0xFF4A2C17);
 
-/// The ring under a bound type's troops: 1 px, a little wider than a skill's ring ([_guardRing] 16, the effects' 18), so
-/// those sit inside it.
-const _pusakaRingSize = Size(20, 8);
-
-/// The rings' paints, one per Pusaka, made once.
-final _pusakaRings = {for (final MapEntry(:key, :value) in _pusakaColors.entries) key: _ringPaint(value)};
-final _pusakaRingElse = _ringPaint(_pusakaColorElse);
-
-Paint _ringPaint(Color c) => Paint()
-  ..color = c.withValues(alpha: 0.9)
-  ..style = PaintingStyle.stroke
-  ..strokeWidth = 1;
+/// The rings' alpha: steady at 90%. The ring itself is pixel_shapes.dart's ([_pusakaRingSize], decisions-log 325).
+const _pusakaRingAlpha = 0.9;
 
 /// How long the Grail's cut-in shows (seconds on the screen's clock), and the share of it that fades in, and out.
 const grailCutTime = 1.6, _grailFadeIn = 0.12, _grailFadeOut = 0.25;
@@ -241,9 +232,12 @@ extension on Board {
     if (u.side != Side.troop || !u.alive) return;
     final r = _pusakaLook.types[u.type];
     if (r == null) return;
-    c.drawOval(Rect.fromCenter(center: ground - const Offset(0, 1), width: _pusakaRingSize.width, height: _pusakaRingSize.height),
-        _pusakaRings[r] ?? _pusakaRingElse);
+    _ringUnder(c, ground, r);
   }
+
+  /// [r]'s ring round the feet at [ground] (the field's, the guide's pictures), in its colour ([_pixelRingAt]).
+  void _ringUnder(Canvas c, Offset ground, Relic r) =>
+      _pixelRingAt(c, ground, _pusakaRingSize, _pixelPaint(_pusakaColors[r] ?? _pusakaColorElse, _pusakaRingAlpha));
 
   /// Left of troop [u]'s HP bar ([box]), past the small relics it holds: its type's Pusaka's icon.
   void _pusakaBarIcon(Canvas c, Unit u, Rect box) {

@@ -1,7 +1,7 @@
 part of 'main.dart';
 
-// How a Hero looks ([Unit.hero]; game.dart: every [heroEvery]th wave one troop becomes one). A soft white
-// halo glows behind its body and the pack's gold crown sits above its HP bar: an awakening only colours
+// How a Hero looks ([Unit.hero]; game.dart: every [heroEvery]th wave one troop becomes one). A white halo
+// in stepped bands glows behind its body and the pack's gold crown sits above its HP bar: an awakening only colours
 // what is round a troop (its outline, ground shadow and sparks: blue, crimson, gold). Its nameplate reads
 // "Hero <name>" with its 2 rolled attributes ([Unit.heroStats]) as the book's stat icons, "x3" each, and
 // under them its own skill ([Unit.heroSkill]: its mark and name, [_heroSkillLine]); the book's troop row and
@@ -22,17 +22,11 @@ extension on Board {
   /// The text after each rolled attribute: "x3", or under Oath of Kings "x2" ([Pusaka.heroBoostNow]).
   String get _heroX => 'x${state.heroBoostNow.round()}';
 
-  /// The halo behind a Hero's body ([feet] on the ground, hopping with it): soft white light fading out,
-  /// pulsing a little (still while paused).
-  void _heroHalo(Canvas c, Unit u, Offset feet) {
-    final at = feet - const Offset(0, 11), r = 14 + math.sin(_fieldClock * 3 + u.id) * 1.5;
-    c.drawCircle(
-        at,
-        r,
-        Paint()
-          ..shader = ui.Gradient.radial(
-              at, r, const [Color(0xDDFFFFFF), Color(0x88FFFFFF), Color(0x00FFFFFF)], const [0, 0.6, 1]));
-  }
+  /// The halo behind a Hero's body ([feet] on the ground, hopping with it): white light in [haloBands] stepped bands,
+  /// fainter outward, in the sprites' pixels (pixel_shapes.dart, decisions-log 325), its radius pulsing 14 ± 1.5 by
+  /// whole units (still while paused).
+  void _heroHalo(Canvas c, Unit u, Offset feet) =>
+      _haloAt(c, feet - const Offset(0, 11), (14 + math.sin(_fieldClock * 3 + u.id) * 1.5).round());
 
   /// The gold crown just above a Hero's bars (the HP bar's top at [barTop], the MP bar under it).
   void _heroCrown(Canvas c, Unit u, double barTop) => _uiIcon(c, _icCrown, Rect.fromLTWH(u.pos.x - 4, barTop - 8.5, 8, 8));

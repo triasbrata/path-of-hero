@@ -1059,6 +1059,42 @@ void main() {
       runFor(g, 0.4);
       expect((u.move != null, u.cd), (true, cd), reason: 'carried: its pause doesn\'t run');
     });
+
+    test('a phantom while it dashes and on its way home: no blow lands on it, drawn as a ghost; home, it is hurt again '
+        '(decisions-log 320)', () {
+      final (g, u) = awakenScene('swordsman', 1);
+      final foes = round(g, u, [(12.5, 0, 0.9), (0, 14, 0.5)]);
+      for (final o in foes) {
+        o
+          ..busyUntil = double.negativeInfinity // they fight: every swing ready
+          ..cd = 0;
+      }
+      u
+        ..skillAt = g.t // Rampage on its cooldown
+        ..hp = u.maxHp * 0.6;
+      final hp = u.hp, from = g.t;
+      expect(isPhantom(u), isFalse);
+      g.tick(0.01);
+      expect(awakenCastsOf(g).single.skill, AwakenSkill.phantomRush);
+      expect(isPhantom(u), isTrue);
+      g.addEffect(u, Status.slow, 3, k: 0.5, by: foes.first, bad: true);
+      expect((g.stunTroop(u, 1), u.effects[Status.slow]), (false, null), reason: 'no monster\'s stun or effect takes either');
+      var phantom = 0;
+      while (u.move != null) {
+        expect(isPhantom(u), isTrue, reason: 'every dash and the way home');
+        phantom++;
+        g.tick(0.01);
+      }
+      expect(phantom, greaterThan(40), reason: 'three cuts and the way home');
+      expect(foes.any((o) => o.attackedAt >= from), isTrue, reason: 'the orcs swung at it');
+      expect(u.hp, greaterThanOrEqualTo(hp), reason: 'no blow landed on the phantom (only its regen)');
+      expect(isPhantom(u), isFalse);
+      runFor(g, 1.5);
+      expect(u.hp, lessThan(hp), reason: 'home, the orcs\' blows land again');
+      expect(g.stunTroop(u, 1), isTrue, reason: 'nor a stun');
+      expect(isPhantom(foeAt(g, 'orc', u.pos, Tier.elite)..move = Carry(u.pos, u.pos, g.t, g.t + 1, look: CarryLook.ghost)), isFalse,
+          reason: 'only a troop');
+    });
   });
 
   group('Skyfall', () {
@@ -1287,6 +1323,131 @@ void main() {
       '${awakenName(3)}: Lifeline III (2 troops, heal x2.5)',
     ]);
     expect(lines('priest', 3).take(3), ['Skill: Lifeline III', 'Pulls 2 hurt troops (under 50% HP) to its side', 'Heals x2.5 its heal']);
+  });
+
+  group('with the wind-ups on (the board\'s), a cast claims what it aims at: the others of its type pick something else '
+      '(decisions-log 320)', () {
+    /// [n] troops of [type] at Bangkit [level], the first at cell (2, 3), the next [gap] below each other, full of MP,
+    /// their #10 skills on their cooldowns, every awakening skill ready on the same tick, never striking on their own;
+    /// the wind-ups on.
+    (Game, List<Unit>) pack(String type, int level, int n, {double gap = 26}) {
+      final (g, u) = awakenScene(type, level);
+      g.skillWinds = true;
+      final us = [u];
+      for (var i = 1; i < n; i++) {
+        us.add(placeNow(g, type, 2, 5)..pos = u.pos + Point(0, gap * i));
+      }
+      for (final b in us) {
+        b
+          ..cd = hold
+          ..mp = b.stats.mp.toDouble()
+          ..skillAt = g.t
+          ..awakenSkillAt = double.negativeInfinity
+          ..awakenThinkAt = double.negativeInfinity;
+      }
+      return (g, us);
+    }
+
+    test('Spellbreaker: of two archers on one buffed foe, one draws a silver arrow and strips it; the other keeps its MP', () {
+      final (g, [a, b]) = pack('archer', 1, 2);
+      final o = foeAt(g, 'orc', a.pos + const Point(60, 0), Tier.elite)..hp = 1e4;
+      g.addEffect(o, Status.might, 5, k: warShoutK.might, by: o);
+      final mp = b.mp;
+      g.tick(0.01);
+      expect(a.troopWind?.claims, [o]);
+      expect(b.troopWind, isNull, reason: 'its one target is claimed');
+      runFor(g, 0.5);
+      expect(awakenCastsOf(g), hasLength(1));
+      expect(o.effects.containsKey(Status.might), isFalse, reason: 'stripped');
+      expect(b.mp, greaterThanOrEqualTo(mp));
+    });
+
+    test('Disarm: of two soldiers on one foe, one disarms it; the other doesn\'t start', () {
+      final (g, [a, b]) = pack('soldier', 1, 2, gap: 2);
+      final o = bigFoe(g, a, 10, 0); // in both reaches
+      g.tick(0.01);
+      expect(a.troopWind?.claims, [o]);
+      expect(b.troopWind, isNull);
+      runFor(g, 0.5);
+      expect(awakenCastsOf(g), hasLength(1));
+      expect(o.disarmedAt, greaterThan(double.negativeInfinity));
+    });
+
+    test('Lifeline: of two priests and one dying troop, one lifts it; the other doesn\'t start', () {
+      final (g, [p, q]) = pack('priest', 1, 2);
+      final o = placeNow(g, 'soldier', 5, 3)..cd = hold;
+      o
+        ..hp = o.maxHp * 0.2
+        ..hurtAt = g.t;
+      foeAt(g, 'orc', o.pos + const Point(12, 0), Tier.elite).hp = 1e4;
+      g.tick(0.01);
+      expect(p.troopWind?.claims, [o]);
+      expect(q.troopWind, isNull);
+      runFor(g, 0.4);
+      expect(awakenCastsOf(g), hasLength(1));
+      expect(o.move, isA<Carry>(), reason: 'lifted by the first');
+    });
+
+    test('Consecration: two templars side by side lay one ground, not two', () {
+      final (g, [a, b]) = pack('knight_templar', 1, 2);
+      bigFoe(g, a, 12, 0);
+      bigFoe(g, a, 0, 13); // 13 from both
+      g.tick(0.01);
+      expect(a.troopWind?.at, isNotNull, reason: 'the spot of its coming ground');
+      expect(b.troopWind, isNull, reason: 'within 1.5x the radius of a\'s coming ground');
+      runFor(g, 0.5);
+      expect(g.zones.where((z) => z.look == ZoneLook.consecrate), hasLength(1));
+      expect(awakenCastsOf(g), hasLength(1));
+    });
+
+    test('Singularity: the foes of a well winding up are taken; the other wizard opens on none of them', () {
+      final (g, [a, b]) = pack('wizard', 1, 2);
+      final o = bigFoe(g, a, 100, 0);
+      bigFoe(g, a, 110, 10);
+      g.tick(0.01);
+      expect(a.troopWind?.claims, [o]);
+      expect(a.troopWind?.at, o.pos);
+      expect(b.troopWind, isNull);
+      runFor(g, 0.5);
+      expect(g.zones.where((z) => z.look == ZoneLook.singularity), hasLength(1));
+      expect(awakenCastsOf(g), hasLength(1));
+    });
+
+    test('without the wind-ups nothing is claimed: a cast lands at once', () {
+      final (g, [a, _]) = pack('archer', 1, 2);
+      g.skillWinds = false;
+      final o = foeAt(g, 'orc', a.pos + const Point(60, 0), Tier.elite)..hp = 1e4;
+      g.addEffect(o, Status.might, 5, k: warShoutK.might, by: o);
+      g.tick(0.01);
+      expect((a.troopWind, g.shots.where((s) => s.look == ShotLook.silver).length), (null, 1));
+    });
+
+    test('Unbroken on its blow asks only for a foe in reach: healed back to full meanwhile, it still lands', () {
+      final (g, [k]) = pack('knight', 1, 1);
+      final foe = bigFoe(g, k, 12, 0);
+      g.addEffect(k, Status.slow, 5, k: 0.5, by: foe);
+      k
+        ..hp = k.maxHp * 0.8
+        ..hurtAt = g.t;
+      g.tick(0.01);
+      expect(k.troopWind?.awaken, AwakenSkill.unbroken);
+      k.hp = k.maxHp.toDouble(); // a priest's heal lands in the wind-up
+      runFor(g, 0.4);
+      expect(k.effects.containsKey(Status.slow), isFalse, reason: 'it landed: the hold thrown off');
+      expect(g.rings.where((r) => r.look == RingLook.unchain), hasLength(1));
+      // With no foe left in reach on its blow it still fizzles.
+      k
+        ..awakenSkillAt = double.negativeInfinity
+        ..awakenThinkAt = double.negativeInfinity
+        ..hp = k.maxHp * 0.8
+        ..hurtAt = g.t
+        ..mp = k.stats.mp.toDouble();
+      g.tick(0.01);
+      expect(k.troopWind?.awaken, AwakenSkill.unbroken);
+      foe.pos += const Point(200, 0);
+      runFor(g, 0.4);
+      expect((k.troopWind, k.skillAnim), (null, null));
+    });
   });
 
   testWidgets('every ring look draws with its colour, and the awakening skills\' casts and pops draw on the field', (tester) async {

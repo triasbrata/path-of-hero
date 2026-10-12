@@ -2917,7 +2917,7 @@ high elite's Curse of Frailty and an armored orc boss's Earthshaker (a moment) w
 
 Pure Dart (lib/wipe.dart). A soldier at 1 HP beside a werebear makes the wipe (`wipe`); `winNow` wins the wave on.
 - The wipe: 2 lives gone, not over, the wave back one with `lostWave` the lost one, no monster, queue, shot or zone
-  left, the swept ones hopping then gone in summon circles after `wipeCheer`, "Replace fallen" holding the army, the
+  left (the soldier fires none; a shot in the air at a wipe is test/shots_test.dart's), the swept ones hopping then gone in summon circles after `wipeCheer`, "Replace fallen" holding the army, the
   lose sound, the `Wiped` event (and its `wipe` kind) and one `WaveEnded(won: false)`, `wipeNote`; the next start plays
   the same wave with as many monsters.
 - What the lost wave paid stays (gold, score, kills) and no bonus or wave score comes; its lying materials are lost; the
@@ -2939,6 +2939,58 @@ The shots come from `test/probe_wipe_shots.dart` (a probe, not in the suite; `OU
 it is down; at 1600×947 and 915×412 the heart's pop with the message and the monsters hopping (`pop`, with 2× crops
 of the hearts and the message), a second on (`hop`) and after the hop (`after`: the summon circles, the meter's next
 wave). The pop shot's field is crowded with the bursts of the ticks played before it.
+
+## test/shots_test.dart: a shot whose target went flies on (decisions-log 327)
+
+Pure Dart (units-and-combat.md "A shot whose target went flies on"). Every shot is fired by hand (`fire`, a plain
+`Shot`) by a shooter held still, at monsters held still (`still`), so only the shot does anything; the units put on the
+spot come after its target fell, since two living ones closer than 12 shove each other apart.
+- A wizard's shot whose target falls mid-flight: `to` is that place (null while it homes), it flies on at its own
+  speed, its `fireball` burst lands there and its splash takes one blow off each orc round the spot (none past it); a
+  slime there at 1 HP dies for its kill gold and a kill.
+- Arcane Blast whose target leaked (`gone`): the `shards` burst, the arcane ring and the splash at the spot.
+- An archer's shot (no splash) whose target fell: the orc nearest the spot within `landReach` (half a tile) takes it,
+  the next one and one further off nothing; with nobody there, its burst alone.
+- A skeleton archer's shot at a knight that fell: a soldier on the spot takes it; one 30 off doesn't.
+- The wave's last monster gone with shots in the air: both are `spent`, the monster's arrow lands on the knight and
+  hurts nothing, the archer's lands where its target went.
+- A wipe with an archer's shot in the air at a monster: spent, frozen where the swept monster stood, its burst alone.
+
+The shots come from `test/probe_shot_through_shots.dart` (a probe, not in the suite; `OUT`, default
+`shots/shot-through/`): at 1600×947 a wizard's fireball and its Arcane Blast at an orc that falls when the shot is 32
+from it, with two orcs 14 above and below it, a frame every 48 ms; it prints the screen box round them and the HP the
+splash took.
+
+## The field's rings in the sprites' pixels (decisions-log 325)
+
+`test/pixel_rings_test.dart` (ui-hud.md "The field's rings in pixels"):
+- **The cells:** `pixelRingCells` at 20 × 8 is the stepped oval drawn out row by row, and at five sizes fills its box,
+  mirrors both ways, is one closed line with no 2×2 block. `pixelDashCells` at the effects' four sizes stays on its
+  ring and shows every cell at some step; from 14 × 6 up about half of it at each step, turning from the last.
+  `pixelHaloCells` at radii 13-16 holds exactly the four band alphas, each cell its band's, inside the circle,
+  mirrored, the area of a disc. `pixelDiscCells` at seven ranges is one centred run a row, mirrored, a disc's area.
+- **Drawn, read back pixel by pixel** on a booted board, at zooms that are no whole number and off the screen's
+  pixels (a pixel whose middle is within a hair of a cell's edge is skipped), through the field's own draws (for
+  tests: `Board.paintPusakaRing`, `paintHeroHalo`, `paintReachDisc`): the Pusaka's ring is nothing or its colour at 90%
+  (no anti-alias), on its cells one world unit each, its box 20 × 8 centred 1 above the feet to a screen pixel, every
+  Pusaka's colour as before and Moonwell's cream for one without its own; the halo is white at one of its band alphas
+  or nothing, each cell its own band's; the reach at ranges 12, 64 and 96 is white at 12% or nothing, on the disc's
+  cells.
+- **On the field:** at 1600×947 and 915×412 an archer drawn before and after its type takes God's Thunder differs
+  round its feet only on the ring's cells, at least half of them showing round the body. At 1600×947, drawn with no
+  step between: a knight under Holy Shield's guard differs only on the guard ring's 16 × 7 cells; a werebear with a slow
+  and a Barrier only on the effects' 18 × 8 and 14 × 6 cells; a braced knight (a monster on the field, so the wave is
+  on) only on the brace ring's cells in its rows under the feet (its body takes the thrust), 80% of them showing.
+
+The shots and the frame time are `test/probe_pixel_rings.dart` (not part of the suite). `SECTION=gallery`: each shape
+alone on a bare field at 1600×947 and 915×412, between waves (Holy Shield's and Hold Fast's guards, a Hero's halo, an
+archer dragged over a free cell with its reach) and then with monsters on (Spear Wall's brace, a slow and a Barrier,
+Impale's dashed ring), with a close-up of each. `SECTION=fight`: the owner's wave-30 save (`SAVE`), 8 s into its wave at
+1600×947 and 915×412, the whole frame and 6× close-ups round a plain troop, a Hero and an
+awakened troop of bound types (at their drawn bodies, `Board.drawnAt`); a guard, Spear Wall's brace, a monster's slow
+and Barrier, a Hero's halo and a dragged troop's reach put on for one frame (`others-<size>`), with their close-ups;
+then 40 s of the wave at 1600×947, each frame's `Board.render` timed and every 10th rasterised. Queue it on the branch
+(`TAG=after`) and on a mirror of main (`TAG=before`, the file copied in if main lacks it); without `SECTION`, both.
 
 ## The packs' looks: the shot probes (decisions-log 173)
 

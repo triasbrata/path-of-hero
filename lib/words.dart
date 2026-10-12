@@ -88,6 +88,11 @@ abstract final class Words {
   static const ready = 'Ready', short = 'Short', forBag = 'For the $bag', noWishes = 'No wishes yet',
       addWishesFrom = 'Add wishes from the $army page, the $bag or the Items tab';
 
+  /// Ingredient wishes (decisions-log 323): the Wishlist tab's group of the products a wish's recipe takes (each row "for
+  /// Royal Ring", never a troop), and what a product's page says in its Give row's place while one is kept for that
+  /// craft ("Needed for Royal Ring").
+  static const ingredients = 'Ingredients', neededFor = 'Needed for';
+
   /// The Town's Shop (decisions-log 230): what the Bag's facing page says under a kind it can't sell.
   static const soldInTown = 'Sold at the $shop, in a $town.';
   static const materialNames = {

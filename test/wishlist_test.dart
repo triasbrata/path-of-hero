@@ -267,6 +267,7 @@ void main() {
     expect(j['wishlist'], {
       'knight': {'royalSword': 1, 'leatherCap': 1},
       'priest': {'prayerBeads': 1},
+      'parts': [], // no ingredient wish (decisions-log 323), the key there all the same
     });
     expect((g.toJson()['wishlist'] as Map)['archer'], {'sword': 2, 'boots': 1, 'bow': 4, 'gloves': 3, 'torch': 1}, reason: 'a set with its counts');
     final back = reload(g);
@@ -362,7 +363,7 @@ void main() {
     g
       ..wishFreeAdd(relic, 2)
       ..wishFreeAdd(Item.steelSword);
-    expect(g.toJson()['wishlist'], {'free': {relic.name: 2, 'steelSword': 1}});
+    expect(g.toJson()['wishlist'], {'free': {relic.name: 2, 'steelSword': 1}, 'parts': []});
     final back = reload(g);
     expect(back.wishFree, {relic: 2, Item.steelSword: 1});
     expect(back.freeWishes, [relic, Item.steelSword]);
@@ -378,7 +379,7 @@ void main() {
     g
       ..unwishAll('knight')
       ..inventory[Item.steelSword] = 1;
-    expect(g.toJson()['wishlist'], {'free': {relic.name: 2}});
+    expect(g.toJson()['wishlist'], {'free': {relic.name: 2}, 'parts': []});
     g.unwishFree(relic);
     expect(g.toJson().containsKey('wishlist'), isFalse);
   });

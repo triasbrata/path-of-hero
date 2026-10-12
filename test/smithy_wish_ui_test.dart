@@ -188,7 +188,9 @@ void main() {
       for (final type in ['knight', 'archer', 'priest']) {
         g.wishSet(type);
       }
-      g.wish('knight', Item.royalHelm);
+      g
+        ..wish('knight', Item.royalHelm)
+        ..unwishParts(); // its Steel Helm and Leather Cap rows (decisions-log 323) are smithy_chain_ui_test.dart's
       final relic = smithyRelics(g).first;
       expect((g.wishFreeAdd(relic, 2), g.wishFreeAdd(Item.steelSword)), (true, true));
       await frames(tester, 40);

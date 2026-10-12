@@ -80,6 +80,7 @@ part 'spawn_bar.dart';
 part 'page_scroll.dart';
 part 'fps_readout.dart';
 part 'body_look.dart';
+part 'pixel_shapes.dart';
 part 'wizard_fx.dart';
 
 /// The player's volumes (settings.json), set on the book's Settings page; a new game keeps them.
@@ -617,6 +618,8 @@ class TdGame extends FlameGame with KeyboardEvents, ScrollDetector {
         images.add('tiny_${necroHealer}_$a.png', a == 'shadow' ? from.clone() : await _recoloured(from, _necroHealerTint));
       }
       images.add('tiny_fx_holy.png', await _recoloured(images.fromCache('tiny_fx_heal.png'), _holyTint));
+      // The field's rings, the Hero's halo and the reach, in the sprites' pixels (pixel_shapes.dart).
+      await _buildPixelShapes();
       // Every monster strip's outline too, drawn in its rank's colour (tier_look.dart).
       for (final k in [...enemyTypes.keys, boss, necroHealer]) {
         for (final a in [..._anims, if (_summoners.contains(k)) 'summon', if (_casters.contains(k)) 'cast', ..._skillAnims(k)]) {
@@ -982,7 +985,11 @@ class Board extends PositionComponent
   // 'wishType:<group>', 'wishOffAll:<group>' ("Remove", armed "Sure?"), and per row 'wishTitle:…' ("Sword ×2 for Knight"),
   // 'wishParts:…' ("boneShard 11/4,orcTooth 3/4,gold 40"), 'wishStatus:…', 'wishCraft:…' (why it is refused; '' when it
   // can), 'wishGive:…' (its words) and 'wishGiveWhy:…'; a product's page's status 'wishMissing' and free line 'freeLess',
-  // 'freeMore', 'freeAdd' (rects) and 'free' ("off ×1", "on ×2"), 'freeAdd' (words).
+  // 'freeMore', 'freeAdd' (rects) and 'free' ("off ×1", "on ×2"), 'freeAdd' (words). The ingredient wishes (decisions-log
+  // 323): their group "parts" ('wishRow:parts:gemRing'), each row's part by 'wishPart:<row key>:<part>' (where its icon is,
+  // a tap there opening a forgeable one's page), a product page's Back after a link ('back') and how many steps back
+  // there are ([smithyTrail]), and in its Give row's place 'kept' (where, and its words: "Needed for Royal Ring").
+  int get smithyTrail => _smithy.trail.length;
   List<(String, Enum, Rect)> get smithyWishCells => [..._smithy.wishCells];
   List<(String, Rect)> get smithyWishHeads => [..._smithy.wishHeads]; // each group heading drawn: its group, where
   int get smithyWishPage => _smithy.wishes.page;
@@ -1325,6 +1332,15 @@ class Board extends PositionComponent
   /// anti-alias). For tests.
   ({List<Rect> rows, Paint paint}) get bookShadow =>
       (rows: _bookArea.isEmpty ? const <Rect>[] : [..._bookShadowRows], paint: _bookShadowPaint);
+
+  /// Pusaka [r]'s ring under the feet at [ground] (world units in [c]), drawn as the field draws it ([_ringUnder],
+  /// decisions-log 325). For tests.
+  void paintPusakaRing(Canvas c, Offset ground, Relic r) => _ringUnder(c, ground, r);
+
+  /// A Hero's halo of whole radius [r] round [middle], and a dragged troop's reach [range] round [middle] at [alpha], drawn
+  /// as the field draws them (pixel_shapes.dart, decisions-log 325). For tests.
+  void paintHeroHalo(Canvas c, Offset middle, int r) => _haloAt(c, middle, r);
+  void paintReachDisc(Canvas c, Offset middle, double range, double alpha) => _discAt(c, middle, range, alpha);
 
   /// Where the open book's left and right pages write this frame: inside each page's printed line, less the book's
   /// padding ([bookWriting]; Rect.zero: the book is shut). For tests.
@@ -2078,9 +2094,7 @@ class Board extends PositionComponent
       final ok = _relocating != null ? g.inZone(cell.$1, cell.$2) : g.canPlace(cell.$1, cell.$2), center = Offset(cell.$1 * tile + tile / 2, cell.$2 * tile + tile / 2);
       c.drawRect(Rect.fromCenter(center: center, width: tile, height: tile),
           Paint()..color = (ok ? Colors.white : Colors.red).withValues(alpha: 0.35));
-      if (ok) {
-        c.drawCircle(center, troopTypes[dragging]!.range, Paint()..color = Colors.white.withValues(alpha: 0.12));
-      }
+      if (ok) _discAt(c, center, troopTypes[dragging]!.range, 0.12); // its reach, in the sprites' pixels (pixel_shapes.dart)
     }
 
     _matLootDraw(c, g); // town_look.dart: the materials lying where they fell, until the wave is won
@@ -2098,13 +2112,13 @@ class Board extends PositionComponent
     }
 
     for (final sh in g.shots) {
-      final who = sh.from.type, at = _shotFrom(sh.from, sh.pos, sh.target), level = g.awakenLevel(who); // from its drawn body (body_look.dart)
+      final who = sh.from.type, at = _shotFrom(sh.from, sh.pos, sh.aim), level = g.awakenLevel(who); // from its drawn body (body_look.dart)
       if (sh.look != ShotLook.plain) {
-        _specialShot(c, g, sh.look, who, at, math.atan2(sh.target.pos.y - sh.pos.y, sh.target.pos.x - sh.pos.x)); // a Hero skill's
+        _specialShot(c, g, sh.look, who, at, math.atan2(sh.aim.y - sh.pos.y, sh.aim.x - sh.pos.x)); // a Hero skill's
       } else if (_arrows.contains(who)) {
         c.save();
         c.translate(at.dx, at.dy);
-        c.rotate(math.atan2(sh.target.pos.y - sh.pos.y, sh.target.pos.x - sh.pos.x));
+        c.rotate(math.atan2(sh.aim.y - sh.pos.y, sh.aim.x - sh.pos.x));
         c.drawImageRect(_img('tiny_arrow_$who.png'), const Rect.fromLTWH(0, 0, 32, 32),
             Rect.fromCenter(center: Offset.zero, width: 32, height: 32), _awakeFx(level));
         c.restore();
@@ -2313,7 +2327,11 @@ class Board extends PositionComponent
       final pace = u.move is Charge ? chargeK.speed : 1.0;
       look = ('${k}_${u.moving || lift > 0 ? 'walk' : 'idle'}.png', (g.t * _fps * pace).floor());
     }
-    _frame(c, look.$1, look.$2, feet, flip: flip, paint: body, line: line);
+    // A phantom (Phantom Rush's dash and its way home, decisions-log 320): its body see-through and washed in the rush's
+    // magenta, its afterimages' colour, the whole time no blow lands on it (skills.dart).
+    final ghost = u.alive && u.move != null && isPhantom(u);
+    _frame(c, look.$1, look.$2, feet, flip: flip, paint: ghost ? _phantomBody : body, line: line);
+    if (ghost) _frame(c, look.$1, look.$2, feet, flip: flip, paint: _phantomWash);
     if (u.side == Side.troop) _strips[u] = look.$1.substring(k.length + 1, look.$1.length - 4); // for tests
     if (grow) c.restore();
     if (level > 0 && u.alive) _auraSparks(c, u, level, ground);
