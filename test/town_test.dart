@@ -93,7 +93,7 @@ List<int> slots(Game g, int waves) {
 /// The file's version and its `schedule` block (the materials' blocks: town_materials_test.dart).
 const defaults = {
   'version': 3,
-  'schedule': {'chanceStart': 0.20, 'chanceStep': 0.05, 'chanceCap': 1.0, 'minGap': 5, 'firstTownAfter': 2, 'autoLeave': 5.0},
+  'schedule': {'chanceStart': 0.20, 'chanceStep': 0.05, 'chanceCap': 1.0, 'minGap': 5, 'firstTownAfter': 2},
 };
 
 void main() {
@@ -104,20 +104,22 @@ void main() {
   });
 
   test('the file: another version, not JSON, a number out of range or of the wrong kind keep their defaults; a patch '
-      'puts numbers in', () {
+      "puts numbers in; an older file's autoLeave is read as nothing (decisions-log 328)", () {
     expect(schedule(TownRules.parse('{"version": 1, "schedule": {"minGap": 9}}')), defaults);
     expect(schedule(TownRules.parse('not json')), defaults);
     expect(schedule(TownRules.parse('{"version": 2}')), defaults);
     final odd = TownRules.parse('{"version": 2, "materials": {}, "schedule": {"chanceStart": 1.5, "chanceStep": 0.1, '
             '"chanceCap": 0.5, "minGap": 0, "firstTownAfter": -1, "autoLeave": "soon"}}')
         .schedule;
-    expect((odd.chanceStart, odd.chanceStep, odd.chanceCap, odd.minGap, odd.firstTownAfter, odd.autoLeave), (0.2, 0.1, 0.5, 5, 2, 5.0));
+    expect((odd.chanceStart, odd.chanceStep, odd.chanceCap, odd.minGap, odd.firstTownAfter), (0.2, 0.1, 0.5, 5, 2));
+    expect(TownSchedule.fromJson({'autoLeave': 5.0}).toJson(), const TownSchedule().toJson(), reason: 'no autoLeave');
+    expect(const TownSchedule().toJson().containsKey('autoLeave'), isFalse);
     final under = TownRules.parse('{"version": 2, "schedule": {"chanceStart": 0.6, "chanceCap": 0.5}}').schedule;
     expect((under.chanceStart, under.chanceCap), (0.2, 1.0), reason: 'a cap under the start: both defaults');
     final p = TownRules.patch({
       'schedule': {'chanceStep': 0.5, 'minGap': 3},
     }).schedule;
-    expect((p.chanceStart, p.chanceStep, p.chanceCap, p.minGap, p.firstTownAfter, p.autoLeave), (0.2, 0.5, 1.0, 3, 2, 5.0));
+    expect((p.chanceStart, p.chanceStep, p.chanceCap, p.minGap, p.firstTownAfter), (0.2, 0.5, 1.0, 3, 2));
   });
 
   test('the roll: blocked (no draw, the chance stays) until wave 5, then 20% and +5% a miss', () {

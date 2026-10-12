@@ -1705,7 +1705,7 @@ apart, nothing of the top band (`pieces` and the hold line) over another; held (
 "Army 1/6 · Auto Wave waits" (its width that text's), on the screen and under the toggle; the spawn bar's Auto Buy face
 (its press area less k each way, on the step right of the hotbar since decisions-log 287) as wide as "Auto Buy", all
 nine slots beside it; a tap on Auto Buy turns
-`autoReplace` on and off, one on Auto Wave turns it off (settings.json too) and on; a wave and a Town's "Leave town 5"
+`autoReplace` on and off, one on Auto Wave turns it off (settings.json too) and on; a wave and a Town's "Leave town"
 with no overlap, nothing moved. The shots: `test/probe_auto_names_shots.dart` (not in the suite; `SIZES`, `OUT`): at each
 window the countdown, the hold line, Auto Buy on, a wave and a Town, a line of the top band's and the bar's rects per
 shot with any overlap, then the landscape band's width at k 2, 3 and 4 (as test/probe_hud_merge_width.dart).
@@ -1887,11 +1887,11 @@ turn.
   words (which Town, the Smithy, the Tavern, the Shop once open and what the Town pays well for; decisions-log 326).
 - town_hud_test.dart (booted `TdGame`s): the chip at 1266×713 and 915×412 (right-aligned under the meter, clear of the
   open book and its tabs, its words, its tooltip under the mouse, kept mid-wave, gone in the Town); a due Town gone into
-  after the cheer and saved, "Leave town" leaving it (saved) and starting no wave, then Start; Auto's countdown in the
-  Town ("Leave town 2", "1") leaving it and the wave starting once the fade back is over; a save made in the Town
-  reopening in it.
+  after the cheer and saved, "Leave town" leaving it (saved) and starting no wave, then Start; with Auto on no
+  countdown in the Town (decisions-log 328: 10 s on, still in it, Auto still on), left by hand (saved, `TownLeft.auto`
+  false), then Auto Wave's 5 s and the wave; a save made in the Town reopening in it.
 - Probes: `test/probe_town_shots.dart` (the chip between waves and mid-wave, its tooltip, the Town's "Leave town" and
-  with Auto "Leave town 5", the battle log's lines, at 1266×713, 915×412 and 412×860) and `test/probe_town_slots.dart`
+  with Auto on, still "Leave town", the battle log's lines, at 1266×713, 915×412 and 412×860) and `test/probe_town_slots.dart`
   (the board's Towns, on with no define, over waves 1-30 for 10 seeds, the gaps, seed 7's waves in the design's
   notation, the mini boss / boss marks checked).
 
@@ -2205,8 +2205,8 @@ on the board), at 1266×713, 915×412 and the owner's tablet's 1164×777.
   the book; with town.json's `shop.from` patched to 15 the tab says when it opens, and with the shipped file again it
   opens its page, the Shop's place in view. Leave: the Town dims first, then the field, its book on the Army without the
   Shop tab.
-- Auto: "Leave town 5"; a press on a tab stops it (the Town stays; left by hand, no wave by itself); with no press it
-  leaves at 0 and the wave starts once the fade back is over.
+- Auto on (decisions-log 328): no countdown in the Town, with no press for 6.4 s or after a tab's; the scene stays until
+  "Leave town", then the fade back (0.7 s) and Auto Wave's 5 s before the wave.
 - No guide card or pointer in a Town but its own; a save made in it reopens in it at once (no fade) on the Smithy; a
   game out of a Town shows none, and the field's book has no Shop tab.
 - Probe: `test/probe_town_scene_shots.dart` (queue `["test", "test/probe_town_scene_shots.dart"]`): shots at those

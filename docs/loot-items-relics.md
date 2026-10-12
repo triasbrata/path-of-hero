@@ -1403,7 +1403,8 @@ the replay kit's, kept them till then): every game has the Towns. The switch-on 
 launch deletes it (architecture.md, lib/save.dart).
 
 - **The numbers:** `assets/config/town.json`, the owner's tuning file (version 2: the materials' blocks below), `schedule` block: `chanceStart` 0.20,
-  `chanceStep` 0.05, `chanceCap` 1.00, `minGap` 5, `firstTownAfter` 2, `autoLeave` 5.0 s. `main()` loads it before the
+  `chanceStep` 0.05, `chanceCap` 1.00, `minGap` 5, `firstTownAfter` 2 (an older file's `autoLeave` is read as nothing:
+  a Town is left by hand, decisions-log 328). `main()` loads it before the
   first game into `loadedTownRules` (`TownRules.parse`: a file of another `version`, or not JSON, gives every default; a
   number missing, of the wrong kind or out of its range keeps its default; a cap under the start resets both; blocks it
   doesn't know are skipped, so later steps add theirs). Each game reads its own `Game.townRules`, so a test or probe swaps
@@ -1427,7 +1428,8 @@ launch deletes it (architecture.md, lib/save.dart).
   326): its number picks its identity, its look and its market ("Towns: the market" below).
 - **The scene:** the HUD goes into a due Town once nothing of the win is left on screen and draws the
   Town where the field was (ui-hud.md "Town"; the field waits as it was left); the start button says "Leave town" there
-  (ui-hud.md "Towns on the HUD"), and Auto leaves it after `autoLeave` s unless a press in the Town stopped it. The book's
+  (ui-hud.md "Towns on the HUD"), and the player leaves by hand: Auto Wave never does (decisions-log 328), its
+  countdown starting once the Town is left. The book's
   Shop is a Town's then, and its Smithy tab crafts (ui-hud.md "The Smithy"; the Smithy's rule is "Town and Smithy:
   Craft"; "The store": it deals only there, decisions-log 230).
 - **Probes:** `Game.townPolicy` 'leave' goes through a due Town (in and out at once) at the next wave's start

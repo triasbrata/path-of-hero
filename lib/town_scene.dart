@@ -681,14 +681,6 @@ extension _TownScene on Board {
     c.drawRect(Rect.fromLTWH(0, 0, size.x, size.y), Paint()..color = Colors.black.withValues(alpha: a));
   }
 
-  /// A press in a Town stops Auto's countdown for this visit (the design's E4: Leave by hand then), unless it is on
-  /// the Start/Pause toggle ("Leave town" itself, or pause; as far round as it takes a press), Auto or x2.
-  void _townPress(Offset p) {
-    if (!state.inTown || autoStart.left == null) return;
-    if ([_toggleAt.inflate(_meterK), _autoAt, _speedAt].any((r) => r.contains(p))) return;
-    autoStart.cancel();
-  }
-
   /// How far the player may pan the Town (decisions-log 264): the view's left edge from the Town's left end at the
   /// screen's left to its right end at the right of what shows of it (with the book open the book's left, else the
   /// screen's), in world px; never so tight that the open page's own pan ([_town.aim]) falls outside it. A
@@ -782,19 +774,17 @@ extension _TownScene on Board {
 
   /// The wheel ([TdGame.onScroll]) or a trackpad's scroll by [d] screen px over the Town's scene ([_townPans]): it
   /// pans sideways by its sideways part, else its up-and-down one (a plain wheel: down goes right), gliding like a
-  /// page's pan, the notches adding up. It stops Auto's countdown, like a press.
+  /// page's pan, the notches adding up.
   void _townWheel(Offset p, Offset d) {
     final by = d.dx.abs() > d.dy.abs() ? d.dx : d.dy;
     if (by == 0 || !_townPans(p)) return;
-    _townPress(p);
     _townPanTo(_town.camTo + by / _town.k, glide: true);
   }
 
   /// A trackpad's two-finger swipe began at [p] ([TdGame]'s trackpad drag: Flutter sends it as a pan, not a scroll):
   /// over the Town's scene it pans it until it ends ([_townLetGo]).
   void _townSwipe(Offset p) {
-    final v = _town..swiping = _townPans(p);
-    if (v.swiping) _townPress(p);
+    _town.swiping = _townPans(p);
   }
 
   /// The trackpad's swipe moved [dx] screen px: the scene follows the fingers, as a drag.

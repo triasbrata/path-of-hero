@@ -1,7 +1,8 @@
 // The Towns on the HUD (decisions-log 216; lib/town_look.dart; ui-hud.md "The Town chip"): the wave meter's chip from
 // the mark until the Town opens (its place and words at the three test sizes, its tooltip; a sweep of window sizes),
 // the meter in a Town ("In Millbrook": its name, decisions-log 326; the coming wave, the same panel), the due Town gone into after the win's cheer,
-// "Leave town" on the start button, Auto leaving after autoLeave s and the wave starting at once, and a save made in a
+// "Leave town" on the start button, Auto in a Town (no countdown there, decisions-log 328: left by hand, then Auto Wave's
+// countdown as after a win), and a save made in a
 // Town reopening in it. Booted TdGames, the Towns turned on per game (dark on the board).
 import 'dart:math';
 
@@ -9,6 +10,7 @@ import 'package:flame/game.dart' hide Game;
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tower_defense/auto_start.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
 import 'package:tower_defense/save.dart';
@@ -199,16 +201,12 @@ void main() {
     await frames(tester, 30);
   });
 
-  testWidgets('Auto in a Town: it counts autoLeave s down on "Leave town", leaves, and the wave starts once the fade back '
-      'to the field is over (one wait)',
-      (tester) async {
+  testWidgets('Auto in a Town (decisions-log 328): no countdown on "Leave town", Auto still on; the Town waits for the '
+      'player; left by hand, saved, and Auto Wave counts down from 5 as after a win', (tester) async {
     final b = await boot(tester);
     b.autoStart.set(true);
     addTearDown(() => b.autoStart.set(false));
     final g = b.state = townGame()
-      ..townRules = TownRules.patch({
-        'schedule': {'autoLeave': 2.0},
-      })
       ..wave = 5
       ..townAt = 7;
     g
@@ -220,15 +218,20 @@ void main() {
       await frames(tester, 1);
     }
     expect(g.inTown, isTrue);
-    expect(b.autoStart.shown, 2, reason: '"Leave town 2"');
-    await frames(tester, 66); // 1.06 s
-    expect((g.inTown, b.autoStart.shown), (true, 1));
-    await frames(tester, 66);
-    expect((g.inTown, g.townLast), (false, 7), reason: 'left by Auto');
-    await frames(tester, 50); // the fade back to the field (decisions-log 224, town_scene.dart)
-    expect((g.waveActive, g.wave), (true, 7), reason: 'the wave on');
-    final left = g.log.entries.whereType<TownLeft>().single;
-    expect(left.auto, isTrue);
+    expect(g.log.entries.whereType<TownEntered>().single.auto, isTrue, reason: 'Auto was on');
+    expect((b.autoStart.on, b.autoStart.shown), (true, null), reason: '"Leave town", no seconds');
+    await frames(tester, 625); // 10 s
+    expect((g.inTown, g.waveActive, b.autoStart.on, b.autoStart.shown), (true, false, true, null), reason: 'it waits');
+    await tester.tapAt(b.startButton.center); // "Leave town"
+    await frames(tester, 2);
+    expect((g.inTown, g.townLast, g.waveActive), (false, 7, false));
+    expect(b.autoStart.shown, autoStartDelay.ceil(), reason: "the field's countdown, as after a win");
+    expect(g.log.entries.whereType<TownLeft>().single.auto, isFalse, reason: 'left by hand');
+    expect(loadGame()?.townLast, 7, reason: 'saved as left');
+    for (var i = 0; i < 600 && !g.waveActive; i++) {
+      await frames(tester, 1);
+    }
+    expect((g.waveActive, g.wave), (true, 7), reason: 'Auto Wave started it');
     await frames(tester, 30);
   });
 

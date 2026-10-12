@@ -10,8 +10,8 @@ import 'touch_hud_test.dart' show boot, frames, on, pieces;
 // scale is 3 or 4 every button is at least 40 px each way (at 2, the phones' size, as before). Measured
 // at its widest (decisions-log 220): five digits of gold, the tide's badge and 3-digit counts on the wave meter, Auto
 // on (Start keeps room for its seconds); and x2, Auto and the meter stay where they were between waves, the Start/Pause
-// toggle's middle too. In a Town (decisions-log 216) the toggle's Start is "Leave town 5", wider than "Start 5": no
-// overlap there either.
+// toggle's middle too. In a Town (decisions-log 216) the toggle's Start is "Leave town", wider than "Start 5", with no
+// countdown even with Auto on (decisions-log 328): no overlap there either.
 
 void main() {
   for (final platform in [TargetPlatform.macOS, TargetPlatform.android]) {

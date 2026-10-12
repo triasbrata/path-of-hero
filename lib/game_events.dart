@@ -475,10 +475,11 @@ final class TownEntered extends GameEvent {
   Map<String, Object?> get data => {'slot': slot, 'gold': gold, 'auto': auto, 'n': n, 'identity': identity};
 }
 
-/// The player left the Town of [slot] ([Towns.leaveTown]) after [secs] game seconds in it; [auto]: Auto left it. The
-/// relics crafted there ([crafts], by kind) and the gold they took ([craftSpent]; [Craft.craft], decisions-log 233). The
-/// Tavern's visit ([tavern]: the kinds of its last roll, the kinds bought, the rerolls, the gold spent; tavern.dart,
-/// decisions-log 266), null without the Tavern (no key).
+/// The player left the Town of [slot] ([Towns.leaveTown]) after [secs] game seconds in it; [auto]: a probe's policy left
+/// it (the player leaves by hand: Auto stopped leaving Towns in decisions-log 328). The relics crafted there ([crafts],
+/// by kind) and the gold they took ([craftSpent]; [Craft.craft], decisions-log 233). The Tavern's visit ([tavern]: the
+/// kinds of its last roll, the kinds bought, the rerolls, the gold spent; tavern.dart, decisions-log 266), null without
+/// the Tavern (no key).
 final class TownLeft extends GameEvent {
   TownLeft(super.wave, super.t,
       {required this.slot, required this.secs, this.auto = false, this.crafts = const {}, this.craftSpent = 0, this.tavern});

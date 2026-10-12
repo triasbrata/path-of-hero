@@ -3,9 +3,9 @@ part of 'main.dart';
 // The Towns on the HUD (decisions-log 216; lib/town.dart; the scene is
 // town_scene.dart's, decisions-log 224): a due Town is gone into once nothing of the win is left on screen (the
 // "VICTORY!" cheer, the Hero splash, a Boss Chest: taken or skipped first), the book opening on its Smithy; the Start/Pause
-// toggle's Start says "Leave town" there ([Words.leaveTown], start_button.dart) and leaves it, and Auto leaves after
-// [TownSchedule.autoLeave] s unless a press in the Town stopped it, the wave starting right after the fade back (one
-// wait, the Auto hold of the field still applying). From the mark until the Town opens, the wave meter shows the chip "Town after wave
+// toggle's Start says "Leave town" there ([Words.leaveTown], start_button.dart) and leaves it. Auto never leaves a Town
+// (decisions-log 328): it is left by hand, Auto staying as set, and once left Auto Wave counts down as after a win (the
+// wait of the fade back and the field's Auto hold applying). From the mark until the Town opens, the wave meter shows the chip "Town after wave
 // 12" under it ([Board._townChip]), with the Town's hammer (town_mark.png, Kenmi's Tools 351) and its tooltip; in the
 // Town the meter itself says it's safe ([Board._inTownMeter]: a beer mug, town_mug.png, Kenmi's Food 3, and "In town",
 // the Town's name since decisions-log 326: "In Millbrook"). As a Town comes up its name shows on a ribbon under the
@@ -103,36 +103,32 @@ extension _TownLook on Board {
 
   /// The Towns' turn in the Board's update: a due Town is gone into once nothing of the win is left on screen (the
   /// cheer's [victoryTime], the Hero splash, the chest's popup or a chest due, a monster skill's splash, a guide card),
-  /// never under the welcome screen; the game is saved there (a reload reopens it) and the book opens on the Smithy. With
-  /// Auto on, its countdown runs [TownSchedule.autoLeave] s in the Town ("Leave town 5" … "1"), holding as the start's
-  /// does while paused, behind a card or splash or a chest due; a press in the Town stops it for the visit
-  /// (town_scene.dart's [_townPress]); at 0 it leaves and the start's countdown is left at 0, so the wave starts once the
-  /// fade back is over unless the field's Auto hold waits ([Game.autoHeld]). True while in a Town (the start's countdown
-  /// is then this one's).
+  /// never under the welcome screen; the game is saved there (a reload reopens it) and the book opens on the Smithy. No
+  /// countdown runs in a Town, whatever Auto is (decisions-log 328): it stays until "Leave town" ([_leaveTown]). True
+  /// while in a Town.
   bool _townTick(Game g, double dt) {
     final calm = !holdAutoStart && !_chestHolds(g) && !_foeSplashBusy && !_coach.showing && g.t - g.victoryAt >= victoryTime;
     if (welcome == null && g.townDue && !g.inTown && calm && g.enterTown(auto: autoStart.on)) {
       saveGame(g);
       _open(_Page.smithy); // the book opens on the Smithy (town_scene.dart)
       _town.book = true;
-      if (autoStart.on) autoStart.left = g.townRules.schedule.autoLeave;
     }
     if (!g.inTown) return false;
-    if (autoStart.tick(math.min(dt, 0.1), held: g.paused || !calm)) {
-      _leaveTown(g, auto: true);
-      autoStart.left = 0; // the start's countdown, done: the wave starts now, or once the Auto hold lets it
-    }
+    autoStart.cancel();
     return true;
   }
 
-  /// Leaves the Town ([Towns.leaveTown]; [auto]: Auto left it) and saves, so a reload doesn't reopen it. The start
-  /// button's press in a Town.
-  void _leaveTown(Game g, {bool auto = false}) {
-    if (g.leaveTown(auto: auto)) saveGame(g);
+  /// Leaves the Town by hand ([Towns.leaveTown]) and saves, so a reload doesn't reopen it; with Auto on, its countdown
+  /// starts as after a win ([AutoStart.won]: the wave once the fade back is over and it has run). The start button's
+  /// press in a Town.
+  void _leaveTown(Game g) {
+    if (!g.leaveTown()) return;
+    saveGame(g);
+    autoStart.won();
   }
 
-  // The Start/Pause toggle's hooks (start_button.dart reads them): in a Town its Start shows,
-  // says "Leave town", counts Auto's [TownSchedule.autoLeave] down, and a press is [_leaveTown].
+  // The Start/Pause toggle's hooks (start_button.dart reads them): in a Town its Start shows, says "Leave town" with no
+  // countdown, and a press is [_leaveTown].
 
   /// The toggle shows Start: a wave can start, or the player is in a Town.
   bool _startShows(Game g) => g.canStartWave || g.inTown;
@@ -140,8 +136,8 @@ extension _TownLook on Board {
   /// Its word: "Leave town" in a Town, else "Start".
   String _startWord(Game g) => g.inTown ? Words.leaveTown : Words.start;
 
-  /// The most seconds Auto's countdown shows on it (its width keeps room for them).
-  int _startMost(Game g) => (g.inTown ? g.townRules.schedule.autoLeave : autoStartDelay).ceil();
+  /// Its widest words: with Auto's most seconds on the field ("Start 5"); in a Town its word alone, no countdown there.
+  String _startMost(Game g) => g.inTown ? _startWord(g) : '${_startWord(g)} ${autoStartDelay.ceil()}';
 }
 
 /// How long a dropped material hops from the kill onto its pile on the ground (decisions-log 221, 262).

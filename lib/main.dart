@@ -1691,7 +1691,7 @@ class Board extends PositionComponent
     // about to: chest_popup.dart, decisions-log 152, 281), and at 0 starts the wave as Start does.
     if (g.waveActive && g.pusakaSuggested) g.dismissPusakaNote(); // a wave begun keeps the save's Pusaka as suggested
     if (_townTick(g, dt)) {
-      // In a Town: Auto's countdown leaves it (town_look.dart), and none starts a wave here.
+      // In a Town: no countdown (decisions-log 328); it is left by hand (town_look.dart).
     } else if (!g.canStartWave) {
       autoStart.cancel();
     } else if (autoStart.tick(math.min(dt, 0.1), held: g.paused || holdAutoStart || _coach.showing || _foeSplashBusy || _page != _Page.troops || g.autoHeld || _chestHolds(g) || _townFading)) {
@@ -1756,7 +1756,6 @@ class Board extends PositionComponent
     _touch = event.deviceKind != ui.PointerDeviceKind.mouse;
     _tip.down(event);
     _welcomeTap = welcome != null;
-    if (!_welcomeTap) _townPress(p); // in a Town it stops Auto's countdown (town_scene.dart)
     _pauseDown(); // pause.dart
     if (_coachDown(p)) return; // a guide card took it: its button, or on to its next page (coach.dart)
     if (_foeSplashDown()) return; // it closed a foe skill's splash (foe_splash.dart)

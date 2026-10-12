@@ -11530,3 +11530,27 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        `_hurt` calls name `on`); test/probe_shot_through_shots.dart's frames at 1600×947 (`<agents>/shots/shot-through/`:
        the fireball and Arcane Blast fly on past the fall and burst at the spot, the splash taking 22 and 33 off each orc
        beside it). Balance (the splash lands more often) is measured after the merge, by replaying saved waves.
+328. **No Auto countdown in a Town: the player leaves it by hand, and Auto Wave counts down once it is left** (the owner,
+     2026-10-12: "disable auto start kalau sampai kota", disable the auto start on reaching a Town). Why: until then,
+     with Auto on, a Town was left by itself after town.json's `autoLeave` 5 s ("Leave town 5" … "1") unless a press
+     there stopped it, so the player had five seconds to start shopping or crafting before the Town went. By
+     town-market, a commit of its own on 326's branch (lib/town_look.dart `_townTick`, `_leaveTown`, `_startMost`;
+     ui-hud.md "Auto in a Town").
+     - **In a Town:** no countdown, whatever Auto is: the button reads "Leave town" alone (no seconds; as wide as its
+       words), and the Town stays until it is pressed. Auto Wave keeps its setting (it can be switched there too);
+       `TownEntered.auto` still says whether it was on.
+     - **Left by hand:** saved as before; with Auto on its countdown starts as after a win (`AutoStart.won`, 5 s: "Start
+       5" … "1"), held through the fade back to the field (0.7 s) and by what holds it on the field (the book left on
+       the Bag or Settings, `Game.autoHeld`), then the wave starts. With Auto off, Start, as before.
+     - **Gone:** `TownSchedule.autoLeave` and town.json's `"autoLeave": 5.0` (an older file's key is read as nothing);
+       `_townPress`, the press that stopped the countdown (and the wheel's and the swipe's calls of it). `TownLeft.auto`
+       stays in the events and the telemetry for `Game.townPolicy`'s probe runs (always false from the board): no save
+       or telemetry shape changes, `telemetryVersion` stays 14.
+     - **The guide's "Towns":** "There, "Auto Wave" waits / until you tap "Leave town"." in place of "There, "Auto Wave"
+       leaves / after 5 seconds."
+     - **Checks:** town_hud_test (Auto on: no seconds in the Town, 10 s on still in it and Auto still on; left by hand:
+       saved, `TownLeft.auto` false, "Start 5", the wave by Auto), town_scene_test (no press for 6.4 s, or a tab's: the
+       Town stays; after "Leave town" the fade and the 5 s before the wave), town_test (no `autoLeave`; an old key read
+       as nothing), guide_text_test and town_switch_test (the new lines), auto_names_test and hud_sweep_test (a Town
+       with Auto on, no overlap). No balance probe: the waves and fights are as before (the probes go through Towns by
+       `townPolicy`, which never used the countdown).

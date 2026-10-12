@@ -434,7 +434,6 @@ class TownSchedule {
     this.chanceCap = 1.00,
     this.minGap = 5,
     this.firstTownAfter = 2,
-    this.autoLeave = 5.0,
   });
 
   /// The first roll's chance, and again after each Town.
@@ -449,11 +448,9 @@ class TownSchedule {
   /// A Town's slot is at least this many after the last Town's: that many waves fought between two Towns.
   final int minGap;
 
-  /// A new run counts as if a Town had come before this wave.
+  /// A new run counts as if a Town had come before this wave. (An older file's `autoLeave`, the seconds Auto waited in a
+  /// Town before it left, is read as nothing: a Town is left by hand, decisions-log 328.)
   final int firstTownAfter;
-
-  /// Seconds Auto waits in a Town before it leaves (and the next wave starts).
-  final double autoLeave;
 
   factory TownSchedule.fromJson(Map<String, dynamic> j) {
     const d = TownSchedule();
@@ -467,7 +464,6 @@ class TownSchedule {
       chanceCap: cap,
       minGap: atLeast('minGap', 1, d.minGap),
       firstTownAfter: atLeast('firstTownAfter', 0, d.firstTownAfter),
-      autoLeave: switch (j['autoLeave']) { final num v when v >= 0 && v.isFinite => v.toDouble(), _ => d.autoLeave },
     );
   }
 
@@ -477,7 +473,6 @@ class TownSchedule {
         'chanceCap': chanceCap,
         'minGap': minGap,
         'firstTownAfter': firstTownAfter,
-        'autoLeave': autoLeave,
       };
 }
 
@@ -1056,8 +1051,8 @@ extension Towns on Game {
     return true;
   }
 
-  /// Leaves the Town ([auto]: Auto left it): its slot becomes [townLast] and the mark goes, so the next wave can start.
-  /// False (nothing changes) when not in one.
+  /// Leaves the Town ([auto]: a probe's [Game.townPolicy] left it; the player leaves by hand, decisions-log 328): its
+  /// slot becomes [townLast] and the mark goes, so the next wave can start. False (nothing changes) when not in one.
   bool leaveTown({bool auto = false}) {
     if (!inTown) return false;
     final slot = townAt!;

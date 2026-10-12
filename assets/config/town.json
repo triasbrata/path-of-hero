@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "schedule": {"chanceStart": 0.20, "chanceStep": 0.05, "chanceCap": 1.00, "minGap": 5, "firstTownAfter": 2, "autoLeave": 5.0},
+  "schedule": {"chanceStart": 0.20, "chanceStep": 0.05, "chanceCap": 1.00, "minGap": 5, "firstTownAfter": 2},
   "drops": {
     "necromancerSlot": {"plus": {"lichOrb": 1}},
     "forge": {

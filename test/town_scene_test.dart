@@ -4,7 +4,7 @@
 // places where the layout puts them (the troops' rest, the Smithy, the Tavern, the Shop; the scale and the Tavern's
 // storeys and width by the room), its three buildings cell by cell standing right on the street's strip (decisions-log
 // 279), the signs, the anchors for the troops on the street's lane, the book's Town tabs, a
-// tap on a sign or a building opening its page, the bare scene shutting the book, the pans, Leave and its fade back, Auto's countdown and its stop on a press, no guide in a Town, a save
+// tap on a sign or a building opening its page, the bare scene shutting the book, the pans, Leave and its fade back, no Auto countdown in a Town (decisions-log 328), no guide in a Town, a save
 // reopening in it; and out of a Town the field's book.
 import 'dart:convert';
 import 'dart:io';
@@ -13,6 +13,7 @@ import 'dart:math';
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tower_defense/auto_start.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/guide_rules.dart';
 import 'package:tower_defense/main.dart';
@@ -331,34 +332,30 @@ void main() {
     });
   }
 
-  testWidgets('Auto in a Town: "Leave town 5" counts down; a press in the Town (a tab) stops it for the visit; with no '
-      'press it leaves at 0 and the wave starts once the fade back is over', (tester) async {
+  testWidgets('Auto in a Town (decisions-log 328): no countdown, with a press in the Town or none; the scene stays until '
+      '"Leave town", then the fade back, and the wave once Auto Wave\'s 5 s have run after it', (tester) async {
     final b = await boot(tester);
     b.autoStart.set(true);
     addTearDown(() => b.autoStart.set(false));
-    var g = await intoTown(tester, b);
-    expect(b.autoStart.shown, 5);
-    await frames(tester, 30);
+    final g = await intoTown(tester, b);
+    await settle(tester, b);
+    expect((b.townShown, b.autoStart.left), (true, null));
+    await frames(tester, 400); // 6.4 s with no press: past the 5 s Auto once took
+    expect((g.inTown, b.townShown, b.autoStart.left), (true, true, null), reason: 'no press: the Town stays');
     await tester.tapAt(b.bookTabs.firstWhere((t) => t.$1 == 'bag').$2.center);
-    await frames(tester, 2);
-    expect(b.autoStart.left, isNull, reason: 'stopped by the press');
-    await frames(tester, 400); // 6.4 s
-    expect(g.inTown, isTrue, reason: 'Leave by hand then');
-    await tester.tapAt(b.startButton.center);
     await frames(tester, 60);
-    expect((g.inTown, g.waveActive), (false, false), reason: 'left by hand: no wave by itself');
-
-    // No press: Auto leaves after 5 s, the wave waiting for the fade back.
-    g = await intoTown(tester, b, wave: 12);
-    expect(b.autoStart.shown, 5);
-    for (var i = 0; i < 400 && g.inTown; i++) {
+    expect((g.inTown, b.townShown, b.autoStart.left), (true, true, null), reason: 'a press: the same');
+    // Back on the Smithy (the field's book then opens on the Army: on the Bag, Auto would wait there as on the field).
+    await tester.tapAt(b.bookTabs.firstWhere((t) => t.$1 == 'smithy').$2.center);
+    await frames(tester, 10);
+    await tester.tapAt(b.startButton.center);
+    var n = 0;
+    for (; n < 600 && !g.waveActive; n++) {
       await frames(tester, 1);
     }
-    expect((g.inTown, g.waveActive), (false, false), reason: 'the fade back first');
-    await frames(tester, 12);
-    expect(g.waveActive, isFalse);
-    await frames(tester, 40);
-    expect((g.waveActive, g.wave), (true, 14));
+    expect((g.inTown, b.townShown, g.waveActive, g.wave), (false, false, true, 7));
+    // The fade back (2 × 0.35 s) holds the countdown, then its 5 s.
+    expect(n * 0.016, inInclusiveRange(autoStartDelay + 0.5, autoStartDelay + 1.0), reason: '$n frames');
     await frames(tester, 30);
   });
 

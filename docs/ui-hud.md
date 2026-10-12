@@ -110,7 +110,7 @@ the owner's ask (decisions-log 172, "Guide" below).
     allows 4. Before the cap a desktop window of 1164×777 had k 4
     and Start lay over pause, Auto over the wave meter and, in a wave, over the book button; so did 900×600–750 (k 3)
     and 900–1300 px wide at 800 px tall and more (k 4). test/hud_sweep_test.dart lays the HUD out at every window from
-    900×400 to 2600×1500 (step 50), between waves, in a wave and in a Town ("Leave town 5", wider than "Start 5"), and
+    900×400 to 2600×1500 (step 50), between waves, in a wave and in a Town ("Leave town", wider than "Start 5"), and
     asserts no two pieces overlap, that x2, Auto and the meter don't move and the toggle's middle doesn't as a wave
     starts, and, from k 3, every button is 40 px each way. What k sizes follows: the top band, the toggle and Auto
     (`_startH`), the wave meter,
@@ -417,7 +417,7 @@ pause button (#93, which stood in the top left row), in the same place in every 
     Auto of its own (decisions-log 283, "Spawn bar"), which now says "Auto Buy" (`Words.autoBuy`). Only the shown words
     changed: `Settings.autoStart`, the save and the telemetry keep their keys, and the look, the countdown, the hold and
     the lit state are as before. Every place it fits: 1600×947, 1266×713, 1164×777 and 915×412, with the countdown, the
-    hold line, in a wave and in a Town's "Leave town 5" (test/auto_names_test.dart). So it can be turned on
+    hold line, in a wave and in a Town's "Leave town" (test/auto_names_test.dart). So it can be turned on
   mid-wave, and it never moves: the wave meter keeps room for the coming wave's count between waves ("Wave meter").
   Not after a game over. Settings.json keeps it (`Settings.autoStart`, per device like the volumes; off by default).
   `Board.autoButton` is where it is.
@@ -1145,15 +1145,17 @@ drawn in a Town, its book and its taps are "Town" below.
   `Game.enterTown` and saves (a reload reopens the Town); never under the welcome screen. The book turns to the Smithy, and
   the scene fades in ("Town"). A save made in a Town comes back in it, and isn't gone into again.
 - **"Leave town":** in a Town the Start/Pause toggle's Start is "Leave town" (`Words.leaveTown`): the same green
-  button, place, height and blink as Start, as wide as its words (with Auto on, room for "Leave town 5"). A press leaves
+  button, place, height and blink as Start, as wide as its words (never a countdown's seconds there). A press leaves
   (`Game.leaveTown`) and saves; it starts no wave, the scene fades back to the field, and the button is Start again
   (paused in a Town it is Resume, as anywhere). The button reads it through town_look.dart's hooks (`_startShows`,
   `_startWord`, `_startMost`, the press `_leaveTown`), so whatever draws Start reads the same.
-- **Auto in a Town:** with Auto on, going in starts the countdown at `TownSchedule.autoLeave` (5 s): "Leave town 5" … "1"
-  on the button. It holds as Start's does (paused, a splash or card, a chest due). Any press in the Town but on "Leave
-  town", Auto, x2 or pause (a sign, a place, a tab, the book, the scene) stops it for the visit (`_townPress`): Leave by
-  hand then. So does the wheel or a trackpad's swipe panning the scene ("The player's pan", "Town"). At 0 it leaves, and Start's countdown is left at 0: the wave starts once the fade back to the field is over
-  (one wait, not 5 s + 5 s), unless the field's Auto hold (`Game.autoHeld`, "Start/Pause toggle") waits for the army.
+- **Auto in a Town** (decisions-log 328; the owner, 2026-10-12: "disable auto start kalau sampai kota"): no countdown runs
+  in a Town, whatever Auto is: the button reads just "Leave town", and the Town stays until the player presses it
+  (`_townTick` stops any countdown there). Auto Wave itself stays as it was set (it can be turned on or off in the Town
+  too). Left by hand with Auto on, its countdown starts as after a win (`AutoStart.won`, `autoStartDelay` 5 s: "Start
+  5" … "1"), holding through the fade back to the field and for whatever holds it on the field (the book on the Bag or
+  Settings, the Auto hold `Game.autoHeld`: "Start/Pause toggle"), then the wave starts. (Before, Auto left a Town after town.json's `autoLeave` 5 s unless a press there
+  stopped it; the key is gone, an older file's read as nothing.)
 - **The wave meter in a Town** (the owner, 2026-10-04: "ketika di town wave metternya di ganti contentnya jadi semacam
   'in town' dan icon swordnya juga di ganti … intinya mau kasi tau ke user kalau ini lagi mode aman";
   `Board._inTownMeter`): the same panel at the same size (the tide badge's room kept, so the Town chip's place, the map
@@ -2317,7 +2319,8 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     the room with troops, "+Room", a second Priest; decisions-log 176), its second what the boss leaves (with the forge
     on "Win it: rare materials", with it off "Win it: 2 items"; decisions-log 272);
   - `topics`: the "How to Play" page's 13 (`GuideTopic`; "Towns", decisions-log 237: K23, K24 and the wave meter's
-    warning, Auto's `autoLeave` s, "Tap the tent for "Army"." (decisions-log 301), and "The "Tavern" sells boosts / for
+    warning, "There, "Auto Wave" waits / until you tap "Leave town"." (decisions-log 328), "Tap the tent for "Army"."
+    (decisions-log 301), and "The "Tavern" sells boosts / for
     the next 2 waves." (town.json's `tavern.waves`,
     decisions-log 268), and with the forge "A "Wishlist" marks items to make, / set in "Smithy" or "Army"."
     (decisions-log 282); by grade "Items & Awaken" adds "Awaken levels take grade I, / then II, then III. /
