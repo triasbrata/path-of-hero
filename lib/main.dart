@@ -2318,7 +2318,11 @@ class Board extends PositionComponent
       final pace = u.move is Charge ? chargeK.speed : 1.0;
       look = ('${k}_${u.moving || lift > 0 ? 'walk' : 'idle'}.png', (g.t * _fps * pace).floor());
     }
-    _frame(c, look.$1, look.$2, feet, flip: flip, paint: body, line: line);
+    // A phantom (Phantom Rush's dash and its way home, decisions-log 320): its body see-through and washed in the rush's
+    // magenta, its afterimages' colour, the whole time no blow lands on it (skills.dart).
+    final ghost = u.alive && u.move != null && isPhantom(u);
+    _frame(c, look.$1, look.$2, feet, flip: flip, paint: ghost ? _phantomBody : body, line: line);
+    if (ghost) _frame(c, look.$1, look.$2, feet, flip: flip, paint: _phantomWash);
     if (u.side == Side.troop) _strips[u] = look.$1.substring(k.length + 1, look.$1.length - 4); // for tests
     if (grow) c.restore();
     if (level > 0 && u.alive) _auraSparks(c, u, level, ground);
