@@ -8,15 +8,13 @@ part of 'main.dart';
 const _braceColor = Color(0xFFC8D2DC);
 
 extension on Board {
-  /// A braced troop's ring at its feet, steady where a guard's pulses, fading out over its last half second.
+  /// A braced troop's ring at its feet ([_braceRingSize], in the sprites' pixels: pixel_shapes.dart), steady where a
+  /// guard's pulses, fading out over its last half second.
   void _braceRing(Canvas c, Game g, Unit u, Offset ground) {
     final until = u.brace?.until;
     if (until == null || !u.alive || !g.braced(u)) return;
     final a = math.min(1.0, (until - g.t) / 0.5) * 0.8;
-    c.drawOval(Rect.fromCenter(center: ground - const Offset(0, 1), width: 18, height: 8), Paint()
-      ..color = _braceColor.withValues(alpha: a)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4);
+    _pixelRingAt(c, ground, _braceRingSize, _pixelPaint(_braceColor, a));
   }
 
   /// The chain from the Hero pulling [u] ([Carry.by], Chain Hook) to it while it is dragged: dark links, a
