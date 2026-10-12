@@ -148,7 +148,7 @@ void main() {
       'v': eventVersion, 'kind': 'storeSold', 'wave': 40, 't': g.t, 'item': 'sword', 'relic': null, 'n': 30, //
       'gain': sum, 'margin': 3.0, 'pressure': 0,
     });
-    expect(eventVersion, 14);
+    expect(eventVersion, greaterThanOrEqualTo(14)); // 14 brought the market's fields; later versions keep them
     expect((g.pressureOf(Item.sword, 2), g.pressureOf(Item.shield)), (0, 0), reason: 'the others untouched');
     expect(g.sellPriceAt(Item.sword, 2), g.marketPrice(Item.sword, 2));
     expect(g.sellAt(Item.sword, 2), 1);

@@ -115,7 +115,7 @@ void main() {
     testWidgets("the boosts' chips at $tag: under the meter without a Town marked; none without a boost; six in rows",
         (tester) async {
       final b = await boot(tester, size);
-      final g = b.state = fieldGame(marked: false)..boosts.add(RunningBoost(Boost.watch, 2));
+      final g = b.state = fieldGame(marked: false)..boosts.add(RunningBoost(Boost.toast, 2));
       await frames(tester, 30);
       expect(b.townChip, Rect.zero);
       expect(b.boostChips, hasLength(1));

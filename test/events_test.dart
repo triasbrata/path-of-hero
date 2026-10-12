@@ -131,9 +131,12 @@ void main() {
 
   test('a lost game logs its wave lost once, however long it is ticked after', () {
     final g = bareGame()..lives = 1;
-    placeNow(g, 'knight', 2, 3);
+    final k = placeNow(g, 'knight', 2, 3)..hp = 1;
     startAt(g, 4);
-    g.units.add(Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(g.baseX - 1, 60))); // past the base
+    g.units.add(Unit(Side.enemy, 'werebear', enemyTypes['werebear']!, k.pos + const Point(10, 0))..entered = true); // the army falls
+    for (var i = 0; i < 100 && !g.over; i++) {
+      g.tick(0.05);
+    }
     for (var i = 0; i < 5; i++) {
       g.tick(0.05);
     }

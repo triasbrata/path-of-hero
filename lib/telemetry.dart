@@ -47,7 +47,10 @@ import 'settings.dart';
 /// wave record's `end` `wiped`.
 /// 14: the Towns' market and identities (decisions-log 326): a `storeSold` of an item or a small relic carries its
 /// `margin` and `pressure`, a `townEntered` its `n` and `identity`; an item's and a small relic's `gain` is the market's.
-const telemetryVersion = 14;
+/// 15: the back line costs nothing (decisions-log 329): no monster crosses it, so a wave's `livesLost` is 0 or a lost
+/// wave's heart; a `wipe` has its `cause` (`fell`, `empty`: begun with no troop, `slow`: its march not won within 60 s,
+/// with `marched` set), each a wave record's `end` `wiped`; Watchman's Brew and the wave's `boostSaved` are gone.
+const telemetryVersion = 15;
 
 /// Where [HttpSink] posts (`--dart-define=TELEMETRY_SERVER=https://...`). None by default, so nothing is sent.
 const telemetryServer = String.fromEnvironment('TELEMETRY_SERVER');
@@ -419,8 +422,6 @@ class TelemetryAdapter {
         w.craftSpent += gold;
       case BoostBought(:final price) || TavernRerolled(:final price):
         w.tavernSpent += price; // in a Town, between waves only, like Asah
-      case BoostSaved():
-        w.boostSaved++;
       case BoostEnded():
         break; // the next wave's start has the boosts still running
       case StrongFoe() || HeroMade() || Awakened() || TypeReleased() || GrailSaved() || PusakaReport() || OfferShown() || OmenGained() || OmenEased() || OmenDusk():
@@ -509,7 +510,6 @@ class TelemetryAdapter {
         // Ukir (pusaka.dart), only when some was fed since the last wave ended: the items fed by kind, their points, and
         // each Pusaka's steps taken.
         if (w.ukirPoints > 0) ...{'ukirItems': w.ukirItems, 'ukirPoints': w.ukirPoints, 'ukirSteps': w.ukirSteps},
-        if (w.boostSaved > 0) 'boostSaved': w.boostSaved, // the leaks a Tavern boost forgave (Watchman's Brew)
         // No item or relic drops on the field (decisions-log 246, 321): always empty, kept so the record's shape stays.
         'dropped': const <String, int>{},
         'relicsDropped': const <String, int>{},
@@ -553,7 +553,7 @@ class _WaveSum {
   int kills = 0, heroesFallen = 0, spent = 0, spentOn = 0, storeSpent = 0, storeSpentOn = 0, storeEarned = 0, storeEarnedOn = 0;
   int ascendSpent = 0, ascendSpentOn = 0, recallSpent = 0, recallSpentOn = 0;
   int chestSpent = 0, chestEarned = 0;
-  int pusakaSpent = 0, asahSpent = 0, tempaSpent = 0, leburSpent = 0, craftSpent = 0, tavernSpent = 0, boostSaved = 0;
+  int pusakaSpent = 0, asahSpent = 0, tempaSpent = 0, leburSpent = 0, craftSpent = 0, tavernSpent = 0;
   double? marchedAt;
   final spawns = <String, Map<String, int>>{}, raised = <String, Map<String, int>>{}, killers = <String, Map<String, int>>{};
   final monsterCasts = <String, Map<String, int>>{};

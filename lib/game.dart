@@ -81,7 +81,8 @@ enum Side { troop, enemy }
 
 enum Face { side, up, down }
 
-/// Sound cues queued by the logic and played by the UI; names match assets/sfx/*.wav (tool/gen_sfx.py).
+/// Sound cues queued by the logic and played by the UI; names match assets/sfx/*.wav (tool/gen_sfx.py). [leak] was a
+/// monster over the back line; since decisions-log 329 it is the alarm of a stalled wave's monsters charging.
 enum Sfx { place, sword, dagger, magic, hit, kill, fall, leak, wave, clear, error, lose, click }
 
 /// [cost] is the base price for troops (what one costs now: [Game.priceOf]) and the gold reward for
@@ -1180,18 +1181,18 @@ const bossBarLayer = 1000;
 }
 
 /// A wave whose own monsters make no progress for this long (none gets nearer the base or falls to a new
-/// low of HP, none dies or leaks, none spawns) has stalled: its monsters give up the fight and march on the
-/// base through the troops ([Game.marching]), so every wave ends. A necromancer's endless skeletons in
+/// low of HP, none dies, none spawns) has stalled: its monsters give up the fight and charge the back line through the
+/// troops ([Game.marching]), and the wave must be won within [marchMax] s. A necromancer's endless skeletons in
 /// front of 1–2 kiting archers stalled wave 5 for good (#39).
 const stallTime = 30.0;
 
 /// The wave's own monsters nearest the base standing this much further from it than they have since the last
-/// spawn, death or leak are drifting off: while they do, their falling HP is no progress ([Game._watchStall]). A
+/// spawn or death are drifting off: while they do, their falling HP is no progress ([Game._watchStall]). A
 /// lone wizard led a mini boss 2,000+ px off, its HP falling ~10% every 2 min, and that read as progress for good
 /// (qa-3). Twice Death Leap's reach (a monster turning on a troop that leapt behind it), ten knockbacks.
 const stallDrift = 10 * tile;
 
-/// This long after the wave's last spawn, the last life lost or the last [stallProgress], its monsters march whatever
+/// This long after the wave's last spawn or the last [stallProgress], its monsters march whatever
 /// else ([Game._watchStall]). None of the owner's 149 waves of telemetry (w1–86, none marched) went on much over 110 s
 /// after its last spawn, by its spawn count (the longest, w78, 230 s in all); only a near-wiped army fights on longer.
 const stallOvertime = 180.0;
@@ -1199,14 +1200,21 @@ const stallOvertime = 180.0;
 /// The wave's slot monsters (its mini boss and boss, alive) losing this share of their summed max HP since the
 /// overtime clock last started starts it afresh ([stallOvertime]): a slow slot fight the army is still winning goes
 /// on. qa-4: at 14437d0's strength the overtime marched late slot fights that 6–10 troops were winning (one won at
-/// 515 s without it), and the mini boss leaked a life each time. A plain monster falling is no such progress.
+/// 515 s without it), and the mini boss leaked a life each time (the back line went in decisions-log 329). A plain
+/// monster falling is no such progress.
 const stallProgress = 0.05;
 
-/// This long after the wave's last spawn or the last life lost, its monsters march whatever the slots'
+/// This long after the wave's last spawn, its monsters march whatever the slots'
 /// [stallProgress] ([Game._watchStall]): a slot monster ground down a little at a time, or healed back between
 /// blows, can't hold the wave for good. qa-4's one stalled wave (w90, 1 troop left whittling a boss) still ran at
 /// 600 s on the slots' progress alone; the slowest win of the late replays it ended came 278 s after the last spawn.
 const stallOvertimeMax = 300.0;
+
+/// A wave still on this long after its monsters began to march ([Game.marching]) is lost as a wiped one is: a heart, and
+/// the wave again ([WipeCause.slow], wipe.dart). Until decisions-log 329 the march ended at the back line, each monster
+/// over it half a heart, and the wave then counted as won: a w60 boss wave lost 5 lives that way, 87 s into its march.
+/// Of the other 6 marches in that audit's 397 waves, the troops killed every marcher within seconds.
+const marchMax = 60.0;
 
 /// The other necromancer ("Nekromanser Penyembuh", drawn as the boss recoloured teal): a support that
 /// stays at the very back ([Game._mend]) and heals the most hurt monster it can safely reach that no other
@@ -2043,7 +2051,8 @@ class Game {
   /// (the boss's raised skeletons too): what goes on the scoreboard.
   int score = 0, kills = 0;
 
-  /// The back line: the deploy zone starts here and a monster crossing it costs a life. It stays put all
+  /// The back line: the deploy zone starts here, and no monster goes past it (it cost a life until decisions-log 329:
+  /// the monsters there wait for the troops, and nothing is lost). It stays put all
   /// wave, however far the fight goes (#79, the owner: "garis belakang di majukan setiap selesai wave
   /// saja"), and when a wave is won it moves up to wherever the rearmost troop stands, never back.
   double baseX = 0;
@@ -3522,7 +3531,7 @@ class Game {
 
   /// Whether fewer monsters live on the field than the [spawnFloor] while the [queue] holds more: the next comes on now.
   bool get belowSpawnFloor => queue.isNotEmpty && enemies.where((u) => u.alive).length < spawnFloor;
-  /// The game is over: no life is left (a leak's, or the last heart an army wiped cost, wipe.dart).
+  /// The game is over: no life is left (the last heart a lost wave cost, wipe.dart).
   bool get over => lives <= 0;
 
   /// The wave just fought ended with the army wiped ([Wipe._wipe], wipe.dart): set as it falls, until the next wave
@@ -3532,6 +3541,9 @@ class Game {
   /// When the army was last wiped ([t]), for the UI to say so and save once; [double.negativeInfinity] in a game where
   /// it wasn't.
   double wipedAt = double.negativeInfinity;
+
+  /// Why the wave was last lost ([wipedAt]), for the UI's note (wipe.dart).
+  WipeCause wipeCause = WipeCause.fell;
 
   /// The wave the army was wiped in, to be played again (wipe.dart): [wave] + 1 between waves, [wave] while it is
   /// played again; null once it is won. Saved.
@@ -3544,9 +3556,13 @@ class Game {
   /// Phoenix Plume rises due ([HeroSkills.later]): while one is, the army isn't wiped. A wave's end drops them.
   int _risesDue = 0;
 
-  /// The wave stalled ([stallTime]): its monsters walk straight to the base, through the troops, and
-  /// don't fight, summon or heal any more. Cleared when the wave ends.
+  /// The wave stalled ([stallTime]): its monsters walk straight to the back line, through the troops, and
+  /// don't summon or heal any more; there they hold it, striking whatever troop comes in reach ([_holdLine]). Within
+  /// [marchMax] s of its start the wave is won, or lost (wipe.dart). Cleared when the wave ends.
   bool marching = false;
+
+  /// When the monsters began to march ([marching]).
+  double _marchAt = 0;
 
   /// The monsters just started marching ([marching]), for the UI to say so; the UI clears it.
   bool newMarch = false;
@@ -3557,7 +3573,7 @@ class Game {
   bool stalled = false;
   double _stallLow = double.infinity, _progressAt = 0, _frontLow = double.infinity, _quietFrom = 0; // [_watchStall]
   double _overtimeFrom = 0, _slotHp = 0, _slotMaxHp = 0; // the overtime clock's start, the slots' HP and max HP then
-  int _stallCount = 0, _stallLives = 0; // [_watchStall]
+  int _stallCount = 0; // [_watchStall]
 
   /// The game is paused (the UI's pause button, Esc / P, or the book opened mid-wave): [tick] does nothing, so
   /// nothing moves, fights, spawns, heals or counts down. Not saved: a loaded game starts unpaused.
@@ -3677,7 +3693,6 @@ class Game {
     _progressAt = _quietFrom = _overtimeFrom = t;
     _slotHp = _slotMaxHp = 0;
     _stallCount = 0;
-    _stallLives = lives;
     for (final u in troops) {
       u.heroSkillAt = double.negativeInfinity; // every Hero's own skill is ready again
       u.fxOnce = false; // and every once-a-wave Pusaka Fx (the Grail's save, [grailK])
@@ -5326,10 +5341,11 @@ class Game {
       return;
     }
     final others = enemies.where((o) => o.alive && !o.stats.heals).toList();
-    // Alone, it walks on toward the back line like a monster with nobody to fight, so a wave never stalls.
+    // Alone, it walks on toward the back line like a monster with nobody to fight (into the troops' reach), so a wave
+    // never stalls.
     if (others.isEmpty) {
       act(Mend.alone);
-      return _moveToward(u, Point(baseX - tile, u.pos.y), dt);
+      return _moveToward(u, Point(baseX, u.pos.y), dt);
     }
     if (back != null) {
       act(Mend.backOff);
@@ -5439,32 +5455,42 @@ class Game {
     return waits[best]! > 0 ? choice(saving: best, scores: scores) : choice(cast: best, scores: scores);
   }
 
+  /// A marching monster ([marching]): straight for the back line, through the troops; there it holds the line, striking
+  /// the nearest troop that comes in its reach, and walks no further (decisions-log 329: until then it went over the
+  /// line, half a heart lost).
+  void _holdLine(Unit u, double dt) {
+    if (u.pos.x > baseX + tile / 2) return _moveToward(u, Point(baseX, u.pos.y), dt);
+    u.moving = false;
+    u.cd -= dt;
+    final foe = _nearestFoe(u);
+    if (foe == null || !reaches(u, foe)) return;
+    _face(u, foe.pos.x - u.pos.x, 0);
+    if (u.cd <= 0) _strike(u, foe);
+  }
+
   /// How much of the wave is left to do: its own monsters' HP plus their way to the base (raised minions
   /// don't count). A new low of it, or a spawn, is progress; none for [stallTime] and the wave has
   /// stalled: the monsters march ([marching]). Two more stalls, for fights whose falling HP alone read as progress
   /// (qa-3): while the monsters nearest the base stand more than [stallDrift] further from it than they have since
-  /// the last spawn, death or leak, a new low doesn't count; and [stallOvertime] after the last spawn, life lost or
-  /// [stallProgress] of the slot monsters, or [stallOvertimeMax] after the last spawn or life lost, they march
-  /// whatever else.
+  /// the last spawn or death, a new low doesn't count; and [stallOvertime] after the last spawn or [stallProgress] of
+  /// the slot monsters, or [stallOvertimeMax] after the last spawn, they march whatever else.
   void _watchStall(bool spawned) {
     if (!waveActive || marching) return;
     final own = enemies.where((u) => u.alive && u.raisedBy == null).toList();
     double way(Unit u) => max(0.0, u.pos.x - baseX);
     final left = own.fold(0.0, (s, u) => s + u.hp + way(u)), front = own.isEmpty ? 0.0 : own.map(way).reduce(min);
-    _frontLow = spawned || own.length != _stallCount ? front : min(_frontLow, front); // a spawn, death or leak: afresh
+    _frontLow = spawned || own.length != _stallCount ? front : min(_frontLow, front); // a spawn or death: afresh
     // Only a spawn brings a slot monster, so between two starts of the overtime clock the same ones are counted, a
     // dead one at 0 HP. HP healed back has to be lost again before it counts.
     final slotted = own.where((u) => u.tier == Tier.boss || u.tier == Tier.miniBoss);
     final slotHp = slotted.fold(0.0, (s, u) => s + u.hp);
-    final fresh = spawned || lives < _stallLives;
-    if (fresh) _quietFrom = t;
-    if (fresh || (_slotMaxHp > 0 && _slotHp - slotHp >= stallProgress * _slotMaxHp)) {
+    if (spawned) _quietFrom = t;
+    if (spawned || (_slotMaxHp > 0 && _slotHp - slotHp >= stallProgress * _slotMaxHp)) {
       _overtimeFrom = t;
       _slotHp = slotHp;
       _slotMaxHp = slotted.fold(0.0, (s, u) => s + u.maxHp);
     }
     _stallCount = own.length;
-    _stallLives = lives;
     final drifting = front - _frontLow > stallDrift;
     if (spawned || (left < _stallLow && !drifting)) {
       _stallLow = left;
@@ -5473,6 +5499,8 @@ class Game {
     final stalled = t - _progressAt > stallTime, longest = t - _quietFrom > stallOvertimeMax;
     if (stalled || longest || t - _overtimeFrom > stallOvertime) {
       marching = newMarch = this.stalled = true; // the field (the guide's card), not the local above
+      _marchAt = t;
+      sfx.add(Sfx.leak); // the charge's alarm (a monster over the back line until decisions-log 329)
       _emit(Marched(wave, t,
           why: stalled
               ? (drifting ? MarchCause.drifting : MarchCause.stalled)
@@ -5548,7 +5576,7 @@ class Game {
         continue;
       }
       if (marching && u.side == Side.enemy) {
-        _moveToward(u, Point(baseX - tile, u.pos.y), dt); // the wave stalled: straight for the base
+        _holdLine(u, dt); // the wave stalled: straight for the back line, and it holds it
         continue;
       }
       // The summoner thinks about raising minions every so often ([decideSummon]); after deciding to wait
@@ -5655,7 +5683,7 @@ class Game {
           }
         }
       } else if (u.side == Side.enemy) {
-        _moveToward(u, Point(baseX - tile, u.pos.y), dt);
+        _moveToward(u, Point(baseX, u.pos.y), dt); // nobody to fight (a Phoenix rise due): on to the back line, no further
       } else {
         _rest(u, dt);
       }
@@ -5730,11 +5758,9 @@ class Game {
         // but its own steps left stand: a monster the view glided past still comes on (#42).
         if (u.entered && u.pos.x > rightLimit) u.pos = Point(max(rightLimit, min(u.pos.x, start[u]?.x ?? u.pos.x)), u.pos.y);
       }
-      if (u.side == Side.enemy && u.pos.x < baseX) {
-        u.gone = true;
-        if (!_boostLeak()) lives = max(0, lives - 1); // unless a Tavern boost forgives it (tavern.dart)
-        sfx.add(over ? Sfx.lose : Sfx.leak);
-      }
+      // The back line holds the monsters as it holds the troops: one there waits for a troop to come to it. Until
+      // decisions-log 329 one over it was gone and cost a life, half a heart.
+      if (u.side == Side.enemy && u.pos.x < baseX) u.pos = Point(baseX, u.pos.y);
     }
 
     // A shot whose target fell or left flies on to where it was, and lands there as on it (decisions-log 327).
@@ -5777,7 +5803,10 @@ class Game {
     if (pusaka.isNotEmpty) _oathWatch(); // a type died out or came back: Alliance's multiplier moves (pusaka.dart)
     units.removeWhere((u) => u.gone || u.dying >= deathTime);
     _watchStall(spawned);
-    if (wasActive && !wipedOut && !over && _armyDown) _wipe(); // a heart lost, the wave swept and played again (wipe.dart)
+    // The army down, or a march not won in time: a heart lost, the wave swept and played again (wipe.dart).
+    if (wasActive && !wipedOut && !over) {
+      if (_waveLost case final why?) _wipe(why);
+    }
 
     if (wasActive && !waveActive && !over && !wipedOut) {
       marching = false;

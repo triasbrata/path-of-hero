@@ -104,19 +104,20 @@ void main() {
     expect(g.holdPastFoe, isFalse, reason: 'the default (decisions-log 153)');
     final start = g.t, x0 = wizard.pos.x, lives = g.lives;
     var most = x0;
-    while (g.waveActive && g.t - start < 200) {
+    while (g.waveActive && g.t - start < 300) {
       g.tick(dt);
-      most = max(most, wizard.pos.x);
+      if (!g.marching) most = max(most, wizard.pos.x);
     }
     // qa-3's scene: both go right, the boss after the wizard, the view in tow, its blows a new low of HP every time. Past
-    // [stallDrift] they are no progress; [stallTime] later the boss marches, and neither can fall, so it leaks.
+    // [stallDrift] they are no progress; [stallTime] later the boss marches, and neither can fall, so [marchMax] s on the
+    // wave is lost (it leaked over the back line until decisions-log 329).
     expect(g.waveActive, isFalse, reason: 'the wave ended');
     expect(heard.map((e) => e.why), [MarchCause.drifting]);
-    expect(g.lives, lessThan(lives));
+    expect((g.lives, g.wipeCause), (lives - wipeLives, WipeCause.slow));
     expect(most - x0, greaterThan(stallDrift), reason: 'it did lead the boss off');
     expect(most - x0, lessThan(stallDrift + (stallTime + 2) * wizard.stats.speed + 2 * tile),
         reason: 'no further than the drift and the stall clock allow');
-    expect(mini.hp, greaterThan(0), reason: 'it leaked, it never fell');
+    expect(mini.hp, greaterThan(0), reason: 'the march was not won, it never fell');
   });
 
   test('with holdPastFoe on, a wizard right of a mini boss stands its ground instead of backing off', () {
@@ -196,8 +197,9 @@ void main() {
     expect(heard.map((e) => e.why), [MarchCause.overtime]);
   });
 
-  test('a life lost starts the overtime clock afresh; a plain monster falling does not', () {
-    for (final leak in [false, true]) {
+  test('a plain monster falling does not start the overtime clock afresh', () {
+    // (A life lost to the back line did until decisions-log 329: no life is lost mid-wave now.)
+    {
       final (g, m) = quietWave();
       listen(g);
       final start = g.t;
@@ -219,23 +221,16 @@ void main() {
         ..hp = 0
         ..dying = 0;
       fight(100);
-      var from = start;
-      if (leak) {
-        final lives = g.lives;
-        g.units.add(g.monster('slime', Tier.normal, Point(g.baseX - 1, fieldH / 2)));
-        g.tick(dt);
-        expect(g.lives, lives - 1, reason: 'it leaked');
-        from = g.t;
-      }
+      final from = start;
       fight(from - start + stallOvertime + 2);
-      expect(g.marching, isTrue, reason: '$leak');
-      expect(g.t - from, inInclusiveRange(stallOvertime, stallOvertime + 0.1), reason: '$leak');
-      expect(heard.map((e) => e.why), [MarchCause.overtime], reason: '$leak');
+      expect(g.marching, isTrue);
+      expect(g.t - from, inInclusiveRange(stallOvertime, stallOvertime + 0.1));
+      expect(heard.map((e) => e.why), [MarchCause.overtime]);
     }
   });
 
   test('a slow slot fight whose mini boss keeps losing HP goes on past stallOvertime, until stallOvertimeMax', () {
-    for (final leak in [false, true]) {
+    {
       final (g, [mini], filler, from) = slotFight();
       listen(g);
       // 6% of its max HP every 180 s, a little every tick, the plain monster untouched: the overtime clock starts
@@ -248,22 +243,13 @@ void main() {
         }
       }
 
-      var last = from;
-      if (leak) {
-        // A life lost at 200 s starts the long clock afresh too.
-        fight(200);
-        final lives = g.lives;
-        g.units.add(g.monster('slime', Tier.normal, Point(g.baseX - 1, fieldH / 2)));
-        g.tick(dt);
-        expect(g.lives, lives - 1, reason: 'it leaked');
-        last = g.t;
-      }
+      final last = from;
       fight(last - from + stallOvertimeMax - 1);
-      expect(g.marching, isFalse, reason: '$leak');
-      // Then the wave has run too long since its last spawn or life lost, however the fight goes.
+      expect(g.marching, isFalse);
+      // Then the wave has run too long since its last spawn, however the fight goes.
       fight(last - from + stallOvertimeMax + 2);
-      expect(heard.map((e) => e.why), [MarchCause.overtimeMax], reason: '$leak');
-      expect(heard.single.t - last, inInclusiveRange(stallOvertimeMax - dt, stallOvertimeMax + 0.1), reason: '$leak');
+      expect(heard.map((e) => e.why), [MarchCause.overtimeMax]);
+      expect(heard.single.t - last, inInclusiveRange(stallOvertimeMax - dt, stallOvertimeMax + 0.1));
       expect(mini.hp / mini.maxHp, closeTo(1 - 0.06 * (heard.single.t - from) / stallOvertime, 0.01));
       expect(filler.hp, 1e9);
     }

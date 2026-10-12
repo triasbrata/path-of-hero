@@ -11781,11 +11781,16 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        and none at all in waves 1-40. 8 waves leaked: 3 in an army's last seconds, while Auto Buy's one fresh troop kept
        it from counting as wiped (322's wipe needs none alive), so that wave cost up to 2.5 hearts instead of 1; 4 that
        began with no troop because the gold could rebuy nothing (how 4 of the 5 runs ended); and 1 stall-marched boss
-       wave whose 5 crossers cost 2.5 hearts and still counted as won. The owner's own waves 1-74 lost no life. What the
-       back line becomes is the owner's call (asked); until then 322's rule stands.
+       wave whose 5 crossers cost 2.5 hearts and still counted as won. The owner's own waves 1-74 lost no life.
+     - **The owner's picks**, among the options he was given (2026-10-13): the back line, "Hapus garis belakang" (delete
+       it: only a lost army costs a heart; over "keep it", "a crossing loses the wave" and "it costs only on boss
+       waves"); the fall-back brain's switched-off parts, "Simpan, bisa dinyalakan" (keep them, patchable: no change);
+       Beban, "Hapus (Recommended)"; the Shop's empty item and relic shelves, "Hapus setelah pasar Town masuk
+       (Recommended)" (delete them once the Town market is in: 326 is).
      - **The guide's first page** said "No hearts or troops: game over.", wrong since 322 (an army wiped costs a heart
-       and the wave is played again). Now (guide_text.dart, 4 lines of at most 6 words): "Monsters come from the right.
-       / Past the line: half a heart. / Army down: a heart, wave again. / No hearts left: game over."
+       and the wave is played again). Now (guide_text.dart, 4 lines of at most 6 words) as the back line's bullet below
+       says; first "... / Past the line: half a heart. / Army down: a heart, wave again. / ...", before the owner's
+       pick.
      - **The lives term in the score goes** (`lifeScore`, 50 a life left, added in the tick the game ended): since 322 a
        game ends only at 0 lives, so it always added 0. The guide's Goal topic said "Score: kills, waves won, hearts
        left."; now "Score: kills and waves won." (scoreboard.md). Scores, saves and telemetry don't change.
@@ -11798,6 +11803,34 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      - **`Game.keepUpWithView` goes**, a `static const` always true (#61's option A): its off arms in `speedTo`,
        `_rearEdge` and a healer's walk-in could never run. The rule itself is unchanged (camera-and-field.md "Back line").
        Whether the keep-up floor still binds once 324's front cap is in is measured after that merge (the audit's item 8).
+     - **The back line costs nothing** (game.dart, lib/wipe.dart; game-overview.md "Lose", units-and-combat.md): a
+       monster can't pass `baseX` (a clamp, as the troops have theirs); one that gets there waits for the troops, and no
+       life is lost. Deleting the line's cost needed three rules the audit named, so every lost wave costs one heart:
+       - **Monsters at the left end** stop at the line and fight on: one chasing a troop bought mid-wave that walks in
+         from behind the line waits there for it. The crossings in an army's last seconds (Auto Buy's one fresh troop
+         alive) are gone with it: such a collapse now ends at the wipe, one heart, not up to 2.5.
+       - **No troop standing** (a wave begun with none, or left with none): the wave is lost when a monster reaches the
+         line (`WipeCause.empty`, "No troops! -1 heart."), not at its first spawn: until then a troop bought mid-wave
+         can still meet it. Until now such a wave was never a wipe and its monsters walked over, half a heart each.
+       - **The collapse and the stall: `marchMax` 60 s.** The stall watchdog keeps its triggers; its march is a charge:
+         the monsters walk through the troops to the line and hold it, striking the troop nearest them in reach
+         (`_holdLine`), and a wave still on 60 s after its charge began is lost (`WipeCause.slow`, "Too slow! -1 heart.";
+         the charge says "Monsters charge! Win in 60 s or lose a heart." with the old leak sound). Until now the march
+         ended at the line, half a heart a monster, and the wave then counted as won (the w60 boss wave: 5 lives, 87 s
+         into its march). The other 6 marches of the audit were won within seconds and still would be. The suggestion
+         "no troop struck or was struck for N s while monsters advance" wasn't taken: between two monster groups the
+         army often fights nobody for 5-10 s, and in a collapse each fresh troop strikes before it falls, so it would
+         fire in ordinary waves and miss the grinder; the stall watchdog already measures "no progress".
+       - **Watchman's Brew goes** (an Epic Tavern boost that forgave a wave's first crossing): the Plate is the one Epic;
+         a save's `watch` offer or boost is dropped as an unknown kind's; the event `boostSaved` and the wave's
+         `boostSaved` go. **Texts:** the guide's first page "Monsters come from the right. / Lose your army: lose a
+         heart, / and play the wave again. / No hearts left: game over."; K16 "The wave took too long: / the monsters
+         charge your line. / Kill them in 60 s / or lose a heart." and its picture one heart lost (it drew a heart and a
+         half); the wipe's note and battle-log line by cause ("Army fell", "No troops", "Too slow").
+       - **Telemetry:** `eventVersion` and `telemetryVersion` 15: a `wipe`'s `cause` (`fell`, `empty`, `slow`).
+       - What the owner's game loses: nothing he has seen (no crossing in his waves 1-74). A collapse costs one heart
+         instead of up to 2.5; a march that can't be won costs a heart instead of half a heart a monster (harsher for
+         one crosser, gentler for many), and is never a win.
      - **Leftovers no player sees go** (the code audit's X1 and X2 of 317, never picked): the Toko-era names of the Army
        tab's dot and K11's picture (`tokoNudge`, `_tokoTabDot`, `'tokoDot'`, `_picToko` are now `armyNudge`,
        `_armyTabDot`, `'armyDot'`, `_picShop`); `Board.carveButton` (a test seam no test read); `To.allTroops` (no Fx

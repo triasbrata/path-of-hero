@@ -177,7 +177,6 @@
       "toast":   {"rarity": "common",    "gold": 1.30},
       "mage":    {"rarity": "rare",      "mpRegen": 1.60},
       "plate":   {"rarity": "epic",      "dmg": 1.40, "rate": 1.15, "who": "type"},
-      "watch":   {"rarity": "epic",      "leaks": 1},
       "banquet": {"rarity": "legendary", "dmg": 1.30, "taken": 0.75, "hp": 1.25, "rate": 1.10}
     }
   },

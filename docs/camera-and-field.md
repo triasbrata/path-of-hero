@@ -152,7 +152,9 @@ the middle of the screen is where our troops and the monsters actually hit each 
 
 ## Back line (`baseX`) and deploy zone
 
-- `baseX` is the zone start and the life-loss line. It only moves forward, and only when a wave is won
+- `baseX` is the zone start, and the line no monster passes (decisions-log 329: a monster there stands at it and waits
+  for the troops; until then one over it was gone and cost a life, half a heart). It only moves forward, and only when
+  a wave is won
   (#79, the owner: "garis belakang di majukan setiap selesai wave saja"):
   - mid-wave it stays put, however far the army fights its way forward. The view centres the battle, so
     the line and the zone can be far off screen to the left (the minimap shows them, #80: ui-hud.md "Minimap").

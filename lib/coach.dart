@@ -745,10 +745,11 @@ extension on Board {
     }
   }
 
-  /// K16: a wave that took too long: its monsters marching on, a heart and a half lost (the lives' own icons).
+  /// K16: a wave that took too long: its monsters charging, and the heart it costs if they aren't killed in time (the
+  /// lives' own icons: two full, one lost; a heart and a half until decisions-log 329, the back line's halves).
   void _picStall(Canvas c, Rect box) {
     final h = (box.height * 0.22).roundToDouble();
-    for (final (i, halves) in const [2, 1, 0].indexed) {
+    for (final (i, halves) in const [2, 2, 0].indexed) {
       c.drawImageRect(_img('ui_icons.png'), _heartIcons[halves], Rect.fromLTWH(box.center.dx + (i - 1.5) * h * 1.1, box.top + box.height * 0.04, h, h), _px);
     }
     final k = box.height * 0.32 / _idleBounds['orc']!.height, ground = box.top + box.height * 0.88;

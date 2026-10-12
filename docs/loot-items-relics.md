@@ -2099,11 +2099,12 @@ ui-hud.md's "The Tavern in battle"; the guide's K23 and its "Towns" topic name i
   | `toast` | Lucky Toast | Common | Kill gold ×1.30 |
   | `mage` | Mage's Brew | Rare | MP regen ×1.60 |
   | `plate` | Champion's Plate | Epic | Damage ×1.40, attack speed ×1.15, on ONE troop type (`"who": "type"`, rolled with the offer among the types alive) |
-  | `watch` | Watchman's Brew | Epic | The first monster over the back line each wave costs no life (`leaks` 1) |
   | `banquet` | King's Banquet | Legendary | Damage ×1.30, damage taken ×0.75, max HP ×1.25, attack speed ×1.10 |
 
   Travel Rations was "longer but weaker" (five waves) in the design; with every boost two waves it is a cheap Common
-  with a little of everything. Every kind has the same length (`waves`, one number for all).
+  with a little of everything. Every kind has the same length (`waves`, one number for all). Watchman's Brew (Epic,
+  `leaks` 1: the wave's first monster over the back line cost no life) went in decisions-log 329, when the line stopped
+  costing lives: the Plate is the one Epic, and a save's offer or boost of `watch` is dropped as an unknown kind's.
 - **The roll** (`_rollTavern`, from `Towns.enterTown`): `offers` 3 different kinds, on `Game.tavernDice` (its own dice;
   not saved, a probe seeds it with seed + 800), so no other die moves. Each slot draws a rarity by `odds` (Common 0.55,
   Rare 0.30, Epic 0.13, Legendary 0.02, each a share of their sum) and a kind of it; a rarity with none left steps down,
@@ -2144,8 +2145,7 @@ ui-hud.md's "The Tavern in battle"; the guide's K23 and its "Towns" topic name i
   forge's Helm: every troop has it, shields or none); `def` and the blow's floor stay. A boost is a stat multiplier,
   never a relic factor: the relics' cap 3.0 neither counts it nor cuts it. A troop bought while a boost runs has it.
   Lucky Toast multiplies the kill gold at the pay line (after the Bayangan Thrift; not the won wave's bonus, not
-  Plunder's extra: `_boostGold`); Watchman's Brew forgives the wave's first monster over the back line (`_boostLeak`: it
-  still goes, no life is lost, the event `BoostSaved`).
+  Plunder's extra: `_boostGold`).
 - **The countdown** (`_boostWaveEnd`, at each wave's end, won or lost): one wave fewer each; a boost at 0 ends (the event
   `BoostEnded`) and the troops are refit, HP over the new max only capped (never killed). Bought between waves n and
   n+1, a boost runs through waves n+1 and n+2. A Town comes at least 5 waves after the last, so nothing runs into the
@@ -2153,11 +2153,11 @@ ui-hud.md's "The Tavern in battle"; the guide's K23 and its "Towns" topic name i
 - **Probes:** `Game.tavernPolicy` ('top': the best offer it can pay, the highest rarity, then the dearest; 'all': every one
   it can pay in that order), from `_townByPolicy` before it leaves a Town; null: the player.
 - **Events and telemetry** (telemetry.md): `boostBought` and `tavernRerolled` passed on, `townLeft.tavern`, a wave's
-  `gold.tavernSpent`, `boostSaved` and its start's `boosts`; the battle log's lines "Feast: +20% damage, 15% less damage
-  taken (2 waves)", "Feast ended" and "Watchman's Brew: no life lost".
+  `gold.tavernSpent` and its start's `boosts`; the battle log's lines "Feast: +20% damage, 15% less damage taken (2
+  waves)" and "Feast ended".
 - **Saved** ("Saved" below): the boosts running and the Town's Tavern keys.
 - **Tests:** test/tavern_test.dart (town.json's block, the prices, the roll, the odds, buying, rerolling, the stats, the
-  countdown, the gold, the leak, the save, the telemetry, the probe policy).
+  countdown, the gold, the save, the telemetry, the probe policy).
 
 ## Towns: the market (decisions-log 326)
 

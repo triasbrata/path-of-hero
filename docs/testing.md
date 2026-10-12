@@ -2114,7 +2114,8 @@ compares every number of two stats.
 The rules of the Tavern (loot-items-relics.md "Towns: the Tavern"). `tavern()` is a seeded game with the Towns (and
 so the Tavern) on (its dice seed + 800) and gold to spare, `inTown(g, wave)` puts it in the Town after
 that wave, `only(rarity)` patches the odds so every roll is of one rarity (no first Feast, no pity unless given),
-`fight(g, foes)` plays the next wave out (through a due Town; by default one slime that leaks at once).
+`fight(g, foes)` plays the next wave out (through a due Town; by default one slime gone at once, so the wave is won;
+it leaked over the back line until decisions-log 329).
 
 - town.json's `tavern` block is the defaults, read whole (11 kinds, their rarities, the Feast's numbers, `most`); a number
   out of range keeps its default and an unknown name is noted in `skipped`; a version-2 file reads the defaults.
@@ -2130,10 +2131,10 @@ that wave, `only(rarity)` patches the odds so every roll is of one rarity (no fi
   1.8, the taken floor 0.6), the Plate only on its type, attack speed dividing the pause, Mage's Brew's MP regen; a
   werebear's blow on a soldier ×0.85.
 - The countdown (two waves, then gone, the troops refit and HP capped, `BoostEnded` and its log line), Lucky Toast's
-  kill gold ×1.3, Watchman's Brew's one leak a wave (`BoostSaved`).
+  kill gold ×1.3; Watchman's Brew gone (no `watch` kind, a saved one dropped; decisions-log 329).
 - The save in a Town and out of it, and a load dropping an unknown kind, a typeless Plate and a spent boost; the
-  telemetry (`boostBought`, `tavernRerolled`, `townLeft.tavern`, the wave's `gold.tavernSpent`, `boostSaved`,
-  `start.boosts`); the log lines and the effect words; the probe policies 'top' and 'all'.
+  telemetry (`boostBought`, `tavernRerolled`, `townLeft.tavern`, the wave's `gold.tavernSpent`, no `boostSaved`,
+  `start.boosts`; bought: the Champion's Plate, the one Epic); the log lines and the effect words; the probe policies 'top' and 'all'.
 
 ## test/tavern_ui_test.dart: the Tavern's pages (decisions-log 267)
 
@@ -2151,7 +2152,7 @@ decisions-log 283; `scrolledTo`, test/page_scroll.dart); `seen` scrolls a part i
 - Another row picked; the gold short: the prices red, "Not enough gold" on Buy and on Reroll by a tap; a Reroll with gold
   (the Feast stays, the rows follow the offers, the next price higher, no dot); leaving the Town shuts the page.
 - After wave 30 with every roll a Legendary: the King's Banquet's six rows fit with Buy (scrolled to where it must); the Champion's Plate's page
-  ("Knights: +40% damage, +15% attack speed." with its type's plural) and the Watchman's Brew's (no Troops row).
+  ("Knights: +40% damage, +15% attack speed." with its type's plural); the one Epic, then a Rare.
 - At 1266x713 the Tavern's sign opens its page after the bare scene shut the book (the wheel bringing the Tavern into
   view, decisions-log 271).
 
@@ -2956,7 +2957,7 @@ The shots come from `test/probe_foe_splash_shots.dart` (a probe, not in the suit
 high elite's Curse of Frailty and an armored orc boss's Earthshaker (a moment) wind up among the monsters, each with a
 2× crop of the panel, at 1266×713 and 412×860.
 
-## test/wipe_test.dart: an army wiped costs a heart and the wave is played again (decisions-log 322)
+## test/wipe_test.dart: a lost wave costs a heart and the wave is played again (decisions-log 322, 329)
 
 Pure Dart (lib/wipe.dart). A soldier at 1 HP beside a werebear makes the wipe (`wipe`); `winNow` wins the wave on.
 - The wipe: 2 lives gone, not over, the wave back one with `lostWave` the lost one, no monster, queue, shot or zone
@@ -2965,9 +2966,13 @@ Pure Dart (lib/wipe.dart). A soldier at 1 HP beside a werebear makes the wipe (`
   the same wave with as many monsters.
 - What the lost wave paid stays (gold, score, kills) and no bonus or wave score comes; its lying materials are lost; the
   replay's win pays its bonus and score once and clears `lostWave`.
-- The last heart (2 lives, and 1): game over, the monsters stay, no lives score, the clock stands still; leaks taking
-  the last life in the tick the last troop falls are a game lost on lives (no `Wiped`); a wave begun with no troop only
-  leaks.
+- The last heart (2 lives, and 1): game over, the monsters stay, no lives score, the clock stands still.
+- The back line (decisions-log 329): a slime chasing a troop that stands behind the line waits at it, alive, no life
+  lost, no `Sfx.leak`. A wave begun with no troop is lost (`WipeCause.empty`, "No troops! -1 heart.") when its first
+  monster reaches the line, not before; with no troop, a monster on its way loses nothing yet, and a troop bought then
+  stands. A stalled wave's monsters charge (`Sfx.leak`), stop at the line and strike a troop that comes in reach; not won
+  `marchMax` s on, the wave is lost (`WipeCause.slow`, "Too slow! -1 heart.", `marchNote`); a march won in time is a
+  won wave.
 - A boss wave (wave 10, a Hero's too) lost: no chest nor Hero; won on the replay: one of each.
 - Towns: one left before the lost wave isn't due again; one marked for after it is due only once the replay is won.
 - The Shadows: the catch-up lands once for the wave number (not on the replay), and Lewati's skip buff owed meets the

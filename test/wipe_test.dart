@@ -1,5 +1,6 @@
 // An army wiped mid-wave (lib/wipe.dart, decisions-log 322; game-overview.md "Lose"): a heart lost and the same wave
-// played again, the game over only when the hearts run out.
+// played again, the game over only when the hearts run out. Since decisions-log 329 the back line costs nothing, and a
+// wave begun with no troop or a march not won in time is lost the same way.
 import 'dart:convert';
 import 'dart:math';
 
@@ -102,27 +103,114 @@ void main() {
     }
   });
 
-  test('the last troop falling as the leaks take the last life is a game lost on lives, not a wipe', () {
-    final g = armyOfOne()..lives = 1;
-    final s = placeNow(g, 'soldier', 4, 1)..hp = 1;
+  test('the back line holds the monsters and costs nothing (decisions-log 329): one chasing a troop behind it waits there', () {
+    final g = armyOfOne();
+    final s = placeNow(g, 'soldier', 4, 1);
+    s
+      ..pos = Point(g.baseX - 60, s.pos.y) // bought mid-wave, behind the line, still walking in
+      ..entered = false
+      ..busyUntil = hold; // and it stays there
+    g
+      ..startWave()
+      ..queue.clear();
+    final slime = Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(g.baseX + 30, s.pos.y))..entered = true;
+    g.units.add(slime);
+    runFor(g, 3);
+    expect((slime.alive, slime.gone, slime.pos.x, g.lives, g.waveActive, g.wipedOut), (true, false, g.baseX, Game.startLives, true, false));
+    expect(g.sfx, isNot(contains(Sfx.leak)));
+  });
+
+  test('a wave begun with no troop is lost when its first monster reaches the back line: a heart, and the wave again', () {
+    final g = armyOfOne();
+    final events = <GameEvent>[];
+    g.listeners.add(events.add);
+    g.startWave();
+    var nearest = double.infinity;
+    for (var i = 0; i < 4000 && !g.wipedOut; i++) {
+      g.tick(0.05);
+      if (!g.wipedOut) {
+        for (final u in g.enemies) {
+          nearest = min(nearest, u.pos.x);
+        }
+      }
+    }
+    expect((g.wipedOut, g.lives, g.wave, g.lostWave, g.wipeCause), (true, Game.startLives - wipeLives, 0, 1, WipeCause.empty));
+    expect(nearest, greaterThan(g.baseX + 1), reason: 'none at the line before');
+    expect(g.swept.map((u) => u.pos.x).reduce(min), lessThanOrEqualTo(g.baseX + 1), reason: 'the first one there');
+    final w = events.whereType<Wiped>().single;
+    expect((w.cause, w.toJson()['cause']), (WipeCause.empty, 'empty'));
+    expect(g.wipeNote, 'No troops! -1 heart.\nWave 1 again.');
+  });
+
+  test('with no troop, a monster on its way to the line loses nothing yet: a troop bought now meets it', () {
+    final g = armyOfOne()
+      ..startWave()
+      ..queue.clear();
+    final slime = Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(g.baseX + 200, fieldH / 2))..entered = true;
+    g.units.add(slime);
+    runFor(g, 0.5);
+    expect((g.wipedOut, g.lives, g.waveActive), (false, Game.startLives, true));
+    placeNow(g, 'soldier', 4, 1); // bought in time
+    slime.pos = Point(g.baseX, slime.pos.y);
+    g.tick(0.05);
+    expect((g.wipedOut, g.lives), (false, Game.startLives), reason: 'a troop stands');
+  });
+
+  test('a stalled wave\'s monsters charge the back line and hold it, striking a troop in reach; not won in marchMax s, '
+      'the wave is lost', () {
+    final g = armyOfOne()..skills = false;
+    final s = placeNow(g, 'soldier', 4, 1)..busyUntil = hold; // never strikes back
     final events = <GameEvent>[];
     g.listeners.add(events.add);
     g
       ..startWave()
-      ..units.add(Unit(Side.enemy, 'werebear', enemyTypes['werebear']!, s.pos + const Point(10, 0))..entered = true)
-      ..units.add(Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(g.baseX - 1, fieldH / 2)));
-    for (var i = 0; i < 40 && s.alive; i++) {
+      ..queue.clear();
+    final orc = foeAt(g, 'orc', Point(g.baseX + 400, s.pos.y))
+      ..maxHp = 1000000
+      ..hp = 1e6
+      ..busyUntil = double.negativeInfinity;
+    s
+      ..maxHp = 1000000
+      ..hp = 1e6;
+    for (var i = 0; i < 2000 && !g.marching; i++) {
       g.tick(0.05);
     }
-    expect((s.alive, g.over, g.lives), (false, true, 0));
-    expect(events.whereType<Wiped>(), isEmpty);
+    expect((g.marching, g.newMarch), (true, true));
+    expect(g.sfx, contains(Sfx.leak), reason: 'the charge\'s alarm');
+    final at = g.t;
+    runFor(g, 20);
+    expect(orc.pos.x, lessThanOrEqualTo(g.baseX + tile / 2), reason: 'at the line');
+    expect(orc.pos.x, greaterThanOrEqualTo(g.baseX), reason: 'never past it');
+    expect(g.lives, Game.startLives);
+    // The soldier walked into its reach (it is held): put it there, and the orc strikes it.
+    s.pos = Point(orc.pos.x + 8, orc.pos.y);
+    final hp = s.hp;
+    runFor(g, 3);
+    expect(s.hp, lessThan(hp), reason: 'it holds the line and strikes');
+    for (var i = 0; i < 2000 && !g.wipedOut; i++) {
+      g.tick(0.05);
+    }
+    expect((g.wipedOut, g.wipeCause, g.lives, g.wave, g.lostWave), (true, WipeCause.slow, Game.startLives - wipeLives, 0, 1));
+    expect(g.wipedAt - at, inInclusiveRange(marchMax, marchMax + 0.1));
+    expect(events.whereType<Wiped>().single.cause, WipeCause.slow);
+    expect(g.wipeNote, 'Too slow! -1 heart.\nWave 1 again.');
+    expect(marchNote, 'Monsters charge!\nWin in 60 s or lose a heart.');
   });
 
-  test('a wave begun with no troop is never a wipe: its monsters leak', () {
-    final g = armyOfOne()..startWave();
-    g.units.add(Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(g.baseX - 1, fieldH / 2)));
-    g.tick(0.05);
-    expect((g.lives, g.wipedOut, g.over), (Game.startLives - 1, false, false));
+  test('a march won in time is a won wave', () {
+    final g = armyOfOne();
+    placeNow(g, 'soldier', 4, 1);
+    g
+      ..startWave()
+      ..queue.clear();
+    final orc = foeAt(g, 'orc', Point(g.baseX + 400, fieldH / 2))..busyUntil = double.negativeInfinity;
+    g.marching = true; // as [stallTime] would
+    runFor(g, 1);
+    orc.gone = true; // the troops cut it down
+    for (var i = 0; i < 40 && g.waveActive; i++) {
+      g.tick(0.05);
+    }
+    expect((g.waveActive, g.wipedOut, g.wave, g.lives), (false, false, 1, Game.startLives));
   });
 
   test('a boss wave lost: no chest and no Hero until it is won, then one of each', () {

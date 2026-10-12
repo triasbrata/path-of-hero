@@ -1232,13 +1232,14 @@ existing art only.
   `Board.boostChips` for tests.
 - **Tooltip** (`_Hint.boost`, the loot tooltips' frame with the boost's icon; `Tavern.boostTip`): "Feast: 2 waves left"
   ("1 wave left"), then what it does, an effect a line ("+20% damage", "15% less damage taken"), then who
-  ("All troops", "Knights"; none for the Lucky Toast and the Watchman's Brew).
+  ("All troops", "Knights"; none for the Lucky Toast).
 - **The troops' burst** (`_boostBursts`): as the field comes back from a Town (the fade's turn, `_townSync`), each living
   troop a boost bought there touches (`Tavern.boostTouches`: one with a troop effect, on every type or on its own; a
   boost with all its `tavern.waves` left) bursts once with the field's upgrade burst (`fx_upgrade.png`, a chest take's).
   `Board.fieldBursts` for tests.
 - **The battle log** (its Other chip): "Feast: +20% damage, 15% less damage taken (2 waves)" at the buy, "Feast ended"
-  when it runs out, "Watchman's Brew: no life lost" when it forgives a leak, each with the boost's own icon.
+  when it runs out, each with the boost's own icon ("Watchman's Brew: no life lost" went with the Brew, decisions-log
+  329).
 
 ### The Bag's Materials (decisions-log 221)
 
@@ -1907,8 +1908,7 @@ icons; nothing new drawn). In every Town (since decisions-log 268; the Tavern-of
   (`_rarityFramePaints`; a Common keeps the plain frame), the pick and the row under the mouse on the lit frame
   (`_frameLit`, the same recolour). In a row: the boost's icon, its name (bold, 15·ts), under it its rarity word in its
   ink (`_rarityInk`; a Common's grey) and in grey " · 2 waves · All troops" (" · Knights" for the Champion's Plate;
-  " · All troops", nothing where shorter; a boost that touches no troop, the Lucky Toast and the Watchman's Brew, only
-  its waves); on the right the coin and the price ("1,550"; red, B0302A, while the gold is short), or once bought "Sold"
+  " · All troops", nothing where shorter; a boost that touches no troop, the Lucky Toast, only its waves); on the right the coin and the price ("1,550"; red, B0302A, while the gold is short), or once bought "Sold"
   in grey with the icon faded (`_ghost`) and its words grey. A tap picks it (the facing page follows). Under them **Reroll**, a light tag
   (`_tag`, `_TagLook.go`; `.off` while the gold is short or every offer is sold, its press saying why: "Not enough gold",
   "Sold out") with the price in it ("Reroll 150"), and at the right in grey "Bought ones stay". Then "Active" (bold) with
@@ -1924,16 +1924,15 @@ icons; nothing new drawn). In every Town (since decisions-log 268; the Tavern-of
   Ale the sword (`Item.sword`, the Army page's damage icon), Hearty Stew the heart (0, 0), Iron Broth the shield
   (`Item.shield`), Spiced Tea the gloves (`Item.gloves`, attack speed), Travel Rations the backpack (160, 32), Lucky
   Toast the coin (96, 0), Mage's Brew the bolt (144, 0), the Champion's Plate its troop type's idle sprite standing in
-  the box (`book_<type>_idle`, `_idleBounds`), Watchman's Brew the steel shield (192, 0), King's Banquet the crown
-  (64, 16).
+  the box (`book_<type>_idle`, `_idleBounds`), King's Banquet the crown (64, 16).
 - **The right page (the pick's, action first):** the heading as the Bag's (`_detailHeading`'s band, 42·ts): the icon
   (`bagHeadIcon`: 16 px at 915×412, 32 on the desk), the name (20·ts) and at the right the rarity word in its ink (bold);
   what it does in ink (`boostDoes`: "Every troop: +20% damage, 15% less damage taken.", "Knights: +40% damage, +15%
-  attack speed.", "A leak a wave costs no life."); in grey "Rare boost. Lasts the next 2 waves."; "Effect" (bold) and a
+  attack speed."); in grey "Rare boost. Lasts the next 2 waves."; "Effect" (bold) and a
   row per line of `boostEffectRows`, inset paper cards that only tell (the Smithy's recipe rows): the icon (the Army
   page's stat icons where it has one: the sword for "Damage", the shield for "Damage taken", the gloves for "Attack
-  speed"; the heart for "Max HP", the bolt for "MP regen", the coin for "Kill gold", the steel shield for "Leaks
-  forgiven"), the words and at the right the value in green (2E8B3A: "+20%", "-15%"; "1 a wave"), then "Troops" (the
+  speed"; the heart for "Max HP", the bolt for "MP regen", the coin for "Kill gold"), the words and at the right the
+  value in green (2E8B3A: "+20%", "-15%"), then "Troops" (the
   crossed swords: "All troops", "Knights") for a boost that touches troops, and "Waves" (ui_icons.png's sword: "2").
   Then the page's **one bevelled button, Buy** (the page's width, max(20, 32·ts) tall): green "Buy (1,550 gold)" ("Buy
   (1550)", "Buy" where shorter); else the white one with why ("Not enough gold", "Sold"; `boostRefusals`), a press
@@ -2301,8 +2300,8 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     with its red dot, ▶, a Ksatria in Bangkit 1's outline, ui_icons.png's green up arrow; K10 the Hero splash's
     portrait (this game's Hero, else the Pendeta); K11 the Shop tab, ▶, two materials (Orc Tooth, Wolf Claw), a coin (what a Town's Shop sells since the forge; an item and a relic until decisions-log 317); K12 two Legendary
     cards (Dragon Crown, Oath of One); K13 the same two rows as I3; K14 a fallen Hero faded with its crown,
-    ▶, the Army tab, whose detail recalls it; K15 "36/36" (`armyMaxBoard`) over two full rows of troops; K16 the lives' hearts (full, half, empty) over three
-    monsters marching; K17 an orc drawn bigger wave by wave with red up arrows between; K18 this game's gold (short,
+    ▶, the Army tab, whose detail recalls it; K15 "36/36" (`armyMaxBoard`) over two full rows of troops; K16 the lives' hearts (full, full, empty: the
+    heart a march not won costs; full, half, empty until decisions-log 329) over three monsters marching; K17 an orc drawn bigger wave by wave with red up arrows between; K18 this game's gold (short,
     "1812k") over the Army tab with its dot, ▶, a Ksatria in Bangkit 4's outline,
     the green up arrow; K19 the boss
     with three healing necromancers behind it; K20 a Pusaka, a relic and a coin, ▶, a star; K21 a Pusaka, ▶,
@@ -2418,7 +2417,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   | K13 | Type full | a type at its cap (`typeFull`, decisions-log 201; never without the board's caps) | 1 |
   | K14 | Hero fell (""Army": pick its type, / then "Recall" brings it back") | `fallenHeroes` not empty and `storeOpen` | none |
   | K15 | Full army | `armySize` at `armyMax` (36; 32 until decisions-log 260) | none |
-  | K16 | Too slow | `Game.stalled`: the last wave marched ("Monsters broke through!"); set with `newMarch`, cleared at the next wave's start, not saved | 1 |
+  | K16 | Too slow | `Game.stalled`: the last wave marched ("Monsters charge!"); set with `newMarch`, cleared at the next wave's start, not saved | 1 |
   | K17 | Tide | `tideRising` | 34 |
   | K18 | Spend gold ("Red dot on "Army": / a type can buy more power.") | `armyNudge` (the Army tab's dot, which it points at; the Toko's tab had it until decisions-log 296) | none |
   | K19 | Escorts | wave 49 won (`escortFrom` − 1) | 49 |
@@ -4321,8 +4320,9 @@ follows the game's position, and never changes the game's positions (fights, the
   "Relic slots full"), a greyed row of the Tas page's list (its reason), a Remove refused ("Only between
   waves", #91), a greyed Sell's reason (the Shop's card and the Bag page's Sell row) and the Bag page's Sell all
   ("Sold Sword x86: +86,000 gold", decisions-log 169), and
-  for "Monsters broke through!" when a stalled wave's monsters start marching on the base (`Game.newMarch`,
-  drained in `update`; units-and-combat.md, "Stalled waves"). Also "The Tide rises! Monsters get stronger
+  for "Monsters charge!" / "Win in 60 s or lose a heart." when a stalled wave's monsters start charging the back line
+  (`Game.newMarch`, drained in `update`; `marchNote`, lib/wipe.dart; units-and-combat.md, "Stalled waves"; "Monsters
+  broke through!" until decisions-log 329). Also "The Tide rises! Monsters get stronger
   every wave" once when a save from before the tide comes in with it already on (`Game.tideCaughtUp`, drained in
   `update`, #92), and "Replace fallen"'s refusals and partial buys (above).
 - **The army cap's warning** (decisions-log 161; qa-4's finding: on the owner's w63 save the army held with no
@@ -4340,12 +4340,15 @@ follows the game's position, and never changes the game's positions (fights, the
     the Hero splash shows, a boss chest is due (`_chestHolds`) or another message is up; then it shows.
   - Its words fit a phone: at 915×412 the window stands 8 px or more inside the screen
     (`test/cap_warning_hud_test.dart`).
-- **An army wiped** (lib/wipe.dart, decisions-log 322; units-and-combat.md "An army wiped"): the heart lost pops as
-  the last troop falls; the monsters left hop for joy where they stood (the game-over hop, `Game.swept`, drawn with the
+- **A lost wave** (lib/wipe.dart, decisions-log 322, 329; units-and-combat.md "An army wiped, and the other lost
+  waves"): the heart lost pops as the wave is lost (the last troop falls, a monster reaches the line with no troop
+  standing, the march runs out); the monsters left hop for joy where they stood (the game-over hop, `Game.swept`, drawn with the
   units) for `wipeCheer` 2.4 s, then each goes in a summon circle (`tiny_fx_summon.png`, the necromancer's). `update`
   sees `Game.wipedAt` change (`_savedWipe`) and, unless the game is over, saves the game at once (the heart lost stays
   lost), starts Auto Wave's countdown as a win does, and says in the message window for `_noteTime` 8 s: "Your army
-  fell! -1 heart." / "Wave N again." (`Game.wipeNote`). Between waves the army's fallen are on "Replace fallen" and
+  fell! -1 heart." / "Wave N again." (`Game.wipeNote`; "No troops! -1 heart." for a wave begun with none, "Too slow! -1
+  heart." for a march not won in time). The battle log's line: "Army fell: -1 heart, wave N again" ("No troops: ...",
+  "Too slow: ..."; at the last heart "...: no hearts left"). Between waves the army's fallen are on "Replace fallen" and
   Auto Buy buys them back as the gold allows; the Auto hold waits for the army as after any wave.
 - **Game over** (`_gameOver`, lib/scoreboard.dart): a light dim (the monsters cheer through it), "GAME OVER  -
   Wave N" (36·u, white), "Score N" (30·u, gold, dark outline) and two buttons side by side, 44·u tall:

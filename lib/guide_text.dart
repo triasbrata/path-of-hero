@@ -127,12 +127,12 @@ final guideEn = guideFor();
 /// The guide built from the rules loaded now ([loadedTownRules]): [guideEn], or a test's after it patched them.
 GuideText guideFor() => GuideText(
   intro: [
-    // A monster over the back line costs half a heart; the whole army down, a heart and the wave again (decisions-log
-    // 322, 329); no hearts left, the game is over.
+    // The whole army down costs a heart and the wave again (decisions-log 322); the back line costs nothing since
+    // decisions-log 329; no hearts left, the game is over.
     const GuidePage('Path of Hero', [
       'Monsters come from the right.',
-      'Past the line: half a heart.',
-      'Army down: a heart, wave again.',
+      'Lose your army: lose a heart,',
+      'and play the wave again.',
       'No hearts left: game over.',
     ]),
     const GuidePage('Gold and troops', [
@@ -324,11 +324,12 @@ GuideText guideFor() => GuideText(
         'items, ${Words.awaken}, ${Words.artifact}s.',
       ]),
     ],
-    'K16': const [
+    'K16': [
       GuidePage('Too slow', [
-        'The wave took too long.',
-        'Monsters ran to the line.',
-        'Make your army stronger.',
+        'The wave took too long:',
+        'the monsters charge your line.',
+        'Kill them in ${marchMax.round()} s',
+        'or lose a heart.',
       ]),
     ],
     'K17': const [
