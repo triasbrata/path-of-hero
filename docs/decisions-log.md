@@ -11458,7 +11458,10 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        (test/probe_wish_chain_shots.dart, -shots) at 1600×947 and 915×412, looked at: the Wishlist tab with its
        Ingredients group (and its second spread on the phone), the Royal Ring's page with its Gem Ring row's "›" and lit
        under the mouse, the Gem Ring's page after the link with Back and "Needed for Royal Ring", the Gem Ring crafted
-       from its row. Main be2af703 (327) merged after, no file in common.
+       from its row. Main be2af703 (327) merged after, no file in common. The Bag's kept line (after the first READY;
+       main 7deb8354, 325, merged, no file in common) on c4d5ea13: `analyze lib test` no issues (-1791800007-an);
+       smithy_chain_ui (its new Bag test), wishlist_chain, wishlist, smithy_wish_ui, wishlist_ui +50 −0 (-t1); bag_detail,
+       bag_actions, bag_chips, bag_grid, forge_smithy_ui, forge_shop_ui, words, english_text +72 −0 (-t2).
 325. **The Pusaka's ring under a bound type's troops is drawn in the sprites' pixels** (the owner, 2026-10-12: "ring
      putih atau kuning di bawah troops di buat jadi pixelated", make the white or yellow ring under the troops
      pixelated). Why: it was the field's one smooth line right under the troops, a 1 px anti-aliased oval among pixel
