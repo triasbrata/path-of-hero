@@ -23,8 +23,8 @@ part of 'game.dart';
 /// forge's cut-over (decisions-log 272), in every game since decisions-log 321. 11: the Tavern switched on
 /// (decisions-log 268): the Tavern's (its own switch is gone, decisions-log 296). 12: the Bayangan switched on
 /// (decisions-log 319): their events and fields (8's, [OmenDusk]) reach every player's records; `--dart-define=OMENS=false`
-/// (tests only) sends none.
-const eventVersion = 12;
+/// (tests only) sends none. 13: an army wiped mid-wave no longer ends the game ([Wiped]; decisions-log 322).
+const eventVersion = 13;
 
 /// How many events [Game.log] keeps, the oldest going first.
 const logSize = 200;
@@ -47,6 +47,7 @@ enum EventKind {
   itemCrafted,
   stoneCrafted, itemEnhanced, // Enhance (decisions-log 255)
   boostBought, boostEnded, boostSaved, tavernRerolled, // the Tavern (decisions-log 266)
+  wipe, // an army wiped mid-wave: a heart lost, the wave played again (decisions-log 322)
 }
 
 /// Something that happened, in wave [wave] at game time [t].
@@ -631,6 +632,22 @@ final class WaveEnded extends GameEvent {
 
   @override
   Map<String, Object?> get data => {};
+}
+
+/// The army was wiped mid-wave ([Wipe._wipe], wipe.dart; decisions-log 322): the [lost] lives (a heart, fewer when fewer
+/// were left), the [lives] left, the monsters still alive or queued ([foes]), and whether it ended the game ([over]);
+/// else they were swept off and the wave is played again.
+final class Wiped extends GameEvent {
+  Wiped(super.wave, super.t, {required this.lives, required this.lost, required this.foes, required this.over});
+
+  final int lives, lost, foes;
+  final bool over;
+
+  @override
+  EventKind get kind => EventKind.wipe;
+
+  @override
+  Map<String, Object?> get data => {'lives': lives, 'livesLost': lost, 'foes': foes, 'over': over};
 }
 
 /// The events only the telemetry takes (#64): what a balancing log needs but a player doesn't. They go to

@@ -11297,3 +11297,37 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        probe_book_shadow_shots and probe_town_shop_tabs_shots gone; probe_bar_clear and probe_fx_ui_shots draw no field
        loot. The probe kits outside the repo (the auto-player, the replay kit, the QA runs) go through a due Town at once
        (`townPolicy` 'leave'; on a ref before 321 a plain `Game()` meets no Town, so it changes nothing there).
+322. **An army wiped mid-wave costs a heart and the wave is played again; the game is over when the hearts run out**
+     (the owner, 2026-10-12, asked what should happen when the whole army dies, and picked "Kalah wave: −1 hati, ulang":
+     an army wipe is no longer game over; the player loses 1 heart (2 lives), the wave's monsters are swept away and
+     the same wave is played again, so he can buy troops again; 3 hearts = 3 chances). Why: the lives never mattered.
+     The balance pass (318) counted 1,681 new-game waves that lost 17 lives, nearly all in a run's last wave, and every
+     run ended in a wipe at full hearts, because the game was over "at 0 lives or when every troop is dead". By
+     lives-rule (lib/wipe.dart; units-and-combat.md "An army wiped", ui-hud.md "An army wiped").
+     - **The wipe** is checked at the end of `tick`, after the raised joined and before the win: a troop fell this
+       wave, none is alive (one Resurrection raised in that tick counts), no Phoenix Plume rise is due, and a monster
+       still lives or is queued. The last troop and the last monster falling together is a win. A wave begun with no
+       troop is never a wipe: as before, only its leaks cost lives.
+     - **It costs** `wipeLives` 2 lives (a heart; at 1 life the half). At 0 the game is over as by leaks: the monsters
+       stay and cheer, the scoreboard. `over` is `lives <= 0` alone.
+     - **The sweep:** the living and queued monsters go with no gold, loot or score. The ones on the field hop for joy
+       2.4 s (the game-over hop), then vanish in the necromancer's summon circle (existing art; no new shape). Effects,
+       zones, shots and what was left for later end as at a wave's end. What the wave paid as it went stays (kill gold,
+       kill score, kills); its materials lying on the field are lost, since they come only with a win (else a replay
+       would pay them twice).
+     - **The replay:** `wave` goes back to the last won one, so between waves everything reads as after that win: the
+       back line, a Town due (one left before the lost wave isn't due again; one marked after it waits for its win), the
+       wave meter's next wave, "from wave 15 won". The next start rolls the same wave afresh (its number and tide, new
+       dice). Its wave bonus and score, Shadow ease, Grudge target, Hero, boss chest and Town roll come once, when it is
+       won. `lostWave` marks it: the Shadows' catch-up doesn't land twice on one wave number, and Lewati's skip buff
+       owed for it is owed again. The Tavern's boosts count the lost wave (it was fought, as a game over counted it).
+     - **Between:** "Replace fallen" lists the army (the Heroes go to Fallen Heroes as ever), Auto Buy buys it back as
+       the gold allows, Auto Wave counts down as after a win (the Auto hold waits below 75% of the cap as ever). The
+       message window says "Your army fell! -1 heart." / "Wave N again." and the heart pops. The game saves at once, so
+       quitting keeps the heart lost. The free priest is a new game's gift and doesn't come again.
+     - **Saves** (additive, `v` stays 3): `lostWave` while set (loaded only when it is the next wave). **Telemetry:**
+       the event `wipe` (`lives`, `livesLost`, `foes`, `over`) and a wave record's `end` `wiped`; `eventVersion` and
+       `telemetryVersion` 13. **The score:** the lives term (`lifeScore`) stays, but a game now always ends at 0
+       lives, so it pays nothing. The battle log adds "Army fell: -1 heart, wave N again".
+     - **What a run's end means now:** a run ends after three wipes, or fewer with leaks. The balance pass weighs where
+       runs end and how many replays they take (lives-rule's probe plan).

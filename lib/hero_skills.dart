@@ -484,11 +484,12 @@ extension HeroSkills on Game {
     }
   }
 
-  /// When a wave ends every effect ends with it, a troop's ward and a slot's Shield too (heal.dart, omen.dart), and
-  /// what was left for [later] is dropped; so do the heals the Bayangan Trickle spreads and what a troop owes Heal Siphon
-  /// (omen.dart).
+  /// When a wave ends (won, or lost to a wipe: wipe.dart) every effect ends with it, a troop's ward and a slot's Shield
+  /// too (heal.dart, omen.dart), and what was left for [later] is dropped; so do the heals the Bayangan Trickle spreads
+  /// and what a troop owes Heal Siphon (omen.dart).
   void _endEffects() {
     _later.clear();
+    _risesDue = 0; // a Phoenix Plume's rise among them (wipe.dart)
     for (final u in units) {
       final stat = u.effects.keys.any((s) => s.stat);
       if (u.alive && u.effects.containsKey(Status.hex)) _unhex(u);
