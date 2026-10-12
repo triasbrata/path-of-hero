@@ -39,6 +39,7 @@ enum _LogChip {
   pusaka(Words.artifact, [EventKind.grailSaved, EventKind.pusakaReport, EventKind.offerPicked, EventKind.pusakaAsah, EventKind.pusakaLebur]), // decisions-log 149, 152, 154, 164
   foe('Monsters', [EventKind.strongFoe, EventKind.monsterSkill, EventKind.omenGained, EventKind.omenEased, EventKind.omenDusk]), // decisions-log 180, 239
   rest('Other', [EventKind.heroMade, EventKind.heroRecalled, EventKind.awakened, EventKind.ascended, EventKind.tempa, EventKind.waveWon, EventKind.waveLost, //
+    EventKind.wipe, // decisions-log 322
     EventKind.townMarked, EventKind.townEntered, EventKind.townLeft, EventKind.crafted, EventKind.itemCrafted, //
     EventKind.stoneCrafted, EventKind.itemEnhanced, //
     EventKind.boostBought, EventKind.boostEnded, EventKind.boostSaved]); // decisions-log 216, 233, 249, 255, 268
@@ -75,6 +76,7 @@ String logLine(GameEvent e) => switch (e) {
       PusakaLebur(:final fodder, :final relic, :final stars, :final type, :final cost) =>
         '${Words.melt}: ${relicNames[fodder]} into ${relicNames[relic]} ★$stars ${_whereAt(type)} (${shortPrice(cost)} gold)',
       WaveEnded(:final wave, :final won) => won ? 'Wave $wave won' : 'Lost at wave $wave',
+      Wiped(:final wave, :final over) => over ? 'Army fell: no hearts left' : 'Army fell: -1 heart, wave $wave again', // wipe.dart
       GrailSaved(:final name, :final type, :final hero) =>
         '${pusakaShortName(Relic.grail)} saves ${hero ? 'Hero ' : ''}$name (${troopTypeNames[type] ?? type})',
       PusakaReport() => pusakaReportLines(e).firstOrNull ?? '',
@@ -300,6 +302,7 @@ extension on Board {
         HeroMade() || HeroRecalled() => _uiIcon(c, _icCrown, to),
         OfferPicked(:final pick) => pick == null ? _uiIcon(c, _icChest, to) : _icon(c, pick, to), // chest_popup.dart
         WaveEnded(:final won) => _uiIcon(c, won ? _icTrophy : _icDarkStar, to),
+        Wiped() => c.drawImageRect(_img('ui_icons.png'), _heartIcons.first, to, _px), // the empty heart (lives.dart)
         OmenGained(:final omen) || OmenEased(:final omen) => _omenIcon(c, state, omen, to), // omen_look.dart
         OmenDusk() => _omenIcon(c, state, OmenKind.dusk, to),
         TownMarked() || TownEntered() || TownLeft() => _townMark(c, to), // the Town's hammer (town_look.dart)
@@ -321,7 +324,7 @@ extension on Board {
         GrailSaved() => _pusakaLogInk(Relic.grail),
         PusakaAsah(:final relic) || PusakaLebur(:final relic) => _pusakaLogInk(relic),
         PusakaReport(:final lines) => row < lines.length ? _pusakaLogInk(lines[row].relic) : _backInk, // the small relics' rows pale gold
-        TroopFell() || WaveEnded(won: false) => const Color(0xFFFF8A80),
+        TroopFell() || WaveEnded(won: false) || Wiped() => const Color(0xFFFF8A80),
         HeroSkillCast() || HeroMade() || HeroRecalled() => _heroPop,
         OfferPicked(:final pick?) => _rarityInk[pick.rarity]!,
         StrongFoe(:final tier) || MonsterSkillCast(:final tier) => _tierBar[tier]?.$1 ?? Colors.white,

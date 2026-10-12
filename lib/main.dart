@@ -674,7 +674,7 @@ class Board extends PositionComponent
   final _welcomeAt = <String, Rect>{}; // its buttons this frame, by label (welcome.dart)
   double get camX => state.cam; // the game moves the camera (it keeps the battle mid-screen)
   int speed = 1;
-  double _clock = 0, _savedWin = double.negativeInfinity;
+  double _clock = 0, _savedWin = double.negativeInfinity, _savedWipe = double.negativeInfinity;
   String? dragging; // the type of [_relocating]
   Unit? _relocating; // troop on the field being dragged to a new spot before the wave
   Vector2? dragAt;
@@ -1663,6 +1663,16 @@ class Board extends PositionComponent
         autoStart.won();
       }
     }
+    if (g.wipedAt != _savedWipe) {
+      _savedWipe = g.wipedAt;
+      // The army fell and the wave is played again (wipe.dart): saved at once, so the heart lost stays lost, said in
+      // the message window, and Auto Wave counts down as after a win.
+      if (g.wipedOut && !g.over) {
+        saveGame(g);
+        autoStart.won();
+        showMessage(g.wipeNote, time: _noteTime);
+      }
+    }
     // The auto start: its countdown stops once a wave is on (Start pressed early) or the game is over; it
     // stands still while paused, the Hero splash or a guide card shows (coach.dart), the book is turned off Army (to Tas or
     // Settings: the player is busy there, #63, #93), the army is below 75% of its cap ([Game.autoHeld],
@@ -2082,7 +2092,7 @@ class Board extends PositionComponent
     _statusLines(c, g); // skills.dart: a duel's or Shared Wounds' line, under the sprites
     _pusakaLook.refresh(g); // which type holds which Pusaka, for the rings and the bars (pusaka_look.dart)
     // Draw back-to-front so lower sprites overlap higher ones.
-    final drawables = [for (final u in g.units) (u.pos.y, u)]..sort((a, b) => a.$1.compareTo(b.$1));
+    final drawables = [for (final u in g.units) (u.pos.y, u), for (final u in g.swept) (u.pos.y, u)]..sort((a, b) => a.$1.compareTo(b.$1));
     for (final (_, u) in drawables) {
       if (u != _relocating) _unit(c, g, u);
     }
@@ -2241,9 +2251,9 @@ class Board extends PositionComponent
     _braceRing(c, g, u, ground); // hero_move_fx.dart: Spear Wall
     _chain(c, u); // hero_move_fx.dart: Chain Hook pulling it
     _afterimages(c, g, u, k, flip); // skills.dart: a Phantom Rush dash's afterimages (#88)
-    if (g.over && u.side == Side.enemy && u.alive) {
+    if ((g.over || g.swept.contains(u)) && u.side == Side.enemy && u.alive) {
       // The monsters won: they hop for joy like the troops after a won wave (on the screen clock, since
-      // the game clock has stopped).
+      // the game clock has stopped), or a moment before a wipe's sweep takes them (wipe.dart).
       _frame(c, '${k}_idle.png', (_clock * _fps).floor(), feet - Offset(0, math.sin(_clock * 10 + u.pos.y).abs() * 4),
           flip: flip, paint: body, line: line);
       return;

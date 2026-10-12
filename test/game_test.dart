@@ -487,16 +487,21 @@ void main() {
     return (g, s);
   }
 
-  test('the game is over when the last troop falls, and then stands still', () {
+  test('the last troop falling costs a heart and the wave is played again (wipe_test.dart); at the last heart the game is '
+      'over, and then stands still', () {
     expect(bare().over, isFalse); // no troops yet is not a wipe-out
     final (g, s) = doomedSoldier();
     g.tick(0.05);
     expect(s.alive, isFalse);
-    expect((g.wipedOut, g.over), (true, true));
+    expect((g.wipedOut, g.over, g.lives, g.waveActive), (true, false, Game.startLives - wipeLives, false));
     expect(g.sfx, contains(Sfx.lose));
-    final t = g.t;
-    g.tick(0.05);
-    expect(g.t, t);
+    final (h, v) = doomedSoldier();
+    h.lives = wipeLives;
+    h.tick(0.05);
+    expect((v.alive, h.wipedOut, h.over), (false, true, true));
+    final t = h.t;
+    h.tick(0.05);
+    expect(h.t, t);
   });
 
   test('a troop falling while another still stands is not game over', () {
@@ -3073,14 +3078,15 @@ void main() {
     expect(g.score, 500 + 600);
   });
 
-  test('when the last troop falls every life left scores once; a game lost on lives gets nothing for them', () {
+  test('every life left scores once as the game ends, which leaves none: a wipe ends it only at the last heart (wipe.dart), '
+      'and a game lost on lives gets nothing for them', () {
     final (g, s) = doomedSoldier();
-    g.lives = 7;
+    g.lives = wipeLives;
     g.tick(0.05);
-    expect((s.alive, g.over), (false, true));
-    expect(g.score, 7 * lifeScore);
+    expect((s.alive, g.over, g.lives), (false, true, 0));
+    expect(g.score, 0 * lifeScore);
     g.tick(0.05);
-    expect(g.score, 350);
+    expect(g.score, 0);
 
     final h = bare()..lives = 1;
     placeNow(h, 'knight', 2, 3); // a troop still stands: it ends on lives
@@ -4527,6 +4533,7 @@ void main() {
 
   test('a game over stays still whether paused or not', () {
     final (g, _) = doomedSoldier();
+    g.lives = wipeLives; // the army wiped at the last heart (wipe.dart)
     g.tick(0.05);
     expect(g.over, isTrue);
     final t = g.t;
