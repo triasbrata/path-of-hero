@@ -257,7 +257,7 @@ void main() {
     expect(g.wishRows, isEmpty);
   });
 
-  test('the save: `wishlist` round trip in order; none without a wish or with the forge off; an old save has none', () {
+  test('the save: `wishlist` round trip in order; none without a wish; an old save has none', () {
     final g = forgeGame()
       ..wish('knight', Item.royalSword)
       ..wish('knight', Item.leatherCap)

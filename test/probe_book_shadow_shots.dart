@@ -5,7 +5,7 @@
 // the book's box). It never touches the real save (flutter_test_config.dart's temp dir); every dice is seeded.
 //
 // At 1600x947 (the owner's window), 1266x713 and 915x412 (`--dart-define=SIZES=1600x947,915x412` for some only): the
-// field between waves (the Towns off) and a Town, the book open; each shot at the bob's top and at its bottom (`-up`,
+// field between waves (no Town marked) and a Town, the book open; each shot at the bob's top and at its bottom (`-up`,
 // `-down`). It prints the book's box and the shadow's rows (none in a Town since decisions-log 304).
 import 'dart:io';
 import 'dart:math';

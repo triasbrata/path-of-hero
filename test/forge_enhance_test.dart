@@ -171,7 +171,7 @@ void main() {
     expect(itemLabel(Item.sword), itemNames[Item.sword]);
   });
 
-  test('why an Enhance is refused, in order: game over, not in a Town, the forge off, not open, none held, at +5, the '
+  test('why an Enhance is refused, in order: game over, not in a Town, not open, none held, at +5, the '
       'stone, the gold', () {
     String? why(Game g, [Item item = Item.royalSword, int plus = 0]) => g.whyNotEnhance(item, plus)?.text;
     final g = forgeInTown();
@@ -352,7 +352,7 @@ void main() {
     expect((w['gold'] as Map)['craftSpent'], 1500);
   });
 
-  test('the save: the plus keys round-trip; a save without them loads all +0; the forge off writes none', () {
+  test('the save: the plus keys round-trip; a save without them loads all +0', () {
     final g = forge();
     g.upgrades['knight'] = [Item.royalSword, Item.royalSword, Item.royalShield];
     g.upgradePlus['knight'] = {Item.royalSword: [4, 2]};

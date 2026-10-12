@@ -11256,3 +11256,44 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        use it (that probe's dump with the Towns moves: its save's catch-up meets waves 90 and 91; a new golden).
      - **S5** (code-audit): `OmenKind`, the kinds' data (570 lines), moved from omen.dart to lib/omen_catalog.dart,
        unchanged.
+321. **The tests play the real rules: the Towns-off rules go, `Game.towns` with them** (the owner, 2026-10-12, asked
+     whether the half of the logic tests that still played the rules from before the Towns (a plain `Game()`, which no
+     player plays) should move to the real rules, the Towns-off rules then deleted: "Ya, setelah bug B1–B3" (yes, after
+     B1–B3, decisions-log 317, on main by then)). Step 4 of 296's plan. By towns-only, after a phase 1 inventory.
+     - **Every game has the Towns**, a plain `Game()` too: `Game.towns` and its four aliases (`byGrade`, `forgeShop`,
+       `wishOn`, `enhanceOn`) are deleted and every branch keeps its Towns arm (about 100). So every game awakens by
+       grade, reads the items' numbers from town.json, has the forge's relics, Enhance, the Wishlist, the Tavern, the
+       materials, the Shop only in a Town, the save's `town` and `awakenKept`, the telemetry's Town fields.
+       `awakenRecipe` stays as what the grade sets build on (`kindRecipe`) and what a save from before the forge keeps
+       its levels by (`oldItemLevel`, `awakenKept`, decisions-log 272). `boardRules()` keeps the board's own: the army
+       and type caps, the Boss Chest, the skill wind-ups. A loaded save's troops are fitted once, in `fromJson`
+       (`_loadedHpBack`); `boardRules()` refits nothing (317's B1 fix needed two steps while the load came before the
+       Towns' rules).
+     - **The field drops go**: nothing lay on the field in a game with the Towns. `drops`, `relicDrops`, `lastLoot`,
+       `lastRelics`, the won wave's pick-up, the field's bobbing loot and its relic glint, the `LootDropped` event
+       (`EventKind.drop`, its log line and icon), `lootCounts` and the "VICTORY!" popup's item and relic counts (the
+       materials stay), and `chestTakesBossRelic`. The `loot` dice still draw each kill's item and relic and throw them
+       away, so a seeded game plays the same.
+     - **The Toko's prices go**: store.dart's `itemPrice` and `relicPrice` and their arms. Kept on purpose: the Towns'
+       own Shop knobs that 248 left unused (`TierPrices.shop` / `shopRise` / `priceAfter`, `TownShop.itemRise`,
+       town.json's tier and item buy prices, the Shop's empty Items and Relics sections): rules of the Towns' Shop, not
+       of a game without them; whether to delete them is a design call.
+     - **Nothing a player sees changes**: every player's game had the Towns since 237. Saves: no key and no version
+       changes (`saveVersion` 3). Telemetry: no raise: `dropped` and `relicsDropped` stay in the wave record, always
+       `{}`, and the `drop` event never came from a game with the Towns.
+     - **The tests**: the ~170 tests that pinned the Towns-off rules moved to the real ones or went (the off half of an
+       on/off pair, a rule only the Towns-off game had); about 30 test cases fewer. test/real_rules.dart holds
+       `awakenItems(type, level)` (a type's items for an Awaken level, by grade) and `noTowns` (Town rules whose every
+       roll misses) for a test that must never meet a Town. forge_cutover_test pins what the rules from before the forge
+       read for the w89 and w8 saves, recorded on main before they went. A run with every Town roll hitting, over the 114
+       test files that play waves, found two tests a Town would stop (events_test's Hero wins at wave 5): they use
+       `noTowns`. Found on the way (the shipped game, unchanged): at 915×412 the Bag's facing page of a worn small relic
+       had its second action row 3 px under the page (the Towns' relic text has the tier and "Best on" lines); its test
+       played the Towns-off text and never saw it, and now asks a whole row.
+     - **The identity guard**: the w89 dump with the Towns (319's, `<agents>/probes/shadows-on/w89-on-ff0f91a6.txt`)
+       byte for byte the same after each lib batch; the probe's `TOWNS` define and its Towns-off dump are gone
+       (testing.md).
+     - **The probes**: the off parts of probe_chest_shots, probe_release_foot_shots, probe_room_tent_shots,
+       probe_book_shadow_shots and probe_town_shop_tabs_shots gone; probe_bar_clear and probe_fx_ui_shots draw no field
+       loot. The probe kits outside the repo (the auto-player, the replay kit, the QA runs) go through a due Town at once
+       (`townPolicy` 'leave'; on a ref before 321 a plain `Game()` meets no Town, so it changes nothing there).

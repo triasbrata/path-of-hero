@@ -287,7 +287,7 @@ void main() {
   });
 
   test("the Stats each item's grade gives: town.json's numbers (the knight's swords 3 + 3 + 2 = x7.137; heals, the Cap's "
-      'cut and the Ring by grade); the forge off gives the constants', () {
+      'cut and the Ring by grade)', () {
     final g = forge(), plain = forge();
     g.upgrades['knight'] = [...List.filled(3, Item.sword), ...List.filled(3, Item.steelSword), ...List.filled(2, Item.royalSword)];
     final k = g.statsOf('knight').dmg / plain.statsOf('knight').dmg;

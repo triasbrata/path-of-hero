@@ -76,7 +76,7 @@ void main() {
       expect(g.itemK(i), g.townRules.items[i]!.effect, reason: '$i: the forge on reads town.json');
     }
     expect([for (final i in droppedItems) Game().itemK(i)], [swordDmg, shieldDef, bootsSpeed, bowRange, glovesRate, potionRegen, staffDmg],
-        reason: 'the forge off: the seven\'s constants');
+        reason: 'the seven\'s numbers in town.json are the constants from before the forge');
   });
 
   group('Amulet: max HP x1.08 / 1.10 / 1.12', () {

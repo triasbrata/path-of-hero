@@ -215,9 +215,6 @@ void main() {
           }
           // Every game has the Towns (decisions-log 237, 321): all eleven, and the forge's nine (decisions-log 272).
           expect(g.relicsInPlay, [...smallRelics, ...forgeRelics]);
-          for (final r in smallRelics.where((r) => !g.relicsInPlay.contains(r))) {
-            expect(all, isNot(contains(relicNames[r])), reason: '$r: the Smithy\'s, not in this game');
-          }
           expect(all.where((p) => p == relicSlotsLine), hasLength(1));
         case GuideLive.pusaka:
           for (final r in Relic.values.where((r) => r.pusaka)) {

@@ -1,8 +1,8 @@
 // The Towns' schedule and state (decisions-log 216; lib/town.dart; docs/loot-items-relics.md "Towns (dark)"): the
 // shipped numbers, the roll (20% at first, +5% a miss, the cap, back to 20% after a Town), the block within 5 waves of
 // the last Town, the first Town before wave 7 at the earliest, the mark two waves ahead, going in and out, the start
-// held while a Town is due, the save, the dice, the boss schedule untouched, the telemetry, and a plain Game() and the
-// board without them.
+// held while a Town is due, the save, the dice, the boss schedule untouched and the telemetry, against games no Town
+// comes to ([noTowns]: every game has the Towns, a plain Game() too, decisions-log 321; town_switch_test.dart).
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';

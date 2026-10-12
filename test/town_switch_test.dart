@@ -1,5 +1,5 @@
-// Town step T7 (decisions-log 237): the Towns switched on for every board game (a plain Game() keeps them off, tests
-// only; no build turns the board's off since decisions-log 296), a save from before them discarded at launch (no Continue,
+// Town step T7 (decisions-log 237): the Towns switched on for every board game (no build turns them off since
+// decisions-log 296; a plain Game() has them too since 321), a save from before them discarded at launch (no Continue,
 // the file gone; a save of this format loads, one in a due Town reopens it), the guide's Town cards (K23 in the first
 // Town, K24 once a material is held; the Shop, Recall and spend-gold cards told as a Town has them), town.json's
 // `shop.from` read, and the polish list: the Army detail's Recall tag always says Recall, the talk bubbles over the head
