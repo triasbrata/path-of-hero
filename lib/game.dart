@@ -376,8 +376,9 @@ List<HeroStat> heroPoolOf(String type) {
 /// each kind it can take before it does. A type awakens (level 1) the moment it holds its whole recipe;
 /// then it can take the recipe once more and awakens again with it (level 2 holds the recipe twice),
 /// up to [maxAwaken]. Kinds missing from a recipe never go on that type. Every level multiplies the
-/// type's price by [awakenPrice] and gives it the level's colour (round its troops, not on them) and hit
-/// effect ([awakeFx]). Past it, gold buys Bangkit 4 and 5 ([maxAscend]).
+/// type's price by [awakenPrice] (×2, Awaken 3 at 8×; ×3, 27×, until decisions-log 318, so a late army's rebuys ate
+/// every coin) and gives it the level's colour (round its troops, not on them) and hit effect ([awakeFx]). Past it,
+/// gold buys Bangkit 4 and 5 ([maxAscend]).
 const awakenRecipe = <String, Map<Item, int>>{
   // front melee
   'soldier': {Item.sword: 2, Item.shield: 2, Item.boots: 1, Item.bow: 1, Item.gloves: 1, Item.potion: 1},
@@ -393,7 +394,7 @@ const awakenRecipe = <String, Map<Item, int>>{
   'wizard': {Item.staff: 2, Item.bow: 3, Item.gloves: 3, Item.potion: 2}, // the staff instead of the sword
   'knight_templar': {Item.sword: 2, Item.shield: 2, Item.boots: 2, Item.bow: 1, Item.potion: 3}, // the owner: more speed, fewer shields
 };
-const maxAwaken = 3, awakenPrice = 3;
+const maxAwaken = 3, awakenPrice = 2;
 
 /// Each type's own new kind and its count a level, added to its [awakenRecipe] when Awaken goes by grade
 /// ([Game.byGrade], decisions-log 249; forge-design §11): the amulet's max HP for the shield line, the torch for the
@@ -865,7 +866,7 @@ String _count(num n, String word) => '${_num(n)} $word${n == 1 ? '' : 's'}';
 const troopTypes = {
   'soldier': Stats(hp: 90, cost: 30, speed: 22, dmg: 10, range: 12, rate: 0.8, mp: 20, mpRegen: 1),
   'knight': Stats(hp: 140, cost: 50, speed: 24, dmg: 20, range: 14, rate: 0.8, mp: 20, mpRegen: 1),
-  'swordsman': Stats(hp: 110, cost: 60, speed: 28, dmg: 14, range: 13, rate: 0.5, mp: 30, mpRegen: 1.5),
+  'swordsman': Stats(hp: 140, cost: 60, speed: 28, dmg: 14, range: 13, rate: 0.5, mp: 30, mpRegen: 1.5), // hp 110 until decisions-log 318
   'archer': Stats(hp: 60, cost: 70, speed: 22, dmg: 9, range: 64, rate: 0.6, shotSpeed: 200, mp: 30, mpRegen: 1.5),
   'lancer': Stats(hp: 120, cost: 80, speed: 26, dmg: 18, range: 22, rate: 1.0, mp: 20, mpRegen: 1),
   'priest': Stats(hp: 60, cost: 90, speed: 20, dmg: 12, range: 96, rate: 1.2, heals: true, mp: 60, mpRegen: 3), // reaches past the long range
@@ -1086,8 +1087,8 @@ const miniHpK = 6.0, miniMpK = 3.0, miniDmgK = 1.5;
 
 /// The boss buff comes in with the wave: none up to [bossBuffFrom], in full from [bossBuffFull], in a straight
 /// line between (the full buff on wave 5 beat every early army; in full from wave 30 it still walled the runs
-/// round wave 25, so the owner moved it to 50).
-const bossBuffFrom = 5, bossBuffFull = 50;
+/// round wave 25, so the owner moved it to 50; to 60 in decisions-log 318, with the gentler late gold).
+const bossBuffFrom = 5, bossBuffFull = 60;
 
 /// [tier]'s boss buff on [wave] as (hp, MP pool, dmg) multipliers: none below the mini boss.
 (double, double, double) bossBuff(Tier tier, int wave) {
@@ -1379,8 +1380,9 @@ enum Tier {
 }
 
 /// Kill gold grows by this share every wave after the first, compounding (the owner's #83: "setiap wave coin
-/// drop naik ... konstanta ini nanti bisa di adjust"; they picked 5% to start).
-const killGoldGrowth = 0.05;
+/// drop naik ... konstanta ini nanti bisa di adjust"; they picked 5% to start, 4.5% in decisions-log 318: at 5% the
+/// flat troop prices made every rebuy free past wave 80).
+const killGoldGrowth = 0.045;
 
 /// The gold a kill of a monster of [base] gold ([Stats.cost] of its type) and rank [tier] pays in [wave]:
 /// base × [Tier.reward] × (1 + [r])^(wave − 1), floored once at the end, not wave by wave (#83).
@@ -1398,8 +1400,8 @@ const relicChance = {Tier.normal: 0.0, Tier.elite: 0.0, Tier.highElite: 0.05, Ti
 
 /// Every wave after the first adds this share of the base hp / dmg (a healer's heal) to every monster, up to
 /// wave [waveLateFrom]; every wave after it adds [waveHpLate] / [waveDmgLate] instead, so the late waves stay
-/// hard ([waveGrowth]; the owner's pick in #36).
-const waveHp = 0.15, waveDmg = 0.06;
+/// hard ([waveGrowth]; the owner's pick in #36; [waveHp] 0.15 until decisions-log 318 made waves 2-15 a little harder).
+const waveHp = 0.17, waveDmg = 0.06;
 const waveLateFrom = 15, waveHpLate = 0.30, waveDmgLate = 0.10;
 
 /// What a monster's base hp or dmg is multiplied by in [wave]: 1 in wave 1, then [early] more a wave through

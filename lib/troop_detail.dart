@@ -378,7 +378,7 @@ extension on Board {
   /// grade set's items ([Game.gradeSet]) with "Done" (green) once held, "In Bag: 1" (green), "Smithy: can make 3" (green,
   /// [Craft.canMake]) or "Smithy: needs Leather Strap" (grey, [Craft.whyNotMake]; shorter in steps down to "Smithy"), and
   /// "Next" adds the grade after it ("Next: Unlocks Unbroken. Awaken 3 needs grade III."). From Awaken 3: "Next: Awaken 4" (at 5 "Next: Forge +5") over the Shop's own
-  /// step ([Board._upgradeButton]: "Awaken 4  100k", "Forge +5  33k", or greyed with why, "Awaken 4: Opens after wave
+  /// step ([Board._upgradeButton]: "Awaken 4  40k", "Forge +5  33k", or greyed with why, "Awaken 4: Opens after wave
   /// 15"), one tap. First, by grade, a level the type kept from a save before the grades ([Game.keptLevel], decisions-log
   /// 272), in grey: "Awaken 3 (kept from old items)", or "Awaken 3 (kept)" where that doesn't fit.
   List<_DetailLine> _detailNext(Canvas c, Game g, String type, double x0, double x1, _DetailSizes s) {
