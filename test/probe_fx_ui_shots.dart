@@ -6,7 +6,7 @@
 //
 // It writes, at 1266x713 and 412x860 (`desk-` / `phone-`): tas (a sword picked on the Tas page: its rows' "now ▸
 // after"), locked (the Pasukan page with the roster full: the locked rows' padlocks); then with a wave on, win and
-// win-later 0.1 s on (the "MENANG!" popup's sparks, a dropped relic's glint beside a dropped item), cut-early and cut
+// win-later 0.1 s on (the "MENANG!" popup's sparks), cut-early and cut
 // (a Hero's cut-in band 0.2 s in, its portrait's burst, and after its slide, with the Grail's plate), splash-early and
 // splash (the Hero splash 0.25 s in and later, its ring on the field under the dim).
 import 'dart:convert';
@@ -107,19 +107,13 @@ void main() {
       g.startWave();
       await frames(tester, 40);
 
-      // The win's popup, with a relic and an item dropped on the field in view.
-      final drop = Point(g.cam + g.viewW * 0.72, 22.0);
-      g.relicDrops.add((drop, Relic.fang));
-      g.drops.add((drop + const Point(16.0, 0), Item.sword));
+      // The win's popup.
       g.victoryAt = g.t - 0.9;
       await frames(tester, 2);
       await shot('$tag-win');
-      await frames(tester, 6); // 0.1 s on: the sparks and the glint a step further
+      await frames(tester, 6); // 0.1 s on: the sparks a step further
       await shot('$tag-win-later');
-      g
-        ..victoryAt = double.negativeInfinity
-        ..relicDrops.clear()
-        ..drops.clear();
+      g.victoryAt = double.negativeInfinity;
       await frames(tester, 4);
 
       // A Hero's cut-in, and the Grail's plate with it.

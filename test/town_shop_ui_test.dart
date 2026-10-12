@@ -82,7 +82,6 @@ const sizes = [Size(1266, 713), Size(1164, 777), Size(915, 412)];
 Game shopGame({bool inTown = true}) {
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
-    ..towns = true
     ..armyMax = null
     ..gold = 40000
     ..wave = 20;
@@ -268,24 +267,20 @@ void main() {
     await frames(tester, 10);
   });
 
-  testWidgets("the gold's dot is on the Army tab (no Shop tab on the field), the Towns off too (decisions-log 296: the "
-      "Toko's tab, which had it, went)", (tester) async {
+  testWidgets("the gold's dot is on the Army tab (no Shop tab on the field; decisions-log 296: the Toko's tab, which had "
+      'it, went)', (tester) async {
     final b = await boot(tester);
-    Game rich({required bool towns}) =>
+    final g = b.state =
         Game.fromJson(jsonDecode(File('test/fixtures/save-20261002-2222-w89-sellbug.json').readAsStringSync()) as Map<String, dynamic>)
             .boardRules()
           ..chests.clear()
-          ..towns = towns
           ..gold = 50000000;
-    for (final towns in [true, false]) {
-      final g = b.state = rich(towns: towns);
-      expect(g.tokoNudge, isTrue);
-      await frames(tester, 40);
-      final dot = b.storeAt('tokoDot'), tab = b.bookTabs.firstWhere((t) => t.$1 == 'troops').$2;
-      expect(dot, isNot(Rect.zero), reason: 'Towns $towns');
-      expect(tab.overlaps(dot), isTrue, reason: 'Towns $towns: on the Army tab');
-      expect(b.bookTabs.map((t) => t.$1), isNot(contains('store')), reason: 'Towns $towns: no Shop tab on the field');
-    }
+    expect(g.tokoNudge, isTrue);
+    await frames(tester, 40);
+    final dot = b.storeAt('tokoDot'), tab = b.bookTabs.firstWhere((t) => t.$1 == 'troops').$2;
+    expect(dot, isNot(Rect.zero));
+    expect(tab.overlaps(dot), isTrue, reason: 'on the Army tab');
+    expect(b.bookTabs.map((t) => t.$1), isNot(contains('store')), reason: 'no Shop tab on the field');
     await frames(tester, 10);
   });
 }

@@ -354,6 +354,7 @@ void main() {
   test('the store: a Pusaka bought waits in the Gudang at ★1; a copy is refused; a bound one is not bought back', () {
     final g = plain()
       ..wave = storeFrom
+      ..inTown = true // the Shop deals only in a Town
       ..gold = 1000000;
     placeNow(g, 'knight', 2, 3);
     expect(g.buy(Relic.grail), isTrue);
@@ -494,7 +495,7 @@ void main() {
       expect(g.relicBag, {Relic.fury: 23, Relic.thorns: 29, Relic.fang: 17, Relic.guard: 21});
       expect([for (final u in g.troops) ...u.relics]..sort((a, b) => a.index.compareTo(b.index)), [Relic.fang, Relic.fang, Relic.fury]);
       expect((g.troops.length, g.wave, g.gold, g.pusakaNoteDue), (48, 86, j['gold'], true));
-      expect((g.storeBought[Relic.grail], g.whyNotBuy(Relic.grail)), (1, StoreRefusal.owned));
+      expect((g.storeBought[Relic.grail], (g..inTown = true).whyNotBuy(Relic.grail)), (1, StoreRefusal.owned)); // in a Town
 
       // The templars got Dragon Heart's HP, what they had lost kept: the HP gained came with it.
       final base = Game.fromJson(w86(), Random(1), Random(2), Random(3))..undoDefaultBinding();

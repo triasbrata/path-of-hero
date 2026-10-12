@@ -149,8 +149,8 @@ class Stats {
   /// Fights up close: neither shoots nor heals (the formation's front and heavy melee).
   bool get melee => shotSpeed == 0 && !heals;
 
-  /// These stats with [item] carried, its effect [k] (null: its kind's grade-I number, [swordDmg] …; with the Towns on its
-  /// own number, [Game.itemK], decisions-log 249). A bow never takes a melee fighter's reach past its [reachCap]
+  /// These stats with [item] carried, its effect [k] (the game gives each item its own number, [Game.itemK],
+  /// decisions-log 249; null: its kind's grade-I number, [swordDmg] …). A bow never takes a melee fighter's reach past its [reachCap]
   /// ([meleeMaxRange] unless spears raised it) (nor shrinks a longer base reach); a potion also makes a healer's heals
   /// [potionHeal] HP bigger (a grade's in the share of its regen to grade I's). The staff is magic power: a healer's heals
   /// [staffHeal] HP bigger (a grade's in the share of its bonus to grade I's), anyone else's attack ×[staffDmg]; both added
@@ -239,13 +239,12 @@ class Stats {
 /// reach, the prism's splash), then the helm (less damage taken) and the ring (MP regen), which no Awaken recipe counts.
 enum ItemSlot { sword, shield, boots, bow, gloves, potion, staff, amulet, beads, torch, spear, prism, helm, ring }
 
-/// Loot monsters drop, collected when the wave is won and used on a troop TYPE: an upgrade goes to
+/// An item, made at a Town's Smithy (town.dart; none drops) and used on a troop TYPE: an upgrade goes to
 /// every troop of that type, now and later, and stacks up to the type's cap ([Game.capOf], its awakening
 /// recipe) (a potion adds [potionRegen]). The staff ("Tongkat Sihir") is for the casters only: only the
 /// wizard's and the priest's recipes take it, and they take no sword ([powerItem]). The value is the save key and the
-/// icon's name (`item_<name>.png`), so a new one is only ever appended: the first seven are the ones monsters drop
-/// ([droppedItems]), then the forge's 35 (decisions-log 245, crafted at a Smithy, never dropped; only in a game with the
-/// Towns on, [Relics.itemsInPlay]) by grade: the five new kinds' grade I, grade II of the twelve Awaken kinds, their grade
+/// icon's name (`item_<name>.png`), so a new one is only ever appended: the first seven are the ones monsters dropped
+/// ([droppedItems]), then the forge's 35 (decisions-log 245) by grade: the five new kinds' grade I, grade II of the twelve Awaken kinds, their grade
 /// III, then the helm's and the ring's three grades. Each has its kind ([slot]) and its [grade] (1 to 3); how many kinds
 /// and grades there are is read from the enum, never counted by hand.
 enum Item {
@@ -302,13 +301,17 @@ enum Item {
   final int grade;
 }
 
-/// The items monsters drop ([droppedItemKinds]), in [Item] order: the only ones a game without the Towns knows.
+/// The items monsters dropped ([droppedItemKinds]) in a game without the Towns (gone, decisions-log 321), in [Item]
+/// order: the first seven kinds' grade I.
 const droppedItems = [Item.sword, Item.shield, Item.boots, Item.bow, Item.gloves, Item.potion, Item.staff];
 
-/// The item kinds monsters drop: the first seven of [Item] (grade I, one of each kind), so the [loot] dice roll as they
+/// The item kinds monsters dropped: the first seven of [Item] (grade I, one of each kind), so the [loot] dice roll as they
 /// did before [Item] grew (decisions-log 245).
 const droppedItemKinds = 7;
 
+/// A kill's item roll from before the Smithy made every item: a normal or elite monster at [dropChance], the boss
+/// [bossDrops] for sure; the [Game.loot] dice still draw them and throw them away (decisions-log 321). [potionRegen]:
+/// a potion's HP/s.
 const dropChance = 0.08, bossDrops = 2, potionRegen = 5.0;
 
 /// What each item multiplies its stat by ([Stats.upgraded]); the shield adds [shieldDef] defence and the
@@ -395,8 +398,8 @@ const awakenRecipe = <String, Map<Item, int>>{
 };
 const maxAwaken = 3, awakenPrice = 3;
 
-/// Each type's own new kind and its count a level, added to its [awakenRecipe] when Awaken goes by grade
-/// ([Game.byGrade], decisions-log 249; forge-design §11): the amulet's max HP for the shield line, the torch for the
+/// Each type's own new kind and its count a level, added to its [awakenRecipe] for Awaken by grade ([Game.kindRecipe],
+/// decisions-log 249; forge-design §11): the amulet's max HP for the shield line, the torch for the
 /// undead-killers, the spear for the lancer, the beads for the healer, the prism for the splash.
 const forgeAwakenKinds = <String, Map<ItemSlot, int>>{
   'soldier': {ItemSlot.amulet: 1},
@@ -454,8 +457,9 @@ String awakeFx(String fx, int level) => level > 0 ? '${fx}_awake$level' : fx;
 /// Rarer loot. The small relics ([RelicScope.troop], [Rarity.biasa]) are held by ONE troop (one relic each, a Hero
 /// two) and change only how that troop fights: fang heals it by [fangShare] of the damage it deals, thorns hit an
 /// attacker back with [thornsShare] of the blow, fury multiplies every [furyEvery]th attack by [furyHit], guard cuts
-/// the damage taken by [guardCut]. Only strong monsters drop one, by their rank ([relicChance]); a fallen troop's
-/// relic goes back in the bag. Every Pusaka is a row of [pusakaCatalog] (pusaka_catalog.dart), which gives its
+/// the damage taken by [guardCut]. The Smithy makes them (relics.dart); strong monsters dropped the first four
+/// ([droppedRelics], [relicChance]) in a game without the Towns, gone in decisions-log 321. A fallen troop's relic goes
+/// back in the bag. Every Pusaka is a row of [pusakaCatalog] (pusaka_catalog.dart), which gives its
 /// [rarity] and whether the Toko sells it ([store]); the enum value is its save key, so a new one is only ever
 /// appended. The [store] ones, today's five artefacts, are Pusaka (pusaka.dart, decisions-log 138):
 /// bound to a whole troop TYPE ([RelicScope.type]), with stars ([dragonHeartK], [dawnStarK], [godThunderK], [grailK],
@@ -591,8 +595,8 @@ enum Relic {
   vanguardOath(RelicScope.army),
   kingsOath(RelicScope.army),
   spellOath(RelicScope.army),
-  // The forge's nine new small relics (decisions-log 245; forge-design §5; [forgeRelics]): crafted at a Smithy only, in a
-  // game with the Towns on ([Relics.relicsInPlay]); never dropped, never offered. Basic: Chill, Shark Tooth, Grit; Strong:
+  // The forge's nine new small relics (decisions-log 245; forge-design §5; [forgeRelics]): crafted at a Smithy only
+  // ([Relics.relicsInPlay]); never dropped, never offered. Basic: Chill, Shark Tooth, Grit; Strong:
   // Ambush, Weak Spot, Hot Streak; Mighty: Avalanche, Afterglow, Reaper. Their numbers are town.json's `relics`.
   chill,
   sharkTooth,
@@ -628,12 +632,12 @@ enum Rarity { biasa, langka, epik, legenda }
 /// or the whole army (an oath, decisions-log 155).
 enum RelicScope { troop, type, army }
 
-/// The relics monsters drop with the Towns off: today's four small ones, never a Pusaka nor one the Smithy crafts
-/// ([smallRelics], relics.dart).
+/// The four small relics monsters dropped before the Smithy made them (decisions-log 221): the [loot] dice still draw
+/// one of them and throw it away; never a Pusaka nor one only the Smithy crafts ([smallRelics], relics.dart).
 const droppedRelics = [Relic.fang, Relic.thorns, Relic.fury, Relic.guard];
 
-/// The forge's nine new small relics (decisions-log 245), in [Relic] order: only in a game with the Towns on
-/// ([Relics.relicsInPlay]); [smallRelics] leaves them out.
+/// The forge's nine new small relics (decisions-log 245), in [Relic] order ([Relics.relicsInPlay]); [smallRelics] leaves
+/// them out.
 const forgeRelics = [
   Relic.chill, Relic.sharkTooth, Relic.grit, Relic.ambush, Relic.weakSpot, Relic.hotStreak, Relic.avalanche, //
   Relic.afterglow, Relic.reaper,
@@ -821,15 +825,6 @@ const relicNames = {
   Relic.afterglow: 'Afterglow',
   Relic.reaper: 'Reaper',
 };
-
-/// Each kind in [loot] once with how many there are, in the enum's order (a won wave's loot as "Nx").
-Map<T, int> lootCounts<T extends Enum>(Iterable<T> loot) {
-  final counts = <T, int>{};
-  for (final k in [...loot]..sort((a, b) => a.index.compareTo(b.index))) {
-    counts[k] = (counts[k] ?? 0) + 1;
-  }
-  return counts;
-}
 
 /// How many of the troops in [fallen] were of each type, in [troopTypes]' order (the book's); a type with
 /// none is left out. The "VICTORY!" popup lists a won wave's fallen ([Game.lastFallen]) this way when more
@@ -1392,8 +1387,9 @@ int killGold(int base, Tier tier, int wave, [double r = killGoldGrowth]) => (bas
 const killScore = {Tier.normal: 10, Tier.elite: 25, Tier.highElite: 50, Tier.miniBoss: 150, Tier.boss: 500};
 const waveScore = 100, lifeScore = 50;
 
-/// A wave's monster drops a relic at this chance by its rank: none from normal and elite ones, the boss at
-/// most, never for sure. A necromancer's raised minions drop none, like the gold they don't pay.
+/// A wave's monster dropped a relic at this chance by its rank in a game without the Towns (decisions-log 321): none from
+/// normal and elite ones, the boss at most, never for sure; a necromancer's raised minions none. The [Game.loot] dice
+/// still roll it and throw it away.
 const relicChance = {Tier.normal: 0.0, Tier.elite: 0.0, Tier.highElite: 0.05, Tier.miniBoss: 0.10, Tier.boss: 0.30};
 
 /// Every wave after the first adds this share of the base hp / dmg (a healer's heal) to every monster, up to
@@ -1489,10 +1485,9 @@ const tideNews = ('The ${Words.tide} rises!', 'Monsters get stronger every wave'
 const capWarnEvery = 5;
 
 /// The warning's words: the cap and the coming wave's tide (whole percent of HP, as the meter's badge), then what
-/// makes the army stronger now that it can't grow: the Shop's Awaken, or with the [towns] on the Army page's
-/// (decisions-log 230, 237).
-String capWarningText(int cap, int tidePct, {bool towns = false}) =>
-    '${Words.army} full: cap $cap - ${Words.tide} +$tidePct%\nMake types stronger in the ${towns ? '${Words.army} page' : Words.shop} (${Words.awaken})';
+/// makes the army stronger now that it can't grow: the Army page's Awaken (decisions-log 230, 237).
+String capWarningText(int cap, int tidePct) =>
+    '${Words.army} full: cap $cap - ${Words.tide} +$tidePct%\nMake types stronger in the ${Words.army} page (${Words.awaken})';
 
 /// The wave meter tooltip's last line while the army is full at the cap of [cap].
 String capTip(int cap) => '${Words.army} full ($cap): make types stronger';
@@ -2110,28 +2105,24 @@ class Game {
   final healQueue = <Unit>[]; // troops still waiting for their after-wave heal
   static const healGap = 0.4;
 
-  /// Loot lying where monsters fell, picked up into [inventory] when the wave is won.
-  final drops = <(Point<double>, Item)>[];
+  /// The Bag's items at +0, how many of each: the Smithy makes them (town.dart); no monster drops one (decisions-log 321).
   final inventory = <Item, int>{};
 
   /// The Bag's enhanced items (decisions-log 255; enhance.dart): how many of each (item, plus) stack, the plus 1 to
   /// [EnhanceRules.most]; +0 is [inventory]'s. Each stack is its own Bag cell.
   final enhancedBag = <(Item, int), int>{};
-  List<Item> lastLoot = const []; // what the last won wave picked up
-  final relicDrops = <(Point<double>, Relic)>[];
   final relicBag = <Relic, int>{};
-  List<Relic> lastRelics = const [];
 
-  /// The Towns' materials (town.dart, decisions-log 221), only with [towns] on: the ones held (saved, by name), the ones
-  /// dropped in the wave being fought (they come into [materials] when it is won, and a lost game loses them, like the
-  /// loot), and the ones the last won wave brought. Monsters drop none with the Towns off.
+  /// The Towns' materials (town.dart, decisions-log 221): the ones held (saved, by name), the ones dropped in the wave
+  /// being fought (they come into [materials] when it is won, and a lost game loses them, like the loot), and the ones
+  /// the last won wave brought.
   final materials = <Mat, int>{};
   final waveMaterials = <Mat, int>{};
   Map<Mat, int> lastMaterials = const {};
 
   /// The kinds of material that have dropped this run, in the order they first dropped ([Materials._dropMaterials]; one
-  /// bought never adds): the forge's Town Shop sells only these (decisions-log 246). Saved as `matsSeen` with the forge
-  /// and the Towns on; a save without it starts from the materials held.
+  /// bought never adds): the forge's Town Shop sells only these (decisions-log 246). Saved as `matsSeen` once any was
+  /// seen; a save without it starts from the materials held.
   final matsSeen = <Mat>{};
 
   /// Materials just dropped, where the kill fell, which and how many, for the UI: they lie there until the wave is won
@@ -2239,7 +2230,7 @@ class Game {
 
   /// What each of the forge's nine small relics did in the wave being fought ([PusakaTally]: its uses and the damage it
   /// added; relics.dart, decisions-log 250), and the damage each pair a troop wields dealt ([RelicPair], by
-  /// [Relics.comboKeyOf]); both only with the Towns on, cleared at every wave's start, not saved.
+  /// [Relics.comboKeyOf]); both cleared at every wave's start, not saved.
   final relicWorth = <Relic, PusakaTally>{};
   final relicPairs = <String, RelicPair>{};
 
@@ -2333,7 +2324,7 @@ class Game {
     }
     relicBag[relic] = relicBag[relic]! - 1;
     u.relics.add(relic);
-    if (towns) u.comboKey = comboKeyOf(u); // a pair given mid-wave counts at once (relics.dart)
+    u.comboKey = comboKeyOf(u); // a pair given mid-wave counts at once (relics.dart)
     _emit(RelicUsed(wave, t, relic: relic, type: u.type));
     impacts.add((u.pos, 'upgrade'));
     sfx.add(Sfx.magic);
@@ -2370,7 +2361,7 @@ class Game {
     }
     u.relics.remove(relic);
     relicBag[relic] = (relicBag[relic] ?? 0) + 1;
-    if (towns) u.comboKey = comboKeyOf(u);
+    u.comboKey = comboKeyOf(u);
     _emit(RelicTakenOff(wave, t, relic: relic, type: u.type));
     sfx.add(Sfx.place);
     return true;
@@ -2447,14 +2438,6 @@ class Game {
   /// its win, any other at the next wave's start. Not saved.
   String? draftPolicy;
 
-  /// The Towns (lib/town.dart, decisions-log 216): a Town rolled two waves ahead comes between two waves. Every board
-  /// game turns it on ([boardRules], decisions-log 237): the game players play has the Towns, always, and no build or
-  /// player path turns them off (the TOWNS define went, decisions-log 296). TEST-ONLY when off: a plain Game() keeps it
-  /// off, the rules from before the Towns (the field's drops, the old Awaken recipe), so the suite's harness, the
-  /// auto-player and the replay kit play as before and their baselines stay comparable; the UI draws no Towns-off
-  /// version of anything (no Toko, no Sell in the Bag). Not saved. A probe reaches it by name, so it is a member.
-  bool towns = false;
-
   /// The troops' skill wind-ups (skill_strips.dart, decisions-log 299: the owner's "Ancang-ancang beneran"): a troop's
   /// #10, awakening and Hero skills land on their strip's blow, 0.2-0.3 s after the cast, the troop standing still
   /// meanwhile. Off in a plain Game(), so every test and probe plays as before (each lands at its cast); the board turns
@@ -2494,7 +2477,7 @@ class Game {
   int _townCraftSpent = 0;
 
   /// The slot of the Town marked (it comes before wave [townAt]), and whether the player is in it ([Towns.enterTown]).
-  /// Saved, while the Towns are on.
+  /// Saved.
   int? townAt;
   bool inTown = false;
 
@@ -2553,8 +2536,7 @@ class Game {
   /// [heavyBuff] ([heavyTypes]); then its type's stat Pusaka (Dragon Heart's HP and regen, Dawn Star's power,
   /// pusaka.dart); then the oath's, for the whole army ([Pusaka._oathStats]: Oath of One's, the Few's and Alliance's
   /// HP and damage ×[_oathK], decisions-log 155; the Wall's, Blood Oath's and the Vanguard's own, decisions-log 247);
-  /// then the Tavern's boosts running ([Tavern._boostStats], decisions-log 266). With the Towns on its items' own
-  /// numbers ([itemK]), an enhanced one's at its plus ([_itemsOn]); the spears' reach and
+  /// then the Tavern's boosts running ([Tavern._boostStats], decisions-log 266). Its items' own numbers ([itemK]), an enhanced one's at its plus ([_itemsOn]); the spears' reach and
   /// the prisms' splash stop at their ceilings ([_ceilings]), and what the amulets add to its HP and the rings to its MP
   /// regen stays on top of the awakening's (decisions-log 251).
   Stats statsOf(String type) {
@@ -2577,12 +2559,12 @@ class Game {
     return boosts.isEmpty ? s : _boostStats(type, s); // the Tavern's boosts running (tavern.dart)
   }
 
-  /// [base] with every item [type] holds ([upgrades], in order), each at its own number ([itemK]) with the Towns on. An
-  /// enhanced type's copies of an item take its pluses ([upgradePlus]), highest first, and the rest +0 (decisions-log 255;
+  /// [base] with every item [type] holds ([upgrades], in order), each at its own number ([itemK]). An enhanced type's
+  /// copies of an item take its pluses ([upgradePlus]), highest first, and the rest +0 (decisions-log 255;
   /// the items multiply and add, so which copy is which doesn't change the sum).
   Stats _itemsOn(String type, Stats base) {
-    final items = upgrades[type] ?? const <Item>[], pluses = towns ? upgradePlus[type] : null;
-    if (pluses == null || pluses.isEmpty) return items.fold(base, (s, i) => s.upgraded(i, towns ? itemK(i) : null));
+    final items = upgrades[type] ?? const <Item>[], pluses = upgradePlus[type];
+    if (pluses == null || pluses.isEmpty) return items.fold(base, (s, i) => s.upgraded(i, itemK(i)));
     final seen = <Item, int>{};
     return items.fold(base, (s, i) {
       final n = seen[i] = (seen[i] ?? 0) + 1, p = pluses[i];
@@ -2605,22 +2587,10 @@ class Game {
     return s;
   }
 
-  /// What one [item] does on a type (its effect's number, [Stats.upgraded]'s k; decisions-log 249 and 251): with the forge
-  /// and the Towns on its town.json `items` effect ([TownRules.items], grade I's too), at +[plus] that much more
-  /// ([enhancedK], town.json `enhance.per`; decisions-log 255); without them the seven's own constants ([swordDmg] …), and
-  /// the forge's items' town.json numbers.
-  double itemK(Item item, [int plus = 0]) => towns
-      ? enhancedK(item, townRules.items[item]!.effect, plus, townRules.enhance.per)
-      : switch (item) {
-          Item.sword => swordDmg,
-          Item.shield => shieldDef,
-          Item.boots => bootsSpeed,
-          Item.bow => bowRange,
-          Item.gloves => glovesRate,
-          Item.potion => potionRegen,
-          Item.staff => staffDmg,
-          _ => townRules.items[item]!.effect,
-        };
+  /// What one [item] does on a type (its effect's number, [Stats.upgraded]'s k; decisions-log 249 and 251): its town.json
+  /// `items` effect ([TownRules.items], grade I's too), at +[plus] that much more ([enhancedK], town.json `enhance.per`;
+  /// decisions-log 255).
+  double itemK(Item item, [int plus = 0]) => enhancedK(item, townRules.items[item]!.effect, plus, townRules.enhance.per);
 
   /// What every item a troop type takes adds to its price: [priceRise] of its base price (rounded, at
   /// least 1 gold).
@@ -2723,8 +2693,8 @@ class Game {
     return lines;
   }
 
-  /// The book's tooltip for [relic]: its name, what it does, with the Towns on its tier and who it suits ([relicTierLine],
-  /// [relicBestLine]: relics.dart), who holds it, how it's used, and how many
+  /// The book's tooltip for [relic]: its name, what it does, its tier and who it suits ([relicTierLine], [relicBestLine]:
+  /// relics.dart), who holds it, how it's used, and how many
   /// are in the bag and held by living troops; a Pusaka's: what it does at its stars, what that sums to over its type
   /// now ([Pusaka.pusakaTotals], critique M6), that it goes on a whole type (an oath: for the whole run), and where it
   /// is ([pusakaWhere]); a carved one's Carve steps after what it does ([ukirGist], decisions-log 196).
@@ -2732,7 +2702,7 @@ class Game {
         ...relicEffect(relic),
         if (pusaka[relic] case OwnedPusaka(:final ukir) when ukir > 0) ukirGist(ukir), // its Carve (pusaka.dart)
         if (relic.pusaka) ...[...pusakaTotals(relic), relic.oath ? oathLine : pusakaLine, pusakaWhere(relic)] else ...[
-          if (towns) ...[relicTierLine(relic), ?relicBestLine(relic)], // decisions-log 227
+          relicTierLine(relic), ?relicBestLine(relic), // decisions-log 227
           relicSlotsLine,
           tapLine,
           'In bag: ${relicBag[relic] ?? 0}, in use: ${relicsHeld(relic)}',
@@ -2813,11 +2783,11 @@ class Game {
   /// The book's tooltip for a troop row's awakening stars: the level in words; the awakening skill of the level
   /// (at level 0 the one Bangkit 1 opens), what it does, its MP and cooldown, and the next level's numbers
   /// ([awakenLines]); then what the next awakening needs, one line per recipe kind with its icon and have/need
-  /// ([awakenProgress]); from Bangkit 3 that the next is bought in the Shop ([maxAscend]); "Max" once there is none,
-  /// then its Tempa (lib/tempa.dart): what it has, and that the next is bought in the Shop. With the Towns on both are
-  /// bought on the Army page (its detail's tag, decisions-log 230), and the line says so.
+  /// ([awakenProgress]); from Bangkit 3 that the next is bought on the Army page (its detail's tag, decisions-log 230;
+  /// [maxAscend]); "Max" once there is none, then its Tempa (lib/tempa.dart): what it has, and that the next is bought
+  /// there too.
   (String, List<(Item?, String)>) awakenInfo(String type) {
-    final buyInShop = towns ? 'buy on the ${Words.army} page' : 'buy in the ${Words.shop}';
+    final buyInShop = 'buy on the ${Words.army} page';
     final level = awakenLevel(type);
     final skill = [for (final l in awakenLines(type, level, price: (base) => skillPrice(type, base), cd: skillCd)) (null, l)];
     if (level >= awakenTop) {
@@ -2841,20 +2811,15 @@ class Game {
   /// The items [type] needs to awaken once ([awakenRecipe]); empty for anything that isn't a troop.
   Map<Item, int> recipeOf(String type) => awakenRecipe[type] ?? const {};
 
-  /// Whether Awaken goes by grade (decisions-log 249; forge-design §11): in a game with the Towns (the forge's, in every
-  /// board game; the forge-off build and town.json's `awaken.byGrade` are gone, decisions-log 296). Then Awaken L takes
-  /// [type]'s grade-L set ([gradeSet]), and a type holds per kind and grade ([capOf]); with the Towns off (a plain
-  /// Game(), tests only) the rule from before the grades, the same recipe once more for each level ([oldItemLevel]).
-  bool get byGrade => towns;
-
-  /// The kinds [type]'s Awaken counts by grade and how many of each a level takes ([byGrade]): its [awakenRecipe]'s,
-  /// then its own new kind ([forgeAwakenKinds]). Empty for anything that isn't a troop.
+  /// The kinds [type]'s Awaken counts by grade and how many of each a level takes (decisions-log 249; forge-design §11:
+  /// Awaken L takes [type]'s grade-L set, [gradeSet], and a type holds per kind and grade, [capOf]): its
+  /// [awakenRecipe]'s, then its own new kind ([forgeAwakenKinds]). Empty for anything that isn't a troop.
   Map<ItemSlot, int> kindRecipe(String type) => {
         for (final MapEntry(key: item, value: n) in recipeOf(type).entries) item.slot: n,
         ...?forgeAwakenKinds[type],
       };
 
-  /// What Awaken [level] (1 to [maxAwaken]) takes by grade ([byGrade]): each kind of [type]'s [kindRecipe] in grade
+  /// What Awaken [level] (1 to [maxAwaken]) takes by grade: each kind of [type]'s [kindRecipe] in grade
   /// [level] ([itemOf]), its count at the level's share (town.json `awaken.share`, its last for a level past it;
   /// [gradeCount]): the knight's Awaken 3 takes Royal Sword 2, Royal Shield 2, Wind Boots 2, Royal Gloves 2, Gold Amulet 1.
   Map<Item, int> gradeSet(String type, int level) {
@@ -2862,11 +2827,9 @@ class Game {
     return {for (final MapEntry(key: slot, value: n) in kindRecipe(type).entries) itemOf(slot, level): gradeCount(n, k)};
   }
 
-  /// The items [type] holds once it has awakened to [level] (0 to [maxAwaken]): by grade every grade set up to it
-  /// ([gradeSet]) past the level it kept ([keptLevel], decisions-log 272), else its recipe [level] times.
-  Map<Item, int> awakenNeeds(String type, int level) => byGrade
-      ? {for (var l = keptLevel(type) + 1; l <= level; l++) ...gradeSet(type, l)}
-      : {for (final MapEntry(key: item, value: n) in recipeOf(type).entries) item: n * level};
+  /// The items [type] holds once it has awakened to [level] (0 to [maxAwaken]): every grade set up to it ([gradeSet])
+  /// past the level it kept ([keptLevel], decisions-log 272).
+  Map<Item, int> awakenNeeds(String type, int level) => {for (var l = keptLevel(type) + 1; l <= level; l++) ...gradeSet(type, l)};
 
   /// What [type] still lacks for its next Awaken from items ([awakenNeeds] of the level after [itemLevel]): each item it
   /// is short of and how many; none at [maxAwaken].
@@ -2882,14 +2845,14 @@ class Game {
   /// How many [item]s troop [type] has taken.
   int countOf(String type, Item item) => (upgrades[type] ?? const <Item>[]).where((i) => i == item).length;
 
-  /// How many of [item] count against its cap on [type] ([capOf]): by grade a Cap's or a Ring's whole kind, any grade
+  /// How many of [item] count against its cap on [type] ([capOf]): a Cap's or a Ring's whole kind, any grade
   /// ([outsideAwaken]); else [countOf].
-  int heldOf(String type, Item item) => byGrade && outsideAwaken.contains(item.slot)
+  int heldOf(String type, Item item) => outsideAwaken.contains(item.slot)
       ? (upgrades[type] ?? const <Item>[]).where((i) => i.slot == item.slot).length
       : countOf(type, item);
 
-  /// How many times [type] has awakened: the most recipes (up to [maxAwaken]) its items hold in full ([itemLevel]),
-  /// and at Bangkit 3 the levels bought past it ([ascended], up to [awakenTop]).
+  /// How many times [type] has awakened: the grade sets its items hold ([itemLevel]), and at Bangkit 3 the levels bought
+  /// past it ([ascended], up to [awakenTop]).
   int awakenLevel(String type) {
     final level = itemLevel(type);
     return level >= maxAwaken ? level + (ascended[type] ?? 0) : level;
@@ -2903,8 +2866,8 @@ class Game {
   /// items were taken by the old rule (the same recipe once more for each level), and no grade set holds them (none has
   /// the forge's new kinds), so at its load each type keeps the level its items gave ([oldItemLevel]) and by grade counts
   /// on from it ([itemLevel]): the next Awaken takes the next grade's set, and Bangkit and Tempa bought at Awaken 3 stay.
-  /// Saved by a game with [byGrade] on, empty included, so a save of the by-grade game is never read by the old rule
-  /// again; a save without the key gets it from its items, and a new game has none. Read only by grade.
+  /// Saved, empty included, so a save of the by-grade game is never read by the old rule again; a save without the key
+  /// gets it from its items, and a new game has none.
   final awakenKept = <String, int>{};
 
   /// How many Tempa levels each troop type bought with gold past Bangkit 5 ([Tempa.temper], lib/tempa.dart); none until
@@ -2912,35 +2875,31 @@ class Game {
   /// decisions-log 163 have none.
   final tempa = <String, int>{};
 
-  /// [awakenLevel] from the items alone: the most recipes (up to [maxAwaken]) [type]'s items hold in full; by grade
-  /// ([byGrade]) the grade sets it holds in a row from grade I ([gradeSet]). Items past a cap (from saves made before
-  /// the caps) stay and count. Kept per type while its list of items is the same list with the same length and the rule
-  /// the same ([_levels]): [priceWith] and [assignPreview] try an item on and take it back, a test may put a new list in,
-  /// and each of those reads the level anew.
+  /// [awakenLevel] from the items alone: the grade sets [type] holds in a row from grade I ([gradeSet], decisions-log
+  /// 249), on from the level it kept ([keptLevel]). Items past a cap (from saves made before the caps) stay and count.
+  /// Kept per type while its list of items is the same list with the same length and the level kept the same
+  /// ([_levels]): [priceWith] and [assignPreview] try an item on and take it back, a test may put a new list in, and each
+  /// of those reads the level anew.
   int itemLevel(String type) {
-    final items = upgrades[type], n = items?.length ?? 0, grades = byGrade, kept = grades ? keptLevel(type) : 0;
-    if (_levels[type] case (final was, final len, final g, final k, final level) when identical(was, items) && len == n && g == grades && k == kept) {
+    final items = upgrades[type], n = items?.length ?? 0, kept = keptLevel(type);
+    if (_levels[type] case (final was, final len, final k, final level) when identical(was, items) && len == n && k == kept) {
       return level;
     }
     var level = 0;
-    if (recipeOf(type).isEmpty) {
-      // nothing awakens it
-    } else if (grades) {
+    if (recipeOf(type).isNotEmpty) {
       bool holds(Map<Item, int> set) => set.entries.every((e) => countOf(type, e.key) >= e.value);
       level = kept; // a level kept from a save before the grades (decisions-log 272) counts on from there
       while (level < maxAwaken && holds(gradeSet(type, level + 1))) {
         level++;
       }
-    } else {
-      level = oldItemLevel(type);
     }
-    _levels[type] = (items, n, grades, kept, level);
+    _levels[type] = (items, n, kept, level);
     return level;
   }
 
   /// [type]'s level by the rule before Awaken by grade: the most recipes (up to [maxAwaken]) its items hold in full, any
-  /// item counting as its own; 0 for anything that isn't a troop. [itemLevel] with [byGrade] off, and what a save from
-  /// before the grades keeps ([awakenKept]).
+  /// item counting as its own; 0 for anything that isn't a troop. What a save from before the grades keeps
+  /// ([awakenKept]).
   int oldItemLevel(String type) {
     final recipe = recipeOf(type);
     return recipe.isEmpty ? 0 : recipe.entries.map((e) => countOf(type, e.key) ~/ e.value).reduce(min).clamp(0, maxAwaken);
@@ -2949,35 +2908,25 @@ class Game {
   /// The Awaken level [type] kept from a save before the grades ([awakenKept]), at most [maxAwaken]; 0 without one.
   int keptLevel(String type) => min(awakenKept[type] ?? 0, maxAwaken);
 
-  /// [awakenLevel]'s memo: per type, the list of items it read, its length then, whether by grade, the level kept
-  /// ([keptLevel]) and the level. Every tick asks it for every troop (the awakening skills, the tinted hits), so it isn't
-  /// worked out again each time.
-  final _levels = <String, (List<Item>?, int, bool, int, int)>{};
+  /// [awakenLevel]'s memo: per type, the list of items it read, its length then, the level kept ([keptLevel]) and the
+  /// level. Every tick asks it for every troop (the awakening skills, the tinted hits), so it isn't worked out again each
+  /// time.
+  final _levels = <String, (List<Item>?, int, int, int)>{};
 
-  /// How far [type] is toward its next awakening, per kind of its recipe: (have, need), where have counts
-  /// only the items past the recipes it already awakened with (at most need). All full at [maxAwaken]. By grade
-  /// ([byGrade]): per item of the next grade set ([gradeSet]; at the top, grade III's, full).
+  /// How far [type] is toward its next awakening, per item of the next grade set ([gradeSet]; at the top, grade III's,
+  /// full): (have, need), have at most need.
   Map<Item, (int, int)> awakenProgress(String type) {
     final level = awakenLevel(type);
-    if (byGrade) {
-      return {
-        for (final MapEntry(key: item, value: need) in gradeSet(type, min(level + 1, maxAwaken)).entries)
-          item: (level >= maxAwaken ? need : min(countOf(type, item), need), need),
-      };
-    }
     return {
-      for (final MapEntry(key: item, value: need) in recipeOf(type).entries)
-        item: (level >= maxAwaken ? need : (countOf(type, item) - need * level).clamp(0, need), need),
+      for (final MapEntry(key: item, value: need) in gradeSet(type, min(level + 1, maxAwaken)).entries)
+        item: (level >= maxAwaken ? need : min(countOf(type, item), need), need),
     };
   }
 
-  /// The most [item]s [type] can hold before its next awakening: its recipe's count once more than it
-  /// has awakened (the full [maxAwaken] recipes once it can't awaken any more); 0 for kinds not in it.
-  /// By grade ([byGrade], decisions-log 249): its grade's count of [gradeSet] once the grade is open (at Awaken L, grades
-  /// up to L + 1), else 0; a Cap or a Ring ([outsideAwaken]) one of the kind, any grade ([heldOf]), per level and one more
-  /// (1 to 4).
+  /// The most [item]s [type] can hold before its next awakening (decisions-log 249): its grade's count of [gradeSet] once
+  /// the grade is open (at Awaken L, grades up to L + 1), else 0 (0 for kinds not in its sets); a Cap or a Ring
+  /// ([outsideAwaken]) one of the kind, any grade ([heldOf]), per level and one more (1 to 4).
   int capOf(String type, Item item) {
-    if (!byGrade) return (recipeOf(type)[item] ?? 0) * min(awakenLevel(type) + 1, maxAwaken);
     final level = min(awakenLevel(type), maxAwaken);
     if (outsideAwaken.contains(item.slot)) return recipeOf(type).isEmpty ? 0 : level + 1;
     if (!kindRecipe(type).containsKey(item.slot) || item.grade > level + 1) return 0;
@@ -2985,13 +2934,13 @@ class Game {
   }
 
   /// The item one more [item] at +[plus] on [type] would send back to the Bag, its lowest-plus copy ([Enhance._lowPlus])
-  /// going at its own plus: by grade, a Cap or a Ring given at its kind's cap ([capOf]) swaps out the type's lowest one by
+  /// going at its own plus: a Cap or a Ring given at its kind's cap ([capOf]) swaps out the type's lowest one by
   /// grade, then plus, when [item]'s grade and [plus] are above it (decisions-log 249, 255); any other item at its cap
   /// swaps out its own lowest-plus copy when [plus] is above it (Enhance's swap, decisions-log 255); else null.
   Item? swapOut(String type, Item item, [int plus = 0]) {
     final cap = capOf(type, item);
     if (cap == 0 || heldOf(type, item) < cap) return null;
-    if (byGrade && outsideAwaken.contains(item.slot)) {
+    if (outsideAwaken.contains(item.slot)) {
       final held = {for (final i in upgrades[type] ?? const <Item>[]) if (i.slot == item.slot) i};
       if (held.isEmpty) return null;
       int rank(Item i, int p) => i.grade * 1000 + p; // grade first, then plus (a plus never reaches 1000)
@@ -3051,24 +3000,24 @@ class Game {
   /// at its reach cap ([Stats.reachCap]: [meleeMaxRange] unless spears raised it).
   bool canUse(Item item, String type, {int plus = 0}) => whyNot(item, type, plus: plus) == null;
 
-  /// Why one more [item] can't go on [type], or null when it can ([canUse]). At its cap it is
-  /// [Refusal.awakenFirst] while an awakening would still raise the cap, else [Refusal.maxed]. By grade ([byGrade]): a
-  /// grade not open yet is [Refusal.awakenFirst], a full grade [Refusal.maxed] (its cap never rises), and a Cap or a Ring
-  /// at its cap goes on when it swaps out a lower grade ([swapOut]). An enhanced one ([plus], decisions-log 255) at its cap
+  /// Why one more [item] can't go on [type], or null when it can ([canUse]). By grade (decisions-log 249): a grade not
+  /// open yet is [Refusal.awakenFirst], a full grade [Refusal.maxed] (its cap never rises; a Cap's or a Ring's rises with
+  /// each awakening, [Refusal.awakenFirst] until the last), and a Cap or a Ring at its cap goes on when it swaps out a
+  /// lower grade ([swapOut]). An enhanced one ([plus], decisions-log 255) at its cap
   /// goes on when it swaps out a lower plus.
   Refusal? whyNot(Item item, String type, {int plus = 0}) {
     final cap = capOf(type, item);
-    if (cap == 0) return byGrade && kindRecipe(type).containsKey(item.slot) ? Refusal.awakenFirst : Refusal.notInRecipe;
+    if (cap == 0) return kindRecipe(type).containsKey(item.slot) ? Refusal.awakenFirst : Refusal.notInRecipe;
     if (item == Item.bow && statsOf(type).melee && statsOf(type).range >= statsOf(type).reachCap) return Refusal.reach;
     if (heldOf(type, item) < cap || swapOut(type, item, plus) != null) return null;
-    final rises = byGrade ? outsideAwaken.contains(item.slot) && awakenLevel(type) < maxAwaken : awakenLevel(type) + 1 < maxAwaken;
+    final rises = outsideAwaken.contains(item.slot) && awakenLevel(type) < maxAwaken;
     return rises ? Refusal.awakenFirst : Refusal.maxed;
   }
 
-  /// Why one more [item] can't go on [type], as the player reads it ([refusalNames]): by grade ([byGrade], decisions-log
-  /// 249) a grade whose slots open with an Awaken says which, its tooltip's line ([gradeOpensAt]); else [refusalNames]'s.
+  /// Why one more [item] can't go on [type], as the player reads it ([refusalNames]): a grade whose slots open with an
+  /// Awaken (decisions-log 249) says which, its tooltip's line ([gradeOpensAt]); else [refusalNames]'s.
   String itemRefusal(Item item, String type, Refusal refusal) =>
-      byGrade && refusal == Refusal.awakenFirst && capOf(type, item) == 0 ? gradeOpensAt(item) : refusalNames[refusal]!;
+      refusal == Refusal.awakenFirst && capOf(type, item) == 0 ? gradeOpensAt(item) : refusalNames[refusal]!;
 
   /// Every troop type for one more [item], in the troop box's order: (type, taken, cap, why not or null).
   /// The bag's item picker lists these.
@@ -3154,20 +3103,12 @@ class Game {
                 ? null
                 : itemRefusal(item, type, refusal); // the bag's picker, the drop popup (decisions-log 252)
     final level = awakenLevel(type);
-    // Toward the awakening after [level]: every recipe kind's items past the recipes [level] took, at most its need.
+    // Toward the awakening after [level]: the next grade set's items held, at most each one's count (decisions-log 249).
     (int, int)? progress() {
       if (level >= maxAwaken) return null;
       var (have, need) = (0, 0);
-      if (byGrade) {
-        // By grade: the next grade set's items held, at most each one's count (decisions-log 249).
-        for (final MapEntry(key: item, value: n) in gradeSet(type, level + 1).entries) {
-          have += min(countOf(type, item), n);
-          need += n;
-        }
-        return (have, need);
-      }
-      for (final MapEntry(key: kind, value: n) in recipeOf(type).entries) {
-        have += (countOf(type, kind) - n * level).clamp(0, n);
+      for (final MapEntry(key: item, value: n) in gradeSet(type, level + 1).entries) {
+        have += min(countOf(type, item), n);
         need += n;
       }
       return (have, need);
@@ -3297,7 +3238,7 @@ class Game {
         'upgrades': {for (final e in upgrades.entries) e.key: [for (final i in e.value) i.name]},
         'relicBag': {for (final e in relicBag.entries) e.key.name: e.value},
         if (materials.isNotEmpty) 'materials': {for (final e in materials.entries) e.key.name: e.value}, // the Towns' (town.dart)
-        if (towns && matsSeen.isNotEmpty) 'matsSeen': [for (final m in matsSeen) m.name], // the forge's (town.dart)
+        if (matsSeen.isNotEmpty) 'matsSeen': [for (final m in matsSeen) m.name], // the forge's (town.dart)
         if (storeBought.isNotEmpty) 'storeBought': {for (final e in storeBought.entries) e.key.name: e.value},
         if (pusaka.isNotEmpty) 'pusaka': {for (final e in pusaka.entries) e.key.name: e.value.toJson()},
         if (notes.isNotEmpty) 'notes': [...notes], // the one-time messages shown
@@ -3308,7 +3249,7 @@ class Game {
         if (toReplace.isNotEmpty) 'toReplace': [for (final f in toReplace) {'type': f.type, 'x': f.post.x, 'y': f.post.y}],
         if (autoReplace) 'autoReplace': true, // Auto, the spawn bar's (decisions-log 283)
         if (ascended.isNotEmpty) 'ascended': ascended,
-        if (byGrade) 'awakenKept': awakenKept, // empty too: this save's items are by grade (decisions-log 272)
+        'awakenKept': awakenKept, // empty too: this save's items are by grade (decisions-log 272)
         if (tempa.isNotEmpty) 'tempa': tempa,
         if (fallenHeroes.isNotEmpty) 'fallenHeroes': [for (final f in fallenHeroes) f.toJson()],
         // The boss chests waiting (draft.dart), always written: a save without the key is from before them and gets its
@@ -3318,10 +3259,10 @@ class Game {
         if (chestsGiven > 0) 'chestsGiven': chestsGiven,
         if (serpihan > 0) 'serpihan': serpihan,
         ..._omenJson, // the Bayangan (omen.dart): no key while they are off
-        ..._townJson, // the Towns (town.dart): no key while they are off
+        ..._townJson, // the Towns (town.dart)
         ..._boostsJson, // the Tavern's boosts running (tavern.dart): no key while none runs
-        ..._enhanceJson, // Enhance's pluses (enhance.dart): no key with the Towns off or nothing enhanced
-        ..._wishJson, // the Wishlist (wishlist.dart): no key with the Towns off or no wish
+        ..._enhanceJson, // Enhance's pluses (enhance.dart): no key with nothing enhanced
+        ..._wishJson, // the Wishlist (wishlist.dart): no key with no wish
         'troops': [
           for (final u in troops.where((u) => u.alive))
             {
@@ -3463,6 +3404,7 @@ class Game {
       if (Relic.values.asNameMap()[name] case final r? when r.rarity == Rarity.legenda) legendsFound.add(r);
     }
     legendsFound.addAll(pusaka.keys.where((r) => r.rarity == Rarity.legenda));
+    final loaded = <(Unit, double)>[]; // each troop and the HP it was saved with
     for (final t in j['troops'] as List) {
       final type = t['type'] as String;
       final u = _newTroop(type, Point((t['x'] as num).toDouble(), (t['y'] as num).toDouble()), t['name'] as String?);
@@ -3486,14 +3428,13 @@ class Game {
       for (final r in (t['relics'] as List?) ?? [?t['relic']]) {
         if (Relic.values.asNameMap()[r] case final relic? when relic.pusaka) copies.add(relic);
       }
-      _loadedHp.add((u, (t['hp'] as num).toDouble()));
+      loaded.add((u, (t['hp'] as num).toDouble()));
     }
     // A save's `runTypes` (decisions-log 141's roster, gone with 201) is no longer read.
     _refitTroops(); // the Heroes' stats and their aura (and an oath's: the types alive), now that every troop is in
     // Saves from before names get one now; saves from before defence counted shields as HP, so a troop
-    // can't come back with more than it has now. Under a plain Game()'s rules: [boardRules] fits them again under the
-    // board's, from the same saved HP ([_loadedHp]).
-    _loadedHpBack();
+    // can't come back with more than it has now.
+    _loadedHpBack(loaded);
     // A save from before the Pusaka: its artefacts become Pusaka, bound by default (the HP Dragon Heart gives comes
     // with it), and the one-time message waits ([pusakaNote]); one with none has nothing to tell.
     final migrated = _migratePusaka(copies);
@@ -3703,7 +3644,7 @@ class Game {
     _grailWatch.clear();
     _fxWave(); // the Pusaka's `waveStart` Fx (pusaka_engine.dart)
     _spiritWards(); // Spirit Ward's shields (relics.dart)
-    if (towns) _relicWave(); // the forge's nine: charges and stacks gone, counted afresh (relics.dart)
+    _relicWave(); // the forge's nine: charges and stacks gone, counted afresh (relics.dart)
     relicsBack.clear();
     grailFirst = null;
     _staggerAwaken(); // every awakening skill comes ready over the wave's first 0–3 s (awaken_skills.dart)
@@ -3769,7 +3710,7 @@ class Game {
         tide: (hp: tide(wave, tideHp, waveTideFrom), dmg: tide(wave, tideDmg, waveTideFrom), gap: spawnGapOf(wave, wavePaceFrom), over: waveOver.waves),
         pusaka: pusakaState,
         omens: _omenState,
-        materials: towns ? {for (final MapEntry(:key, :value) in materials.entries) key.name: value} : null,
+        materials: {for (final MapEntry(:key, :value) in materials.entries) key.name: value},
         boosts: boosts.isEmpty ? null : {for (final b in boosts) b.kind.name: b.left})); // the Tavern's (tavern.dart)
   }
 
@@ -3896,37 +3837,21 @@ class Game {
   }
 
   /// Turns on the owner's limits the way the board plays (decisions-log 141, 201): [armyMax] [armyMaxBoard] and
-  /// [typeCap] [typeCapBoard]; and the boss chest, [offers] (decisions-log 152); the Towns, always (decisions-log 237,
-  /// 296); the troops' skill wind-ups, [skillWinds] (decisions-log 299). This game, for a cascade.
-  ///
-  /// A troop's stats are fitted when it comes in ([Unit.stats]), and [Game.fromJson] fits a save's troops under a plain
-  /// Game()'s rules, the Towns off (the old items' numbers, no enhance pluses, Awaken by the old recipe): turning the
-  /// Towns on fits them again under the board's, each back at its saved HP ([_loadedHp]), so a "Continue" fights with
-  /// the stats the save was made with (decisions-log 317).
+  /// [typeCap] [typeCapBoard]; and the boss chest, [offers] (decisions-log 152); the troops' skill wind-ups,
+  /// [skillWinds] (decisions-log 299). This game, for a cascade. None of them changes a troop's stats, so a save's troops
+  /// ([Game.fromJson] fits them under the game's one set of rules, decisions-log 317, 321) stay as loaded.
   Game boardRules() {
-    final refit = !towns;
     armyMax = armyMaxBoard;
     typeCap = typeCapBoard;
     offers = true; // and the boss chest (draft.dart, P3)
-    towns = true; // and the Towns (town.dart)
     skillWinds = true; // and the troops' skill wind-ups (skill_strips.dart)
-    if (refit) {
-      _refitTroops();
-      _loadedHpBack();
-    }
-    _loadedHp.clear();
     return this;
   }
 
-  /// The troops [Game.fromJson] read and the HP each was saved with, for [boardRules]; empty in a new game, and once
-  /// the board's rules are on. Not saved.
-  final _loadedHp = <(Unit, double)>[];
-
-  /// Each troop [Game.fromJson] read back at the HP it was saved with, at most its max under the rules it is fitted to
-  /// now ([_loadedHp]): at the load, and again when [boardRules] fits it under the board's. A load's restore, not a heal
-  /// (test/heal_funnel_test.dart's `notHeals`).
-  void _loadedHpBack() {
-    for (final (u, hp) in _loadedHp) {
+  /// Each troop [Game.fromJson] read ([loaded]) back at the HP it was saved with, at most its max under the rules it is
+  /// fitted to. A load's restore, not a heal (test/heal_funnel_test.dart's `notHeals`).
+  void _loadedHpBack(List<(Unit, double)> loaded) {
+    for (final (u, hp) in loaded) {
       u.hp = min(hp, u.maxHp.toDouble());
     }
   }
@@ -3954,7 +3879,7 @@ class Game {
   String? capWarning() {
     if (!canStartWave || !capPressed || (capWarnedAt != null && wave - capWarnedAt! < capWarnEvery)) return null;
     capWarnedAt = wave;
-    return capWarningText(armyMax!, tidePercent(wave + 1, shownTideFrom), towns: towns);
+    return capWarningText(armyMax!, tidePercent(wave + 1, shownTideFrom));
   }
 
   /// The limits' one-time notes due for this game (decisions-log 141, 201; their keys in [notes]: "army", "over",
@@ -4415,7 +4340,7 @@ class Game {
     u.attackedAt = t;
     if (omensOn && u.side == Side.troop) u.lastFoe = (foe: foe, at: t); // whom it fights, for the Bayangan Blindside (omen.dart)
     var dmg = u.stats.dmg * _blowK(u, u.stats.dmg, foe); // a worn fury's every 3rd blow, and its type's War Drum's (pusaka_engine.dart)
-    if (u.relics.isNotEmpty && towns) dmg *= _relicBlowK(u, foe, dmg); // the forge's nine, under the relics' cap (relics.dart)
+    if (u.relics.isNotEmpty) dmg *= _relicBlowK(u, foe, dmg); // the forge's nine, under the relics' cap (relics.dart)
     final pummel = omensOn && u.side == Side.enemy && _omenPummel(u); // a monster's every 3rd under Pummel (omen.dart)
     final sap = omensOn && u.side == Side.enemy && _omenSapBlow(u); // and its every 4th under Sap, on the same count
     if (u.stats.shotSpeed > 0) {
@@ -4831,33 +4756,20 @@ class Game {
       if (by != null && by.side == Side.troop && by.relics.isNotEmpty) _relicKill(by); // Hot Streak's stack (relics.dart)
       _monsterFell(u); // a slime mini boss's Split, a grave for Grave Call (boss_skills.dart)
       if (omensOn && by?.side == Side.troop) _omenToll(by!); // Toll: the killer pays a share of its HP (omen.dart)
-      // The wave's boss and mini boss (whatever their type) always drop; a raised mini boss only rolls, so a
-      // necromancer can't be farmed for items either. With the forge (and the Towns) on no item drops: the Smithy makes
-      // them (decisions-log 246). Its item is still drawn and thrown away, so the [loot] dice stay where they were.
-      final isBoss = u.tier == Tier.boss, before = (drops.length, relicDrops.length), crafted = towns;
+      // The loot dice roll as when items and relics fell here: the wave's boss and mini boss (whatever their type) draw
+      // their items, a raised mini boss only rolls, and every monster not raised rolls a relic. Nothing drops (the Smithy
+      // makes items and relics, decisions-log 221, 246), but each draw is still made and thrown away, so the [loot] dice
+      // stay where they were (decisions-log 321).
+      final isBoss = u.tier == Tier.boss;
       if (isBoss || (u.tier == Tier.miniBoss && u.raisedBy == null)) {
         for (var i = 0; i < (isBoss ? bossDrops : 1); i++) {
-          final item = Item.values[loot.nextInt(droppedItemKinds)];
-          if (!crafted) drops.add((u.pos + Point(i * 6.0, 0), item));
+          loot.nextInt(droppedItemKinds);
         }
       } else if (loot.nextDouble() < dropChance) {
-        final item = Item.values[loot.nextInt(droppedItemKinds)];
-        if (!crafted) drops.add((u.pos, item));
+        loot.nextInt(droppedItemKinds);
       }
-      if (u.raisedBy == null && loot.nextDouble() < relicChance[u.tier]!) {
-        final relic = droppedRelics[loot.nextInt(droppedRelics.length)]; // never a Pusaka
-        // With the chest on the boss's relic is drawn and thrown away ([chestTakesBossRelic], decisions-log 152): the
-        // chest replaces it, and the [loot] dice stay where they were. With the Towns on every relic is (relics are
-        // crafted at a Smithy, decisions-log 221): the items fall as they did.
-        if (!towns && !(u.tier == Tier.boss && offers && chestTakesBossRelic)) relicDrops.add((u.pos + const Point(0, -6.0), relic));
-      }
-      if (towns && u.raisedBy == null) _dropMaterials(u); // town.dart: its type's part by its rank, on [matDice]
-      for (final (_, item) in drops.skip(before.$1)) {
-        _emit(LootDropped(wave, t, from: u.type, tier: u.tier, item: item));
-      }
-      for (final (_, relic) in relicDrops.skip(before.$2)) {
-        _emit(LootDropped(wave, t, from: u.type, tier: u.tier, relic: relic));
-      }
+      if (u.raisedBy == null && loot.nextDouble() < relicChance[u.tier]!) loot.nextInt(droppedRelics.length);
+      if (u.raisedBy == null) _dropMaterials(u); // town.dart: its type's part by its rank, on [matDice]
     } else {
       final back = [...u.relics];
       for (final r in back) {
@@ -5124,7 +5036,7 @@ class Game {
       ..swung = false;
     impacts.add((o.pos, 'holy')); // the heal burst in holy colours, whatever the healer's awakening
     var dmg = _healOf(u) * holyShare * _blowK(u, _healOf(u) * holyShare, o);
-    if (u.relics.isNotEmpty && towns) dmg *= _relicBlowK(u, o, dmg); // the forge's nine, under the relics' cap (relics.dart)
+    if (u.relics.isNotEmpty) dmg *= _relicBlowK(u, o, dmg); // the forge's nine, under the relics' cap (relics.dart)
     _holyHurt(o, dmg, u, Hit.smite);
     if (u.relics.isNotEmpty) _relicLanded(u, o, dmg, Hit.smite); // Mana Siphon (relics.dart)
     sfx.add(Sfx.hit);
@@ -5832,16 +5744,6 @@ class Game {
       lastBonus = waveBonus(wave);
       gold += lastBonus;
       score += waveScore * wave;
-      lastLoot = [for (final (_, item) in drops) item];
-      for (final item in lastLoot) {
-        inventory[item] = (inventory[item] ?? 0) + 1;
-      }
-      drops.clear();
-      lastRelics = [for (final (_, r) in relicDrops) r];
-      for (final r in lastRelics) {
-        relicBag[r] = (relicBag[r] ?? 0) + 1;
-      }
-      relicDrops.clear();
       lastMaterials = {...waveMaterials};
       for (final MapEntry(key: m, value: n) in waveMaterials.entries) {
         materials[m] = (materials[m] ?? 0) + n;

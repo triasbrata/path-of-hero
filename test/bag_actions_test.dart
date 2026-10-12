@@ -131,7 +131,6 @@ Future<List<(BagAction, bool, String?, String?)>> actionsOf(WidgetTester tester,
 /// on the knight, the Grail (40 points on its Carve bar) and Dawn Star in the Vault, Oath of One.
 Game stocked({int wave = 45}) {
   final g = Game(Random(1)).boardRules()
-    ..towns = false // the Towns off (tests only, decisions-log 296: the rules from before them; the book is the Towns' still)
     ..armyMax = null
     ..gold = 5000000
     ..wave = wave;

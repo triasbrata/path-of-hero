@@ -89,7 +89,6 @@ Game tavernGame({int wave = 20, int gold = 40000, TownRules rules = const TownRu
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
     ..tavernDice = Random(4)
-    ..towns = true
     ..townRules = rules
     ..armyMax = null
     ..wave = wave;

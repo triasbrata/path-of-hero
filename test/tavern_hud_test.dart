@@ -53,7 +53,6 @@ Game fieldGame({bool marked = true}) {
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
     ..tavernDice = Random(4)
-    ..towns = true
     ..armyMax = null
     ..wave = 20;
   for (final type in ['soldier', 'knight', 'archer', 'priest']) {
@@ -76,11 +75,10 @@ void main() {
     testWidgets("the boosts' chips at $tag: under the Town chip, right-aligned, their tooltips; the log keeps clear",
         (tester) async {
       final b = await boot(tester, size);
-      final g = b.state = fieldGame()
+      b.state = fieldGame()
         ..boosts.addAll([RunningBoost(Boost.feast, 2), RunningBoost(Boost.plate, 1, type: 'knight')]);
       await frames(tester, 30);
       final screen = Offset.zero & size, meter = b.waveMeter, town = b.townChip, chips = b.boostChips;
-      expect(g.towns, isTrue, reason: 'the Towns, and with them the Tavern, on as shipped');
       expect(town, isNot(Rect.zero), reason: 'a Town marked');
       expect(chips, hasLength(2));
       for (final (i, r) in chips.indexed) {

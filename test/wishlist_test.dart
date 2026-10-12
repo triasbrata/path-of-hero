@@ -4,7 +4,7 @@
 // have read live); a type's whole next Awaken in one go, on and off; a wish met shown done until the type's Awaken drops
 // it (a Cap's or a Ring's at once); the Items board's order (open wishes first in their grade); what a wish still lacks
 // and the materials the open wishes take; the save's `wishlist` (a round trip with the counts, a 282 save's lists as
-// held + 1, an old save without it, unknown names skipped, no key with nothing wished or the Towns off); free lines
+// held + 1, an old save without it, unknown names skipped, no key with nothing wished); free lines
 // (decisions-log 302: any item or relic the Smithy makes, for the Bag to hold a count of it; met by a craft or on leaving
 // the Town, it drops off; its recipe's parts for the rest; the save's `free`); and nothing crafts or gives by itself. No game is ever drawn here: the pages are wishlist_ui_test.dart's.
 import 'dart:convert';
@@ -19,7 +19,6 @@ import 'package:tower_defense/main.dart' show smithyItemOrder, smithyRelics;
 Game forgeGame({bool inTown = false}) {
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
-    ..towns = true
     ..armyMax = null
     ..wave = 20;
   for (final type in ['soldier', 'knight', 'archer', 'priest']) {
@@ -61,11 +60,6 @@ void main() {
       expect(troopTypes.keys.any((t) => g.canWish(t, item)), isTrue, reason: '$item');
     }
     expect(g.canWish('slime', Item.sword), isFalse, reason: 'not a troop type');
-
-    // The Towns off (a plain Game(), tests only): no Wishlist at all.
-    final noTowns = Game();
-    expect((noTowns.wishOn, noTowns.wish('knight', Item.sword)), (false, false));
-    expect(noTowns.wishlist, isEmpty);
   });
 
   test('wish, unwish, toggle: one list per type, in the order put on, once each', () {
@@ -157,8 +151,6 @@ void main() {
     expect(g.itemLevel('soldier'), maxAwaken);
     expect(g.wishSetOf('soldier'), isEmpty);
     expect((g.wishSet('soldier'), g.setWished('soldier')), (false, false));
-    // The Towns off: none.
-    expect(Game().wishSetOf('knight'), isEmpty);
   });
 
   test('done: a wish met shows done until the type\'s Awaken drops it; a Cap\'s or a Ring\'s drops at once', () {
@@ -265,7 +257,7 @@ void main() {
     expect(g.wishRows, isEmpty);
   });
 
-  test('the save: `wishlist` round trip in order; none without a wish or with the forge off; an old save has none', () {
+  test('the save: `wishlist` round trip in order; none without a wish; an old save has none', () {
     final g = forgeGame()
       ..wish('knight', Item.royalSword)
       ..wish('knight', Item.leatherCap)
@@ -313,9 +305,6 @@ void main() {
         'slime': {'sword': 1},
       };
     expect(Game.fromJson(goals).wishlist, {'knight': {Item.royalSword: 2}});
-    // The Towns off (tests only) write none (their game has no Wishlist).
-    g.towns = false;
-    expect(g.toJson().containsKey('wishlist'), isFalse);
     expect(Game.saveVersion, 3, reason: 'an added key, its value read in both shapes: no new format');
   });
 
@@ -324,7 +313,6 @@ void main() {
     final g = forgeGame(inTown: true)..gold = 40000;
     final relic = smithyRelics(g).first;
     expect((g.canWishFree(Item.steelSword), g.canWishFree(relic), g.canWishFree(Mat.wolfClaw)), (true, true, false));
-    expect(Game().canWishFree(Item.sword), isFalse, reason: 'the Towns off');
     // On for two more than the Bag holds, once; its have read live.
     g.inventory[Item.steelSword] = 1;
     expect(g.wishFreeAdd(Item.steelSword, 2), isTrue);

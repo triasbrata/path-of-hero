@@ -6,6 +6,7 @@ import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart' show logLine;
 
 import 'hero_skill_helpers.dart';
+import 'real_rules.dart';
 
 // The game's event stream (#60, lib/game_events.dart): each kind lands in the log once, where it happens; the
 // log's cap; the listeners (the telemetry, #64, subscribes there) and the telemetry's own events, which reach
@@ -78,20 +79,6 @@ void main() {
     expect(of<HeroSkillCast>(g).map((e) => (e.name, e.type, e.skill)), [(h.name, h.type, HeroSkill.judgement)]);
   });
 
-  test('what a slain monster drops is logged, each item and relic once, with who dropped it', () {
-    final g = bareGame();
-    final a = placeNow(g, 'archer', 0, 3);
-    startAt(g, 1);
-    foeAt(g, 'slime', const Point(400.0, 20.0)); // far and still: the wave stays on, the drops on the field
-    final m = foeAt(g, 'orc', a.pos + const Point(40.0, 0), Tier.miniBoss)..hp = 1;
-    tickUntil(g, () => !m.alive, 'the archer shoots down the mini boss at 1 HP in its reach', max: 100);
-    expect(g.drops.length, 1); // a mini boss always drops one item
-    final drops = of<LootDropped>(g);
-    expect(drops.map((d) => d.item).whereType<Item>(), [for (final (_, i) in g.drops) i]);
-    expect(drops.map((d) => d.relic).whereType<Relic>(), [for (final (_, r) in g.relicDrops) r]);
-    expect(drops.every((d) => d.from == 'orc' && d.tier == Tier.miniBoss), isTrue);
-  });
-
   test('a strong monster coming in is logged once; a normal or an elite one is not', () {
     final g = bareGame();
     placeNow(g, 'knight_templar', 0, 3)
@@ -112,13 +99,14 @@ void main() {
     expect(logLine(TroopFell(4, 1, name: 'Budi', type: 'soldier', killer: 'orc_rider', killerTier: Tier.miniBoss)),
         'Budi (Soldier) fell to Mini Boss Orc Rider');
     expect(logLine(TroopFell(4, 1, name: 'Budi', type: 'soldier', killer: 'orc', killerTier: Tier.normal)), 'Budi (${troopTypeNames['soldier']}) fell to Orc');
-    expect(logLine(LootDropped(4, 1, from: 'elite_orc', tier: Tier.highElite, item: Item.sword)), '${tierNames[Tier.highElite]} ${monsterTypeNames['elite_orc']} drops ${itemNames[Item.sword]}');
     expect(logLine(StrongFoe(5, 1, type: boss, tier: Tier.boss)), '${tierNames[Tier.boss]} appears: ${monsterTypeNames[boss]}');
     expect(logLine(StrongFoe(6, 1, type: 'werebear', tier: Tier.miniBoss)), 'Mini Boss appears: Werebear');
   });
 
   test('a Hero made on a heroEvery-th win is logged once, after the win, with its attributes and skill', () {
-    final g = bareGame()..heroes = Random(3);
+    final g = bareGame()
+      ..heroes = Random(3)
+      ..townRules = noTowns; // no Town marked after the win (its events: town_test.dart)
     placeNow(g, 'knight', 2, 3);
     startAt(g, heroEvery);
     winNow(g);
@@ -132,7 +120,7 @@ void main() {
 
   test('an awakening is logged once, with its level; an item that awakens nothing is not', () {
     final g = bareGame();
-    final recipe = awakenRecipe['soldier']!, items = [for (final e in recipe.entries) ...List.filled(e.value, e.key)];
+    final recipe = g.gradeSet('soldier', 1), items = [for (final e in recipe.entries) ...List.filled(e.value, e.key)];
     g.inventory.addAll(recipe);
     for (final (i, item) in items.indexed) {
       expect(g.useItem(item, 'soldier'), isTrue, reason: item.name);
@@ -163,7 +151,7 @@ void main() {
   });
 
   test('every listener gets each event as it is logged, in order, and the telemetry\'s own ones, which the log never keeps', () {
-    final g = bareGame();
+    final g = bareGame()..townRules = noTowns; // the roll after the win, never a Town marked (town_test.dart)
     final heard = <GameEvent>[], also = <EventKind>[];
     g.listeners
       ..add(heard.add)
@@ -172,7 +160,7 @@ void main() {
     startAt(g, heroEvery);
     winNow(g);
     expect(heard.where((e) => e is! TraceEvent), g.log.entries);
-    expect(also, [EventKind.bought, EventKind.waveStarted, EventKind.waveWon, EventKind.heroMade]);
+    expect(also, [EventKind.bought, EventKind.waveStarted, EventKind.waveWon, EventKind.heroMade, EventKind.townRolled]); // the Towns' roll
     expect(g.log.entries.whereType<TraceEvent>(), isEmpty);
   });
 
@@ -185,7 +173,7 @@ void main() {
     placeNow(g, 'knight', 2, 4)
       ..hero = true
       ..heroSkill = HeroSkill.cleave;
-    final recipe = awakenRecipe['soldier']!;
+    final recipe = g.gradeSet('soldier', 1);
     g.inventory.addAll(recipe);
     for (final e in recipe.entries) {
       for (var i = 0; i < e.value; i++) {
@@ -264,7 +252,9 @@ void main() {
   });
 
   test('the store tells the listeners what it sold and for how much, and what it bought back; a refused deal nothing', () {
-    final g = bareGame()..wave = storeFrom;
+    final g = bareGame()
+      ..wave = storeFrom
+      ..inTown = true; // the Shop deals only in a Town
     final heard = traces(g);
     final price = g.buyPrice(Relic.grail), back = g.sellPrice(Item.potion);
     g.inventory[Item.potion] = 3;

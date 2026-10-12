@@ -8,19 +8,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart' show logLine;
 
+import 'real_rules.dart';
 import 'hero_skill_helpers.dart';
-
-/// Every item [type]'s awakening recipe asks for, [level] times over: the type at awakening [level].
-List<Item> recipe(String type, int level) => [
-      for (final MapEntry(key: item, value: n) in awakenRecipe[type]!.entries)
-        for (var i = 0; i < n * level; i++) item,
-    ];
 
 /// A game whose store is open (wave [storeFrom] won) with [gold], and [type] at Bangkit 3 from its items.
 Game atThree(String type, [int gold = 1000000]) => bareGame()
   ..wave = storeFrom
   ..gold = gold
-  ..upgrades[type] = recipe(type, maxAwaken);
+  ..upgrades[type] = awakenItems(type, maxAwaken);
 
 void main() {
   test('the constants: two levels past Bangkit 3, x1.25 damage, the same troop price, -15% cooldown, 100k and 250k', () {
@@ -32,9 +27,9 @@ void main() {
 
   test('the level counts what was bought only at Bangkit 3 from the items', () {
     final g = bareGame()..ascended['knight'] = 2;
-    g.upgrades['knight'] = recipe('knight', 2);
+    g.upgrades['knight'] = awakenItems('knight', 2);
     expect((g.itemLevel('knight'), g.awakenLevel('knight')), (2, 2), reason: 'Bangkit 2: what was bought waits');
-    g.upgrades['knight'] = recipe('knight', 3);
+    g.upgrades['knight'] = awakenItems('knight', 3);
     expect((g.itemLevel('knight'), g.awakenLevel('knight')), (3, 5));
     g.ascended['knight'] = 1;
     expect(g.awakenLevel('knight'), 4);
@@ -45,11 +40,11 @@ void main() {
     for (final type in ['knight', 'archer', 'priest', 'knight_templar']) {
       final g = atThree(type), base = troopTypes[type]!, three = g.statsOf(type);
       final price = g.priceOf(type), caps = {for (final i in Item.values) i: g.capOf(type, i)};
-      final heavy = heavyTypes.contains(type) ? 1 + heavyBuff : 1.0;
       for (final (level, hp, dmg) in [(4, 2.0, 1.25), (5, 2.25, 1.5625)]) {
         g.ascended[type] = level - maxAwaken;
         final s = g.statsOf(type);
-        expect(s.hp, ((base.hp * hp).round() * heavy).round(), reason: '$type $level');
+        // The HP of Awaken 3's x1.75 scaled to x2 / x2.25, the items' (an amulet's) share with it (decisions-log 321).
+        expect(s.hp, closeTo(three.hp * hp / (1 + awakenHp * maxAwaken), 2), reason: '$type $level');
         expect(s.mp, (base.mp * hp).round(), reason: '$type $level');
         expect(s.mpRegen, closeTo(base.mpRegen * hp, 1e-9));
         expect(s.dmg, closeTo(three.dmg * dmg, 1e-9), reason: '$type $level');
@@ -92,8 +87,8 @@ void main() {
     expect(g.ascendPriceOf('knight'), 100000);
     expect(g.ascend('knight'), isTrue);
     expect((g.gold, g.ascended['knight'], g.awakenLevel('knight'), g.ascendPriceOf('knight')), (300000, 1, 4, 250000));
-    final gain = troopTypes['knight']!.hp * awakenHp;
-    expect(k.maxHp, maxHp + gain.round());
+    expect(k.maxHp, closeTo(maxHp * (1 + awakenHp * 4) / (1 + awakenHp * 3), 1), reason: 'x2 of the base for x1.75, with its amulets');
+    expect(k.maxHp, g.statsOf('knight').hp);
     expect(k.hp, closeTo(k.maxHp - 30, 1e-9), reason: 'the HP gained comes with it');
     expect(k.stats.dmg, closeTo(g.statsOf('knight').dmg, 1e-9));
     expect(other.maxHp, otherHp, reason: 'another type');
@@ -125,7 +120,7 @@ void main() {
       ..heroSkills = false
       ..monsterSkills = false
       ..ascended['soldier'] = 2;
-    g.upgrades['soldier'] = recipe('soldier', 3);
+    g.upgrades['soldier'] = awakenItems('soldier', 3);
     final u = placeNow(g, 'soldier', 2, 3);
     g
       ..startWave()
@@ -144,14 +139,14 @@ void main() {
     expect(u.mp, closeTo(u.stats.mp - AwakenSkill.disarm.costAt(3), 1e-6));
   });
 
-  test('the book: the stars\' tooltip names the Shop from Bangkit 3, Max at 5; the section\'s card', () {
+  test('the book: the stars\' tooltip names the Army page from Bangkit 3, Max at 5; the section\'s card', () {
     final g = atThree('priest');
-    expect((g.awakenInfo('priest').$1, g.awakenInfo('priest').$2.last), (awakenName(3), (null, '${awakenName(4)}: buy in the Shop')));
+    expect((g.awakenInfo('priest').$1, g.awakenInfo('priest').$2.last), (awakenName(3), (null, '${awakenName(4)}: buy on the ${Words.army} page')));
     g.ascended['priest'] = 1;
-    expect(g.awakenInfo('priest').$2.last, (null, '${awakenName(5)}: buy in the Shop'));
+    expect(g.awakenInfo('priest').$2.last, (null, '${awakenName(5)}: buy on the ${Words.army} page'));
     g.ascended['priest'] = 2;
     expect(g.awakenInfo('priest').$1, awakenName(5));
-    expect(g.awakenInfo('priest').$2.reversed.take(2).toList(), [(null, '${tempaName(1)}: buy in the Shop'), (null, "Max: can't Awaken more")],
+    expect(g.awakenInfo('priest').$2.reversed.take(2).toList(), [(null, '${tempaName(1)}: buy on the ${Words.army} page'), (null, "Max: can't Awaken more")],
         reason: 'then Tempa (tempa_test.dart)');
     g.ascended.clear();
     expect(g.ascendInfo('priest').$1, awakenName(4));
@@ -194,24 +189,23 @@ void main() {
   });
 
   test('the bag\'s hint: how far the bag\'s items take a type, and the Tas tab\'s dot for a fielded one', () {
-    final g = bareGame()..upgrades['archer'] = recipe('archer', 2);
+    final g = bareGame()..upgrades['archer'] = awakenItems('archer', 2);
     placeNow(g, 'archer', 0, 2);
     expect((g.bagLevel('archer'), g.bagAwakens), (2, false));
-    for (final MapEntry(key: item, value: n) in awakenRecipe['archer']!.entries) {
-      g.inventory[item] = n; // just Bangkit 3's
-    }
+    final three = g.gradeSet('archer', 3), short = three.keys.first;
+    g.inventory.addAll(three); // just Bangkit 3's grade set
     expect((g.bagLevel('archer'), g.bagAwakens), (3, true));
-    g.inventory[Item.gloves] = g.inventory[Item.gloves]! - 1; // one short
+    g.inventory[short] = g.inventory[short]! - 1; // one short
     expect((g.bagLevel('archer'), g.bagAwakens), (2, false));
-    g.inventory[Item.gloves] = 99;
-    expect(g.bagLevel('wizard'), 0, reason: 'its staffs and potions are missing');
-    for (final item in [Item.sword, Item.shield, Item.boots, Item.potion, Item.staff, Item.bow]) {
+    g.inventory[short] = 99;
+    expect(g.bagLevel('wizard'), 0, reason: 'its grade sets are missing');
+    for (final item in g.awakenNeeds('wizard', maxAwaken).keys) {
       g.inventory[item] = 99;
     }
-    expect(g.bagLevel('wizard'), maxAwaken, reason: 'counts only: the bag fills it three times');
+    expect(g.bagLevel('wizard'), maxAwaken, reason: 'counts only: the bag holds its three grade sets');
     g.units.clear(); // no archer fielded: no dot, though the bag still holds it
     expect((g.bagLevel('archer'), g.bagAwakens), (3, false));
-    g.upgrades['archer'] = recipe('archer', 3);
+    g.upgrades['archer'] = awakenItems('archer', 3);
     expect(g.bagLevel('archer'), 3, reason: 'Bangkit 3: the rest is bought');
   });
 }

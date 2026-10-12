@@ -28,7 +28,6 @@ const steps = int.fromEnvironment('STEPS', defaultValue: 62), stepMs = int.fromE
 Game forgeGame({int wave = 20}) {
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
-    ..towns = true
     ..armyMax = null
     ..wave = wave;
   for (final type in ['soldier', 'knight', 'archer', 'priest']) {

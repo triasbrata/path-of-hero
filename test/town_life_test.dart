@@ -264,6 +264,9 @@ void main() {
         ..loot = Random(7)
         ..slots = Random(8)
         ..draft = Random(9)
+        ..matDice = Random(10) // every game has the Towns (decisions-log 321): their dice too
+        ..townDice = Random(11)
+        ..tavernDice = Random(12)
         ..gold = 4000
         ..wave = 3;
       for (final type in ['knight', 'archer', 'priest', 'wizard', 'soldier', 'lancer']) {

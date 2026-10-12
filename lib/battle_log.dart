@@ -30,9 +30,8 @@ Color _pusakaLogInk(Relic r) => switch (r) {
 /// The relic most sent back to the bag (the first by kind among equals).
 Relic _mostBack(Map<Relic, int> back) => back.entries.reduce((a, b) => b.value > a.value || (b.value == a.value && b.key.index < a.key.index) ? b : a).key;
 
-/// The filter chips over the log, and the kinds each shows. A field drop ([EventKind.drop]) had a Loot chip of its own
-/// until decisions-log 317: no item or relic lies on the field of a board game (the Smithy makes them), so it was always
-/// empty; a game with the Towns off (the tests') still lists its drops under All.
+/// The filter chips over the log, and the kinds each shows. A field drop had a Loot chip of its own until decisions-log
+/// 317: no item or relic lies on the field (the Smithy makes them), so it was always empty; its event went in 321.
 enum _LogChip {
   all('All', EventKind.values), // the log holds no TraceEvents
   fell('Fallen', [EventKind.fell]),
@@ -62,8 +61,6 @@ String logLine(GameEvent e) => switch (e) {
       SkillCast(:final name, :final skill) => '$name uses $skill',
       HeroSkillCast(:final name, :final skill) => 'Hero $name: ${skill.title}',
       AwakenSkillCast(:final name, :final skill, :final level) => '$name uses ${skill.titleAt(level)}',
-      LootDropped(:final from, :final tier, :final item, :final relic) =>
-        '${_foeName(from, tier)} drops ${item != null ? itemNames[item] : relicNames[relic]}',
       StrongFoe(:final type, :final tier) => '${tierNames[tier]} appears: ${_monsterName(type)}',
       MonsterSkillCast(:final type, :final tier, :final skill) => '${_foeName(type, tier)}: ${skill.title}',
       HeroMade(:final name, :final type) => '$name (${troopTypeNames[type] ?? type}) is now a Hero!',
@@ -299,7 +296,6 @@ extension on Board {
         AwakenSkillCast(:final level) || Awakened(:final level) || Ascended(:final level) =>
           c.drawImageRect(_img('ui_icons.png'), _icStar & const Size(16, 16), to, level == maxAwaken ? _px : _awakeFxPaints[level - 1]),
         Tempered() => c.drawImageRect(_img('ui_icons.png'), _icStar & const Size(16, 16), to, _awakeFxPaints[tempaFrom - 1]), // Bangkit 5's white
-        LootDropped(:final item, :final relic) => _icon(c, (item ?? relic)!, to),
         StrongFoe() || MonsterSkillCast() => _uiIcon(c, _icSwords, to),
         HeroMade() || HeroRecalled() => _uiIcon(c, _icCrown, to),
         OfferPicked(:final pick) => pick == null ? _uiIcon(c, _icChest, to) : _icon(c, pick, to), // chest_popup.dart

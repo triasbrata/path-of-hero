@@ -1,9 +1,9 @@
-// The Town's Shop's rules (decisions-log 230; loot-items-relics.md "The store", ui-hud.md "The Town's Shop"): with the
-// Towns on the store deals only in a Town (StoreRefusal.town, first), for every kind it buys or sells, while Awaken,
+// The Town's Shop's rules (decisions-log 230; loot-items-relics.md "The store", ui-hud.md "The Town's Shop"): the store
+// deals only in a Town (StoreRefusal.town, first), for every kind it buys or sells, while Awaken,
 // Forge and Recall still buy between any waves; in a Town it sells the materials seen (the forge's shelf, its rules
 // forge_shop_test.dart's) and buys at today's prices, the materials at their own price (town.json), the last one leaving
-// no entry, with its own `material` in the record; the Sell grid (decisions-log 269: shopSellLoot); with the Towns off
-// (tests only) nothing changes. The page: forge_shop_ui_test.dart, shop_tabs_ui_test.dart.
+// no entry, with its own `material` in the record; the Sell grid (decisions-log 269: shopSellLoot). The page:
+// forge_shop_ui_test.dart, shop_tabs_ui_test.dart.
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -12,11 +12,10 @@ import 'package:tower_defense/main.dart' show shopSellLoot;
 
 import 'hero_skill_helpers.dart';
 
-/// A rich game after wave 20 (the store open) with the Towns [on] (off: tests only), [inTown] or not, holding items,
-/// small relics, materials and a Vault Artifact; the Wolf Claw has dropped (on the forge's shelf, [Game.matsSeen]).
-Game shopGame({bool on = true, bool inTown = false}) {
+/// A rich game after wave 20 (the store open), [inTown] or not, holding items, small relics, materials and a Vault
+/// Artifact; the Wolf Claw has dropped (on the forge's shelf, [Game.matsSeen]).
+Game shopGame({bool inTown = false}) {
   final g = bareGame(Random(1))
-    ..towns = on
     ..wave = 20
     ..gold = 100000;
   if (inTown) {
@@ -35,7 +34,7 @@ Game shopGame({bool on = true, bool inTown = false}) {
 void main() {
   final kinds = <Enum>[Item.sword, droppedRelics.first, Mat.wolfClaw, Relic.titanBane];
 
-  test('with the Towns on, outside a Town the store neither buys nor sells anything ("Only in a Town", first); in one it '
+  test('outside a Town the store neither buys nor sells anything ("Only in a Town", first); in one it '
       'deals as today, open from the first Town (town.json shop.from 1, decisions-log 253; locked before a later shop.from)',
       () {
     final g = shopGame();
@@ -131,13 +130,5 @@ void main() {
     g.pusaka[Relic.dragonCrown] = OwnedPusaka(type: 'knight');
     g.pusaka[Relic.oathOfOne] = OwnedPusaka();
     expect([for (final l in shopSellLoot(g)) if (l.kind case Relic(pusaka: true)) l.kind], [Relic.titanBane], reason: 'bound and oaths out');
-  });
-
-  test('with the Towns off nothing changes: the store deals on the field, and no material is ever in its record', () {
-    final g = shopGame(on: false), events = <GameEvent>[];
-    g.listeners.add(events.add);
-    expect((g.inTown, g.whyNotBuy(Item.sword), g.whyNotSell(Item.sword), g.whyNotSell(Relic.titanBane)), (false, null, null, null));
-    expect(g.sell(Item.sword), 1);
-    expect(events.whereType<StoreSold>().single.data, {'item': 'sword', 'relic': null, 'n': 1, 'gain': 1000});
   });
 }

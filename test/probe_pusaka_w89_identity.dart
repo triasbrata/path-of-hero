@@ -5,14 +5,11 @@
 // wave 90 with seeded dice; then a seeded run of waves 90 and 91 with the telemetry listening (as saved and each set at
 // ★2), every record and their hash (catalog step 0b, the Pusaka engine). It prints how long the 45 s fights take (the
 // hot path's cost; not compared). A probe, not part of the suite (no `_test.dart`): a byte golden of a fight would
-// break on every balance change. It plays the save with the Towns ([_towns], its own define: the game's TOWNS define
-// went in decisions-log 296): since the Towns are on (decisions-log 237) the dump moves with them, and
-// `--dart-define=TOWNS=false` gives the Towns-off dump (a plain Game()'s rules, a state only tests reach: the tests',
-// the auto-player's and the replay kit's), a base before that gives. The forge plays with the
-// Towns (its off switch is gone, decisions-log 296), so a run with no define is the game players play: Towns, forge and
-// Tavern on (docs/testing.md names both baselines; on a base from before decisions-log 296 the same dump takes
-// `--dart-define=FORGE=true`). The troops' skills wind up as on the board (decisions-log 299), but in the Towns-off dump;
-// `--dart-define=WINDS=false` gives the board dump from before the wind-ups.
+// break on every balance change. It plays the game players play: the Towns, the forge and the Tavern (every game has
+// them, decisions-log 296, 321; the probe's TOWNS define and its Towns-off dump went with the Towns-off rules; on a base
+// from before decisions-log 321 the same dump is its default run, before 296 with `--dart-define=FORGE=true`). The
+// troops' skills wind up as on the board (decisions-log 299); `--dart-define=WINDS=false` gives the dump from before the
+// wind-ups.
 //
 // Run it on the base with `--dart-define=OUT=<file>` (it writes the dump there), then on the branch with
 // `--dart-define=OUT=<file2> --dart-define=GOLDEN=<file>`: it fails at the first line that differs. Queue
@@ -30,21 +27,14 @@ const _save = 'test/fixtures/save-20261002-2222-w89-sellbug.json';
 
 const _out = String.fromEnvironment('OUT', defaultValue: 'build/pusaka_w89_identity.txt'), _golden = String.fromEnvironment('GOLDEN');
 
-/// Whether the dump plays the Towns: on, the game players play, unless `--dart-define=TOWNS=false` (the Towns-off
-/// dump). The probe's own switch, for tests only: no build of the game reads it (decisions-log 296; until then the
-/// game's `townsOnBoard` was this define, so a base from before 296 reads the same).
-const _towns = bool.fromEnvironment('TOWNS', defaultValue: true);
+/// Whether the troops' skills wind up as on the board ([Game.skillWinds], decisions-log 299), unless
+/// `--dart-define=WINDS=false`, which gives the dump from before them.
+const _winds = bool.fromEnvironment('WINDS', defaultValue: true);
 
-/// Whether the troops' skills wind up as on the board ([Game.skillWinds], decisions-log 299): with the board's Towns (off in
-/// the Towns-off dump, a plain Game()'s rules), unless `--dart-define=WINDS=false`, which gives the dump from before them.
-const _winds = bool.fromEnvironment('WINDS', defaultValue: _towns);
-
-/// The w89 save with its dice seeded ([seed]), as the probes load it, with the Towns as [_towns] says (on a base from
-/// before decisions-log 237, off) and their dice seeded too.
+/// The w89 save with its dice seeded ([seed]), as the probes load it, the Towns' dice too.
 Game _load([int seed = 89]) =>
     Game.fromJson(jsonDecode(File(_save).readAsStringSync()) as Map<String, dynamic>, Random(seed), Random(seed + 100))
       ..seedDice(seed) // every die at the probes' offsets, the Shadows' too (decisions-log 319)
-      ..towns = _towns
       ..skillWinds = _winds;
 
 /// The w89 save's five types, in its saved roster's order (decisions-log 141's `runTypes`, no longer read since 201):

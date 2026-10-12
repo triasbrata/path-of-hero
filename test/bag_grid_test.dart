@@ -69,7 +69,6 @@ Future<void> openBag(WidgetTester tester, Board b) async {
 /// knight beside the free priest, standing at their posts.
 Game bagGame({int wave = 30}) {
   final g = Game(Random(1)).boardRules()
-    ..towns = false // the Towns off (tests only, decisions-log 296: the rules from before them; the book is the Towns' still)
     ..armyMax = null
     ..gold = 5000000
     ..wave = wave;
@@ -403,8 +402,7 @@ void main() {
         expect(b.bagCategory, cat);
         expect(kindsOf(b), [for (final k in allOrder(g)) if (test(k)) k], reason: '$cat');
       }
-      // The five chips in one row over the grid, apart, a finger's height, inside the left page (Materials the Towns
-      // off too, decisions-log 296: the UI has no Towns-off version).
+      // The five chips in one row over the grid, apart, a finger's height, inside the left page.
       expect(b.bagChip(BagCategory.materials), isNot(Rect.zero));
       final chips = [for (final cat in BagCategory.values) b.bagChip(cat)], left = b.bagDetail('page').left;
       for (final (i, r) in chips.indexed) {
@@ -421,8 +419,8 @@ void main() {
       expect((b.bagCategory, b.picked, b.bagSlot(Relic.fury) == Rect.zero), (BagCategory.all, Relic.fury, false));
       await tapOn(tester, b.bagSlot(Relic.fury).center);
 
-      // Before the Shop opens, with no Pusaka: no Artifacts chip.
-      b.state = bagGame(wave: 5)..inventory[Item.sword] = 1;
+      // Before the Shop opens (a new game: town.json's `shop.from` 1), with no Pusaka: no Artifacts chip.
+      b.state = bagGame(wave: 0)..inventory[Item.sword] = 1;
       await frames(tester, 50);
       await openBag(tester, b);
       expect((b.bagChip(BagCategory.artifacts), b.bagChip(BagCategory.relics) == Rect.zero), (Rect.zero, false));
@@ -497,8 +495,8 @@ void main() {
     await frames(tester);
     expect(isNew(Relic.fang), isTrue);
 
-    // ▲: the soldier's recipe in the bag, once over: every kind of it marked, nothing else.
-    final recipe = g.recipeOf('soldier');
+    // ▲: what the soldier lacks for its next Awaken (its grade set) in the bag: every kind of it marked, nothing else.
+    final recipe = g.awakenShort('soldier');
     for (final MapEntry(key: item, value: need) in recipe.entries) {
       g.inventory[item] = need;
     }
@@ -506,7 +504,7 @@ void main() {
     expect(g.bagLevel('soldier'), greaterThan(g.itemLevel('soldier')));
     bool ready(Item i) => [
           for (final type in {for (final u in g.troops) if (u.alive) u.type})
-            if (g.bagLevel(type) > g.itemLevel(type) && g.countOf(type, i) < (g.recipeOf(type)[i] ?? 0) * (g.itemLevel(type) + 1)) type,
+            if (g.bagLevel(type) > g.itemLevel(type) && g.awakenShort(type).containsKey(i)) type,
         ].isNotEmpty;
     for (final i in Item.values.where((i) => (g.inventory[i] ?? 0) > 0)) {
       expect(b.bagMarks(i)!.ready, ready(i), reason: '$i');
@@ -529,7 +527,7 @@ void main() {
       await frames(tester, 50);
       await openBag(tester, b);
       expect(b.bagCells, isEmpty, reason: at);
-      // The Towns' words, the Towns off too (decisions-log 296: the UI has no Towns-off version).
+      // The Towns' words.
       expect(b.bagEmpty.join(' '), 'Your bag is empty. Monsters drop materials. Make items at the Smithy in a Town.', reason: at);
       // The board stands, but for the whole rows the text's card covers.
       final slots = b.bagSlots, cols = slots.where((r) => r.top == slots.first.top).length;
@@ -553,15 +551,14 @@ void main() {
     });
   }
 
-  // What drops, true to the build (decisions-log 292): with the Towns (and the forge) on, the board's, monsters drop no
-  // item, only materials, and the Smithy makes the items.
+  // What drops, true to the build (decisions-log 292): monsters drop no item, only materials, and the Smithy makes the
+  // items.
   for (final size in const [owner, desk, mid, wide]) {
     final at = '${size.width.round()}x${size.height.round()}';
-    testWidgets('at $at the empty Bag with the Towns on says monsters drop materials and the Smithy makes items, whole and '
-        'inside its card', (tester) async {
+    testWidgets('at $at the empty Bag says monsters drop materials and the Smithy makes items, whole and inside its card',
+        (tester) async {
       final b = await boot(tester, size);
-      final g = b.state = bagGame()..towns = true;
-      expect(g.towns, isTrue, reason: "the board's");
+      b.state = bagGame();
       await frames(tester, 50);
       await openBag(tester, b);
       expect(b.bagCells, isEmpty, reason: at);

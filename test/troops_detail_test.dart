@@ -19,6 +19,7 @@ import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
 
 import 'hud_font.dart';
+import 'real_rules.dart';
 
 const desk = Size(1266, 713), wide = Size(915, 412), tablet = Size(1164, 777);
 
@@ -139,7 +140,6 @@ bool inside(Rect r, Rect area) => r.left >= area.left - 0.5 && r.top >= area.top
 
 /// The board's rules with plenty of gold: the free priest alone (1 of 4 types).
 Game rich() => Game().boardRules()
-  ..towns = false // the Towns off (tests only, decisions-log 296: the rules from before them; the book is the Towns' still)
   ..gold = 50000;
 
 /// Four types: the free priest, a soldier, an archer and a knight, everyone at its post.
@@ -156,28 +156,20 @@ Game fourTypes() {
   return g;
 }
 
-/// [type]'s items for awakening [level]: its recipe [level] times over.
-List<Item> recipe(String type, int level) => [
-      for (final MapEntry(key: item, value: n) in awakenRecipe[type]!.entries)
-        for (var i = 0; i < n * level; i++) item,
-    ];
-
 /// Rich, the Shop open (wave [storeFrom] won), a knight on the field at Awaken 3 (its Awaken 4 for sale), the free
 /// priest beside it.
 Game shopper() {
   final g = rich()..wave = storeFrom;
-  g.upgrades['knight'] = recipe('knight', 3);
+  g.upgrades['knight'] = awakenItems('knight', 3);
   expect(g.autoPlace('knight'), isTrue);
   return g..gold = 1000000;
 }
 
-/// [shopper] with an archer fielded at Awaken 2 whose Awaken 3 the bag holds (its recipe once over).
+/// [shopper] with an archer fielded at Awaken 2 whose Awaken 3 the bag holds (its grade III set).
 Game bagReady() {
   final g = shopper();
-  g.upgrades['archer'] = recipe('archer', 2);
-  for (final MapEntry(key: item, value: n) in awakenRecipe['archer']!.entries) {
-    g.inventory[item] = n;
-  }
+  g.upgrades['archer'] = awakenItems('archer', 2);
+  g.inventory.addAll(g.gradeSet('archer', 3));
   expect(g.autoPlace('archer'), isTrue);
   return g;
 }
@@ -438,7 +430,7 @@ void main() {
         expect((b.troopDetail(key), said(b, key)), (Rect.zero, ''), reason: '$size $key: nothing to say');
       }
       expect(said(b, 'heading'), contains('${troopTypeNames[Game.freeHealer]} | x1'), reason: '$size');
-      expect(said(b, 'next'), startsWith('${awakenName(1)} needs:'), reason: '$size');
+      expect(said(b, 'next'), startsWith('${awakenName(1)} needs'), reason: '$size'); // (grade I) where it fits
       expect(said(b, 'relics'), 'Relics: none', reason: '$size');
 
       // None alive: "None on field", and no relics line.
@@ -493,8 +485,11 @@ void main() {
       expect(words, contains(w), reason: 'the short name $w');
     }
     expect(words, contains(Words.hpHelp.first), reason: 'what HP means, under it');
-    for (final MapEntry(key: item, value: _) in awakenRecipe['knight']!.entries) {
-      expect(words, contains('${g.countOf('knight', item)}/${g.capOf('knight', item)}'), reason: '$item');
+    for (final item in awakenRecipe['knight']!.keys) {
+      // By grade the kind's grades together (decisions-log 249): what the knight holds of them, the caps of those open.
+      final grades = [for (var n = 1; n <= maxAwaken; n++) itemOf(item.slot, n)];
+      final (taken, cap) = (grades.fold(0, (a, i) => a + g.countOf('knight', i)), grades.fold(0, (a, i) => a + g.capOf('knight', i)));
+      expect(words, contains('$taken/$cap'), reason: '$item');
     }
     // Two to a row: the first two item cells (Def and Dmg) side by side, the next two under them.
     final cells = [for (final (r, _, type) in b.itemCells) if (type == 'knight') r];
@@ -532,12 +527,12 @@ void main() {
     await frames(tester, 40);
     await tapOn(tester, b.troopRow('soldier'));
     final next = said(b, 'next');
-    expect(next, startsWith('${awakenName(1)} needs:'));
-    for (final MapEntry(key: item, value: n) in g.recipeOf('soldier').entries) {
+    expect(next, startsWith('${awakenName(1)} needs (${gradeName(1)}):'));
+    for (final MapEntry(key: item, value: n) in g.gradeSet('soldier', 1).entries) {
       expect(next, contains('${itemNames[item]} | 0/$n'), reason: '$item');
     }
     expect(next, contains('In ${Words.bag}: 1'), reason: 'the sword in the Bag');
-    expect(next, contains(Words.smithy), reason: 'the rest from the Smithy (decisions-log 296: no Towns-off words)');
+    expect(next, contains(Words.smithy), reason: 'the rest from the Smithy');
     await frames(tester, 30);
   });
 
@@ -618,10 +613,7 @@ void main() {
       expect(b.troopDetailWords('next').last, bagAwakensTo(3), reason: '$size');
       final taps = [0];
       await tapOn(tester, await reveal(tester, b, 'upgrade'), taps);
-      final need = [
-        for (final MapEntry(key: item, value: n) in g.recipeOf('archer').entries)
-          if (g.countOf('archer', item) < n * 3 && (g.inventory[item] ?? 0) > 0) item,
-      ].first;
+      final need = [for (final item in g.awakenShort('archer').keys) if ((g.inventory[item] ?? 0) > 0) item].first;
       expect((b.bagOpen, b.picked, b.bagChooser), (true, need, BagAction.giveTroops), reason: '$size: its types');
       final had = g.countOf('archer', need);
       await tapOn(tester, await chooserRow(tester, b, 'archer'), taps);

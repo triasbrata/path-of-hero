@@ -38,7 +38,6 @@ Game board() {
     ..loot = Random(seed + 200)
     ..draft = Random(seed + 500)
     ..townDice = Random(seed + 600)
-    ..towns = true
     ..townRules = TownRules.patch({
       'schedule': {'chanceStart': 1.0},
     })

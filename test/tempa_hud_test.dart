@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
 
+import 'real_rules.dart';
 import 'hud_font.dart';
 
 // Tempa on the board (decisions-log 163, lib/ascend_page.dart): the "+n" after a Bangkit 5 type's stars on the Army
@@ -18,20 +19,14 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
   }
 }
 
-/// Every item [type]'s awakening recipe asks for, [level] times over.
-List<Item> recipe(String type, int level) => [
-      for (final MapEntry(key: item, value: n) in awakenRecipe[type]!.entries)
-        for (var i = 0; i < n * level; i++) item,
-    ];
-
-/// After wave 87, rich: the knight at Bangkit 5 and Tempa +3 with one fielded, the archer at Bangkit 2 with one too. A
-/// plain Game() (the Towns off, tests only): its Awaken by the item recipe gets the knight to Bangkit 3 at once.
+/// After wave 87, rich: the knight at Bangkit 5 and Tempa +3 with one fielded, the archer at Bangkit 2 with one too: its
+/// grade sets ([awakenItems]) get the knight to Bangkit 3 at once.
 Game forger() {
   final g = Game()..wave = 87;
-  g.upgrades['knight'] = recipe('knight', 3);
+  g.upgrades['knight'] = awakenItems('knight', 3);
   g.ascended['knight'] = maxAscend;
   g.tempa['knight'] = 3;
-  g.upgrades['archer'] = recipe('archer', 2);
+  g.upgrades['archer'] = awakenItems('archer', 2);
   g.inventory[Item.sword] = 1; // one to pick on the Tas page, whose rows then show the types
   g.gold = 1000000;
   expect(g.place('knight', 0, 1), isTrue);

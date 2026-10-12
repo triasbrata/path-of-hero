@@ -84,7 +84,6 @@ double share(int Function(int, int) px, Rect r, int colour) {
 /// the free priest at their posts, and a long run's bag (bag_grid_test.dart's).
 Game stocked() {
   final g = Game(Random(1)).boardRules()
-    ..towns = false // the Towns off (tests only, decisions-log 296: the rules from before them; the book is the Towns' still)
     ..armyMax = null
     ..gold = 5000000
     ..wave = 30;
@@ -126,7 +125,7 @@ void main() {
       await frames(tester, 50);
       await openBag(tester, b, mouse);
       // Read where they are in the frame the pixels come from: the book bobs.
-      // The chips shown (Materials the Towns off too, decisions-log 296: the UI has no Towns-off version).
+      // The chips shown (Materials too).
       final cats = [for (final cat in BagCategory.values) if (b.bagChip(cat) != Rect.zero) cat];
       expect(cats, [BagCategory.all, BagCategory.items, BagCategory.relics, BagCategory.materials, BagCategory.artifacts]);
       List<Rect> chips() => [for (final cat in cats) b.bagChip(cat)];
@@ -143,7 +142,7 @@ void main() {
         for (final (i, r) in chips().indexed) {
           final face = share(px, r, pickFace), orange = share(px, r, pickRim), plain = share(px, r, paper);
           if (cats[i] == on) {
-            // Five segments (Materials the Towns off too, decisions-log 296; 0.4 with four): the rim and the bold word
+            // Five segments (Materials too; 0.4 with four): the rim and the bold word
             // take a larger share of a narrower one, and the others have none of the face at all.
             expect((face > 0.25, orange > 0.02), (true, true), reason: '$at $why: ${cats[i]} lit as a pick ($face, $orange)');
           } else {

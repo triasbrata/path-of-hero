@@ -1,7 +1,7 @@
 // The Smithy's seven small relics (decisions-log 227; lib/relics.dart; docs/loot-items-relics.md "Relics"): Sweep (save
 // key cleave), Venom, Mana Siphon, Spirit Ward (Strong), Iron Will (lastStand), Giant Slayer, Holy Charm (blessing)
 // (Mighty). One group a relic, its numbers from the rules (town.json `relics`) at their edges and patched; a Hero holding
-// two; the save's names; the tiers and their words; with the Towns off none of the seven ever shows or drops.
+// two; the save's names; the tiers and their words.
 import 'dart:convert';
 import 'dart:math';
 
@@ -91,13 +91,8 @@ void main() {
       expect(g.relicTierLine(Relic.cleave), 'Mighty relic');
     });
 
-    test('with the Towns off none of the seven shows: the guide, the Bag\'s kinds, the drops; on, all eleven and the '
-        'forge\'s nine', () {
-      final g = Game();
-      expect(g.towns, isFalse);
-      expect(g.relicsInPlay, droppedRelics);
-      g.towns = true;
-      expect(g.relicsInPlay, [...smallRelics, ...forgeRelics]);
+    test('in play: all eleven and the forge\'s nine (the guide, the Bag\'s kinds)', () {
+      expect(Game().relicsInPlay, [...smallRelics, ...forgeRelics]);
     });
   });
 
@@ -444,9 +439,8 @@ void main() {
       expect(g.relicEffect(Relic.venom).single, 'Poisons: +20% of the hit over 4 s');
     });
 
-    test("the tooltip shows the tier and who it suits with the Towns on, and nothing new with them off", () {
-      final off = Game(), on = Game()..towns = true;
-      expect(off.relicInfo(Relic.fang).$2, isNot(contains('Basic relic')));
+    test('the tooltip shows the tier and who it suits', () {
+      final on = Game();
       expect(on.relicInfo(Relic.fang).$2, containsAllInOrder(['Heals 30% of damage dealt', 'Basic relic', 'Best on: Knight, Templar, Lancer, Swordsman']));
       expect(on.relicInfo(Relic.cleave).$2, containsAllInOrder(['Strong relic', 'Best on: Soldier, Knight, Axeman, Templar', relicSlotsLine]));
       expect(on.relicInfo(Relic.lastStand).$2, containsAllInOrder(['Mighty relic', 'Best on: Front melee, Heroes']));

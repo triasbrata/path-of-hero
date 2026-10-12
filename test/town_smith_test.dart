@@ -2,7 +2,7 @@
 // the phone (915x412) and the owner's tablet (1164x777), in a Town he is drawn on the Smithy's ground floor, his
 // feet at its house's middle (under its sign) on its floor (townStep over the street's lane, decisions-log 274), inside
 // its walls and below its window, at 1 world px
-// a sprite px; his loop runs on the field's clock; with the Towns off no Town and no smith shows. Decoration only: a tap
+// a sprite px; his loop runs on the field's clock; out of a Town no Town and no smith shows. Decoration only: a tap
 // on him is the Smithy's house's (its page).
 import 'dart:math';
 
@@ -70,11 +70,10 @@ void main() {
     });
   }
 
-  testWidgets('with the Towns off no Town shows, so no smith', (tester) async {
+  testWidgets('out of a Town no Town shows, so no smith', (tester) async {
     final b = await boot(tester);
     b.autoStart.set(false);
     b.state = Game(Random(1), Random(2)).boardRules()
-      ..towns = false
       ..wave = 20;
     await frames(tester, 40);
     expect((b.townShown, b.townScene.containsKey('smith')), (false, false));

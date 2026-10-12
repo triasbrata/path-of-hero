@@ -12,13 +12,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart' show logLine, logLines, shortPrice;
 
+import 'real_rules.dart';
 import 'hero_skill_helpers.dart';
-
-/// Every item [type]'s awakening recipe asks for, [level] times over: the type at awakening [level].
-List<Item> recipe(String type, int level) => [
-      for (final MapEntry(key: item, value: n) in awakenRecipe[type]!.entries)
-        for (var i = 0; i < n * level; i++) item,
-    ];
 
 /// A game between waves, wave [wave] won (the store open), with [gold] and a 6-column zone.
 Game afterWave(int wave, [int gold = 1000000]) => bareGame()
@@ -121,7 +116,7 @@ void main() {
       ..names = Random(8);
     final events = <GameEvent>[];
     g.listeners.add(events.add);
-    g.upgrades['knight'] = recipe('knight', maxAwaken);
+    g.upgrades['knight'] = awakenItems('knight', maxAwaken);
     g.ascended['knight'] = 1; // Bangkit 4
     g.givePusaka(Relic.dawnStar, type: 'knight');
     g.fallenHeroes.add(f);
@@ -329,7 +324,7 @@ void main() {
 
   test('the gold is weighed against the recall price, not the troop price', () {
     final g = afterWave(storeFrom, 0);
-    g.upgrades['knight_templar'] = recipe('knight_templar', maxAwaken);
+    g.upgrades['knight_templar'] = awakenItems('knight_templar', maxAwaken);
     final f = FallenHero(name: 'Sari', type: 'knight_templar', stats: const [HeroStat.hp, HeroStat.power], fell: 10);
     g.fallenHeroes.add(f);
     g.gold = g.recallPrice;

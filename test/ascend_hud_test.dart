@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
 
+import 'real_rules.dart';
+
 
 // The Tas tab's dot (#92 part 2, lib/ascend_page.dart), as the player gets it: one TdGame (its own file: a second TdGame
 // in one file breaks the shared image cache, docs/testing.md). The rules: ascend_test.dart. Awaken 4-5 is bought on the
@@ -16,21 +18,13 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
   }
 }
 
-/// Every item [type]'s awakening recipe asks for, [level] times over.
-List<Item> recipe(String type, int level) => [
-      for (final MapEntry(key: item, value: n) in awakenRecipe[type]!.entries)
-        for (var i = 0; i < n * level; i++) item,
-    ];
-
 /// A game whose store is open, rich, with the knight at Bangkit 3 and an archer fielded at Bangkit 2 whose Bangkit 3
-/// is in the bag. A plain Game() (the Towns off, tests only): its Awaken by the item recipe.
+/// is in the bag (its grade set III).
 Game shopper() {
   final g = Game()..wave = storeFrom;
-  g.upgrades['knight'] = recipe('knight', 3);
-  g.upgrades['archer'] = recipe('archer', 2);
-  for (final MapEntry(key: item, value: n) in awakenRecipe['archer']!.entries) {
-    g.inventory[item] = n;
-  }
+  g.upgrades['knight'] = awakenItems('knight', 3);
+  g.upgrades['archer'] = awakenItems('archer', 2);
+  g.inventory.addAll(g.gradeSet('archer', 3));
   g.gold = 100000;
   expect(g.place('archer', 0, 1), isTrue);
   return g..gold = 1000000;

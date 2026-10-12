@@ -1,6 +1,6 @@
 part of 'main.dart';
 
-// The Town scene (decisions-log 224; docs/ui-hud.md "Town"). Dark like the rest of the Towns ([Game.towns]): while a
+// The Town scene (decisions-log 224; docs/ui-hud.md "Town"): while a
 // Town shows ([Game.inTown]) the Board draws it where the field was, and the field waits as it was left (its game ticks
 // on; no wave starts). GandalfHardcore's free platformer set only (lib/town_art.dart, decisions-log 222): the parallax
 // layers and the castle, the clouds, the ground ([_townStreet]), and along the street four places, left to right ([_TownLayout]): the

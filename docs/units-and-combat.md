@@ -227,7 +227,7 @@ archer boss shoots from afar. Then:
   share, scaled by the two tiers' damage. Its speed is ×1.1 like any high elite's, and it gets no boss buff
   (high elites get none). So it has a high-elite werebear's HP: wave 50 13,056 HP and 74 damage every 1.5 s;
   wave 60 15,936 and 88. Its gold, score and relic chance are a high elite's: 40 × 2, grown with the wave (873
-  at wave 50), 50 points and 5% (with the Towns on, the board since decisions-log 237, no relic drops: its Dark Gem at
+  at wave 50), 50 points and 5% (a roll that drops nothing since the Towns, decisions-log 237, 321: its Dark Gem at
   35% instead, loot-items-relics.md "Town and Smithy: materials"). Like any high elite it casts its type's signature, Curse of Frailty (1.15×, not
   a mini boss's 1.2×; "Monster skills"), and neither Soul Drain nor Death Nova.
 - A necromancer's raised minions are never raised to a slot (`enemyStats(…, raised: true)`): a raised mini
@@ -998,11 +998,11 @@ high elite one comes in every escort ("Waves"; its stats above).
   - In effect: safe (nobody near, full health), it saves for its ceiling tier; with troops closing
     in, hurt, or being hit, only what it can pay for now scores, so it spends on the strongest tier it
     can afford.
-- **Drops:** the boss (any type, `Tier.boss`) drops `bossDrops` 2 items and a relic at `relicChance` 30%;
-  the wave's mini boss (any type) drops 1 item and a relic at 10%. With the Towns on (the board since decisions-log
-  237) the relic rolls drop nothing (the `loot` dice draw the same) and the kill drops materials instead: a boss 3 of
-  its type's Rare part and a Soul Orb, a mini boss 2 and an Evil Eye (loot-items-relics.md "Town and Smithy:
-  materials").
+- **Drops:** the boss (any type, `Tier.boss`) and the wave's mini boss (any type) drop materials: a boss 3 of its
+  type's Rare part and a Soul Orb, a mini boss 2 and an Evil Eye (loot-items-relics.md "Town and Smithy: materials").
+  No item or relic drops (the Smithy makes them, decisions-log 221, 246); the `loot` dice still roll the boss's
+  `bossDrops` 2 items and its relic at `relicChance` 30%, the mini boss's item and relic at 10%, and throw them away
+  (decisions-log 321), so a seeded game plays the same.
 
 ### The healer (`necro_healer`)
 
@@ -1117,8 +1117,8 @@ melee maka range jangan dinaikkan".
 Heroes falling at wave 66 was a loss the owner cared about, and late gold had nothing to buy (#92). The rules are
 lib/recall.dart. Where a fallen Hero is recalled: on its type's Army detail, a "Recall" tag per fallen Hero in its
 Heroes section (lib/troop_detail.dart `_recallLines`, decisions-log 230; ui-hud.md "Army"), between waves from wave 15
-won (`storeFrom`, the army's buy gate `whyNotRecall` checks first). The Towns-off game's Fallen Heroes side of the
-field's Shop (lib/recall_page.dart) went in decisions-log 296.
+won (`storeFrom`, the army's buy gate `whyNotRecall` checks first). The Fallen Heroes side of the field's Shop of a
+game without the Towns (lib/recall_page.dart) went in decisions-log 296.
 
 - **Kept when it falls** (`Game.fallenHeroes`, a `FallenHero` each): a Hero that falls (`_hurt`) is kept with its
   `name`, `type`, rolled attributes (`stats`), own `skill` and the wave it fell in (`fell`), in the order they fell.

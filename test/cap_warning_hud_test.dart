@@ -27,7 +27,6 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
 /// knights, 10 swordsmen and 10 lancers (each at its type's cap) and a soldier last.
 Game atCap({int won = 63}) {
   final g = Game().boardRules()
-    ..towns = false // the Towns off (tests only, decisions-log 296: the rules from before them; the book is the Towns' still)
     ..gold = 1 << 30
     ..wave = won
     ..victoryAt = -victoryTime
@@ -64,7 +63,7 @@ Game overCap() {
       ..entered = true);
   }
   g.notes.add('army');
-  return g.boardRules()..towns = false; // the Towns-off board's warning (decisions-log 237)
+  return g.boardRules();
 }
 
 void main() {

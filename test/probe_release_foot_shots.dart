@@ -38,9 +38,7 @@ Point<double> cellMiddle(int c, int r) => Point(c * tile + tile / 2, r * tile + 
 
 /// Four types: the free priest, a soldier, an archer and a knight, everyone at its post (troops_detail_test's).
 Game fourTypes() {
-  final g = Game().boardRules()
-    ..towns = false
-    ..gold = 50000;
+  final g = Game().boardRules()..gold = 50000;
   for (final type in ['soldier', 'archer', 'knight']) {
     g.autoPlace(type);
   }

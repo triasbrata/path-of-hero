@@ -1,6 +1,6 @@
 part of 'main.dart';
 
-// The Towns on the HUD (decisions-log 216; lib/town.dart; dark: only with [Game.towns] on; the scene is
+// The Towns on the HUD (decisions-log 216; lib/town.dart; the scene is
 // town_scene.dart's, decisions-log 224): a due Town is gone into once nothing of the win is left on screen (the
 // "VICTORY!" cheer, the Hero splash, a Boss Chest: taken or skipped first), the book opening on its Smithy; the Start/Pause
 // toggle's Start says "Leave town" there ([Words.leaveTown], start_button.dart) and leaves it, and Auto leaves after
@@ -225,8 +225,8 @@ extension _MatLook on Board {
     return air;
   }
 
-  /// The piles lying where monsters fell, on the ground under the units (in field units, as the items' loot: its 10-unit
-  /// icon bobbing 2 units on the field's clock), each its material's icon; from 2 up its count in the Bag's capsule
+  /// The piles lying where monsters fell, on the ground under the units (in field units, as the items' loot was before
+  /// decisions-log 321: a 10-unit icon bobbing 2 units on the field's clock), each its material's icon; from 2 up its count in the Bag's capsule
   /// ("x5"), in screen pixels over every icon. Called inside the field's transform, before the units.
   void _matLootDraw(Canvas c, Game g) {
     if (_matLoot.isEmpty) return;

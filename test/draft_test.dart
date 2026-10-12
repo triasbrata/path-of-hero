@@ -314,15 +314,18 @@ void main() {
     expect(g.chests.length, 1);
   });
 
-  test('with the chest on the Toko sells no Pusaka; its items and small relics stay; it never sells a Langka', () {
+  test("with the chest on a Town's Shop sells no Pusaka; it never sells a Langka", () {
     expect(artefactShelf, isFalse);
     final g = bareGame()
       ..wave = storeFrom
+      ..inTown = true // the Shop deals only in a Town
       ..gold = 1000000;
     expect((g.shelfOpen, g.whyNotBuy(Relic.grail), g.whyNotBuy(Relic.ironBanner)), (true, null, StoreRefusal.shelf));
     expect(storeGoods.where((k) => langka.contains(k)), isEmpty);
     g.offers = true;
-    expect((g.shelfOpen, g.whyNotBuy(Relic.grail), g.whyNotBuy(Item.sword), g.whyNotBuy(Relic.fang)), (false, StoreRefusal.shelf, null, null));
+    // No item or small relic on its shelf either: the Smithy makes them (decisions-log 248).
+    expect((g.shelfOpen, g.whyNotBuy(Relic.grail), g.whyNotBuy(Item.sword), g.whyNotBuy(Relic.fang)),
+        (false, StoreRefusal.shelf, StoreRefusal.notSold, StoreRefusal.notSold));
     expect((g.buy(Relic.grail), g.gold), (false, 1000000));
     expect(g.pusaka, isEmpty);
     expect(storeRefusalNames[StoreRefusal.shelf], 'Boss Chest only');
@@ -330,8 +333,8 @@ void main() {
     expect((g.sellPrice(Relic.ironBanner), g.sell(Relic.ironBanner), g.gold), (langkaPrice ~/ 2, 1, 1000000 + langkaPrice ~/ 2));
   });
 
-  test("with the chest on, the boss's small relic is drawn and thrown away: the loot dice draw the same", () {
-    (int, List<(Point<double>, Relic)>) bossFalls(bool offers) {
+  test("the chest on or off, the boss's fall draws the loot dice the same (its small relic thrown away either way)", () {
+    int bossFalls(bool offers) {
       final g = plain(Random(3))
         ..offers = offers
         ..wave = 4;
@@ -346,30 +349,11 @@ void main() {
         g.tick(0.05);
       }
       expect(b.alive, isFalse);
-      return (dice.draws, [...g.relicDrops]);
+      expect(g.relicBag.values, everyElement(0), reason: 'no relic drops: the Smithy makes them');
+      return dice.draws;
     }
 
-    final (offDraws, _) = bossFalls(false);
-    final (onDraws, onRelics) = bossFalls(true);
-    expect(onDraws, offDraws);
-    expect(onRelics, isEmpty);
-    expect(chestTakesBossRelic, isTrue);
-    // Dice that always drop: the boss's relic goes, a high elite's stays.
-    final g = plain(Random(3))
-      ..loot = _Dice(0)
-      ..wave = 4
-      ..offers = true;
-    g
-      ..startWave()
-      ..queue.clear();
-    final k = placeNow(g, 'knight', 2, 3);
-    final b = foeAt(g, boss, k.pos + const Point(14, 0), Tier.boss)..hp = 1;
-    final orc = foeAt(g, 'orc', k.pos + const Point(14, 8), Tier.highElite)..hp = 1;
-    for (var n = 0; n < 200 && (b.alive || orc.alive); n++) {
-      g.tick(0.05);
-    }
-    expect((b.alive, orc.alive), (false, false));
-    expect(g.relicDrops.length, 1, reason: "a high elite's relic stays: only the boss's goes");
+    expect(bossFalls(true), bossFalls(false));
   });
 
   test("an old save gets its catch-up chests: one per 3 boss waves won, at most 3, rolled when opened; the owner's w86 save 3", () {
@@ -445,10 +429,8 @@ void main() {
     List<String> run(int seed) {
       const army = ['soldier', 'archer', 'knight', 'priest', 'wizard', 'lancer', 'swordsman'];
       final g = Game(Random(seed), Random(seed + 100))
-        ..loot = Random(seed + 200)
-        ..heroes = Random(seed + 300)
-        ..slots = Random(seed + 400)
-        ..draft = Random(seed + 500)
+        ..seedDice(seed) // the Towns' dice too: a Town comes on the same wave each run (decisions-log 321)
+        ..townPolicy = 'leave'
         ..gold = 3000
         ..capacity = 16
         ..offers = true

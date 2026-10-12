@@ -46,10 +46,9 @@ const shopDetailLines = 3;
 /// categories ([bagCategoryNames] their headings).
 const shopBuyOrder = [BagCategory.items, BagCategory.relics, BagCategory.artifacts, BagCategory.materials];
 
-/// What the shelf sells under Buy's [section] ([onShopShelf]), in its order: the seven items monsters drop in [Item]
-/// order ([droppedItems]), the small relics in play in [Relic] order ([Relics.relicsInPlay]; with the Towns all eleven),
-/// the store's Artifacts while their shelf is open, and with the forge's Shop ([Store.forgeShop], decisions-log 248) the
-/// materials that have dropped, in the order they first did ([Game.matsSeen]) in place of the items and small relics.
+/// What the shelf sells under Buy's [section] ([onShopShelf]), in its order: the store's Artifacts while their shelf is
+/// open, and the forge's Shop's (decisions-log 248) materials that have dropped, in the order they first did
+/// ([Game.matsSeen]), never an item or a small relic.
 /// [BagCategory.all]: every section's, in order.
 List<Enum> shopBuyKinds(Game g, BagCategory section) => switch (section) {
       BagCategory.items => [for (final i in droppedItems) if (onShopShelf(g, i)) i],

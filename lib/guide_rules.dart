@@ -47,7 +47,7 @@ final guideRules = <GuideRule>[
   GuideRule('K5', bossEvery, (g) => g.chests.isNotEmpty, atChest: true),
   // A Pusaka bound to a type.
   GuideRule('K6', bossEvery, (g) => g.pusaka.entries.any((e) => !e.key.oath && e.value.type != null)),
-  // A small relic in the bag (with the Towns on, any of the Smithy's: [Relics.relicsInPlay]).
+  // A small relic in the bag (any of the Smithy's: [Relics.relicsInPlay]).
   GuideRule('K7', 7, (g) => g.relicsInPlay.any((r) => (g.relicBag[r] ?? 0) > 0)),
   // Item limits: a fielded type at its cap for a kind in the bag, until it awakens ([Refusal.awakenFirst]).
   GuideRule('K8', 10,
@@ -72,7 +72,7 @@ final guideRules = <GuideRule>[
   GuideRule('K16', 1, (g) => g.stalled),
   // Pasang: the tide comes in with the next wave ([Game.tideRising]).
   GuideRule('K17', tideFrom - 1, (g) => g.tideRising, passing: true),
-  // Gold waits for an Awaken or a Forge: the Toko tab's dot, with the Towns on the Army tab's ([Tempa.tokoNudge]).
+  // Gold waits for an Awaken or a Forge: the Army tab's dot ([Tempa.tokoNudge]).
   GuideRule('K18', null, (g) => g.tokoNudge),
   // The bosses' escorts come with the next wave.
   GuideRule('K19', escortFrom - 1, (g) => g.wave == escortFrom - 1, passing: true),
@@ -85,7 +85,7 @@ final guideRules = <GuideRule>[
   // The Towns (decisions-log 237): the first Town (the card shows in it), and materials in the bag after the first wave
   // that drops one.
   GuideRule('K23', null, (g) => g.inTown, inTown: true),
-  GuideRule('K24', 1, (g) => g.towns && g.materials.isNotEmpty),
+  GuideRule('K24', 1, (g) => g.materials.isNotEmpty),
   // The Shadows (decisions-log 319): the first chest whose cards hide one (from [omenFrom]); the card sits over it.
   GuideRule('K25', omenFrom, (g) => omensOn && (g.chest?.omens?.any((k) => k != null) ?? false), atChest: true),
 ];

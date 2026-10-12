@@ -270,7 +270,9 @@ void main() {
     expect(g.legendsFound, {Relic.oathOfOne, Relic.dragonCrown});
     expect(g.gudang, [Relic.dragonCrown]); // no troop: the Gudang
     // Sold, Dragon Crown stays found: never on a card again; the next Legenda come (batch G-1P's, decisions-log 231).
+    g.inTown = true; // the Shop buys only in a Town
     expect((g.sellPrice(Relic.dragonCrown), g.sell(Relic.dragonCrown)), ((legendaPrice * sellShare).round(), 1));
+    g.inTown = false;
     expect(g.pusaka.containsKey(Relic.dragonCrown), isFalse);
     g.giveChests(1);
     expect(g.chest!.cards, [Relic.loneWolf, Relic.martyrFlame, Relic.wideBlows]);
@@ -288,7 +290,9 @@ void main() {
   });
 
   test('an oath binds to no type and never sells; Dragon Crown binds, moves and sells like any Pusaka', () {
-    final g = plain()..wave = 30;
+    final g = plain()
+      ..wave = 30
+      ..inTown = true; // where the Shop buys
     placeNow(g, 'knight', 2, 3);
     g
       ..givePusaka(Relic.oathOfOne, type: 'knight') // a type given is ignored: an oath is the army's

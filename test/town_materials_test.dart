@@ -1,8 +1,8 @@
 // The Towns' materials (decisions-log 221; lib/town.dart; docs/loot-items-relics.md "Town and Smithy"): the shipped
 // town.json is the defaults, every number written out; the 30 and their names, grades and sources, each in a recipe;
 // the file's names the game doesn't know left out; a kill's materials into the wave's tally and the bag at the win, never
-// from a raised monster; relics and items no longer dropping with the Towns on (the loot dice drawing the same) and
-// dropping as before with them off; the save; the telemetry. Each rank's list of drops (town.json `drops.forge`; the
+// from a raised monster; relics and items no longer dropping (the loot dice drawing as before them:
+// forge_drops_test.dart); the save; the telemetry. Each rank's list of drops (town.json `drops.forge`; the
 // table from before the forge went with the forge-off build, decisions-log 296): forge_drops_test.dart.
 import 'dart:convert';
 import 'dart:io';
@@ -38,32 +38,6 @@ class _Dice implements Random {
   bool nextBool() => throw UnsupportedError('nextBool');
 }
 
-/// A die that counts the draws of [inner].
-class _Counted implements Random {
-  _Counted(this.inner);
-
-  final Random inner;
-  int draws = 0;
-
-  @override
-  double nextDouble() {
-    draws++;
-    return inner.nextDouble();
-  }
-
-  @override
-  int nextInt(int max) {
-    draws++;
-    return inner.nextInt(max);
-  }
-
-  @override
-  bool nextBool() {
-    draws++;
-    return inner.nextBool();
-  }
-}
-
 /// A sink that keeps the records, through JSON.
 class _Kept implements TelemetrySink {
   final records = <Map<String, dynamic>>[];
@@ -78,12 +52,11 @@ class _Kept implements TelemetrySink {
 /// The monster types that drop parts: the twelve, the healer and the Necromancer.
 final types = [...enemyTypes.keys, necroHealer, boss];
 
-/// A game with no skills cast, the Towns [on] (off: tests only), its materials on [mats] and its loot on [loot].
-Game townGame({bool on = true, Random? mats, Random? loot}) => bareGame(Random(1))
+/// A game with no skills cast, its materials on [mats] and its loot on [loot].
+Game townGame({Random? mats, Random? loot}) => bareGame(Random(1))
   ..skills = false
   ..heroSkills = false
   ..awakenSkills = false
-  ..towns = on
   ..matDice = mats ?? Random(5)
   ..loot = loot ?? Random(9);
 
@@ -216,21 +189,12 @@ void main() {
     expect(p.recipes['fang']!.materials, {Mat.batWing: 5, Mat.slimeGel: 2});
   });
 
-  test('with the Towns on a kill drops into the wave\'s tally and pops; the win puts them in the bag; a raised monster drops '
-      'none (no draw); no relic or item drops, the loot dice drawing as with them off; a lost tally is gone with the game', () {
-    (Game, int) run(bool on) {
-      final loot = _Counted(Random(4)), mats = _Dice([0.0, 0.0], 0.5);
-      final g = townGame(on: on, mats: mats, loot: loot);
-      kill(g, [('slime', Tier.normal, false), ('bat', Tier.highElite, false), ('orc', Tier.miniBoss, false), ('skeleton', Tier.normal, true)]);
-      if (on) expect(mats.used, 2, reason: 'one draw for the slime, one for the bat\'s Rare; none for the mini boss and the raised one');
-      return (g, loot.draws);
-    }
-
-    final (off, offDraws) = run(false);
-    final (on, onDraws) = run(true);
-    expect(onDraws, offDraws, reason: 'the loot dice draw the same: the relic and item draws are thrown away');
-    expect([off.waveMaterials, off.matPops, off.materials], everyElement(isEmpty));
-    expect([on.relicDrops, on.drops], everyElement(isEmpty));
+  test('a kill drops into the wave\'s tally and pops; the win puts them in the bag; a raised monster drops none (no draw); '
+      'no relic or item drops; a lost tally is gone with the game', () {
+    final mats = _Dice([0.0, 0.0], 0.5);
+    final on = townGame(mats: mats, loot: Random(4));
+    kill(on, [('slime', Tier.normal, false), ('bat', Tier.highElite, false), ('orc', Tier.miniBoss, false), ('skeleton', Tier.normal, true)]);
+    expect(mats.used, 2, reason: 'one draw for the slime, one for the bat\'s Rare; none for the mini boss and the raised one');
     final tally = {Mat.slimeGel: 1, Mat.batWing: 1, Mat.batFang: 1, Mat.orcTooth: 3, Mat.orcTusk: 3, Mat.evilEye: 1};
     expect(on.waveMaterials, tally);
     expect([for (final (_, m, n) in on.matPops) (m, n)],
@@ -238,7 +202,7 @@ void main() {
     expect(on.materials, isEmpty, reason: 'not in the bag before the win');
     winNow(on);
     expect([on.materials, on.lastMaterials], [tally, tally]);
-    expect(on.waveMaterials, isEmpty);
+    expect([on.waveMaterials, on.inventory, on.relicBag], everyElement(isEmpty));
     // The next win adds to the bag, and its own tally is the last.
     on.matDice = _Dice([]); // the elite's Common always drops: no draw
     kill(on, [('slime', Tier.elite, false)]);
@@ -247,18 +211,14 @@ void main() {
     expect(on.lastMaterials, {Mat.slimeGel: 1});
   });
 
-  test('relics and items drop as before the Towns with them off and never with them on, on dice that always drop', () {
-    for (final on in [false, true]) {
-      final g = townGame(on: on, loot: _Dice([], 0.0), mats: _Dice([], 0.0));
-      kill(g, [('orc', Tier.highElite, false), ('orc', Tier.miniBoss, false)]);
-      expect(g.relicDrops.length, on ? 0 : 2, reason: 'Towns $on');
-      expect(g.drops.length, on ? 0 : 2, reason: 'the items fall only with the Towns off (the forge\'s rule)');
-      winNow(g);
-      expect(g.relicBag.values.fold(0, (a, n) => a + n), on ? 0 : 2);
-    }
+  test('relics and items never drop, on dice that always drop', () {
+    final g = townGame(loot: _Dice([], 0.0), mats: _Dice([], 0.0));
+    kill(g, [('orc', Tier.highElite, false), ('orc', Tier.miniBoss, false)]);
+    winNow(g);
+    expect([g.relicBag, g.inventory], everyElement(isEmpty));
   });
 
-  test('the save: materials by name, only when any; a name this build doesn\'t know is skipped; none before the Towns', () {
+  test('the save: materials by name, only when any; a name this build doesn\'t know is skipped', () {
     final g = townGame()
       ..materials.addAll({Mat.slimeGel: 4, Mat.lichOrb: 1})
       ..wave = 9;
@@ -271,19 +231,14 @@ void main() {
     expect(Game.fromJson(Game().toJson()).materials, isEmpty);
   });
 
-  test('the telemetry: a won wave\'s record has the materials it dropped and its start the ones held, only with the Towns on', () {
-    for (final on in [false, true]) {
-      final kept = _Kept(), tel = TelemetryAdapter([kept], installId: 'i', session: 's', platform: 'test', now: () => DateTime.utc(2026, 10, 4));
-      final g = townGame(on: on, mats: _Dice([], 0.0))..materials[Mat.skull] = 2;
-      tel.attach(g);
-      kill(g, [('slime', Tier.normal, false)]);
-      winNow(g);
-      final waves = [for (final r in kept.records) if (r['rec'] == 'wave') r];
-      expect(waves, hasLength(1), reason: 'Towns $on');
-      final w = waves.single;
-      expect([w['materials'], (w['start'] as Map)['materials']], on ? [{'slimeGel': 1}, {'skull': 2}] : [null, null], reason: 'Towns $on');
-      if (!on) expect((w.containsKey('materials'), (w['start'] as Map).containsKey('materials')), (false, false));
-      tel.detach();
-    }
+  test('the telemetry: a won wave\'s record has the materials it dropped and its start the ones held', () {
+    final kept = _Kept(), tel = TelemetryAdapter([kept], installId: 'i', session: 's', platform: 'test', now: () => DateTime.utc(2026, 10, 4));
+    final g = townGame(mats: _Dice([], 0.0))..materials[Mat.skull] = 2;
+    tel.attach(g);
+    kill(g, [('slime', Tier.normal, false)]);
+    winNow(g);
+    final w = [for (final r in kept.records) if (r['rec'] == 'wave') r].single;
+    expect([w['materials'], (w['start'] as Map)['materials']], [{'slimeGel': 1}, {'skull': 2}]);
+    tel.detach();
   });
 }

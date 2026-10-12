@@ -45,7 +45,6 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
 /// Rich, the Shop open, a soldier and a knight beside the free priest at their posts, a sword in the bag.
 Game shopGame() {
   final g = Game().boardRules()
-    ..towns = false // the Towns off (tests only, decisions-log 296: the rules from before them; the book is the Towns' still)
     ..gold = 50000
     ..wave = storeFrom + 1;
   for (final type in ['soldier', 'knight']) {

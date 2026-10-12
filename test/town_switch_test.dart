@@ -1,5 +1,5 @@
-// Town step T7 (decisions-log 237): the Towns switched on for every board game (a plain Game() keeps them off, tests
-// only; no build turns the board's off since decisions-log 296), a save from before them discarded at launch (no Continue,
+// Town step T7 (decisions-log 237): the Towns switched on for every board game (no build turns them off since
+// decisions-log 296; a plain Game() has them too since 321), a save from before them discarded at launch (no Continue,
 // the file gone; a save of this format loads, one in a due Town reopens it), the guide's Town cards (K23 in the first
 // Town, K24 once a material is held; the Shop, Recall and spend-gold cards told as a Town has them), town.json's
 // `shop.from` read, and the polish list: the Army detail's Recall tag always says Recall, the talk bubbles over the head
@@ -22,6 +22,7 @@ import 'package:tower_defense/main.dart';
 import 'package:tower_defense/save.dart';
 
 import 'hud_font.dart';
+import 'real_rules.dart';
 import 'town_hud_test.dart' show frames, townGame;
 import 'town_life_test.dart' show ScriptDice, troop;
 import 'town_scene_test.dart' show intoTown, settle;
@@ -82,10 +83,11 @@ Game seeded(int seed) => Game(Random(seed), Random(seed + 100)).boardRules()
   ..townPolicy = 'leave';
 
 void main() {
-  test('the board plays with the Towns: boardRules turns them on, always (no define, decisions-log 296); a plain Game() '
-      'keeps them off (tests only)', () {
-    expect(Game().towns, isFalse);
-    expect(Game().boardRules().towns, isTrue);
+  test('every game plays with the Towns: the board (no define, decisions-log 296) and a plain Game() (decisions-log 321) '
+      'save their schedule', () {
+    for (final g in [Game(), Game().boardRules()]) {
+      expect(g.toJson()['town'], {'chance': const TownSchedule().chanceStart, 'last': const TownSchedule().firstTownAfter});
+    }
   });
 
   test('a board game rolls Towns: over 30 waves won at once each seed has Towns, none before wave 7, 5 apart at least, '
@@ -151,7 +153,6 @@ void main() {
       final g = Game(Random(1))
         ..wave = 12
         ..gold = 777
-        ..towns = true
         ..townAt = 13;
       expect(saveGame(g), isTrue);
       expect(jsonDecode(_save.readAsStringSync())['v'], Game.saveVersion);
@@ -198,7 +199,7 @@ void main() {
       for (var i = 0; i < 120 && !b.townShown; i++) {
         await frames(tester, 1);
       }
-      expect((b.welcome, b.state.towns, b.state.inTown, b.townShown), (null, true, true, true));
+      expect((b.welcome, b.state.inTown, b.townShown), (null, true, true));
       await frames(tester, 40); // the tap's own timers
     });
   });
@@ -222,7 +223,6 @@ void main() {
       expect(guideNext(g, seen), isNull);
       g.materials[Mat.slimeGel] = 1;
       expect(guideNext(g, seen), 'K24');
-      expect(guideNext(g..towns = false, seen), isNull, reason: 'with the Towns off no materials card');
     });
 
     test('the Shop, Recall and spend-gold cards tell a Town\'s game: no Shop tab, the Army tab\'s dot, Recall', () {
@@ -277,59 +277,40 @@ void main() {
     });
   });
 
-  test("town.json's shop.from opens the Town's Shop with the Towns on (shipped 1: every Town's, decisions-log 253); Awaken "
-      '4-5, Forge and Recall keep wave 15; off, wave 15 for all as ever', () {
+  test("town.json's shop.from opens the Town's Shop (shipped 1: every Town's, decisions-log 253); Awaken 4-5, Forge and "
+      'Recall keep wave 15', () {
     expect(const TownRules().shop.from, 1);
     final on = Game()
-      ..towns = true
       ..townRules = TownRules.patch({'shop': {'from': 10}})
       ..wave = 9;
     expect((on.shopFrom, on.storeOpen, on.storeWhy(StoreRefusal.locked)), (10, false, 'Opens after wave 10'));
     on.wave = 10;
     expect(on.storeOpen, isTrue);
-    final off = Game()
-      ..townRules = on.townRules
-      ..wave = 10;
-    expect((off.shopFrom, off.storeOpen, off.storeWhy(StoreRefusal.locked)), (storeFrom, false, 'Opens after wave $storeFrom'));
-    // The shipped rules: the Shop open from wave 1's win; the Army page's buys from wave 15's, with the Towns on or off.
-    for (final towns in [true, false]) {
-      final g = Game()
-        ..towns = towns
-        ..gold = 1 << 30;
-      for (var w = 0; w <= 20; w++) {
-        g.wave = w;
-        expect(g.storeOpen, towns ? w >= 1 : w >= storeFrom, reason: 'towns $towns wave $w: the Shop');
-        expect(g.armyBuysOpen, w >= storeFrom, reason: 'towns $towns wave $w: Awaken 4-5, Forge, Recall');
-      }
-      g
-        ..wave = storeFrom - 1
-        ..fallenHeroes.add(FallenHero(name: 'Kael', type: 'knight', stats: const [HeroStat.hp], fell: 3));
-      for (final why in [g.whyNotAscend('knight'), g.whyNotTempa('knight'), g.whyNotRecall(g.fallenHeroes.single)]) {
-        expect(why, 'Opens after wave $storeFrom', reason: 'towns $towns: the Army page\'s buys before wave 15');
-      }
-      g.wave = storeFrom;
-      for (final why in [g.whyNotAscend('knight'), g.whyNotTempa('knight'), g.whyNotRecall(g.fallenHeroes.single)]) {
-        expect(why, isNot('Opens after wave $storeFrom'), reason: 'towns $towns: open from wave 15 (its own refusals then)');
-      }
+    // The shipped rules: the Shop open from wave 1's win; the Army page's buys from wave 15's.
+    final g = Game()..gold = 1 << 30;
+    for (var w = 0; w <= 20; w++) {
+      g.wave = w;
+      expect(g.storeOpen, w >= 1, reason: 'wave $w: the Shop');
+      expect(g.armyBuysOpen, w >= storeFrom, reason: 'wave $w: Awaken 4-5, Forge, Recall');
+    }
+    g
+      ..wave = storeFrom - 1
+      ..fallenHeroes.add(FallenHero(name: 'Kael', type: 'knight', stats: const [HeroStat.hp], fell: 3));
+    for (final why in [g.whyNotAscend('knight'), g.whyNotTempa('knight'), g.whyNotRecall(g.fallenHeroes.single)]) {
+      expect(why, 'Opens after wave $storeFrom', reason: 'the Army page\'s buys before wave 15');
+    }
+    g.wave = storeFrom;
+    for (final why in [g.whyNotAscend('knight'), g.whyNotTempa('knight'), g.whyNotRecall(g.fallenHeroes.single)]) {
+      expect(why, isNot('Opens after wave $storeFrom'), reason: 'open from wave 15 (its own refusals then)');
     }
   });
 
-  test('the Shop texts with the Towns on: the cap warning and the awakening tooltip send to the Army page', () {
-    expect(capWarningText(32, 50, towns: true), endsWith('in the ${Words.army} page (${Words.awaken})'));
-    expect(capWarningText(32, 50), endsWith('in the ${Words.shop} (${Words.awaken})'));
-    // At Awaken 3 from its items, by the game's own rule (by grade with the Towns and the forge on, decisions-log 272):
-    // the next is bought.
-    Game atThree({required bool towns}) {
-      final g = Game()..towns = towns;
-      g.upgrades['priest'] = [
-        for (final MapEntry(key: item, value: n) in g.awakenNeeds('priest', maxAwaken).entries) ...List.filled(n, item),
-      ];
-      expect(g.awakenLevel('priest'), maxAwaken);
-      return g;
-    }
-
-    expect(atThree(towns: true).awakenInfo('priest').$2.last, (null, '${awakenName(maxAwaken + 1)}: buy on the ${Words.army} page'));
-    expect(atThree(towns: false).awakenInfo('priest').$2.last, (null, '${awakenName(maxAwaken + 1)}: buy in the ${Words.shop}'));
+  test('the Shop texts: the cap warning and the awakening tooltip send to the Army page', () {
+    expect(capWarningText(32, 50), endsWith('in the ${Words.army} page (${Words.awaken})'));
+    // At Awaken 3 from its items, by the game's own rule (by grade, decisions-log 272): the next is bought.
+    final g = Game()..upgrades['priest'] = awakenItems('priest', maxAwaken);
+    expect(g.awakenLevel('priest'), maxAwaken);
+    expect(g.awakenInfo('priest').$2.last, (null, '${awakenName(maxAwaken + 1)}: buy on the ${Words.army} page'));
   });
 
   testWidgets('the Recall tag always says Recall: "Recall 6k" where "6000" won\'t fit, a swap only where it fits whole',

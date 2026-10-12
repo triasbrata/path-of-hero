@@ -6,7 +6,7 @@ part of 'game.dart';
 // wishes, the Bag's and the Shop's materials mark what they take. Nothing crafts or gives by itself (the owner's "Wishlist
 // / target saja"): crafting and giving stay the player's. Set from the Smithy's item page and from each type's Army
 // detail, one list ("Dua-duanya"). Items only: a small relic is worn by one troop, not a type, and the Enhance stones go
-// on no type. Only with the Towns on ([wishOn]), where the Smithy makes items; saved as `wishlist` while a wish stands.
+// on no type. Saved as `wishlist` while a wish stands.
 //
 // Quantities and whole sets (decisions-log 300; the owner: "user harusnya bisa whitelist semua item yang yang dibutuhkan
 // untuk enhance 1 army type, misal knight butuh 5 item maka ke 5nya akan langsung di whitelist beserta quantitynya"): each
@@ -38,15 +38,12 @@ typedef WishRow = ({String? type, Enum kind, int need, int make, List<CraftRow> 
 /// The Wishlist's rules (decisions-log 282, 300): who can wish for what, the wishes per type and how many each is to hold,
 /// a type's whole set, and what they still lack.
 extension Wishlist on Game {
-  /// Whether this game has a Wishlist: the Towns on, where the Smithy makes items.
-  bool get wishOn => towns;
-
   /// Whether [type] can wish for [item]: a troop type, an item the Smithy makes ([Craft.itemRecipe]) and one the type can
-  /// ever take: by grade ([Game.byGrade]) a kind its Awaken counts ([Game.kindRecipe]) in any grade, or the Cap or the
-  /// Ring ([outsideAwaken]), which every type takes; else its recipe's items ([Game.recipeOf]).
+  /// ever take: a kind its Awaken counts ([Game.kindRecipe]) in any grade, or the Cap or the Ring ([outsideAwaken]), which
+  /// every type takes.
   bool canWish(String type, Item item) {
-    if (!wishOn || itemRecipe(item) == null || recipeOf(type).isEmpty) return false;
-    return byGrade ? kindRecipe(type).containsKey(item.slot) || outsideAwaken.contains(item.slot) : recipeOf(type).containsKey(item);
+    if (itemRecipe(item) == null || recipeOf(type).isEmpty) return false;
+    return kindRecipe(type).containsKey(item.slot) || outsideAwaken.contains(item.slot);
   }
 
   /// The products [type] can wish for ([canWish]), in [Item] order: the Army detail's picker, by grade.
@@ -147,11 +144,9 @@ extension Wishlist on Game {
     }
   }
 
-  /// Whether [kind] can be a free line (decisions-log 302): the Wishlist on and a product the Smithy makes, an item with a
-  /// recipe ([Craft.itemRecipe]) or a small relic in play with one ([Relics.relicsInPlay], [Craft.craftRecipe]).
-  bool canWishFree(Enum kind) =>
-      wishOn &&
-      switch (kind) {
+  /// Whether [kind] can be a free line (decisions-log 302): a product the Smithy makes, an item with a recipe
+  /// ([Craft.itemRecipe]) or a small relic in play with one ([Relics.relicsInPlay], [Craft.craftRecipe]).
+  bool canWishFree(Enum kind) => switch (kind) {
         final Item i => itemRecipe(i) != null,
         final Relic r => relicsInPlay.contains(r) && craftRecipe(r) != null,
         _ => false,
@@ -269,10 +264,10 @@ extension Wishlist on Game {
 
   /// The save's `wishlist` (type → its wishes by name, in order, each with how many the type is to hold; decisions-log
   /// 300), and under `free` the open free lines (product name → how many the Bag is to hold, in order; decisions-log 302:
-  /// no item and no relic share a name), only with [wishOn] and some wish (a save without it: none).
+  /// no item and no relic share a name), only with some wish (a save without it: none).
   Map<String, Object> get _wishJson {
     final free = freeWishes;
-    if (!wishOn || (wishlist.isEmpty && free.isEmpty)) return const {};
+    if (wishlist.isEmpty && free.isEmpty) return const {};
     return {
       'wishlist': {
         for (final MapEntry(key: type, value: goals) in wishlist.entries) type: {for (final MapEntry(key: i, value: n) in goals.entries) i.name: n},
@@ -281,7 +276,7 @@ extension Wishlist on Game {
     };
   }
 
-  /// [j]'s `wishlist`, whatever [wishOn] is (a save without it: none): each type's wishes with their goals; a save from
+  /// [j]'s `wishlist` (a save without it: none): each type's wishes with their goals; a save from
   /// before the goals (decisions-log 282: a list of names) wishes each for one more than the type holds, as it was wished.
   /// A type that isn't a troop type, an item name this build doesn't know and a goal under 1 are skipped, an item twice
   /// kept once; under `free` the free lines (decisions-log 302), an item's or a relic's name each, skipped the same.

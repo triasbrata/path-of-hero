@@ -93,7 +93,6 @@ const sizes = [Size(1266, 713), Size(1164, 777), Size(915, 412)];
 Game smithyGame() {
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
-    ..towns = true
     ..armyMax = null
     ..gold = 40000
     ..wave = 20;

@@ -1,8 +1,8 @@
 // The forge's five new item kinds (decisions-log 251; docs/loot-items-relics.md "The forge"): the Amulet's max HP, the
 // Prayer Beads' heals (and a healer's holy damage on the undead), the Torch's blows on the undead (the one new step in
 // Game._hurt), the Spear's melee reach and reach cap up to their ceiling (town.json `items.spear.reachMost`), the Prism's
-// splash (only a type with splash) up to its ceiling (`items.prism.splashMost`). Each at its three grades from town.json `items`, stacked by count, and nothing at all
-// with the Towns off (a plain Game(), tests only; the forge's own switch is gone, decisions-log 296).
+// splash (only a type with splash) up to its ceiling (`items.prism.splashMost`). Each at its three grades from town.json `items`,
+// stacked by count, in every game (the forge's own switch went in decisions-log 296, the Towns' in 321).
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -13,9 +13,8 @@ import 'hero_skill_helpers.dart';
 /// A board game (the Towns, and with them the forge, on).
 Game board() => Game(Random(1), Random(2))..boardRules();
 
-/// A [bareGame] with the Towns on (or off, [towns]) and no skills of any kind: what happens is the items' doing.
-Game field({bool towns = true}) => bareGame(Random(1))
-  ..towns = towns
+/// A [bareGame] with no skills of any kind: what happens is the items' doing.
+Game field() => bareGame(Random(1))
   ..skills = false
   ..heroSkills = false
   ..awakenSkills = false
@@ -46,10 +45,10 @@ void strikeOnce(Game g, Unit u) {
   u.busyUntil = hold;
 }
 
-/// The HP a [type] troop holding [items] takes off a [foe] (a [field] game, the Towns on or off) with one blow, and the
-/// foe's defence and whether it is undead.
-(double, double, bool) blow(String type, List<Item> items, String foe, {bool towns = true}) {
-  final g = field(towns: towns)..upgrades[type] = [...items];
+/// The HP a [type] troop holding [items] takes off a [foe] (a [field] game) with one blow, and the foe's defence and
+/// whether it is undead.
+(double, double, bool) blow(String type, List<Item> items, String foe) {
+  final g = field()..upgrades[type] = [...items];
   final u = placeNow(g, type, 2, 3), f = foeAt(g, foe, u.pos + const Point(12, 0))..hp = 100000;
   final before = f.hp;
   strikeOnce(g, u);
@@ -77,7 +76,7 @@ void main() {
       expect(g.itemK(i), g.townRules.items[i]!.effect, reason: '$i: the forge on reads town.json');
     }
     expect([for (final i in droppedItems) Game().itemK(i)], [swordDmg, shieldDef, bootsSpeed, bowRange, glovesRate, potionRegen, staffDmg],
-        reason: 'the forge off: the seven\'s constants');
+        reason: 'the seven\'s numbers in town.json are the constants from before the forge');
   });
 
   group('Amulet: max HP x1.08 / 1.10 / 1.12', () {
@@ -307,22 +306,8 @@ void main() {
     });
   });
 
-  group('the Towns off (a plain Game(), tests only): nothing', () {
+  group('Stats.upgraded without a number', () {
     final all = [for (final slot in [ItemSlot.amulet, ItemSlot.beads, ItemSlot.torch, ItemSlot.spear, ItemSlot.prism]) ...grades(slot)];
-
-    test('a type holding all fifteen fights as it would without them', () {
-      final g = Game();
-      for (final type in troopTypes.keys) {
-        expect(whole(holding(g, type, [Item.sword, ...all, Item.potion])), whole(holding(g, type, const [Item.sword, Item.potion])),
-            reason: type);
-      }
-    });
-
-    test('a torch holder\'s blow on the undead, as before', () {
-      final dmg = troopTypes['swordsman']!.dmg;
-      final (hp, def, _) = blow('swordsman', [Item.sunTorch], 'skeleton', towns: false);
-      expect(hp, closeTo(hitTaken(dmg, def), 1e-9));
-    });
 
     test('Stats.upgraded without a number leaves the five alone, and the new fields start at their defaults', () {
       for (final type in troopTypes.keys) {

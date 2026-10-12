@@ -60,7 +60,7 @@ but the troops move freely.
 - **Relics** (one per troop, a Hero two): crafted at a Town's Smithy from materials, items and gold, twenty small
   relics in three tiers: seven Basic (fang, thorns, fury, guard and the forge's chill, shark tooth and grit), seven
   Strong and six Mighty (assets/config/town.json `relics`).
-- **The store** (a Town's Shop, open in every Town; with the Towns off from wave 15 won): sells only the materials
+- **The store** (a Town's Shop, open in every Town): sells only the materials
   that have dropped (2.5x their sell price), no item or small relic (the Smithy makes them); what is in the bag sells
   back (items and relics for half their worth). Its Artifact shelf (five overpowered artefacts) opens only in a game
   without the Boss Chest: on the board the chest is the Artifacts' one source.

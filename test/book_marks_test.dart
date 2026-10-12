@@ -3,12 +3,10 @@
 // gone, on the field's book and a Town's, on every page; the top band's gold panel and wave meter still show both. The
 // board is rendered into a recording canvas and every piece it takes from ui_book_marks.png is checked: the tabs lie
 // at x < 60 of the sheet, the flags from x 162. Booted TdGames, seeded.
-import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
 
 import 'town_hud_test.dart' show boot, frames, townGame;
@@ -54,26 +52,15 @@ Future<void> noRibbons(WidgetTester tester, Board b, String tag) async {
 void main() {
   for (final size in sizes) {
     final tag = '${size.width.round()}x${size.height.round()}';
-    testWidgets('$tag: no gold or wave ribbon on the book, on the field (Towns off and on) and in a Town, on every page',
-        (tester) async {
+    testWidgets('$tag: no gold or wave ribbon on the book, on the field and in a Town, on every page', (tester) async {
       final b = (await boot(tester, size))..guideSeen = null; // no guide card: its gold picture draws the sheet's flag
-      // The field's book with the Towns off at wave 20 (tests only): Army, Bag, Settings (the Toko's Shop tab went in
-      // decisions-log 296).
-      b.state = Game(Random(1), Random(2)).boardRules()
-        ..towns = false
-        ..armyMax = null
+      // The field's book at wave 20: Army, Bag, Settings (the Toko's Shop tab went in decisions-log 296).
+      b.state = townGame()
         ..wave = 20
         ..gold = 4130;
       await frames(tester, 60);
       expect(b.bookTabs.map((t) => t.$1), ['troops', 'bag', 'settings']);
       await noRibbons(tester, b, 'field $tag');
-      // The field's book with the Towns on: Army, Bag, Settings.
-      b.state = townGame()
-        ..wave = 20
-        ..gold = 4130;
-      await frames(tester, 60);
-      expect(b.bookTabs.map((t) => t.$1), containsAll(['troops', 'bag', 'settings']));
-      await noRibbons(tester, b, 'field, Towns on, $tag');
       // A Town's book: Smithy, Tavern, Shop, Army, Bag, Settings (decisions-log 230, 268, 301).
       await intoTown(tester, b);
       await settle(tester, b);

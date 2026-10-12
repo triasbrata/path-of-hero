@@ -15,13 +15,13 @@ part of 'game.dart';
 /// decisions-log 180) and Ukir's ([UkirFed] and [UkirStep], an Asah's [PusakaAsah.items] and a wave start's Pusaka
 /// with their Ukir; decisions-log 183). While [omensOn] is off no Bayangan field is written. 9: the Towns' ([TownMarked],
 /// [TownEntered], [TownLeft], [TownRolled]; decisions-log 216), and the Smithy's [Crafted] with [TownLeft.crafts] and
-/// [TownLeft.craftSpent] (decisions-log 233), only while [Game.towns] is on. [OmenDusk] (decisions-log 239) came without
+/// [TownLeft.craftSpent] (decisions-log 233), in every game (decisions-log 321). [OmenDusk] (decisions-log 239) came without
 /// a raise: like every Bayangan event it is sent only while [omensOn] is on, which no player's game has yet. The Tavern's
 /// ([BoostBought], [BoostEnded], [BoostSaved], [TavernRerolled], [TownLeft.tavern], [WaveStarted.boosts]; decisions-log
 /// 266) came without a raise too: only a game with the Tavern's switch on had them, which no player's game had yet. 10: the
 /// forge's ([ItemCrafted], [StoneCrafted], [ItemEnhanced]; decisions-log 249, 255), sent in every board game since the
-/// forge's cut-over (decisions-log 272); with the Towns off (tests only; the forge-off build is gone, decisions-log 296) none is. 11: the Tavern switched on (decisions-log 268):
-/// the Tavern's, while the Towns are on (its own switch is gone, decisions-log 296). 12: the Bayangan switched on
+/// forge's cut-over (decisions-log 272), in every game since decisions-log 321. 11: the Tavern switched on
+/// (decisions-log 268): the Tavern's (its own switch is gone, decisions-log 296). 12: the Bayangan switched on
 /// (decisions-log 319): their events and fields (8's, [OmenDusk]) reach every player's records; `--dart-define=OMENS=false`
 /// (tests only) sends none.
 const eventVersion = 12;
@@ -32,7 +32,7 @@ const logSize = 200;
 /// What an event is about. The twelve from waveStarted to pusakaMoved are [TraceEvent]s, for the telemetry only, and so
 /// are offerShown, offerRerolled, ukirFed, ukirStep, townRolled and tavernRerolled.
 enum EventKind {
-  fell, skill, heroSkill, awakenSkill, drop, strongFoe, monsterSkill, heroMade, awakened, waveWon, waveLost, //
+  fell, skill, heroSkill, awakenSkill, strongFoe, monsterSkill, heroMade, awakened, waveWon, waveLost, //
   waveStarted, spawned, bought, itemUsed, relicUsed, marched, storeBought, storeSold,
   relicTakenOff, typeReleased, pusakaBound, pusakaMoved,
   ascended, heroRecalled, grailSaved, pusakaReport,
@@ -127,22 +127,6 @@ final class AwakenSkillCast extends GameEvent {
 
   @override
   Map<String, Object?> get data => {'name': name, 'type': type, 'skill': skill.name, 'level': level};
-}
-
-/// A slain monster ([from], of [tier]) dropped an [item] or a [relic] (one of the two).
-final class LootDropped extends GameEvent {
-  LootDropped(super.wave, super.t, {required this.from, required this.tier, this.item, this.relic}) : assert((item == null) != (relic == null));
-
-  final String from;
-  final Tier tier;
-  final Item? item;
-  final Relic? relic;
-
-  @override
-  EventKind get kind => EventKind.drop;
-
-  @override
-  Map<String, Object?> get data => {'from': from, 'tier': tier.name, 'item': item?.name, 'relic': relic?.name};
 }
 
 /// A strong monster came onto the field: a high elite, a mini boss or the boss ([strongTiers]).
@@ -417,8 +401,8 @@ final class GrailSaved extends GameEvent {
 }
 
 /// What a won wave's Pusaka did (decisions-log 149), for the battle log and the "MENANG!" line ([Game.lastPusaka]):
-/// each bound one's counter ([lines], [PusakaDone]), what the forge's small relics did ([relics], [RelicDone]; with the
-/// Towns on, decisions-log 250), and the small relics that went back to the bag as their troops fell ([returned], by
+/// each bound one's counter ([lines], [PusakaDone]), what the forge's small relics did ([relics], [RelicDone];
+/// decisions-log 250), and the small relics that went back to the bag as their troops fell ([returned], by
 /// kind). The telemetry has the same in the wave record's `pusaka` and `relics`.
 final class PusakaReport extends GameEvent {
   PusakaReport(super.wave, super.t, {required this.lines, this.relics = const [], this.returned = const {}});
@@ -582,8 +566,7 @@ final class Crafted extends GameEvent {
       };
 }
 
-/// An item made at a Town's Smithy (town.dart's [Craft.craftItem], decisions-log 249; only with the Towns on): what it
-/// took.
+/// An item made at a Town's Smithy (town.dart's [Craft.craftItem], decisions-log 249): what it took.
 final class ItemCrafted extends GameEvent {
   ItemCrafted(super.wave, super.t, {required this.item, required this.materials, this.items = const {}, required this.gold});
 
@@ -688,7 +671,7 @@ final class WaveStarted extends TraceEvent {
   /// levels still `owed` and the `skipBuff`; null while [omensOn] is off (no key).
   final Map<String, Object>? omens;
 
-  /// The Towns' materials held at the start (town.dart, by name); null while [Game.towns] is off (no key).
+  /// The Towns' materials held at the start (town.dart, by name); null in an event made without them (no key).
   final Map<String, int>? materials;
 
   /// The Tavern's boosts running at the start (tavern.dart, each kind's waves left); null while none runs (no key).
@@ -841,7 +824,7 @@ final class StoreBought extends TraceEvent {
   Map<String, Object?> get data => {..._lootJson(loot), 'cost': cost};
 }
 
-/// [n] [loot] (an [Item], a [Relic], or with the Towns on a material, [Mat]) sold from the bag to the store for [gain] in
+/// [n] [loot] (an [Item], a [Relic] or a material, [Mat]) sold from the bag to the store for [gain] in
 /// all.
 final class StoreSold extends TraceEvent {
   StoreSold(super.wave, super.t, {required this.loot, required this.n, required this.gain, this.plus = 0})
@@ -860,7 +843,7 @@ final class StoreSold extends TraceEvent {
   Map<String, Object?> get data => {..._lootJson(loot), if (plus > 0) 'plus': plus, 'n': n, 'gain': gain};
 }
 
-/// A store event's loot as [LootDropped] has it: `item` or `relic` by name, the other null; a material sold (the Towns'
+/// A store event's loot: `item` or `relic` by name, the other null (as a field drop's event had it, decisions-log 321); a material sold (the Towns'
 /// Shop, decisions-log 230) both null and its name under `material`.
 Map<String, Object?> _lootJson(Enum loot) =>
     {'item': loot is Item ? loot.name : null, 'relic': loot is Relic ? loot.name : null, if (loot is Mat) 'material': loot.name};
@@ -955,7 +938,7 @@ final class UkirStep extends TraceEvent {
 
 /// What the Town roll after won wave [wave] did ([Towns._rollTown]), for that wave's telemetry record (its `town`):
 /// `{chance, hit, slot?}` when it rolled, `{blocked: true}` within [TownSchedule.minGap] of the last Town, `{marked:
-/// slot}` while one is marked. Only while [Game.towns] is on, once every won wave.
+/// slot}` while one is marked. Once every won wave.
 final class TownRolled extends TraceEvent {
   TownRolled(super.wave, super.t, {required this.town});
 
