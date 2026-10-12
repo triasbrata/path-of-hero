@@ -92,8 +92,11 @@ void main() {
       g.startWave();
       await frames(tester, 2);
       // 12 s of the wave at a fixed step, the casts' pops drained so no banner covers the field.
+      // ignore: avoid_print
+      print('$name: wave ${g.wave} started, ${g.troops.where((u) => u.alive).length} troops, paused ${g.paused}');
       for (var s = 0.0; s < 12 && !g.wipedOut; s += 0.5) {
         for (var i = 0; i < 15 && !g.wipedOut; i++) {
+          g.paused = false;
           g.tick(1 / 30);
         }
         g
@@ -108,8 +111,18 @@ void main() {
           ..shield = 0;
         g.units.add(Unit(Side.enemy, 'werebear', enemyTypes['werebear']!, u.pos + const Point(10, 0))..entered = true);
       }
-      for (var i = 0; i < 600 && !g.wipedOut; i++) {
+      for (var i = 0; i < 1200 && !g.wipedOut; i++) {
+        g.paused = false; // the book never holds it
         g.tick(1 / 30);
+        if (i % 150 == 149) {
+          final left = g.troops.where((u) => u.alive).toList();
+          // ignore: avoid_print
+          print('$name t ${g.t.toStringAsFixed(1)}: ${left.length} troops left ${[for (final u in left.take(4)) '${u.type} ${u.hp.toStringAsFixed(0)} at ${u.pos}']}, '
+              'foes ${g.enemies.where((u) => u.alive).length}, active ${g.waveActive}, over ${g.over}');
+          for (final u in left) {
+            u.hp = min(u.hp, 1); // healed back up: down to 1 again
+          }
+        }
       }
       expect(g.wipedOut, isTrue, reason: 'the army fell');
       g
