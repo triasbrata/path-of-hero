@@ -3,6 +3,7 @@
 // `_test.dart`): queue `["test", "test/probe_wipe_shots.dart"]` with the worktree as `dir`. It never touches the real
 // save (flutter_test_config.dart's temp dir); the dice are seeded and the play is at a fixed step.
 //
+// After 12 s of the wave every troop is held at 1 HP with a werebear that doesn't fall beside it until the army is down.
 // It writes, at 1600x947 (`desk-`) and 915x412 (`phone-`): pop (the heart popping as the last troop falls, the monsters
 // hopping, the message), hop (a second on), after (the hop over: the field swept, the message, the meter's next wave),
 // and 2x crops of the hearts (`-hearts`) and the message (`-msg`) of pop.
@@ -104,24 +105,29 @@ void main() {
           ..monsterCasts.clear();
         await frames(tester, 1);
       }
-      // Then each troop left, at 1 HP, meets a werebear beside it.
-      for (final u in g.troops.where((u) => u.alive).toList()) {
-        u
-          ..hp = 1
-          ..shield = 0;
-        g.units.add(Unit(Side.enemy, 'werebear', enemyTypes['werebear']!, u.pos + const Point(10, 0))..entered = true);
-      }
-      for (var i = 0; i < 1200 && !g.wipedOut; i++) {
+      // Then each troop left is held at 1 HP, a werebear that doesn't fall beside it, until the army is down.
+      final bears = <Unit, Unit>{};
+      for (var i = 0; i < 1800 && !g.wipedOut; i++) {
+        for (final u in g.troops.where((u) => u.alive).toList()) {
+          u
+            ..hp = min(u.hp, 1)
+            ..shield = 0
+            ..ward = 0;
+          if (!(bears[u]?.alive ?? false)) {
+            final bear = Unit(Side.enemy, 'werebear', enemyTypes['werebear']!, u.pos + const Point(10, 0))
+              ..entered = true
+              ..maxHp = 10000000
+              ..hp = 1e7;
+            g.units.add(bears[u] = bear);
+          }
+        }
         g.paused = false; // the book never holds it
         g.tick(1 / 30);
-        if (i % 150 == 149) {
+        if (i % 300 == 299) {
           final left = g.troops.where((u) => u.alive).toList();
           // ignore: avoid_print
-          print('$name t ${g.t.toStringAsFixed(1)}: ${left.length} troops left ${[for (final u in left.take(4)) '${u.type} ${u.hp.toStringAsFixed(0)} at ${u.pos}']}, '
+          print('$name t ${g.t.toStringAsFixed(1)}: ${left.length} troops left ${[for (final u in left.take(4)) '${u.type} at ${u.pos}']}, '
               'foes ${g.enemies.where((u) => u.alive).length}, active ${g.waveActive}, over ${g.over}');
-          for (final u in left) {
-            u.hp = min(u.hp, 1); // healed back up: down to 1 again
-          }
         }
       }
       expect(g.wipedOut, isTrue, reason: 'the army fell');
