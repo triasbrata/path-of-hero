@@ -124,8 +124,9 @@ void main() {
 
   test('selling one exact product pulls its margin to the floor over 24 sales (gently at first), never under; '
       'a Sword, a Sword +2 and a Shield each their own', () {
-    final g = inTown(1)..inventory.addAll({Item.sword: 30, Item.shield: 2});
+    final g = inTown(1)..inventory.addAll({Item.sword: 30, Item.shield: 2}), events = <GameEvent>[];
     g.enhancedBag[(Item.sword, 2)] = 1;
+    g.listeners.add(events.add); // the store's events go to the listeners, not the log
     final fresh = g.freshMargin(Item.sword), hpp = g.hppOf(Item.sword);
     final margins = [for (var s = 0; s <= 30; s++) g.marginOf(Item.sword, 0, s)];
     for (var s = 1; s <= 24; s++) {
@@ -142,7 +143,7 @@ void main() {
     expect(g.sell(Item.sword, 30), 30);
     expect(g.gold - before, sum, reason: 'each piece at its own step');
     expect([g.pressureOf(Item.sword), g.marginOf(Item.sword), g.sellPrice(Item.sword)], [24, closeTo(1.3, 1e-9), (hpp * 1.3).round()]);
-    final sold = g.log.entries.whereType<StoreSold>().last;
+    final sold = events.whereType<StoreSold>().last;
     expect(sold.toJson(), {
       'v': eventVersion, 'kind': 'storeSold', 'wave': 40, 't': g.t, 'item': 'sword', 'relic': null, 'n': 30, //
       'gain': sum, 'margin': 3.0, 'pressure': 0,
@@ -152,7 +153,7 @@ void main() {
     expect(g.sellPriceAt(Item.sword, 2), g.marketPrice(Item.sword, 2));
     expect(g.sellAt(Item.sword, 2), 1);
     expect([g.pressureOf(Item.sword, 2), g.market.keys.toSet()], [1, {'sword', 'sword+2'}]);
-    expect(g.log.entries.whereType<StoreSold>().last.toJson()['plus'], 2);
+    expect(events.whereType<StoreSold>().last.toJson()['plus'], 2);
   });
 
   test("each new Town takes 10 off every product's pressure: back to fresh in the third Town after a flood", () {
