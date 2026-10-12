@@ -12,7 +12,7 @@ dulu untuk tulis score player ke board". The screens are in [ui-hud.md](ui-hud.m
 | Points | When |
 |---|---|
 | `killScore[tier]`: normal 10, elite 25, highElite 50, miniBoss 150, boss 500 | Every monster killed (`_hurt`), by its rank. The boss's raised skeletons (`cost` 0) score 0, like their gold. |
-| `waveScore` × n (100·n) | Winning wave n (beside the gold bonus). |
+| `waveScore` × n (100·n) | Winning wave n (beside the gold bonus), the first time only: a wave won again after a wipe sent the game back to a Town (`Game.bestWon`, decisions-log 333) scores its kills, not its win. |
 
 - The lives left no longer score (decisions-log 329). Until then `lifeScore` paid 50 a life in the tick the game ended;
   since decisions-log 322 a game ends only at 0 lives (an army wiped costs a heart and the wave is played again), so it
@@ -23,7 +23,8 @@ dulu untuk tulis score player ke board". The screens are in [ui-hud.md](ui-hud.m
 
 ## Entries and adapters (lib/scores.dart, pure Dart)
 
-- `ScoreEntry {name, score, wave, kills, at}`. `at` is when the game ended, UTC, cut to whole
+- `ScoreEntry {name, score, wave, kills, at}`; `wave` is the furthest reached (`Game.waveReached`: past the wave
+  fought when a wipe sent the game back to a Town, decisions-log 333). `at` is when the game ended, UTC, cut to whole
   milliseconds so an entry that went through JSON compares equal (`==` covers every field; the board
   lights the player's own entry that way).
   - `cleanName`: control characters out, trimmed, cut to `maxName` 12 characters; empty → `defaultName`

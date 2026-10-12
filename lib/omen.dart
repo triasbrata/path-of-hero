@@ -636,9 +636,19 @@ extension Omens on Game {
   /// Dragon Crown tooltip counts ([Pusaka.bossBlowsLived]: another wave [at], from [tideStart]). [enemyStats] with this
   /// wave's tide (from [Game.tideStart]), then the Bayangan's stat hooks ([_omenStats]); Lewati's skip buff for one of
   /// the wave's first monsters ([skipBuff]). Exactly [enemyStats]'s while [omensOn] is off.
+  /// After a wipe, until the next new Town, every one is weakened ([Game.weakened]: [weakenedHp], [weakenedDmg] on its
+  /// HP and damage, its kill gold kept; wipe.dart), the Bayangan's off switch or not.
   Stats spawnStats(String type, Tier tier, {bool raised = false, bool skipBuff = false, int? at, int? tideStart}) =>
-      _omenStats(enemyStats(type, tier, at ?? wave, raised: raised, tideStart: tideStart ?? this.tideStart), type, tier,
-          raised: raised, skipBuff: skipBuff);
+      _weakenedStats(_omenStats(enemyStats(type, tier, at ?? wave, raised: raised, tideStart: tideStart ?? this.tideStart), type,
+          tier, raised: raised, skipBuff: skipBuff));
+
+  /// [s] weakened by [Game.weakened] (wipe.dart): [s] itself at 0.
+  Stats _weakenedStats(Stats s) {
+    if (weakened <= 0) return s;
+    final n = min(weakened, weakenedMost);
+    final hp = max(1, (s.hp * weakenedHp[n]).round());
+    return s._with(hp: hp, dmg: s.dmg * weakenedDmg[n], regen: s.regen * hp / max(1, s.hp));
+  }
 
   /// An old save's catch-up ([Game.omensOwed]): every owned Pusaka (the store's too) owes [omenMarks] × its stars
   /// levels of its counter ([omenCounter] on its type), dealt one level at a time round-robin in [Relic] order, at most
@@ -1640,8 +1650,8 @@ extension Omens on Game {
   /// [Game.startWave], beside Beban's freeze: Grudge's tally and Dusk start afresh ([Game.duskOn]); Lewati's skip buff
   /// owed moves onto this wave ([Game.waveSkipBuff]); the Beban factor ([Game.omenFactor]) and the troops that start it
   /// ([Game.omenTroops]) are frozen for the wave; and from [omenFrom] the catch-up's next [omenCatchUpStep] levels land,
-  /// once a wave number: none when a wave lost to a wipe is played again ([Game.lostWave], wipe.dart). Nothing else while
-  /// [omensOn] is off.
+  /// once a wave number: none when a wave lost to a wipe is played again ([Game.lostWave], wipe.dart), nor a wave won
+  /// before a wipe sent the game back to a Town ([Game.bestWon]). Nothing else while [omensOn] is off.
   void _omenWave() {
     waveSkipBuff = false;
     _waveKills.clear(); // Grudge's tally starts afresh
@@ -1655,7 +1665,7 @@ extension Omens on Game {
     omenStarters
       ..clear()
       ..addAll(troops.where((u) => u.alive));
-    if (wave < omenFrom || lostWave == wave) return;
+    if (wave < omenFrom || wave <= bestWon || lostWave == wave) return;
     final land = omensOwed.take(omenCatchUpStep).toList();
     omensOwed.removeRange(0, land.length);
     for (final k in land) {

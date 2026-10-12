@@ -998,17 +998,27 @@ extension Towns on Game {
   /// The Town before wave [townAt] was marked and hasn't come yet ([TownMarked]): the wave meter's chip says so.
   bool get townMarked => townAt != null && !inTown;
 
+  /// The Town due (or the one the player is in) is the checkpoint's, gone back to after a wipe (wipe.dart, decisions-log
+  /// 333): its slot is the last Town's left.
+  bool get townAgain => townAt != null && townAt == _townLast;
+
   /// Goes into the due Town ([townDue]); [auto]: Auto was on. False (nothing changes) when none is due or it is in one.
+  /// The checkpoint's Town again ([townAgain]) is the same Town as left: its number, identity and market stay, the
+  /// monsters' weakening and the boosts until the next Town run on; its Tavern rolls a new visit's offers.
   bool enterTown({bool auto = false}) {
-    if (!townDue || inTown || over) return false;
+    if (!townDue || inTown || over || wipeAsk) return false; // after a wipe, once the player chose Try again (wipe.dart)
+    final again = townAgain;
     inTown = true;
-    _marketNewTown(); // its number and the market's recovery (market.dart)
+    if (!again) {
+      _marketNewTown(); // its number and the market's recovery (market.dart)
+      weakened = 0; // the monsters are themselves again (wipe.dart)
+      _boostTownEnd(); // the boosts until this Town end, so its Tavern may offer them again (tavern.dart)
+    }
     _townSince = t;
     _townCrafts.clear();
     _townCraftSpent = 0;
-    _boostTownEnd(); // the boosts until this Town end, so its Tavern may offer them again (tavern.dart)
     _rollTavern(); // the Tavern's offers (tavern.dart), on its own dice
-    _emit(TownEntered(wave, t, slot: townAt!, gold: gold, auto: auto, n: townCount, identity: townIdentity.key));
+    _emit(TownEntered(wave, t, slot: townAt!, gold: gold, auto: auto, n: townCount, identity: townIdentity.key, again: again));
     return true;
   }
 

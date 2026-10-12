@@ -45,7 +45,7 @@ extension _BossBars on Board {
     final aside = _bossAside = _asideLeft && units.isNotEmpty;
     final top0 = aside
         ? [_meterBottom, if (_troops.open) _troops.list.bottom, _omenRow.at.bottom].reduce(math.max) + 4
-        : [_meterAt.isEmpty ? _meterBottom : _meterAt.bottom, _map.at.bottom, _omenRow.at.bottom, _townChipAt.bottom, _boostRowAt.bottom]
+        : [_meterAt.isEmpty ? _meterBottom : _meterAt.bottom, _map.at.bottom, _omenRow.at.bottom, _townChipAt.bottom, _boostRowAt.bottom, _weakChipAt.bottom]
                 .reduce(math.max) +
             6;
     final full = units.fold(top0 - 4, (y, u) => y + 4 + _bossBarH(u, false));

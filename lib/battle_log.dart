@@ -76,8 +76,8 @@ String logLine(GameEvent e) => switch (e) {
       PusakaLebur(:final fodder, :final relic, :final stars, :final type, :final cost) =>
         '${Words.melt}: ${relicNames[fodder]} into ${relicNames[relic]} ★$stars ${_whereAt(type)} (${shortPrice(cost)} gold)',
       WaveEnded(:final wave, :final won) => won ? 'Wave $wave won' : 'Lost at wave $wave',
-      Wiped(:final wave, :final over, :final cause) => // wipe.dart
-        '${cause == WipeCause.fell ? 'Army fell' : wipeWhy(cause)}: ${over ? 'no hearts left' : '-1 heart, wave $wave again'}',
+      Wiped(:final wave, :final over, :final cause, :final checkpoint, :final town) => // wipe.dart
+        '${cause == WipeCause.fell ? 'Army fell' : wipeWhy(cause)}: ${over ? 'no hearts left' : checkpoint != null && town != null ? '-1 heart, back to $town from wave $checkpoint' : '-1 heart, wave $wave again'}',
       GrailSaved(:final name, :final type, :final hero) =>
         '${pusakaShortName(Relic.grail)} saves ${hero ? 'Hero ' : ''}$name (${troopTypeNames[type] ?? type})',
       PusakaReport() => pusakaReportLines(e).firstOrNull ?? '',
@@ -193,6 +193,7 @@ extension on Board {
           if (!_asideLeft) _omenRow.at.bottom, // the Shadows' chips (omen_look.dart)
           _townChipAt.bottom, // the Town chip, under the meter even while the book shows (town_look.dart)
           _boostRowAt.bottom, // the boosts' chips under it (tavern_look.dart)
+          _weakChipAt.bottom, // the weakened foes' chip under those (wipe_ask.dart)
           if (!_bossAside) _bossAt.bottom,
         ].reduce(math.max) +
         pad;

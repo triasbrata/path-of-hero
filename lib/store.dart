@@ -69,8 +69,8 @@ extension Store on Game {
   /// ([armyBuysOpen]).
   int get shopFrom => townRules.shop.from;
 
-  /// Wave [shopFrom] has been won. Derived from the wave, so not saved.
-  bool get storeOpen => wave > shopFrom || (wave == shopFrom && !waveActive);
+  /// Wave [shopFrom] has been won ([Game.wonWave]). Derived from the waves, so not saved.
+  bool get storeOpen => wonWave(shopFrom);
 
   /// This wave's win opened the Shop: the "VICTORY!" popup says so ([shopInTowns]; a game without the Towns said "The Shop is open!" until decisions-log 296). Never while
   /// [shopFrom] is 1, where no Town comes before it and so the Shop was never shut (decisions-log 253).
@@ -78,8 +78,9 @@ extension Store on Game {
 
   /// Wave [storeFrom] has been won: Awaken 4-5, Forge and Recall can be bought (in the Army page's detail, between any
   /// waves). A Town's Shop opens at [shopFrom] instead (decisions-log 253: the owner asked the Shop open in every Town,
-  /// nothing about these). Derived from the wave, so not saved.
-  bool get armyBuysOpen => wave > storeFrom || (wave == storeFrom && !waveActive);
+  /// nothing about these). Derived from the waves ([Game.wonWave]: a wipe's trip back to a Town locks nothing again), so
+  /// not saved.
+  bool get armyBuysOpen => wonWave(storeFrom);
 
   /// [why] in the store's words ([storeRefusalNames]), the locked one with this game's [shopFrom].
   String storeWhy(StoreRefusal why) => why == StoreRefusal.locked ? 'Opens after wave $shopFrom' : storeRefusalNames[why]!;

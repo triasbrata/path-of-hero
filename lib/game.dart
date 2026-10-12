@@ -3213,7 +3213,10 @@ class Game {
         if (pusaka.isNotEmpty) 'pusaka': {for (final e in pusaka.entries) e.key.name: e.value.toJson()},
         if (notes.isNotEmpty) 'notes': [...notes], // the one-time messages shown
         'asahAt': ?asahAt, // the last Asah's wave
-        'lostWave': ?lostWave, // the wave the army was wiped in, played again next (wipe.dart)
+        'lostWave': ?lostWave, // the furthest wave the army was wiped in, played again (wipe.dart)
+        if (bestWon > wave) 'bestWon': bestWon, // the highest wave won, past the wave after a trip back (wipe.dart)
+        if (weakened > 0) 'weakened': weakened, // the monsters weakened after a wipe until the next new Town (wipe.dart)
+        if (wipeAsk) 'wipeAsk': true, // Try again or Give up, still to be chosen (wipe.dart)
         if (ukir.fed) 'ukir': ukir.toJson(), // the run's Ukir, once fed (pusaka.dart)
         if (legendsFound.isNotEmpty) 'legendsFound': [for (final r in legendsFound) r.name], // never offered again (pusaka.dart)
         if (toReplace.isNotEmpty) 'toReplace': [for (final f in toReplace) {'type': f.type, 'x': f.post.x, 'y': f.post.y}],
@@ -3344,7 +3347,10 @@ class Game {
     }
     notes.addAll([for (final n in (j['notes'] as List?) ?? const []) n as String]);
     asahAt = j['asahAt'] as int?; // none in saves from before Asah (pusaka.dart)
-    lostWave = switch (j['lostWave']) { final int w when w == wave + 1 => w, _ => null }; // a wiped wave, next (wipe.dart)
+    lostWave = switch (j['lostWave']) { final int w when w > wave => w, _ => null }; // a wiped wave, still ahead (wipe.dart)
+    bestWon = max(wave, j['bestWon'] as int? ?? 0); // a save is made between waves: its wave was won (wipe.dart)
+    weakened = (j['weakened'] as int? ?? 0).clamp(0, weakenedMost);
+    wipeAsk = j['wipeAsk'] == true;
     if (j['ukir'] case final Map u) {
       // the run's Ukir (pusaka.dart); none in saves from before it, or never fed
       ukir
@@ -3483,9 +3489,30 @@ class Game {
   /// Why the wave was last lost ([wipedAt]), for the UI's note (wipe.dart).
   WipeCause wipeCause = WipeCause.fell;
 
-  /// The wave the army was wiped in, to be played again (wipe.dart): [wave] + 1 between waves, [wave] while it is
-  /// played again; null once it is won. Saved.
+  /// The furthest wave the army was wiped in, to be played again (wipe.dart): past [wave] between waves (the next one
+  /// with no Town gone into yet, further after a trip back to the checkpoint's Town), [wave] or past it while the waves
+  /// up to it are played again; null once it is won. Saved.
   int? lostWave;
+
+  /// The highest wave won this run (wipe.dart, decisions-log 333): after a wipe sent the game back to a Town, a wave won
+  /// again pays its once-a-number rewards (the wave's score, a Hero, a Boss Chest, the Shadows' catch-up) only past it,
+  /// and what opens at a wave won ([wonWave]) stays open. Saved.
+  int bestWon = 0;
+
+  /// How weakened the monsters are after a wipe (wipe.dart: [weakenedHp], [weakenedDmg] by it, at most [weakenedMost]),
+  /// until the next new Town is gone into ([Towns.enterTown]). Saved.
+  int weakened = 0;
+
+  /// After a wipe that left hearts, the player hasn't chosen yet between "Try again" and "Give up" (wipe.dart, wipe_ask.dart;
+  /// never while [autoTryAgain] is on): no wave starts and no Town opens until then. Saved, so a reload asks again.
+  bool wipeAsk = false;
+
+  /// Wave [n] has been won: past it, on it between waves, or before a wipe sent the game back ([bestWon]).
+  bool wonWave(int n) => bestWon >= n || wave > n || (wave == n && !waveActive);
+
+  /// The furthest wave this run got to: the one fought or just won, or the one after [bestWon] after a trip back (the
+  /// game-over screen and the scoreboard's wave).
+  int get waveReached => max(wave, lostWave ?? 0);
 
   /// The monsters a wipe swept off the field, no longer in [units]: they hop for joy where they stood for [wipeCheer] s
   /// (the UI draws them), then go ([Wipe._sweptGone]).
@@ -3605,8 +3632,9 @@ class Game {
   final risen = <Unit>[];
 
   /// A wave can start: none is on, the game isn't over and no Town is due ([Towns.townDue]: marked for the next wave,
-  /// until it is left). The Start/Pause toggle starts a wave only then (ui-hud.md); in a Town it says "Leave town".
-  bool get canStartWave => !waveActive && !over && !townDue;
+  /// until it is left), nor a wipe's choice waiting ([wipeAsk]). The Start/Pause toggle starts a wave only then
+  /// (ui-hud.md); in a Town it says "Leave town".
+  bool get canStartWave => !waveActive && !over && !townDue && !wipeAsk;
 
   void startWave() {
     if (townPolicy != null) _townByPolicy(); // a probe's due Town, gone through first (town.dart)
@@ -3713,7 +3741,9 @@ class Game {
         pusaka: pusakaState,
         omens: _omenState,
         materials: {for (final MapEntry(:key, :value) in materials.entries) key.name: value},
-        boosts: boosts.isEmpty ? null : {for (final b in boosts) b.kind.name: b.untilTown ? 0 : b.left})); // the Tavern's (tavern.dart)
+        boosts: boosts.isEmpty ? null : {for (final b in boosts) b.kind.name: b.untilTown ? 0 : b.left}, // the Tavern's (tavern.dart)
+        weakened: weakened, // the monsters weakened after a wipe (wipe.dart)
+        again: wave <= bestWon));
   }
 
   /// Troops are set up in the zone just ahead of the back line, one per cell; mid-battle any cell will do
@@ -5766,10 +5796,14 @@ class Game {
       _boostWaveEnd(); // the Tavern's boosts count the wave (tavern.dart)
       _omenEase(); // the wave's falls take Bayangan levels away (omen.dart)
       _omenTopKiller(); // the wave's top killer, Grudge's target in the next (omen.dart)
-      lostWave = null; // a wave the army was wiped in is won now (wipe.dart)
+      // A wave won again after a trip back to a Town pays its kills, drops and win gold again, its once-a-number
+      // rewards only the first time (wipe.dart).
+      final first = wave > bestWon;
+      bestWon = max(bestWon, wave);
+      if (lostWave case final w? when w <= wave) lostWave = null; // the wave the army was wiped in is won now
       lastBonus = waveBonus(wave);
       gold += lastBonus;
-      score += waveScore * wave;
+      if (first) score += waveScore * wave;
       lastMaterials = {...waveMaterials};
       for (final MapEntry(key: m, value: n) in waveMaterials.entries) {
         materials[m] = (materials[m] ?? 0) + n;
@@ -5807,9 +5841,9 @@ class Game {
       }
       // Every [heroEvery]th wave won makes a Hero, between waves (the owner: "setelah wave 10 baru muncul
       // hero baru, bukan di awal wave 10"), while fewer than [heroMax] live; the auto-save after the win keeps it.
-      if (wave > 0 && wave % heroEvery == 0 && heroCount < heroMax) _crownHero();
+      if (first && wave > 0 && wave % heroEvery == 0 && heroCount < heroMax) _crownHero();
       // A won boss wave brings the boss's chest (draft.dart), rolled now so the auto-save keeps its cards.
-      if (offers && wave % bossEvery == 0) _bossChest();
+      if (first && offers && wave % bossEvery == 0) _bossChest();
       _rollTown(); // then the Town two waves ahead, rolled now so the auto-save keeps it (town.dart)
     }
     _autoReplaceTick(); // Auto buys back the fallen the gold now covers (auto_replace.dart)

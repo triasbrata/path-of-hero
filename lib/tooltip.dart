@@ -35,7 +35,7 @@ enum _Aim { down, left, right, up }
 /// tooltip ([Game.relicInfo], its tier among its lines; decisions-log 227); and the spawn bar's "+Room" (spawn_bar.dart,
 /// the Army header's until decisions-log 283): what the capacity buy does and costs ([Game.roomTip], decisions-log 260,
 /// 292).
-enum _Hint { hp, mp, awaken, hero, tide, recall, pusaka, omens, carve, town, relic, room, boost, troop, autoReplace }
+enum _Hint { hp, mp, awaken, hero, tide, recall, pusaka, omens, carve, town, relic, room, boost, troop, autoReplace, weak }
 
 /// The tooltip's state between frames.
 class _Tips {
@@ -76,6 +76,7 @@ extension on Board {
       if (_omenRow.at != Rect.zero) (_omenRow.at, _Hint.omens, null),
       if (_townChipAt != Rect.zero) (_townChipAt, _Hint.town, null),
       for (final (i, r) in _boostChipsAt.indexed) (r, _Hint.boost, '$i'), // a boost's chip under it (tavern_look.dart)
+      if (_weakChipAt != Rect.zero) (_weakChipAt, _Hint.weak, null), // the weakened foes' chip (wipe_ask.dart)
     ];
     final pointed = p == null || dragAt != null ? null : areas.where((a) => a.$1.contains(p)).firstOrNull, hit = pointed ?? omens;
     // An item cell's plus: an enhanced stack's tooltip is its own (decisions-log 255), from one cell to the next too.
@@ -110,6 +111,7 @@ extension on Board {
       _Hint.carve => _plain(state.carveInfo(Relic.values.byName(type!))), // a Pusaka's Carve bar (bag.dart)
       _Hint.town => _plain(state.townTip), // the wave meter's Town chip (town_look.dart)
       _Hint.boost => _plain(state.boostTip(int.parse(type!))), // a boost's chip (tavern_look.dart)
+      _Hint.weak => _plain(state.weakenedTip), // the weakened foes' chip (wipe_ask.dart)
       _Hint.room => _plain(state.roomTip), // the spawn bar's "+Room" (spawn_bar.dart)
       _Hint.troop => _plain(state.spawnTip(type!)), // a spawn bar's card (spawn_bar.dart)
       _Hint.autoReplace => _plain(state.autoTip), // the spawn bar's Auto (auto_replace.dart)
@@ -152,6 +154,8 @@ extension on Board {
         _barSprite(c, state, type!, titleIcon); // a spawn bar's card: its type's sprite (spawn_bar.dart)
       case _Hint.autoReplace:
         c.drawImageRect(_img('ui_icons.png'), _counterShield, titleIcon, _px); // the army's shield (troop_counter.dart)
+      case _Hint.weak:
+        _uiIcon(c, _icDownGreen, titleIcon); // the weakened foes' chip: its green down arrow (wipe_ask.dart)
       default:
         _icon(c, what, titleIcon, null, plus);
     }

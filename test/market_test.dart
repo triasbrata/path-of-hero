@@ -20,10 +20,12 @@ Game inTown(int n) => bareGame(Random(1))
   ..inTown = true
   ..townCount = n;
 
-/// The next Town gone into and left at once (its recovery and its number).
+/// The next Town gone into and left at once (its recovery and its number), a wave on: the same slot again would be the
+/// checkpoint's Town after a wipe, the same Town (decisions-log 333).
 void nextTown(Game g) {
   g
     ..leaveTown()
+    ..wave += 1
     ..townAt = g.wave + 1;
   expect(g.enterTown(), isTrue);
 }

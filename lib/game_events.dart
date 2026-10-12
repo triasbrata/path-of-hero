@@ -28,7 +28,9 @@ part of 'game.dart';
 /// Tavern boost's length is its offer's ([BoostBought.waves] 2 to 4, or 0 with [BoostBought.untilTown]; decisions-log 331).
 /// 16: the back line costs nothing (decisions-log 329): a [Wiped]'s `cause`, and Watchman's Brew's `boostSaved` gone;
 /// Beban went too (329), and with it [WaveStarted.tide]'s `over`.
-const eventVersion = 16;
+/// 17: the Town checkpoint (decisions-log 333): [Wiped] checkpoint and debuff, [TownEntered] again, [WaveStarted]
+/// weakened and again, and [WipeChosen].
+const eventVersion = 17;
 
 /// How many events [Game.log] keeps, the oldest going first.
 const logSize = 200;
@@ -52,6 +54,7 @@ enum EventKind {
   stoneCrafted, itemEnhanced, // Enhance (decisions-log 255)
   boostBought, boostEnded, tavernRerolled, // the Tavern (decisions-log 266; boostSaved, Watchman's Brew's, went in 329)
   wipe, // an army wiped mid-wave: a heart lost, the wave played again (decisions-log 322)
+  wipeChoice, // after it, "Try again" or "Give up" (decisions-log 333)
 }
 
 /// Something that happened, in wave [wave] at game time [t].
@@ -463,10 +466,14 @@ final class TownMarked extends GameEvent {
 
 /// The player went into the Town of [slot] ([Towns.enterTown]) with [gold]; [auto]: Auto was on.
 final class TownEntered extends GameEvent {
-  TownEntered(super.wave, super.t, {required this.slot, required this.gold, this.auto = false, this.n = 0, this.identity = ''});
+  TownEntered(super.wave, super.t,
+      {required this.slot, required this.gold, this.auto = false, this.n = 0, this.identity = '', this.again = false});
 
   final int slot, gold;
   final bool auto;
+
+  /// The checkpoint's Town gone into again after a wipe (wipe.dart, decisions-log 333; no key when not).
+  final bool again;
 
   /// The Town's number in the run and its identity's key (decisions-log 326, market.dart; `eventVersion` 14).
   final int n;
@@ -476,7 +483,8 @@ final class TownEntered extends GameEvent {
   EventKind get kind => EventKind.townEntered;
 
   @override
-  Map<String, Object?> get data => {'slot': slot, 'gold': gold, 'auto': auto, 'n': n, 'identity': identity};
+  Map<String, Object?> get data =>
+      {'slot': slot, 'gold': gold, 'auto': auto, 'n': n, 'identity': identity, if (again) 'again': true};
 }
 
 /// The player left the Town of [slot] ([Towns.leaveTown]) after [secs] game seconds in it; [auto]: a probe's policy left
@@ -645,7 +653,15 @@ final class WaveEnded extends GameEvent {
 /// alive or queued ([foes]), and whether it ended the game ([over]); else they were swept off and the wave is played
 /// again.
 final class Wiped extends GameEvent {
-  Wiped(super.wave, super.t, {required this.lives, required this.lost, required this.foes, required this.over, this.cause = WipeCause.fell});
+  Wiped(super.wave, super.t,
+      {required this.lives,
+      required this.lost,
+      required this.foes,
+      required this.over,
+      this.checkpoint,
+      this.town,
+      this.debuff = 0,
+      this.cause = WipeCause.fell});
 
   final int lives, lost, foes;
   final bool over;
@@ -653,17 +669,47 @@ final class Wiped extends GameEvent {
   /// Why: the army fell, there was none, or the march wasn't won in time (decisions-log 329).
   final WipeCause cause;
 
+  /// The slot of the Town the game goes back to (wipe.dart, decisions-log 333), null before the first Town or at game
+  /// over, and its name for the battle log ([town], not in [data]); [debuff] the monsters' weakening after it
+  /// ([Game.weakened]).
+  final int? checkpoint;
+  final String? town;
+  final int debuff;
+
   @override
   EventKind get kind => EventKind.wipe;
 
   @override
-  Map<String, Object?> get data => {'lives': lives, 'livesLost': lost, 'foes': foes, 'over': over, 'cause': cause.name};
+  Map<String, Object?> get data => {
+        'lives': lives,
+        'livesLost': lost,
+        'foes': foes,
+        'over': over,
+        'cause': cause.name,
+        'checkpoint': checkpoint,
+        'debuff': debuff,
+      };
 }
 
 /// The events only the telemetry takes (#64): what a balancing log needs but a player doesn't. They go to
 /// [Game.listeners] only, never into [Game.log], so the battle log never sees them.
 sealed class TraceEvent extends GameEvent {
   TraceEvent(super.wave, super.t);
+}
+
+/// The player's answer after a wipe (wipe.dart, decisions-log 333): [tryAgain] (back to the checkpoint) or "Give up" (the
+/// game over with [lives] still left).
+final class WipeChosen extends TraceEvent {
+  WipeChosen(super.wave, super.t, {required this.tryAgain, required this.lives});
+
+  final bool tryAgain;
+  final int lives;
+
+  @override
+  EventKind get kind => EventKind.wipeChoice;
+
+  @override
+  Map<String, Object?> get data => {'tryAgain': tryAgain, 'lives': lives};
 }
 
 /// The Tavern's unbought offers were rolled again ([Tavern.rerollTavern]) for [price], the visit's [n]th reroll; the
@@ -689,9 +735,14 @@ final class WaveStarted extends TraceEvent {
   WaveStarted(super.wave, super.t,
       {required this.army, required this.levels, required this.heroes, required this.gold, required this.capacity,
       required this.lives, required this.bag, required this.relics, this.tide = const (hp: 1.0, dmg: 1.0, gap: Game.spawnGap), this.pusaka = const {},
-      this.omens, this.materials, this.boosts});
+      this.omens, this.materials, this.boosts, this.weakened = 0, this.again = false});
 
   final Map<String, int> army, levels, bag, relics;
+
+  /// The monsters' weakening after a wipe ([Game.weakened], wipe.dart; no key at 0), and whether the wave was won before
+  /// a wipe sent the game back ([again]: no key when not; decisions-log 333).
+  final int weakened;
+  final bool again;
   final Map<String, Map<String, Object>> pusaka;
 
   /// The Bayangan the wave starts with (omen.dart): `levels` (each kind held, by name), the frozen Beban `factor`, the
@@ -726,6 +777,8 @@ final class WaveStarted extends TraceEvent {
         'omens': ?omens,
         'materials': ?materials,
         'boosts': ?boosts,
+        if (weakened > 0) 'weakened': weakened,
+        if (again) 'again': true,
       };
 }
 

@@ -53,7 +53,10 @@ import 'settings.dart';
 /// wave's heart; a `wipe` has its `cause` (`fell`, `empty`: no troop standing 5 s after the monsters came on, `slow`: its
 /// charge not won within 60 s, with `marched` set), each a wave record's `end` `wiped`; Watchman's Brew and the wave's
 /// `boostSaved` are gone, and so is a wave start's `tide.over` (Beban went).
-const telemetryVersion = 16;
+/// 17: the Town checkpoint (decisions-log 333): a `wipe`'s `checkpoint` (the Town's slot, null before the first Town) and
+/// `debuff` (the monsters' weakening after it), a `townEntered`'s `again` (the checkpoint's Town after a wipe), a wave
+/// start's `weakened` and `again` (a wave won before, played again), and the event `wipeChoice` (`tryAgain`, `lives`).
+const telemetryVersion = 17;
 
 /// Where [HttpSink] posts (`--dart-define=TELEMETRY_SERVER=https://...`). None by default, so nothing is sent.
 const telemetryServer = String.fromEnvironment('TELEMETRY_SERVER');
@@ -80,6 +83,7 @@ const passedOn = {
   EventKind.stoneCrafted, EventKind.itemEnhanced, // a stone made there and an item enhanced (decisions-log 255)
   EventKind.boostBought, EventKind.tavernRerolled, // a Tavern boost bought, its offers rerolled (decisions-log 266)
   EventKind.wipe, // an army wiped mid-wave: a heart lost, the wave played again (decisions-log 322)
+  EventKind.wipeChoice, // then "Try again" or "Give up" (decisions-log 333)
 };
 
 /// Where the records go.
@@ -433,6 +437,8 @@ class TelemetryAdapter {
         break; // passed on as they happen // the spawns count the strong foes, the wave record has the Pusaka's; the others are passed on
       case Wiped():
         break; // passed on as it happens; the WaveEnded right after closes the record as `wiped` (or `lost`)
+      case WipeChosen():
+        break; // passed on as it happens, between waves (decisions-log 333)
     }
   }
 
