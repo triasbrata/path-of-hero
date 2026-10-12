@@ -1464,7 +1464,7 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
     ceiling is its HP and the heal funnel gives it nothing ("Bayangan on the field").
 - **Game over** is `lives <= 0`. Then `tick` stops.
 - **An army wiped** (lib/wipe.dart, decisions-log 322; the owner: "Kalah wave: −1 hati, ulang"): checked at the end of
-  `tick`, after the raised joined and before the win. `_armyDown`: a troop fell this wave (`fallen` isn't empty), none
+  `tick`, after the raised joined and before the win, unless the leaks just ended the game. `_armyDown`: a troop fell this wave (`fallen` isn't empty), none
   is alive (a troop Resurrection raised this tick counts), no Phoenix Plume rise is due (`_risesDue`, counted when its
   `later` is set, dropped by `_endEffects`), and a monster lives or is queued (the last troop and the last monster
   falling together is a win; a wave begun with no troop is never a wipe: only its leaks cost). Then `_wipe`:

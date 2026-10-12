@@ -102,6 +102,22 @@ void main() {
     }
   });
 
+  test('the last troop falling as the leaks take the last life is a game lost on lives, not a wipe', () {
+    final g = armyOfOne()..lives = 1;
+    final s = placeNow(g, 'soldier', 4, 1)..hp = 1;
+    final events = <GameEvent>[];
+    g.listeners.add(events.add);
+    g
+      ..startWave()
+      ..units.add(Unit(Side.enemy, 'werebear', enemyTypes['werebear']!, s.pos + const Point(10, 0))..entered = true)
+      ..units.add(Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(g.baseX - 1, fieldH / 2)));
+    for (var i = 0; i < 40 && s.alive; i++) {
+      g.tick(0.05);
+    }
+    expect((s.alive, g.over, g.lives), (false, true, 0));
+    expect(events.whereType<Wiped>(), isEmpty);
+  });
+
   test('a wave begun with no troop is never a wipe: its monsters leak', () {
     final g = armyOfOne()..startWave();
     g.units.add(Unit(Side.enemy, 'slime', enemyTypes['slime']!, Point(g.baseX - 1, fieldH / 2)));

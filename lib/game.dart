@@ -5750,7 +5750,7 @@ class Game {
     if (pusaka.isNotEmpty) _oathWatch(); // a type died out or came back: Alliance's multiplier moves (pusaka.dart)
     units.removeWhere((u) => u.gone || u.dying >= deathTime);
     _watchStall(spawned);
-    if (wasActive && !wipedOut && _armyDown) _wipe(); // a heart lost, the wave swept and played again (wipe.dart)
+    if (wasActive && !wipedOut && !over && _armyDown) _wipe(); // a heart lost, the wave swept and played again (wipe.dart)
 
     if (wasActive && !waveActive && !over && !wipedOut) {
       marching = false;
