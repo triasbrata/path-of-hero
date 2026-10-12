@@ -11162,3 +11162,32 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        twice (the vault key's file) and 315's last bullet (the two `git config` lines). Found by pairing every
        list item's and paragraph's backticks in order, in every tracked `.md` file and Dart comment, and looking
        for a scrub word inside a code span; the owner's quotes keep the scrub's words.
+317. **A code audit, and its fixes: a "Continue" fights with the board's stats, a save is never cut nor silently
+     lost, Auto Buy doesn't buy back a troop brought back** (the owner, 2026-10-12: "jalankan code analyze dan
+     balancing game" (run a code analysis and the game's balancing); this entry is the code half, the balance is its
+     own). By code-audit: a report first (analyze, a stricter lint pass in a copy of the tree, dead code, the biggest
+     files and functions, bug smells, the hot paths, the tests), then the owner's picks: B1, B2, B3, the three cheap
+     frame-time wins, the guide card K11's picture, the battle log's Loot chip and `flutter analyze` at 0.
+     - **B1, a loaded save fought with the Towns-off stats.** A troop's stats are fitted when it comes in
+       (`Unit.stats`), and `Game.fromJson` fits a save's troops as a plain `Game()`, the Towns off (the old items'
+       numbers, no enhance pluses, Awaken by the old recipe), capping each one's saved HP at that max. "Continue"
+       then turned the board's rules on (`boardRules()`) without fitting them again, so the army fought with the old
+       numbers until something refit a troop (a Hero falling, an item put on its type, a stat effect ending). Measured
+       on a wave-58 save from 2026-10-12: 7 of its 8 types differed, a knight's HP 175 against the board's 326, a
+       priest's heal 48 against 144, a templar's HP 420 against 588. Now `boardRules()`, turning the Towns on, fits
+       every troop again (`_refitTroops`) and puts each loaded one back at its saved HP, capped at its new max
+       (`_loadedHp`); a new game's troops don't change. architecture.md "Key `Game` state". A plain `Game.fromJson`
+       (the tests' and the replay kit's) is as before. Tests: save_test's "a save loaded for the board fights with the
+       board's stats" (the w89 save, two templars' swords at +3; it fails on the code before: a templar's damage 171
+       against the board's 192) and "a new game on the board: boardRules changes no troop".
+     - **B2, the save.** `saveGame` wrote `save.json` in place, and `loadGame` turned any error (a cut file, a bug in
+       `fromJson`) into "no save" without a word, after which the new game's first save wrote over it. Now the save
+       is written as `save.json.tmp` and renamed over `save.json` in one step, and a save that can't be read is logged
+       and moved to `save.bad-<yyyyMMdd-HHmmss>.json` beside it (`keepAside`); dev-workflow.md "A save is never cut
+       nor silently lost" says what happens. Tests: save_test (the three kinds of bad file each kept, none written
+       over, the name and its `-2`; a folder nothing can be written in), town_switch_test's broken file now kept aside.
+     - **B3, Auto Buy and a troop brought back.** A troop that falls joins Auto's queue at once; a Rising Pusaka or a
+       priest Hero's Resurrection took it off `fallen` but not off the queue, so Auto also bought it back (gold spent,
+       a troop more than before it fell). Now its type's last entry of the wave leaves the queue (`_autoRose`,
+       ui-hud.md "Spawn bar"); one already bought stays bought and counts at the win as before (the type has its
+       number again). Test: auto_replace_test's Resurrection case (it fails on the code before).

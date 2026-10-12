@@ -156,6 +156,24 @@ void main() {
     expect((alive(g, 'knight'), g.waveActive), (knights + 1, true), reason: 'carried into the wave, bought mid-wave');
   });
 
+  test('a troop brought back (Resurrection) is not bought back as well: its entry leaves the queue (decisions-log 317)', () {
+    final (g, h) = heroCaster(HeroSkill.revive);
+    foeAt(g, 'orc', const Point(cols * tile - 8, tile * 1.5)); // keeps the wave on
+    final s = idle(g, 'soldier', 4, 3)..hp = 1;
+    g
+      ..setAutoReplace(true)
+      ..gold = 0; // Auto can't buy it yet: it waits in the queue
+    final orc = foeAt(g, 'orc', s.pos + const Point(12, 0));
+    strike(g, [orc]);
+    expect(s.alive, isFalse);
+    orc.gone = true;
+    g.tick(0.05);
+    expect((h.heroSkillAt, g.fallen.length, g.risen.length), (g.t, 0, 1), reason: 'the priest brought it back');
+    g.gold = 10000;
+    runFor(g, 1);
+    expect((alive(g, 'soldier'), g.gold), (1, 10000), reason: 'the risen soldier alone: none bought');
+  });
+
   test('the save keeps it: the key only while on, read back; off when a save lacks it', () {
     final g = Game()..setAutoReplace(true);
     final j = jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>;

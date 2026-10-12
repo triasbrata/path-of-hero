@@ -731,7 +731,10 @@ the field's own ground, whose top is under the lowest anything of the battle is 
     (`_replaceOne`); the gold short, the rest wait behind it; one refused for more than the gold stays on the list (its
     greyed button says why);
   - at the next wave's start what is left on the list goes into the queue (`_autoWaveStart`); what of it the gold
-    hasn't covered by the next win is let go, as the list's offer itself ends at a wave's start.
+    hasn't covered by the next win is let go, as the list's offer itself ends at a wave's start;
+  - one brought back mid-wave (a Rising Pusaka, a priest Hero's Resurrection) is no longer down: its type's last entry
+    of the wave leaves the queue (`_autoRose`, decisions-log 317), so Auto doesn't buy it a second time. One Auto
+    already bought stays bought, and counts at the win like any other.
   Turning it off empties the queue. The save keeps it (`"autoReplace": true`, written only while on; a save without it
   loads off); the queue isn't saved (it is empty between waves).
 - **The field under the bar** takes no press, hover or drag (`_onBar` in `_covered`, plates.dart: the step with its

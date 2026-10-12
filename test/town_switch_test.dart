@@ -147,7 +147,7 @@ void main() {
       }
     });
 
-    test('a save of this format loads, at the launch too, and stays; a broken file is no save and stays', () {
+    test('a save of this format loads, at the launch too, and stays; a broken file is no save and is kept aside', () {
       final g = Game(Random(1))
         ..wave = 12
         ..gold = 777
@@ -160,7 +160,13 @@ void main() {
       expect(_save.existsSync(), isTrue);
       _save.writeAsStringSync('{"v": 2, "wave": ');
       expect((loadGame(), savedWave(), launchSave()), (null, null, null));
-      expect(_save.existsSync(), isTrue, reason: 'not a save from before: written over by the next save');
+      // Not a save from before: moved aside (save.bad-<time>.json, decisions-log 317), so the next save can't write over it.
+      expect(_save.existsSync(), isFalse);
+      final bad = [for (final f in _save.parent.listSync()) if (f is File && f.uri.pathSegments.last.startsWith('save.bad-')) f];
+      expect([for (final f in bad) f.readAsStringSync()], ['{"v": 2, "wave": ']);
+      for (final f in bad) {
+        f.deleteSync();
+      }
     });
   });
 

@@ -10,7 +10,9 @@ part of 'game.dart';
 // - between waves it works through that list in the order they fell, each back to its old spot as "Replace fallen" puts
 //   it ([Game._replaceOne]); one refused for more than the gold stays on the list (its greyed button says why);
 // - at the next wave's start what is left on the list goes into the queue; what of it the gold hasn't covered by the
-//   next win is let go, as the list's offer itself ends at a wave's start.
+//   next win is let go, as the list's offer itself ends at a wave's start;
+// - one brought back (a Rising Pusaka, Resurrection) is no longer down: its entry leaves the queue ([Game._autoRose];
+//   decisions-log 317), so Auto doesn't buy it a second time.
 // Off by default (a game without it plays as before); saved, the queue isn't (it is empty between waves).
 
 extension AutoReplace on Game {
@@ -30,6 +32,16 @@ extension AutoReplace on Game {
   /// A troop [u] fell: with Auto on (not a Hero), it joins the queue.
   void _autoFell(Unit u) {
     if (autoReplace && !u.hero) _autoQueue.add((type: u.type, carried: false));
+  }
+
+  /// A troop [u] that fell this wave came back (a Rising Pusaka's rise, a priest Hero's Resurrection; decisions-log 317):
+  /// one fewer of its type is down, so its type's last queued entry from this wave leaves the queue (one carried from
+  /// the last list is another troop). Bought back already, it stays bought: the type has its number again, and the win
+  /// counts that buy against its fallen still down ([_autoWon]), as for any other.
+  void _autoRose(Unit u) {
+    if (u.hero) return; // a Hero's fall is Recall's: never queued
+    final at = _autoQueue.lastIndexWhere((e) => e.type == u.type && !e.carried);
+    if (at >= 0) _autoQueue.removeAt(at);
   }
 
   /// A wave starts: with Auto on, the troops still on [toReplace] go into the queue (in the order they fell) before the

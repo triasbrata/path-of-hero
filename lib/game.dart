@@ -3441,7 +3441,6 @@ class Game {
       if (Relic.values.asNameMap()[name] case final r? when r.rarity == Rarity.legenda) legendsFound.add(r);
     }
     legendsFound.addAll(pusaka.keys.where((r) => r.rarity == Rarity.legenda));
-    final savedHp = <(Unit, double)>[];
     for (final t in j['troops'] as List) {
       final type = t['type'] as String;
       final u = _newTroop(type, Point((t['x'] as num).toDouble(), (t['y'] as num).toDouble()), t['name'] as String?);
@@ -3465,13 +3464,14 @@ class Game {
       for (final r in (t['relics'] as List?) ?? [?t['relic']]) {
         if (Relic.values.asNameMap()[r] case final relic? when relic.pusaka) copies.add(relic);
       }
-      savedHp.add((u, (t['hp'] as num).toDouble()));
+      _loadedHp.add((u, (t['hp'] as num).toDouble()));
     }
     // A save's `runTypes` (decisions-log 141's roster, gone with 201) is no longer read.
     _refitTroops(); // the Heroes' stats and their aura (and an oath's: the types alive), now that every troop is in
     // Saves from before names get one now; saves from before defence counted shields as HP, so a troop
-    // can't come back with more than it has now.
-    for (final (u, hp) in savedHp) {
+    // can't come back with more than it has now. Under a plain Game()'s rules: [boardRules] fits them again under the
+    // board's, from the same saved HP ([_loadedHp]).
+    for (final (u, hp) in _loadedHp) {
       u.hp = min(hp, u.maxHp.toDouble());
     }
     // A save from before the Pusaka: its artefacts become Pusaka, bound by default (the HP Dragon Heart gives comes
@@ -3868,12 +3868,31 @@ class Game {
   /// Turns on the owner's limits the way the board plays (decisions-log 141, 201): [armyMax] [armyMaxBoard] and
   /// [typeCap] [typeCapBoard]; and the boss chest, [offers] (decisions-log 152); the Towns, always (decisions-log 237,
   /// 296); the troops' skill wind-ups, [skillWinds] (decisions-log 299). This game, for a cascade.
-  Game boardRules() => this
-    ..armyMax = armyMaxBoard
-    ..typeCap = typeCapBoard
-    ..offers = true // and the boss chest (draft.dart, P3)
-    ..towns = true // and the Towns (town.dart)
-    ..skillWinds = true; // and the troops' skill wind-ups (skill_strips.dart)
+  ///
+  /// A troop's stats are fitted when it comes in ([Unit.stats]), and [Game.fromJson] fits a save's troops under a plain
+  /// Game()'s rules, the Towns off (the old items' numbers, no enhance pluses, Awaken by the old recipe): turning the
+  /// Towns on fits them again under the board's, each back at its saved HP ([_loadedHp]), so a "Continue" fights with
+  /// the stats the save was made with (decisions-log 317).
+  Game boardRules() {
+    final refit = !towns;
+    armyMax = armyMaxBoard;
+    typeCap = typeCapBoard;
+    offers = true; // and the boss chest (draft.dart, P3)
+    towns = true; // and the Towns (town.dart)
+    skillWinds = true; // and the troops' skill wind-ups (skill_strips.dart)
+    if (refit) {
+      _refitTroops();
+      for (final (u, hp) in _loadedHp) {
+        u.hp = min(hp, u.maxHp.toDouble());
+      }
+    }
+    _loadedHp.clear();
+    return this;
+  }
+
+  /// The troops [Game.fromJson] read and the HP each was saved with, for [boardRules]; empty in a new game, and once
+  /// the board's rules are on. Not saved.
+  final _loadedHp = <(Unit, double)>[];
 
   /// Auto's countdown waits (decisions-log 141; qa-1: Auto began w86 5 s after a wave that left 20 of 48): with
   /// [armyMax] on, while fewer than [autoHoldShare] of [armyCap] are alive, until the player buys them back or
