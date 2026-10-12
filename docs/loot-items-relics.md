@@ -2150,7 +2150,7 @@ again brings its price down, so the player sells a mix, and the price comes back
 - **The price** (`marketPrice`, `sellPrice`, `sellPriceAt`): the gold at the floor and the parts at the margin,
   round(gold x 1.3 + parts x margin), so never under 1.3x the HPP: any margin over 1 on the gold would print gold (buy the
   parts, forge, sell). A Sword in Millbrook 206 (20 x 1.3 + 60 x 3.0), Boots there 182 (x3.9); a Royal Sword in
-  Frostgate 774 (x3.9), +2 there 7,643.
+  Frostgate 774 (x3.9), +2 there 8,293.
 - **Pressure** (`Game.market`: a product's key → its pressure; `marketKey`: an item's name, `<name>+<plus>` for an
   enhanced one, `relic:<name>`, `mat:<name>` for a material bought): each piece sold adds 1, up to `most` 24. The margin
   is floor + (fresh - floor) x (1 - (pressure / 24)^`curve` 1.5): gentle at first, the floor at 24, never under it.
