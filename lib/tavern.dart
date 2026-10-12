@@ -14,7 +14,7 @@ part of 'game.dart';
 // end of [Game.statsOf] ([Tavern._boostStats]), on top of the items, awakening, Tempa, the heavies' buff, the Pusaka and
 // the oath; two kinds hook the kill gold ([Tavern._boostGold]) and the leak line ([Tavern._boostLeak]) instead. Every
 // number is town.json's `tavern` block ([TavernRules]). Every Town has its Tavern (decisions-log 296: the Tavern-off
-// build is gone); a game with the Towns off ([Game.towns], tests only) rolls, sells and saves none of it.
+// build is gone).
 
 /// A Tavern boost's kind; its name is its save key and its town.json key (`tavern.boosts.<name>`).
 enum Boost { feast, ale, stew, broth, tea, rations, toast, mage, plate, watch, banquet }
@@ -377,7 +377,7 @@ extension Tavern on Game {
   BoostWhy? whyNotBuyBoost(int i) {
     if (over) return BoostWhy.over;
     final v = _tavern;
-    if (!towns || !inTown || v == null || i < 0 || i >= v.offers.length) return BoostWhy.town;
+    if (!inTown || v == null || i < 0 || i >= v.offers.length) return BoostWhy.town;
     if (v.offers[i].sold) return BoostWhy.sold;
     if (gold < boostPrice(v.offers[i].kind)) return BoostWhy.gold;
     return null;
@@ -407,7 +407,7 @@ extension Tavern on Game {
   BoostWhy? whyNotRerollTavern() {
     if (over) return BoostWhy.over;
     final v = _tavern;
-    if (!towns || !inTown || v == null) return BoostWhy.town;
+    if (!inTown || v == null) return BoostWhy.town;
     if (v.offers.every((o) => o.sold)) return BoostWhy.soldOut;
     if (gold < tavernRerollPrice) return BoostWhy.gold;
     return null;

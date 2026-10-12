@@ -9,18 +9,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
 
+import 'real_rules.dart';
 import 'hero_skill_helpers.dart';
 import 'hud_font.dart';
 
 // The wizard's magic (decisions-log 313, units-and-combat.md "The wizard's magic", lib/wizard_fx.dart): its plain shot
 // is the Tiny RPG pack's fireball and Arcane Blast its ice star, each landing with its sheet's hit frames; an awakened
 // wizard's are tinted its level's colour; Arcane Blast's cast strip glows blue.
-
-/// Every item [type]'s awakening recipe asks for, [level] times over: the type at awakening [level].
-List<Item> recipe(String type, int level) => [
-      for (final MapEntry(key: item, value: n) in awakenRecipe[type]!.entries)
-        for (var i = 0; i < n * level; i++) item,
-    ];
 
 /// A wave on with nothing to spawn, a wizard at cell (2, 3) and an orc 40 before it that never moves, strikes or falls.
 /// [arcane]: the wizard casts Arcane Blast at once and never shoots plainly; else no skills, and it shoots at once.
@@ -97,7 +92,7 @@ void main() {
     expect(a.impacts.map((i) => i.$2), isNot(contains('hit_wizard_big')));
 
     final (h, _, _) = duel();
-    h.upgrades['wizard'] = recipe('wizard', 2);
+    h.upgrades['wizard'] = awakenItems('wizard', 2);
     expect(h.awakenLevel('wizard'), 2);
     h.tick(0.05);
     land(h);
@@ -186,7 +181,7 @@ void main() {
 
     for (final (level, ascended, tint) in [(2, 0, 2), (3, 1, 3)]) {
       final (h, _, _) = duel();
-      h.upgrades['wizard'] = recipe('wizard', level);
+      h.upgrades['wizard'] = awakenItems('wizard', level);
       if (ascended > 0) h.ascended['wizard'] = ascended;
       expect(h.awakenLevel('wizard'), level + ascended);
       final (hFlight, hHits, hTints, _) = await watch(h);

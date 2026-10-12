@@ -5,35 +5,33 @@ the boss's chest they come from (Peti Bos), and the store that buys and sells th
 
 ## Drops
 
-When a monster dies (`_hurt`), it rolls on `loot`, a Random kept separate from the spawn `rng`:
+Monsters drop the Towns' materials, on dice of their own ("Town and Smithy: materials" below). No item and no relic
+drops: a Town's Smithy crafts them (decisions-log 221, 246; every board game since the forge's cut-over, 272; every
+game since 321). When a monster dies (`_hurt`) it still rolls on `loot`, a Random kept separate from the spawn `rng`,
+what dropped before the Towns, and throws each draw away, so the `loot` dice stay where they were and a seeded game
+plays the same:
 
-1. An item at `dropChance` 0.08 → `drops`, each of the 7 kinds (the staff too) as likely: the first
-   `droppedItemKinds` 7 of `Item`, so the dice roll the same whatever comes after them. The boss
-   (whatever its type) always drops `bossDrops` 2, and the wave's mini boss 1. With the forge and the Towns on, so in
-   every board game since the forge's cut-over (decisions-log 272; "The forge: drops" below), no item drops: items are
-   crafted at a Town's Smithy, and each roll's item is drawn and thrown away, so the `loot` dice stay where they were.
-2. Then a relic → `relicDrops`, only from strong monsters, at `relicChance[tier]` (one table beside
-   `Tier`, the owner's numbers). It is one of `droppedRelics` (fang, thorns, fury, guard), each as likely:
-   no Pusaka ever drops. With the chest on (`Game.offers`, the board's games) the boss's roll is drawn and thrown
-   away (`chestTakesBossRelic`, decisions-log 152; "Peti Bos" below): both its draws still happen, so the `loot`
-   dice stay where saved probe states expect them. The high elites' and mini bosses' relics stay. With the Towns on
-   (`Game.towns`, "Town and Smithy: materials" below) every relic roll is drawn and thrown away the same way: relics
-   are crafted at a Smithy then, and monsters drop materials instead, on dice of their own.
+1. An item at `dropChance` 0.08, one of the first `droppedItemKinds` 7 of `Item` (the grade-I kinds), each as likely,
+   so the dice roll the same whatever comes after them in the enum. The boss (whatever its type) draws `bossDrops` 2
+   for sure, and the wave's mini boss 1.
+2. Then a relic, only from strong monsters, at `relicChance[tier]` (one table beside `Tier`, the owner's numbers): one
+   of `droppedRelics` (fang, thorns, fury, guard), each as likely; no Pusaka ever dropped. With the chest on the boss's
+   went first (`chestTakesBossRelic`, decisions-log 152; "Peti Bos" below), then every relic with the Towns (221).
 
    | Tier | normal | elite | high elite | mini boss | boss |
    |---|---|---|---|---|---|
    | Relic chance | 0 | 0 | 5% | 10% | 30% |
 
-   The boss no longer always drops one. A necromancer's raised minions (`raisedBy` set) never drop a
-   relic, whatever their tier, like the gold they don't pay: a stalled boss can't be farmed for relics.
-   A probe (3000 kills per tier through `_hurt`) gave 5.1% / 10.1% / 28.9%, and 0 for raised ones. Over
-   waves 1–30 that is about 12.7 relics a game (10 seeds; 9.9 of them from high elites), where the old
-   rule (2% from every monster, the boss always) gave about 28.
+   A necromancer's raised minions (`raisedBy` set) roll no relic, whatever their tier, like the gold they don't pay.
+   When relics dropped, a probe (3000 kills per tier through `_hurt`) gave 5.1% / 10.1% / 28.9%, and 0 for raised
+   ones: over waves 1–30 about 12.7 relics a game (10 seeds; 9.9 of them from high elites), where the older rule (2%
+   from every monster, the boss always) gave about 28.
 
-Loot lies on the field (the UI bobs it; a relic glints: `ui_click.png`'s sparks in gold, now and then, ui-hud.md) until the wave is won. Then it moves into
-`inventory` / `relicBag`, and `lastLoot` / `lastRelics` show in the "VICTORY!" popup, each kind once
-with its count ("3x" + icon; `lootCounts(loot)`: kind → count in the enum's order, items then relics).
-The troops that fell in the wave show under it (ui-hud.md); their relics were back in the bag already.
+Only the materials lie on the field until the wave is won, and the "VICTORY!" popup counts them (ui-hud.md "The Bag's
+Materials"). Until decisions-log 321 a game without the Towns (the tests' alone) had its items and relics lie there
+(`drops`, `relicDrops`), picked up at the win into `inventory` / `relicBag` and counted in the popup (`lastLoot`,
+`lastRelics`, `lootCounts`); they went with the rules from before the Towns. The troops that fell in the wave show
+under the popup's loot (ui-hud.md); their relics were back in the bag already.
 
 ## Items: per troop TYPE, capped by awakening
 
@@ -61,12 +59,11 @@ Every troop's base regen and defence are 0. Upgrades compound, and gloves and bo
 A healer's heal only ever gets added to (potions and staffs), so the order its items came in doesn't
 change it (with the forge's Prayer Beads, which multiply it, the added heals are multiplied too: "The forge: the new
 kinds' effects" below).
-No item raises HP or MP: only awakening does (with the forge on, the Amulet raises max HP: "The forge: the new kinds'
+No item raises HP or MP: only awakening does (and the forge's Amulet raises max HP: "The forge: the new kinds'
 effects").
 The forge (on in every board game since its cut-over, decisions-log 272; "The forge: data" below) gives `Item` 42
 values, each with a kind (`Item.slot`) and a grade: these seven are its first, the grade-I items monsters dropped before
-it and still drop with the Towns off (`droppedItems`; a plain `Game()`, tests only); the other 35 show in every game with
-the Towns.
+it (`droppedItems`); every game has all 42 (decisions-log 321).
 In the UI (the book's Tas page, ui-hud.md), tap an item and then a troop type in the list beside it
 (#87: every type with what the item would do there, `Game.assignPreview` below, greyed with why not,
 `whyNot` → `Refusal`) or any troop on the field, or drag the item onto a troop on the field; over the troop a
@@ -95,7 +92,10 @@ glove short of its recipe: 95 → 300); null when `whyNot` refuses it. The Tas p
 
 The owner's rule: a troop type can't just stack one attribute; it has to raise the others to awaken,
 and only then can it take more. `awakenRecipe` (lib/game.dart) gives each type how many of each item
-kind it needs to awaken once:
+kind it needs to awaken once. Since the forge each level takes that recipe in its own grade ("The forge: items crafted,
+Awaken by grade" below), every game since decisions-log 321: the rule below, the recipe once more a level all in grade
+I, is the one a save from before the forge keeps its levels by (`oldItemLevel`, `awakenKept`), and the recipe is what
+each type's grade sets build on (`kindRecipe`):
 
 | Type | sword | shield | boots | bow | gloves | potion | staff | Items |
 |---|---|---|---|---|---|---|---|---|
@@ -109,19 +109,19 @@ kind it needs to awaken once:
 | wizard | – | – | – | 3 | 3 | 2 | 2 | 10 (the staff instead of its 2 swords) |
 | knight_templar | 2 | 2 | 2 | 1 | – | 3 | – | 10 (the owner: more speed, fewer shields) |
 
-- **Level** (`itemLevel(type)`, 0 to `maxAwaken` 3) is derived from `upgrades`: the most whole
-  recipes the type's items hold (`min` over the recipe of count ÷ needed). `awakenLevel(type)` is that, plus at
+- **Level** (by this rule `oldItemLevel(type)`, 0 to `maxAwaken` 3) is derived from `upgrades`: the most whole
+  recipes the type's items hold (`min` over the recipe of count ÷ needed); `itemLevel(type)` reads the grade sets
+  instead (below). `awakenLevel(type)` is that, plus at
   Bangkit 3 the levels bought with gold (`ascended`, "Bangkit 4-5" below), so 0 to `awakenTop` 5; every reader
   (stats, skills, looks) takes it, and the item rules below read only up to 3.
-- **Caps** (`capOf(type, item)`): the recipe's count × (level + 1), at most × `maxAwaken`. Kinds missing
+- **Caps** (by this rule; `capOf(type, item)` is by grade now, below): the recipe's count × (level + 1), at most × `maxAwaken`. Kinds missing
   from a recipe have cap 0: they never go on that type. So before awakening the knight takes at most
   3 swords; with its whole recipe it awakens (level 1) and may take up to 6. At level 3 the caps stay
   at the level-3 totals, so a type that has awakened three times takes no more items.
 - `canUse(item, type)` = under the cap and not a bow on a melee type at its reach cap (`Stats.reachCap`, `meleeMaxRange`
   unless spears raised it).
-- `awakenProgress(type)`: per recipe kind, (have, need) toward the next level, where have counts only
-  the items past the recipes already awakened with, at most need; every kind reads full at level 3.
-  The book shows it under each row with the level in words (ui-hud.md).
+- `awakenProgress(type)`: per kind of the next grade set, (have, need) toward the next level; every kind reads full at
+  level 3. The book shows it under each row with the level in words (ui-hud.md).
 - **The moment:** the item that completes a recipe awakens the type. Every living troop of it gets
   `awakeFx('upgrade', level)` instead of its item burst, and `Sfx.clear` plays after `Sfx.magic`. Mid-wave, its
   awakening skill is ready at once, the type's troops 0–3 s apart, and each pops the skill's new name
@@ -143,7 +143,7 @@ kind it needs to awaken once:
 - The recipes are one table to tune; with it, a type needs 8–10 items per level, 24–30 for level 3.
   Kinds asked for over all nine recipes per level: gloves 17, sword 16, shield 14, boots 13, potion 12,
   bow 11, staff 4.
-- With the forge on (dark) each level takes its own grade instead: "The forge: items crafted, Awaken by grade" below.
+- Each level takes its own grade: "The forge: items crafted, Awaken by grade" below.
 
 ## Bangkit 4-5 ("Kebangkitan Emas", #92 part 2)
 
@@ -233,10 +233,10 @@ rules and every constant are `lib/tempa.dart` (`extension Tempa on Game`); it is
 ## Relics: held by ONE troop (a Hero: two)
 
 The small relics (`RelicScope.troop`, `Rarity.biasa`; `smallRelics`; the Pusaka are below): the first four
-(`droppedRelics`: Fang, Thorns, Fury, Guard; the Basic tier) and the Smithy's seven ("The Smithy's seven" below). With
-the Towns on (the board since decisions-log 237) a Town's Smithy crafts all eleven and none drops; with them off (a
-plain `Game()`, tests only since decisions-log 296) monsters drop the four and the seven never show. The forge's nine
-(`forgeRelics`, "The forge: data" below) show and act only with the forge on as well ("The forge's nine" below). Each `Relic` has a `rarity`
+(`droppedRelics`: Fang, Thorns, Fury, Guard; the Basic tier) and the Smithy's seven ("The Smithy's seven" below). A
+Town's Smithy crafts all eleven and none drops (the board since decisions-log 237, every game since 321: until then a
+plain `Game()`, the tests', had monsters drop the four and never showed the seven). The forge's nine (`forgeRelics`,
+"The forge: data" below) show and act in every game too ("The forge's nine" below). Each `Relic` has a `rarity`
 (`Rarity` biasa, langka, epik, legenda: the chest's odds and its cards' colours come with it, P3) and a `scope`:
 `troop` (held by one troop), `type` (a Pusaka, bound to a troop type) or `army` (an oath, P5); `Relic.pusaka` is
 any scope but `troop`.
@@ -262,10 +262,9 @@ any scope but `troop`.
 - A troop that dies returns every relic it held to the bag (a Hero both); its `TroopFell` lists them (`relics`). So
   does a troop sent home by Lepas jenis (`releaseType`, decisions-log 141; units-and-combat.md); the released type's
   bound Pusaka goes to the Gudang, free ("Pusaka" below).
-- Where they come from: only high elites, mini bosses and the boss drop them (Drops, above), and only the four of
-  `droppedRelics`; with the Towns on none drops, and a Town's Smithy crafts all eleven ("Town and Smithy: Craft"
-  below). Where they go besides troops and the Toko: Asah takes 10 from the bag for each star it gives a Pusaka ("Asah"
-  below; with the Towns on any of the eleven, the cheapest first).
+- Where they come from: a Town's Smithy crafts all twenty ("Town and Smithy: Craft" below); none drops (Drops, above).
+  Where they go besides troops and the Town's Shop: Asah takes 10 from the bag for each star it gives a Pusaka ("Asah"
+  below; any of them, the cheapest first).
 - In the UI (#87), tap a relic in the Tas page's bag, then a troop in the list beside it: every living troop,
   one that can't take it greyed with why (`Game.assignPreview` below). Or tap a troop on the field, or drag the
   relic onto one (#86). It stays in hand while the bag holds more. Its icon shows left of that troop's HP bar (a
@@ -284,11 +283,10 @@ any scope but `troop`.
 ### The Smithy's seven (decisions-log 227)
 
 Seven new small relics (lib/relics.dart), appended to `Relic` after the last Artifact (their names are their save keys,
-so the enum is only ever appended to). They exist only with the Towns on: monsters never drop them (`droppedRelics`
-stays the four), today's Shop never sells them (`storeGoods`), the Bag lists and the guide's relic page shows only
-`Relics.relicsInPlay` (the four with the Towns off, all eleven on), and only a Town's Smithy makes them ("Town and
-Smithy: Craft", decisions-log 233; the Town's Shop prices them by their tier there); so with the Towns off nothing of
-this changes a game (the w89 identity probe is the same). The
+so the enum is only ever appended to). Monsters never dropped them (`droppedRelics` stays the four), the Shop never
+sells them (`storeGoods`), the Bag lists and the guide's relic page shows `Relics.relicsInPlay` (all eleven and the
+forge's nine; until decisions-log 321 a game without the Towns had the four alone), and only a Town's Smithy makes them
+("Town and Smithy: Craft", decisions-log 233). The
 three display names are the owner's of 2026-10-04 (the design's Cleave, Last Stand and Blessing are Hero skills'
 names): **Sweep** (`cleave`), **Iron Will** (`lastStand`), **Holy Charm** (`blessing`).
 
@@ -320,9 +318,8 @@ a site that already was one:
 
 ### The forge's nine: their effects and the relics' cap (decisions-log 250)
 
-The nine (`forgeRelics`, "The forge: data" below) act only with the Towns on (`Game.towns`; the forge's own switch is
-gone, decisions-log 296): with them off (tests only) none is in play, a troop holding one (a test's) fights as without it, and the eleven are exactly as
-before (the w89 identity probe is the same). A Smithy crafts them from their recipes (`craftRecipe`; the Mighty three
+The nine (`forgeRelics`, "The forge: data" below) act in every game (the forge's own switch went in decisions-log 296,
+the Towns' in 321, when a game without them, the tests', last had none in play). A Smithy crafts them from their recipes (`craftRecipe`; the Mighty three
 take their grade-II item, the gold is the forge's x0.7), and they are given and taken off like the eleven. Their numbers
 are their town.json `relics` entries (`relicK`, a patch moves them). The code is lib/relics.dart; where each acts:
 
@@ -377,7 +374,7 @@ are their town.json `relics` entries (`relicK`, a patch moves them). The code is
   progress).
 - **Tests:** test/forge_relics_test.dart (each relic alone at its numbers, the bosses' halves and Reaper on a boss; the
   cap: Giant Slayer with the beat, under Relic Altar, Afterglow, an Artifact outside it, a patch; the combos' multiples;
-  the cards; the report's rows and the telemetry's records; the Towns off).
+  the cards; the report's rows and the telemetry's records; the save).
 
 ## Pusaka: bound to a troop TYPE (decisions-log 138)
 
@@ -414,8 +411,8 @@ number at every star. `ukir` is the Pusaka's Ukir steps ("Ukir" below): at 0 the
   and without it the HP is cut to the max); a binding plays `Sfx.magic` with the gold burst on each of them. It
   emits `PusakaBound` or `PusakaMoved` (telemetry.md).
 - **Where they come from:** on the board (the chest on, `Game.offers`) only the boss's chest ("Peti Bos" below): a
-  new one is bound by the default rule (`pusakaPrefs`), a duplicate adds a star. The Toko's shelf is closed there; a
-  plain `Game()` (tests, probes) keeps it: the five epik, one of each (a copy of one owned is refused, "Owned"),
+  new one is bound by the default rule (`pusakaPrefs`), a duplicate adds a star. The Shop's Artifact shelf is closed
+  there; a game without the chest (a plain `Game()`: tests, probes) keeps it, in a Town's Shop: the five epik, one of each (a copy of one owned is refused, "Owned"),
   into the Gudang at ★1. The Langka and the new Epik (batches E-1P's ten and E-2P's seven) are never sold; one in the Gudang sells back to
 the store for half of its price (`langkaPrice` 16,000 for a Langka, `epikPrice` 25,000 for a new Epik) (the owner, 2026-10-03: "hanya bisa sell ke toko tapi untuk buy tidak bisa"), through a Town's Shop's Sell Basket (decisions-log 269). The Tas page binds, moves and unbinds them in two taps (its cell in
   the Bag's grid, then a type's row; an unowned one has no cell, decisions-log 187); it sold one from the Gudang until decisions-log 296, with the Towns off (decisions-log 151; ui-hud.md "Tas"; what a row previews:
@@ -925,8 +922,9 @@ Draft on Game`), the popup `lib/chest_popup.dart` (ui-hud.md "Boss Chest"). Ever
 constant there.
 
 - **The switch:** `Game.offers`, off in a plain `Game()` (every test and probe as before) and on for every game the
-  board starts or loads (`boardRules()`). With it on, the Toko's Pusaka shelf is closed (`artefactShelf` false,
-  `shelfOpen`; owner decision 4a, which reverses decisions-log 99) and the boss's small relic goes (Drops, above).
+  board starts or loads (`boardRules()`). With it on, the Shop's Pusaka shelf is closed (`artefactShelf` false,
+  `shelfOpen`; owner decision 4a, which reverses decisions-log 99) and the boss's small relic went (Drops, above; every
+  relic since the Towns).
 - **When:** a won wave with `wave % bossEvery == 0` brings one (`_bossChest`, in `tick`'s win path right after
   `_crownHero`, so the auto-save holds its rolled cards and a reload shows the same). Never on a lost wave. It waits in
   `Game.chests` (`chest` the next) until dealt with, between waves only (`whyNotChest`: `chestRefusals` over
@@ -1273,12 +1271,12 @@ number one constant; the button is on the Tas page (ui-hud.md "Tas", "A Pusaka p
   burst in gold, `Sfx.clear`, as the chest's Ambil; one in the Gudang just rises. It emits `PusakaAsah`
   (telemetry.md; the battle log on its Pusaka chip: "Sharpen: Dragon Heart ★2 on Templar (60k gold)", and a
   second row "Thorns 8, Fury 2 from the Bag").
-- **Which relics** (`asahTake`): one at a time, each from the kind the bag holds most of at that moment (ties:
-  `droppedRelics`' order, Fang, Thorns, Fury, Guard), so the bag stays even and the kind the player has least
-  of is spared. The owner's wave-86 bag (Fang 17, Thorns 29, Fury 23, Guard 21) gives Thorns 8, Fury 2. Relics
-  held by troops are never taken. `asahTakeLine` writes it: "Thorns 8, Fury 2".
-  With the Towns on it takes any of the eleven small relics, the cheapest first by craft gold, and the same way among
-  the kinds of one price ("Town and Smithy: Craft" below, decisions-log 233).
+- **Which relics** (`asahTake`; "Town and Smithy: Craft" below, decisions-log 233): any small relic in play, the
+  cheapest first by craft gold, the dearer ones only once the cheaper are gone; among the kinds of one price one at a
+  time from the kind the bag holds most of at that moment (ties: `Relic` order), so the bag stays even and the kind the
+  player has least of is spared. The owner's wave-86 bag (Fang 17, Thorns 29, Fury 23, Guard 21) gives Thorns 10 (Fang
+  and Thorns the cheapest). Relics held by troops are never taken. `asahTakeLine` writes it: "Thorns 10". Until
+  decisions-log 321 a game without the Towns took from the four by count alone (that bag: Thorns 8, Fury 2).
 - **Once per boss interval**, across all Pusaka, so the chest's duplicate cards keep their worth (§3.7):
   `Game.asahAt` is the wave of the last Asah (the wave last fought; `asahDone`). The interval is `wave ~/ bossEvery`:
   after wave 85's boss up to the end of wave 89 is one, and the next opens when the wave-90 boss is won
@@ -1400,12 +1398,11 @@ The owner, 2026-10-03: small relics will no longer drop; they will be crafted at
 an interlude BETWEEN two waves, not a wave: the wave number and the difficulty don't move, and the mini boss / boss
 schedule is untouched (the owner, 2026-10-04: "untuk town setiap wave antara wave 6 dan wave7, jadi harusnya tida
 menggangu spawn mini boss atau boss"). This step builds the schedule and the Town's state; the materials and the rules
-file's other blocks came next ("Town and Smithy: materials" below: with the Towns on, relics no longer drop); the scene,
-the Smithy's crafting and the Shop came in later steps. It shipped dark and is on since decisions-log 237: `Game.towns`
-is off in a plain `Game()` (the tests' and probes' own games: the rules from before the Towns, so the suite, the
-auto-player and the replay kit play as before), and `boardRules()` turns it on, so every board game has Towns. No build
-or player path turns them off: the TOWNS define (`townsOnBoard`) and the Towns-off UI it kept (the field's Shop tab,
-the Bag's Sell) went in decisions-log 296; the UI draws the Towns' book whatever `towns` says. The switch-on made the save's format 2: a save from before the Towns is no save, and the
+file's other blocks came next ("Town and Smithy: materials" below: relics no longer drop); the scene, the Smithy's
+crafting and the Shop came in later steps. It shipped dark and is on since decisions-log 237, in every board game; the
+TOWNS define (`townsOnBoard`) and the Towns-off UI it kept (the field's Shop tab, the Bag's Sell) went in decisions-log
+296, and `Game.towns` with the rules from before the Towns in 321 (a plain `Game()`, the tests', the auto-player's and
+the replay kit's, kept them till then): every game has the Towns. The switch-on made the save's format 2: a save from before the Towns is no save, and the
 launch deletes it (architecture.md, lib/save.dart).
 
 - **The numbers:** `assets/config/town.json`, the owner's tuning file (version 2: the materials' blocks below), `schedule` block: `chanceStart` 0.20,
@@ -1426,36 +1423,36 @@ launch deletes it (architecture.md, lib/save.dart).
   - A new run counts as a Town before wave `firstTownAfter` (`townLast` 2), so the first roll comes after wave 5 and the
     first Town before wave 7 at the earliest; two Towns are at least 5 waves apart. With every roll hitting, Towns come
     before waves 7, 12, 17, 22, …
-- **The Town:** `townDue` (the Towns on, `townAt == wave + 1`, no wave on). While it is due no wave starts
+- **The Town:** `townDue` (`townAt == wave + 1`, no wave on). While it is due no wave starts
   (`canStartWave` is false; the start button hides) until it is gone into and left: `enterTown({auto})` (`inTown`) and
   `leaveTown({auto})`, which makes its slot `townLast` and clears the mark. `townMarked` (marked and not yet gone into)
   drives the wave meter's chip (ui-hud.md "The Town chip").
-- **The scene:** with the Towns on, the HUD goes into a due Town once nothing of the win is left on screen and draws the
+- **The scene:** the HUD goes into a due Town once nothing of the win is left on screen and draws the
   Town where the field was (ui-hud.md "Town"; the field waits as it was left); the start button says "Leave town" there
   (ui-hud.md "Towns on the HUD"), and Auto leaves it after `autoLeave` s unless a press in the Town stopped it. The book's
   Shop is a Town's then, and its Smithy tab crafts (ui-hud.md "The Smithy"; the Smithy's rule is "Town and Smithy:
   Craft"; "The store": it deals only there, decisions-log 230).
 - **Probes:** `Game.townPolicy` 'leave' goes through a due Town (in and out at once) at the next wave's start
-  (`startWave`); null leaves it to the HUD. `towns`, `townRules`, `townDice` and `townPolicy` are members, so the probe
-  knobs reach them by name.
+  (`startWave`); null leaves it to the HUD. `townRules`, `townDice` and `townPolicy` are members, so the probe
+  knobs reach them by name (the shared probe knobs set `townPolicy` 'leave' by default: every game meets Towns).
 - **The dice and determinism:** one draw a roll, none while blocked or marked; the Town dice aren't saved (decision
   112's rule, as the chest's), so the same seeds and the same play give the same Towns, and after a reload the later
-  rolls are new draws. No other die moves: a seeded run plays the same, wave by wave, with the Towns on (a probe going
-  through each) and off, and the queue (a mini boss every 3rd wave, the boss every 5th) and the Boss Chests are the same.
+  rolls are new draws. No other die moves: a seeded run plays the same, wave by wave, through Towns (a probe going
+  through each) and with none (rules whose every roll misses), and the queue (a mini boss every 3rd wave, the boss
+  every 5th) and the Boss Chests are the same.
 - **Telemetry** (telemetry.md): `townMarked`, `townEntered`, `townLeft`, and a won wave's `town`.
 
 ## Town and Smithy: materials (decisions-log 221)
 
-The owner, 2026-10-04: "buat ke 30": 30 materials, every monster type its own. With the Towns on, monsters drop
-materials and no relics; the Smithy crafts the small relics from them in a Town ("Town and Smithy: Craft" below), and
-the Town's Shop buys them (decisions-log 230, "The store": the Bag sells none). With the Towns off (a plain `Game()`, tests
-only) none drops.
+The owner, 2026-10-04: "buat ke 30": 30 materials, every monster type its own. Monsters drop materials and no relics
+(the board since decisions-log 237, every game since 321); the Smithy crafts the small relics from them in a Town ("Town
+and Smithy: Craft" below), and the Town's Shop buys them (decisions-log 230, "The store": the Bag sells none).
 
 - **The 30** (`enum Mat`, lib/town.dart; the value is the save key and the icon's name `mat_<key>.png`, only appended;
   the names in `Words.materialNames`): each monster type's **Common** part and **Rare** part (the Necromancer has no
   Common: it is never normal or elite), and three **Trophies**. The enum's order is the Bag's: Common, Rare, Trophy,
   within a grade the monsters weakest first (`enemyTypes`), then the Necro Healer, then the Necromancer. The forge's two
-  stones come after them (`craftedMats`; never dropped, shown only with the forge on: "The forge: data" below).
+  stones come after them (`craftedMats`; never dropped: "The forge: data" below).
 
   | Type | Common (sell) | Rare (sell) |
   |---|---|---|
@@ -1489,16 +1486,16 @@ only) none drops.
   elite its Dark Gem at 35%. A raised monster (`raisedBy`: a necromancer's minions, Split's slimes, Swarm's bats) drops
   none, like its gold. A hexed monster drops as its own type and rank (Slime Hex swaps only its stats).
 - **The dice:** `Game.matDice` (a `Random` of its own, injectable, not saved; probes seed it with seed + 700): one draw
-  a kill whose rank's chance is between 0 and 1 and whose type has that part; none for an always-drop, none with the
-  Towns off. The `loot` dice draw exactly as with the Towns off (the relic draws are thrown away), so the items fall
-  the same, and so does everything else of a seeded run.
+  a kill whose rank's chance is between 0 and 1 and whose type has that part; none for an always-drop. The `loot` dice
+  draw as before the Towns (each kill's item and relic drawn and thrown away, Drops above), so everything else of a
+  seeded run is the same.
 - **Into the bag:** a kill's materials go into `waveMaterials` (the wave's tally) and lie where the kill fell until the
   wave is won, then fly to the Bag (`matPops`, ui-hud.md "The Bag's Materials", decisions-log 262; only the look); the
   win moves the tally into `materials` (kind → count) and keeps it as
-  `lastMaterials` for the "VICTORY!" line (after the items: "3x" and the icon, each kind once, in the enum's order). A
-  lost game loses the tally, as the loot. Expected by wave 10 / 20 / 30 / 60 in a run that wins every wave: about 49 /
+  `lastMaterials` for the "VICTORY!" line ("3x" and the icon, each kind once, in the enum's order). A lost game loses
+  the tally. Expected by wave 10 / 20 / 30 / 60 in a run that wins every wave: about 49 /
   161 / 328 / 1,122 in all (the design's model).
-- **In the Bag** (ui-hud.md "The Bag's Materials"): a Materials chip with the Towns on, a cell per kind held after the
+- **In the Bag** (ui-hud.md "The Bag's Materials"): a Materials chip, a cell per kind held after the
   small relics, a facing page that says who drops it and what it is for, and one row "Craft at the Smithy" naming the
   relics whose recipe takes it ("Fang, Fury"; "Only in a Town" outside one). No Sell row: the Town's Shop buys them,
   each at its own `sell` price (`sellPrice(mat)`). `inBag(mat)` counts them.
@@ -1512,26 +1509,22 @@ only) none drops.
   number's default when it is missing, of the wrong kind or out of range, and leaves out a name the game doesn't know
   (a material, a monster type, a relic, an item) where it stands, listing it in `TownRules.skipped` (main.dart prints
   each with `debugPrint`). test/town_materials_test.dart pins the file to the defaults. The shop's `from` is the wave
-  after which a Town's Shop opens with the Towns on (`shopFrom`, decisions-log 237: "The store"); 1, the earliest a Town
-  comes, opens it in every Town (the owner, 2026-10-07: "shop juga harusnya di buka ketika masuk kota"). With them off
-  it is `storeFrom` 15. It opens the Shop only: Awaken 4-5, Forge and Recall keep `storeFrom` (`armyBuysOpen`).
+  after which a Town's Shop opens (`shopFrom`, decisions-log 237: "The store"); 1, the earliest a Town comes, opens it
+  in every Town (the owner, 2026-10-07: "shop juga harusnya di buka ketika masuk kota"). It opens the Shop only: Awaken 4-5, Forge and Recall keep `storeFrom` (`armyBuysOpen`).
 - **Saved:** `materials` (key → count, only when any); an unknown key is skipped. The tally of a wave in progress isn't
   (a save holds no wave in progress).
-- **Telemetry** (telemetry.md): a wave record's `materials` (dropped) and its start's `materials` (held), only with the
-  Towns on.
+- **Telemetry** (telemetry.md): a wave record's `materials` (dropped) and its start's `materials` (held).
 
 ## The forge: drops (decisions-log 246)
 
 The owner, 2026-10-04: items are crafted, never dropped by monsters; monsters drop more crafting materials; the Town
 Shop sells only what dropped in earlier waves, at 2.5x the sell price. The forge is on in every board game since its
 cut-over (decisions-log 272), and since decisions-log 296 it has no switch of its own (`forgeLive`, `Game.forgeOn` and
-the `--dart-define=FORGE=false` build are gone): all of this applies with `Game.towns` on, so in every board game. With
-the Towns off (a plain `Game()`, tests only) the game is the one from before the Towns: the same drops, the same dice,
-the same save.
+the `--dart-define=FORGE=false` build are gone), and since decisions-log 321 every game has it (a plain `Game()`, the
+tests', had the rules from before the Towns until then).
 
 - **No item drops** (the kill block in `_hurt`): every `loot` draw still happens (the item roll and its kind, the
-  relic roll and its kind), and the item is thrown away, as the relics are with the Towns on. So `drops`, `lastLoot`
-  and the "VICTORY!" line's items stay empty; items come from the Smithy (a later step).
+  relic roll and its kind), and both are thrown away (Drops, above); items come from the Smithy.
 - **The materials' table** (`TownRules.forgeDrops`, town.json `drops.forge`: a list a rank, each entry its type's part
   of a grade at a chance, a count, and always-drops), about 3x the table from before the forge (town.json's
   `drops.normal` to `drops.boss`, gone with the forge-off build, decisions-log 296: an old file's are noted in
@@ -1564,12 +1557,11 @@ the same save.
 
 The owner, 2026-10-04: "shop di town hanya menjual item yang pernah di drop dari wave sebelumnya dengan harga x2.5 harga
 jual item ke toko" (the Town Shop sells only what dropped in earlier waves, at 2.5x what the Shop pays for it). Like
-the drops above, all of it needs the Towns (`Store.forgeShop`), so every board game has it; with them off (tests only)
-the store is "The store"'s.
+the drops above, every game has it (decisions-log 321).
 
 - **The shelf** (`onShopShelf`): every material that has dropped this run (`matsSeen`, in first-drop order), each at
   `shopMatPrice` (Slime Gel 25, Wolf Claw 65, Evil Eye 750, Soul Orb 1,500, Lich Orb 2,000). No item and no small relic:
-  they never drop with the forge on, so they are never on the shelf; buying one is refused `notSold` "Not for sale",
+  they never drop, so they are never on the shelf; buying one is refused `notSold` "Not for sale",
   as is a material not seen yet. The store's Artifact shelf is unchanged. Nothing dropped yet: the shelf is empty.
 - **Buying a material** (`buy`): its price in gold, one more in `materials` (a first one too), `Sfx.kill`, a
   `StoreBought` record with the material under `material`. It is counted in `storeBought` (saved by its name with the
@@ -1587,10 +1579,9 @@ the store is "The store"'s.
 The owner, 2026-10-03/04: the small relics are crafted at a Smithy, only in a Town, from the monsters' materials, as
 many as the bag can pay for (no limit a visit); every one of the 30 materials goes into some recipe. The rules are
 `extension Craft on Game` (lib/town.dart); the Smithy's pages draw them (ui-hud.md "The Smithy", decisions-log 235).
-With the Towns off there is never a Town, so nothing here can happen.
 
-- **The recipes** (town.json `relics.<key>.recipe`, `TownRules.recipes`; `craftRecipe(relic)`, none for a Pusaka; with
-  the forge on its changes, "The forge: data" below):
+- **The recipes** (town.json `relics.<key>.recipe`, `TownRules.recipes`; `craftRecipe(relic)`, none for a Pusaka; the
+  forge's changes, "The forge: data" below):
 
   | Relic (key) | Tier | Materials | Item | Gold | Sells for |
   |---|---|---|---|---|---|
@@ -1623,7 +1614,7 @@ With the Towns off there is never a Town, so nothing here can happen.
   rank ("Mini Boss", "Boss").
 - **Refusals** (`whyNotCraft(relic)` → `CraftRefusal`: `why` (`CraftWhy`), `short` (the material or item short),
   `have`, `need` and its `text`), in this order; refused, `craft` returns false, nothing changes and `Sfx.error` plays:
-  `over` "Game over"; `town` "Only in a Town" (`Words.onlyInTown`; always with the Towns off); `recipe` "No recipe" (a
+  `over` "Game over"; `town` "Only in a Town" (`Words.onlyInTown`); `recipe` "No recipe" (a
   Pusaka); `material`, the recipe's first material short: "Need 2 more Wolf Claw" (2 of 4 held), "Need 4 Wolf Claw"
   (none held); `item`, its first item short: "Need 1 Bow"; `gold` "Not enough gold" (`Words.notEnoughGold`).
   `canCraft(relic)`: none of them.
@@ -1631,44 +1622,43 @@ With the Towns off there is never a Town, so nothing here can happen.
   the recipe's order, then the gold (`kind` null); none for a relic without a recipe.
 - **A visit's crafts:** `TownLeft` carries the relics crafted in that Town (`crafts`) and their gold (`craftSpent`); the
   battle log says "Left town: 2 crafted" (just "Left town" for none).
-- **The Shop's prices with the Towns on** (inside the Store's own `basePrice`, `buyPrice` and `sellPrice`, so their
-  callers don't change; every number from town.json):
+- **The Shop's prices** (inside the Store's own `basePrice`, `buyPrice` and `sellPrice`, so their callers don't
+  change; every number from town.json):
   - a small relic costs its tier's `shop` price, Basic 12,000, Strong 20,000, Mighty 32,000, and its `shopRise`, 20% of
     it, more after each one of that kind bought (`storeBought` counts per kind: Fang 12,000, 14,400, 16,800, …;
-    `TierPrices.priceAfter`). The save restores `storeBought` of the Smithy's seven too;
+    `TierPrices.priceAfter`; the forge's Shop sells none, decisions-log 248, so only a count from before it raises it).
+    The save restores `storeBought` of the Smithy's seven too;
   - it sells back for its tier's `sellShare`, half, of its craft gold: the table's "Sells for", 150 to 1,750;
   - an item: the `shop` block's `itemPrice` 2,000, +`itemRise` 200 a buy, sold back for `itemSellShare` half, 1,000:
     today's numbers;
   - an Artifact as before ("The store" below).
-  With the Towns off every price is today's, byte for byte, and the seven (never held then) are priced as the four:
-  8,000 +1,600, sold for 4,000.
-- **Asah with the Towns on** (`asahTake`, the design's decision 10: a 32,000-gold Mighty relic is never eaten while a
+  Until decisions-log 321 a game without the Towns priced by the field Toko's constants (`itemPrice`, `relicPrice`).
+- **Asah** (`asahTake`, the design's decision 10: a 32,000-gold Mighty relic is never eaten while a
   300-gold one is in the Bag): it counts and takes any of the eleven (`asahRelicsInBag`), the cheapest first by craft
   gold: Fang and Thorns (300), then Fury and Guard (400), then the Strong four (1,000), then Iron Will and Holy Charm
   (3,000), then Giant Slayer (3,500), a dearer kind only once every cheaper one is gone; among the kinds of one price,
-  one at a time from the one held most, as with the Towns off (ties: the `Relic` order). Fang 3, Thorns 5, Fury 4,
-  Sweep 5 give Thorns 5, Fang 3, Fury 2. With the Towns off it is today's rule over the four ("Asah" above).
+  one at a time from the one held most (ties: the `Relic` order). Fang 3, Thorns 5, Fury 4, Sweep 5 give Thorns 5,
+  Fang 3, Fury 2.
 - **Telemetry** (telemetry.md): the `crafted` event (`relic`, `materials`, `items`, `gold`); a wave record's `crafted`,
   `materialsUsed` and `gold.craftSpent` (the crafts since the last wave ended, so a Town's land in the next wave's
-  record); a `townLeft`'s `crafts` and `craftSpent`. Only with the Towns on.
+  record); a `townLeft`'s `crafts` and `craftSpent`.
 - **Tests:** test/town_craft_test.dart (each refusal in order, no limit, the takes, the rows, every recipe from exactly
-  its own, the prices on and off, Asah's order, the event and the telemetry).
+  its own, the prices, Asah's order, the event and the telemetry).
 
 ## The forge: data (decisions-log 245)
 
 The owner, 2026-10-04: every item is crafted at the Smithy, in three grades, and more kinds of item; twenty small
 relics; late in a run an item can be enhanced. This is the forge's data: the enums, town.json version 3, the words and
 the icons. The items' crafting and Awaken by grade read it ("The forge: items crafted, Awaken by grade" below); the rest
-waits for its own step. Like "The forge: drops" above, only a game with the Towns on (every board game) shows any of
-it. With them off (a plain `Game()`, tests only) the Bag and the store list the seven items, the four dropped relics and
-no material, and every recipe and price is as before the Towns.
+waits for its own step. Like "The forge: drops" above, every game has it (decisions-log 321).
 
 - **Items** (`enum Item`, game.dart): 14 kinds (`ItemSlot`) in 3 grades (`Item.grade`, 1 to 3), 42 in all, each value
   with its kind (`Item.slot`) and grade. The first seven are the items monsters drop (`droppedItems`, grade I, in the
   index the drop dice use, `droppedItemKinds`); then the five new kinds' grade I, grade II of the twelve kinds Awaken
   uses, their grade III, then the Cap's (`ItemSlot.helm`) and the Ring's three. The counts are the enum's: nothing
-  counts kinds or grades by hand. `Relics.itemsInPlay` (the Bag's items, the guide's item page) is every item with the
-  forge on, else `droppedItems`; the Shop's shelf, the store, Carve and Asah keep `droppedItems`.
+  counts kinds or grades by hand. `Relics.itemsInPlay` (the Bag's items, the guide's item page) is every item (until
+  decisions-log 321 a game without the Towns had `droppedItems`); the store's goods, Carve and Asah keep
+  `droppedItems`.
   The five new kinds each serve what no item did: the Amulet max HP, the Prayer Beads a healer's heals, the Torch damage
   to the undead (a foe with `Stats.dark`), the Spear a melee fighter's reach past `meleeMaxRange`, the Prism the splash
   area. Grades II and III of the twelve Awaken kinds are made from the middle and the late monsters' Common parts with no
@@ -1721,27 +1711,27 @@ no material, and every recipe and price is as before the Towns.
   | Gem Ring (`gemRing`) | Ring | II | Teal Gem 1, Wolf Fang 1 | Ring | 600 | +0.15 MP/s |
   | Royal Ring (`royalRing`) | Ring | III | Bear Claw 1, Soul Orb 1 | Gem Ring | 2,500 | +0.2 MP/s |
 
-  With the forge on `Stats.upgraded` reads each item's own effect, every grade of the seven and the Cap's and the
+  `Stats.upgraded` reads each item's own effect, every grade of the seven and the Cap's and the
   Ring's ("The forge: items crafted, Awaken by grade" below, decisions-log 249) and the five new kinds' ("The forge: the
   new kinds' effects" below, decisions-log 251). The card (`itemEffect`) says the file's effect ("+12% max HP", "-7%
-  damage taken", "+0.15 MP every second"). None of the 35 is ever given while the forge is off.
+  damage taken", "+0.15 MP every second").
 - **The nine new small relics** (`forgeRelics`, appended to `Relic` after the Artifacts; Basic, Strong, Mighty by their
   recipe's tier): Chill, Shark Tooth, Grit, Ambush, Weak Spot, Hot Streak, Avalanche, Afterglow, Reaper. Each has its
   numbers in its town.json `relics` entry (`relicK`), a one-line card (`relicEffect`: "Every 3rd hit slows 30% for 1.5 s
   (bosses 15%)", "Hits mark a monster 3 s: it takes +12% from all (bosses +6%)"; a card never names another relic or a
   combo), a "Best on" hint (`relicBestOn`) and an icon. Their effects: "The forge's nine" above (decisions-log 250).
-  `Relics.relicsInPlay` lists them with
-  the Towns and the forge on (the Bag, the Town Shop's page and Asah then count them as any small relic in play);
+  `Relics.relicsInPlay` lists them in every game (the Bag, the Town Shop's page and Asah then count them as any small
+  relic in play);
   `smallRelics` stays the eleven, so no drop and no store ever offers them.
 - **The relics' recipes with the forge** (`TownRules.forgeChanges`, a `relics` entry's `forge` block: only what
   changes; `forgeRecipe(key)`): every one of the eleven costs 70% of its gold, rounded to 50 (Fang 200, Fury 300, the
   Strong four 700, Iron Will and Holy Charm 2,100, Giant Slayer 2,450), Mana Siphon takes Bone Arrow 3 for Teal Cloth 4,
   and the Mighty three a grade-II item (Iron Will a Tower Shield, Giant Slayer Steel Gloves, Holy Charm a Big Potion).
-  The nine's recipes are at that gold already (Chill 200 … Reaper 2,450). `craftRecipe(relic)` reads them with the
-  forge and the Towns on, else the eleven's own.
+  The nine's recipes are at that gold already (Chill 200 … Reaper 2,450). `craftRecipe(relic)` reads them (the
+  eleven's own were a game without the Towns' until decisions-log 321).
 - **The stones** (`craftedMats`: Mithril and Starmetal, appended to `Mat`, grade `MatGrade.crafted`, `Mat.crafted`):
   made at the Smithy for Enhance, never dropped. No drop rule names them, `matsSeen` never takes one (not from a drop,
-  not from a save), the Bag shows them only with the forge on (`Materials.matsInPlay`, else `droppedMats`, the 30), and
+  not from a save), the Bag shows them (`Materials.matsInPlay`: every `Mat`), and
   their "who drops it" line is "Made at the Smithy." (`Words.madeAtSmithy`). Their `sell` is half their worth (Mithril
   770, Starmetal 2,970).
 - **The combos** (town.json `combos`, `Combos`): the small relics' damage factors on one blow multiply to at most
@@ -1767,15 +1757,14 @@ no material, and every recipe and price is as before the Towns.
   grades of a new kind are one design in the pack's own colours (bronze, steel, gold where it has them). A `LOOT` entry
   may carry a tint (r, g, b) for a tinted variant of an icon another entry uses.
 - **Tests:** test/forge_data_test.dart (the kinds and grades, names and cards, icons, both file versions, every recipe's
-  materials and items, the stones, Awaken and Enhance blocks, a plain `Game()` without the Towns, the save).
+  materials and items, the stones, Awaken and Enhance blocks, the forge in every game, the save).
 
 ## The forge: items crafted, Awaken by grade (decisions-log 249)
 
 The owner, 2026-10-04: every item is made at the Smithy, and "setiap awakenning butuh item dengan grade yang berbeda untuk
-next awakening" (each Awaken level takes items of its own grade). Like the rest of the forge, a game with the Towns on
-(`Game.byGrade`), so every board game, plays by it. With the Towns off (a plain `Game()`, tests only) every rule below is
-the one from before the forge ("Awakening: recipes, caps and levels" above), byte for byte. The forge-off build and
-town.json's `awaken.byGrade` are gone (decisions-log 296).
+next awakening" (each Awaken level takes items of its own grade). Every game plays by it: the forge-off build and
+town.json's `awaken.byGrade` went in decisions-log 296, and `Game.byGrade`, a plain `Game()`'s way to the rule from
+before the forge ("Awakening: recipes, caps and levels" above), in 321 with the rules from before the Towns.
 
 - **The recipe by grade** (`kindRecipe(type)`): today's `awakenRecipe`, counted by kind, plus the type's own new kind
   (`forgeAwakenKinds`): Soldier and Knight an Amulet, Swordsman, Archer and Templar a Torch, Lancer 2 Spears, Priest 2
@@ -1809,7 +1798,7 @@ town.json's `awaken.byGrade` are gone (decisions-log 296).
   the Templar at 2; without the floor every type would read Awaken 0. The Army detail says it first, in grey: "Awaken 3
   (kept from old items)" (ui-hud.md "Army"). Saved as `awakenKept` by every by-grade game, an empty map too, so a save
   of the by-grade game is never read by the old rule again (a new game's stays empty: its grade-I items never make a
-  level); a save without the key gets it from its items. A game with the Towns off never reads or writes it.
+  level); a save without the key gets it from its items.
 - **Caps** (`capOf`): per kind and grade, the grade set's count once the grade is open: at Awaken L the grades up to L + 1
   (grade I from the start, II at Awaken 1, III at 2), else 0. So a type holds at most its grade sets, today's recipe × 3
   less the trimmed third of grade III (the knight 31 items where today's takes 30). Refusals (`whyNot`): a kind outside
@@ -1817,14 +1806,14 @@ town.json's `awaken.byGrade` are gone (decisions-log 296).
   reach rule is today's. The refusal's words by grade (`itemRefusal`): a grade whose slots open with an Awaken names it,
   its tooltip's own line ("Opens at Awaken 1" for a grade-II item, "Opens at Awaken 2" for grade III; `gradeOpensAt`), in
   the Bag's picker rows, the drop popup and the message window; the others as today's (`refusalNames`: "Awaken first" for
-  a Cap or a Ring at its cap), and every refusal as today's with the Towns off.
+  a Cap or a Ring at its cap).
 - **The Cap and the Ring** (`outsideAwaken`: the kinds no Awaken counts): every type takes them, one of the kind (any
   grade, `heldOf`) per Awaken level and one more, 1 to 4. At that cap a better grade goes on and swaps out the type's
   lowest-grade one, which goes back to the Bag (`swapOut`; `useItem`, and `priceWith` / `assignPreview` try it on the
   same way); the same grade or a lower one is refused (`awakenFirst` below Awaken 3, then `maxed`). With Enhance the
   lowest goes by grade, then by "+" ("The forge: Enhance" below).
 - **What each grade does** (`Stats.upgraded(item, k)`): `k` is the item's own number, town.json `items.<key>.effect`
-  (`Game.itemK`), read with the Towns on for every item, grade I too; the Towns off read today's constants. Swords and
+  (`Game.itemK`), read for every item, grade I too (its numbers are the constants from before the forge). Swords and
   staffs (attack ×), shields (+defence), boots (walk ×), bows (reach ×, the melee clamp as before), gloves (wait ×) and
   potions (+regen) by their grade's number; a healer's heal from a potion is `potionHeal` × its regen ÷ grade I's (3,
   4.8, 7.2), from a staff `staffHeal` × its bonus ÷ grade I's (3, 3.36, 3.84) (`healOf`), each times the beads'
@@ -1838,7 +1827,7 @@ town.json's `awaken.byGrade` are gone (decisions-log 296).
   `craftItemNeed`), `bagLevel` (the grade sets the type and the Bag hold in a row).
 - **Crafting items** (`extension Craft`, lib/town.dart): every item from its town.json `items` recipe ("The forge: data"
   above): grades I, II and III of the twelve Awaken kinds from their own materials and 20 / 60 / 250 gold, the Cap's and
-  the Ring's 150 / 600 / 2,500 and the grade below. `itemRecipe(item)` (null with the forge or the Towns off),
+  the Ring's 150 / 600 / 2,500 and the grade below. `itemRecipe(item)`,
   `itemCraftRows(item)` (each material, the item it takes, the gold: have / need), `whyNotCraftItem(item)` (the relics'
   order: game over, not in a Town, no recipe, a material, the item ("Need 1 Leather Cap"), the gold), `canCraftItem`,
   `craftItem(item)` (takes them, one into `inventory`, `Sfx.clear`, the event `ItemCrafted`: the battle log's "Crafted
@@ -1849,7 +1838,7 @@ town.json's `awaken.byGrade` are gone (decisions-log 296).
   `craftableItems(grade)`. A craft never adds to `matsSeen`.
 - **Tests:** test/forge_awaken_test.dart (the counts, the table, levels from exactly the grade set, caps and when grades
   open, the Cap and Ring swap, every recipe's gold and take, refusals, `canMake`, Stats per grade, the Cap's cut on a
-  blow, the event, everything as before with the Towns off), test/forge_army_detail_test.dart (the Army detail),
+  blow, the event, the old recipe the sets build on), test/forge_army_detail_test.dart (the Army detail),
   test/forge_cutover_test.dart (the forge on by default, and the saves from before it: the kept levels).
 
 ## The forge: the new kinds' effects (decisions-log 251)
@@ -1857,8 +1846,7 @@ town.json's `awaken.byGrade` are gone (decisions-log 296).
 The owner, 2026-10-04: more item kinds, each with one clear job: a stat no item served (`Stats` had `hp`, `splash` and
 the `dark` foe flag, which no item touched) or a troop type without an item of its own. Like "The forge: data":
 `Game.statsOf` hands `Stats.upgraded(item, k)` an item's own number `k` (`Game.itemK`: its town.json
-`items.<name>.effect`) only with the Towns on, and without one the five change nothing, so with them off (tests only) a
-type holding them fights as before. Each item multiplies, one at a time in the order taken (`upgrades[type]`), as
+`items.<name>.effect`); without one (`Stats.upgraded(item)`) the five change nothing. Each item multiplies, one at a time in the order taken (`upgrades[type]`), as
 the seven do.
 
 | Kind (grades I / II / III) | What one does (`Stats.upgraded`) | Whose Awaken recipe takes it |
@@ -1885,14 +1873,13 @@ the seven do.
 - **Tests:** test/forge_kinds_test.dart (each kind alone at each grade, stacking, the Amulet at Awaken 1 and on a troop
   in the field, the beads' heal and holy damage whatever the order, the torch only on undead foes and never a monster's
   blow, the spear's clamp, ceiling and patched ceiling with Hawk Feather and the aura, the prism only with splash and its
-  ceiling, and nothing with the forge or the Towns off).
+  ceiling, and `Stats.upgraded` without a number leaving them alone).
 
 ## The forge: Enhance (decisions-log 255)
 
 The owner, 2026-10-04: late in a run an item can be enhanced, with stones the Smithy makes from the rarest trophies. Like
-the rest of the forge, only a game with the Towns on (every board game) enhances
-(`Enhance.enhanceOn`); with them
-off (tests only) nothing below acts, an item's number ignores any "+" and the save gains no key. The rules are lib/enhance.dart's
+the rest of the forge, every game enhances (`Enhance.enhanceOn`, a game without the Towns' off switch, went in
+decisions-log 321). The rules are lib/enhance.dart's
 `extension Enhance on Game`, the numbers town.json `enhance` ("The forge: data" above). The Smithy's Enhance tab, the
 Bag's stack cells and the tint are ui-hud.md's ("The Smithy", the Bag's "Enhanced stacks").
 
@@ -1919,7 +1906,7 @@ Bag's stack cells and the tint are ui-hud.md's ("The Smithy", the Bag's "Enhance
   | +5 | Starmetal | 4,000 |
 
   From +0 to +5 an item takes Evil Eye 5, Soul Orb 2, Lich Orb 2, Iron Scrap 10, Grave Steel 5 and 20,500 gold, the
-  stones' own included. Refused in this order: the game over, not in a Town (or the Towns off), "Opens after
+  stones' own included. Refused in this order: the game over, not in a Town, "Opens after
   wave 30", none at that "+" in the Bag ("Need 1 Royal Sword"), already at +5 ("Max: +5", `CraftWhy.top`), the stone
   ("Need 1 Starmetal"), the gold. Its gold counts in the visit's `craftSpent`. The event `ItemEnhanced`: the battle
   log's "Enhanced Royal Sword to +3 (1,500 gold)" (`Words.enhance`) with the item's icon, the telemetry's `itemEnhanced`, its stone in a
@@ -1967,8 +1954,8 @@ a row per thing to make with its materials have/need and whether it is ready; wi
 pages and the Smithy's other tabs, and come off from those and from the tab's rows). The rules are lib/wishlist.dart's
 `extension Wishlist on Game`; the pages are ui-hud.md's ("The Smithy", "The Bag", "Army").
 
-- **When:** only with the Towns on (`wishOn`, every board game), where the Smithy makes items. With them off (a plain
-  `Game()`, tests only) nothing can be wished, nothing shows and the save gains no key.
+- **When:** in every game, where the Smithy makes items (`wishOn`, a game without the Towns' off switch, went in
+  decisions-log 321).
 - **What:** a type's wishes are items only (a small relic is worn by one troop, not by a type, and the Enhance stones go
   on no type; free lines take relics, below). `canWish(type, item)`: a troop type and an item with a Smithy recipe (`itemRecipe`) that the type can ever take: by
   grade a kind its Awaken counts (`kindRecipe`) in any of the three grades, or the Cap or the Ring (`outsideAwaken`),
@@ -2031,7 +2018,7 @@ pages and the Smithy's other tabs, and come off from those and from the tab's ro
   (`smithyItemOrder`, smithy_page.dart). The board's sections and pages are as many as before: no item moves to another
   grade, and nothing is shown twice.
 - **Saved** as `wishlist` (type → item name → goal, in order; its `free` the open free lines, product name → goal, in
-  order), only with `wishOn` and some wish ("Saved" below).
+  order), only with some wish ("Saved" below).
 - **Tests:** test/wishlist_test.dart (who can wish for what, the list's edits, the counts read live, a whole set on and
   off, done and the Awaken's drop, the board's order, what a wish lacks and the materials, free lines and their drop,
   the rows and what they lack, the save with its free lines, a list from before the goals and an old save, nothing
@@ -2047,9 +2034,7 @@ troop type, offered gacha-style), and on 2026-10-08: "500 adalah contoh saja, ka
 kota kota awal" (500 was only an example; not too dear at the first Towns), "Sebanyak gold cukup" (buy as many as the
 gold allows), "semua buff tavern adalah temporary buff untuk 2 wave setelahnya" (every Tavern boost lasts the two waves
 after it), DEF as less damage taken, and the game's existing icons. On since decisions-log 268 (built dark in 266 and
-267): every Town has its Tavern; its own switch and the `--dart-define=TAVERN=false` build are gone (decisions-log 296).
-A game with the Towns off (a plain `Game()`, tests only) rolls, sells and saves none of it: no die moves and the save
-gains no key. The rules are lib/tavern.dart's `extension
+267): every Town has its Tavern; its own switch and the `--dart-define=TAVERN=false` build are gone (decisions-log 296), and every game has the Towns since decisions-log 321. The rules are lib/tavern.dart's `extension
 Tavern on Game`, the numbers town.json `tavern` (`TownRules.tavern`, `TavernRules`). The Tavern's page in the Town's
 book (decisions-log 267) is ui-hud.md's "The Tavern": the offers, Reroll, the boosts running and Buy; the boosts in
 battle (decisions-log 268: their chips under the wave meter, the troops' burst back from the Town, the log's lines) are
@@ -2127,7 +2112,7 @@ ui-hud.md's "The Tavern in battle"; the guide's K23 and its "Towns" topic name i
   taken (2 waves)", "Feast ended" and "Watchman's Brew: no life lost".
 - **Saved** ("Saved" below): the boosts running and the Town's Tavern keys.
 - **Tests:** test/tavern_test.dart (town.json's block, the prices, the roll, the odds, buying, rerolling, the stats, the
-  countdown, the gold, the leak, the save, the telemetry, the probe policy, the Towns off).
+  countdown, the gold, the leak, the save, the telemetry, the probe policy).
 
 ## The store ("Toko", on screen "Shop", #63)
 
@@ -2141,17 +2126,17 @@ Toko, went in decisions-log 296). Each of the owner's choices (decisions-log 99)
 there. The economy they were weighed against was measured with the full-economy auto-player (#41, below).
 
 - **When:** `storeOpen` once wave `shopFrom` is won (`wave > shopFrom`, or wave `shopFrom` and no wave on).
-  `shopFrom` is town.json's `shop.from` with the Towns on (1 as shipped: a Town's Shop is open in every Town,
-  decisions-log 253) and `storeFrom` 15 with them off (decisions-log 237); the "locked" refusal says it (`storeWhy`:
-  "Opens after wave <shopFrom>"). Awaken 4-5, Forge and Recall (the Army detail's with the Towns on) keep `storeFrom`
-  15 either way (`armyBuysOpen`, `_armyClosed`: "Opens after wave 15"); with the Towns off it is the store's own gate.
+  `shopFrom` is town.json's `shop.from` (1 as shipped: a Town's Shop is open in every Town, decisions-log 253; 237
+  read it, at `storeFrom` 15); the "locked" refusal says it (`storeWhy`: "Opens after wave <shopFrom>"). Awaken 4-5,
+  Forge and Recall (the Army detail's) keep `storeFrom` 15 (`armyBuysOpen`, `_armyClosed`: "Opens after wave 15").
   The "VICTORY!" line that the Shop opened (`shopJustOpened`) is said only when `shopFrom` is over 1. Derived from the wave, so nothing is saved for it. `storeMidWave` false (the owner: between waves only): during a
   wave it is open but buys and sells nothing ("Only between waves"), even with the game paused (#93).
   The Shop page holds the auto start while it is open between waves, so the 5 s countdown is no race (so do
   Tas and Settings, #93; every page but the Army's).
-- **What it sells:** `storeGoods`: the 7 items, the 4 dropped relics and the 5 epik Pusaka (`Relic.store`), these
-  only while the shelf is open (`shelfOpen`: not with the chest on, "Peti Bos" above). Bought goods go
-  into the bag (`inventory` / `relicBag`) and are used from it as drops are; a Pusaka goes to the Gudang at ★1
+- **What it sells** (only in a Town, below): the 5 epik Pusaka (`Relic.store`) while the shelf is open (`shelfOpen`:
+  not with the chest on, "Peti Bos" above), and the materials that have dropped ("The forge: the Town Shop" above);
+  never an item or a small relic, which the Smithy makes (`storeGoods` still names the 7 items and the 4 dropped relics
+  the field's Toko sold until decisions-log 321). A Pusaka goes to the Gudang at ★1
   (`inBag` counts it 1 there), one of each. It never sells a Langka, a new Epik (`store` false: batches E-1P's ten and E-2P's seven) or a Legenda; one
   in the Gudang sells back for half of `langkaPrice` 16,000 (a new Epik: of its own `epikPrice` 25,000, so 12,500; Dragon Crown: of `legendaPrice` 40,000). An old save's copy past ★3 pays back `copyRefund` of the same price. An oath never sells (`inBag` 0).
 - **Prices** (`buyPrice(kind)`; `storeBought[kind]` counts this game's purchases of each kind, and each one
@@ -2159,14 +2144,12 @@ there. The economy they were weighed against was measured with the full-economy 
 
   | Goods | Base | Each one bought adds | Sells for (`sellShare` 50% of base) |
   |---|---|---|---|
-  | an item (`itemPrice`) | 2,000 | +200 | 1,000 |
-  | a dropped relic (`relicPrice`) | 8,000 | +1,600 | 4,000 |
   | a Pusaka (`artefactPrice`) | Grail of Immortality 24,000; Dragon Heart 30,000; Void Eye 36,000; God's Thunder 40,000; Dawn Star 40,000 | ×`artefactRise` 1.5 (bought again after selling it) | half its base, its stars gone with it |
 
-  With the Towns on a small relic costs its tier's price instead (12,000 / 20,000 / 32,000, +20% of it a buy) and sells
-  for half its craft gold ("Town and Smithy: Craft" above, decisions-log 233).
-  The owner doubled the design's prices and raised selling from 20% to half. All 7 items cost the same on
-  purpose; what is short is got by selling the surplus (two items buy one at base).
+  A small relic sells back for half its craft gold and an item for the `shop` block's `itemSellShare` of its
+  `itemPrice`, 1,000 ("Town and Smithy: Craft" above, decisions-log 233). The field's Toko sold an item at `itemPrice`
+  2,000 (+200 a buy) and a dropped relic at `relicPrice` 8,000 (+1,600); both went with the rules from before the
+  Towns (decisions-log 321). The owner doubled the design's prices and raised selling from 20% to half.
   Measured income (#63, on the kill gold before #83): about 1.1k a wave at wave 15, 2–2.7k after wave 30, with
   18k banked by wave 40 and 41k by wave 50 when nothing else is left to buy. Since #83 the kill gold grows 5% a
   wave (4.5% since decisions-log 318; units-and-combat.md "Kill gold"): a wave cleared pays about 1k in kills at wave 15, 4.6k at 30, 8.8k at
@@ -2176,8 +2159,8 @@ there. The economy they were weighed against was measured with the full-economy 
   "Opens after wave <shopFrom>" (`storeWhy`, "When" above), `midWave` "Only between waves", `over` "Game over", `owned` "Owned" (a Pusaka already owned:
   a purchase that does nothing is a trap; its card's Buy reads "Owned ★2", its shelf slot "★2" and "Owned" for the
   price, decisions-log 151), `shelf` "Boss Chest only" (a Pusaka with the shelf closed, or a Langka), `gold` "Not
-  enough gold", `notSold` "Not for sale" (a material, unless the forge's Shop has seen it drop; with it an item or a
-  small relic, decisions-log 248); refused, nothing changes and `Sfx.error` plays.
+  enough gold", `notSold` "Not for sale" (a material not seen to drop yet, an item, a small relic; decisions-log 248),
+  and first of all `town` "Only in a Town" (below); refused, nothing changes and `Sfx.error` plays.
 - **Selling:** `sell(kind, [n])` sells up to n from the bag (all there are when fewer) for `sellPrice(kind)`
   each. Only the bag sells: an item given to a type is part of its awakening, caps and price, and a relic on
   a troop is sold once it is taken off into the bag (between waves, "Relics" above). `whyNotSell` adds `none`
@@ -2186,24 +2169,24 @@ there. The economy they were weighed against was measured with the full-economy 
   The book sells by this one rule in a Town's Shop alone (below). Until decisions-log 296 a game without the Towns
   sold in two places too (decisions-log 169 and 187): the Toko's card ("Sell", "Sell all") and the Bag page's facing
   page (Sell, Sell all; a Gudang Pusaka's Sell); both went with the Towns-off book.
-- **With the Towns on** (`Game.towns`, decisions-log 230; the owner, 2026-10-04: "semua aktifitas shop hanya bisa di
-  lakukan di town, di tas di remove, dan di reuse codenya ketika di kota") the store deals only in a Town: outside one
-  `whyNotBuy` and `whyNotSell` say `town` "Only in a Town" first, for every kind (so a stale tap or a probe can't buy or
-  sell on the field). In a Town its refusals and prices are the ones above, and its shelf holds every small relic in
-  play (`relicsInPlay`: the Smithy's seven too; their `storeBought` is saved by name like the rest, while `storeGoods`, the Towns-off shelf, keeps the four). It also buys the materials held, each at
-  its own price (`sellPrice(mat)` = town.json `materials`' `sell`, e.g. Wolf Claw 25, Skull 60; the last one sold
-  leaves no entry), and its record names it under `material` (`StoreSold`; telemetry.md). It sells no material (with the
-  forge on, only the materials that have dropped, and no item or small relic: "The forge: the Town Shop" above). The
-  page is the Town's Shop on the Bag's code (ui-hud.md "The Town's Shop"): the field's Bag sells nothing. The page splits
-  buying and selling (decisions-log 269): Buy shows the shelf in sections (Items, Relics, the store's Artifacts, with the
-  forge Materials; only those the shelf has some of, decisions-log 280), Sell
+- **Only in a Town** (decisions-log 230; the owner, 2026-10-04: "semua aktifitas shop hanya bisa di lakukan di town, di
+  tas di remove, dan di reuse codenya ketika di kota"): outside one `whyNotBuy` and `whyNotSell` say `town` "Only in a
+  Town" first, for every kind (so a stale tap or a probe can't buy or sell on the field). In a Town its refusals and
+  prices are the ones above. It buys back every small relic in play (`relicsInPlay`: the Smithy's seven and the
+  forge's nine too; their `storeBought` is saved by name like the rest) and the materials held, each at its own price
+  (`sellPrice(mat)` = town.json `materials`' `sell`, e.g. Wolf Claw 25, Skull 60; the last one sold leaves no entry),
+  and its record names it under `material` (`StoreSold`; telemetry.md). It sells only the materials that have dropped
+  and the open Artifact shelf, no item or small relic ("The forge: the Town Shop" above). The page is the Town's Shop on
+  the Bag's code (ui-hud.md "The Town's Shop"): the field's Bag sells nothing. The page splits buying and selling
+  (decisions-log 269): Buy shows the shelf in sections (Items, Relics, the store's Artifacts, Materials; only those the
+  shelf has some of, decisions-log 280), Sell
   everything in the Bag that no troop or type is using (each enhanced stack, the Vault Artifacts too; not a bound
   Artifact or an oath), sold in one press from a sell basket by these same rules (`shopSellBasket`: `sell` / `sellAt`
   per stack, the gold the sum of each piece's price). Awaken 4-5,
   Forge and the fallen Heroes' Recall aren't the store's deals: the Army detail buys them between any waves, in a Town
-  or not (their refusals are the store's `locked` and `midWave` alone). Its prices with the Towns on, inside these
-  same price functions: a small relic by its tier (12,000 / 20,000 / 32,000, +20% of it a buy), bought back at half
-  its craft gold, an item at town.json's `shop` numbers ("Town and Smithy: Craft" above, decisions-log 233).
+  or not (their refusals are the store's `locked` and `midWave` alone). Its prices, inside these same price functions:
+  a small relic bought back at half its craft gold, an item at town.json's `shop` numbers ("Town and Smithy: Craft"
+  above, decisions-log 233).
 - **The Pusaka** (`Relic.store`; names in English like the Hero skills, the owner's pick, in `relicNames`;
   their lines in simple English like every item's since decisions-log 168): what they do is "Pusaka" above. The optional Midas purse
   of the design (more kill gold) was left out: a gold engine in a gold sink.
@@ -2309,10 +2292,10 @@ which the store's card shows:
 - relic: the effect ("Heals 30% of damage dealt", "Attackers take 30% back", "x2 damage every 3rd hit", "-25% damage
   taken"; the Smithy's seven from town.json's numbers: "Hits 1 more monster near the target for 30%", "Poisons: +20% of
   the hit over 3 s", "+2 MP each hit or heal", "Shield 15% HP each wave", "Once a wave: heals 40% HP below 25%", "x1.5
-  damage to mini boss and boss", "Heals on it +40%"), with the Towns on its tier ("Strong relic", `relicTierLine`) and
+  damage to mini boss and boss", "Heals on it +40%"), its tier ("Strong relic", `relicTierLine`) and
   "Best on: Soldier, Knight, Axeman, Templar" (`relicBestLine`), then "One relic per troop (Hero: 2)"
   (`relicSlotsLine`), "Tap, then pick a troop", "In bag: n, in use: m" (m = living troops holding one, `relicsHeld`).
-  With the Towns on the Bag's facing page also has the tier under the heading (Basic in the page's ink, Strong in a
+  The Bag's facing page also has the tier under the heading (Basic in the page's ink, Strong in a
   Rare's green, Mighty in an Epic's violet) and "Best on" after what it does, and the Army detail's relic icons have the
   tooltip (ui-hud.md).
 - Pusaka: its effect at its stars (★1 when not owned; a change in percent, `_pct`, a hit's multiplier to two decimals,
@@ -2359,20 +2342,19 @@ first; always written then, `[]` when none, so its absence marks a save from bef
 wave's top killer type, only when there is one; an unknown type is skipped; units-and-combat.md "Bayangan on the
 field"), and each rolled chest's `omens` (a face a card, null for none). An unknown kind is skipped. Off, none of them is written or read. The Bayangan dice are not saved.
 
-The Towns ("Towns" above) save `town` only while `Game.towns` is on: `{chance, last, at?, in?}`, the next roll's
-chance, the last Town's slot, the marked slot (only while one is marked) and `in: true` (only while the player is in
-it: a save made there reopens in it). It is read whatever `towns` is: a mark already passed (`at` ≤ the wave) and an
-`in` without a due Town are dropped, and with the Towns off a loaded mark holds nothing up. A save without it (a
-Towns-off game's; a file from before the Towns is no save since decisions-log 237) counts as a Town before its own wave (`last` = its wave, at least `firstTownAfter`), so the first
+The Towns ("Towns" above) save `town` in every game (until decisions-log 321 a game without the Towns, the tests',
+wrote none): `{chance, last, at?, in?}`, the next roll's chance, the last Town's slot, the marked slot (only while one
+is marked) and `in: true` (only while the player is in it: a save made there reopens in it). On load a mark already
+passed (`at` ≤ the wave) and an `in` without a due Town are dropped. A save without it (a file from before the Towns is
+no save since decisions-log 237) counts as a Town before its own wave (`last` = its wave, at least `firstTownAfter`), so the first
 comes 5 waves on at the earliest, like a new run's. The Town dice are not saved. The Towns' materials ("Town and Smithy: materials"
-above) save as `materials` (key → count, only when any; read whatever `towns` is, an unknown key skipped); the
+above) save as `materials` (key → count, only when any; an unknown key skipped); the
 materials' dice are not saved. The kinds dropped so far ("The forge: drops" above) save as `matsSeen` (names in
-first-drop order) only with the Towns on, and only when any: with them off a save is as before. It
+first-drop order) only when any. It
 loads in its order, an unknown name skipped; a save without it starts from the materials held, in `Mat` order.
 Enhance ("The forge: Enhance" above) saves `bagPlus` (the Bag's enhanced stacks, each `{item, plus, n}`) and
-`upgradePlus` (type → its enhanced copies the same way), again only with the Towns on and only when any.
-`inventory` keeps the +0 items and `upgrades` every item, so a save without them (one from before Enhance, or
-a game's with the Towns off) loads all +0, and the format stays version 3. On load an unknown item is skipped, a "+" is kept in 1 to
+`upgradePlus` (type → its enhanced copies the same way), again only when any.
+`inventory` keeps the +0 items and `upgrades` every item, so a save without them (one from before Enhance) loads all +0, and the format stays version 3. On load an unknown item is skipped, a "+" is kept in 1 to
 `enhance.most`, and a type keeps no more enhanced copies of an item than `upgrades` lists (its highest).
 The Tavern ("Towns: the Tavern" above) saves `boosts` (the boosts running, each `{kind, left, type?}`, only while any
 runs) and in `town` `tavern` (the visit's offers `{kind, type?, sold?}`, `rerolls`, `spent` and `bought`, only while in
@@ -2381,7 +2363,7 @@ game without the Tavern is as before. `boosts` loads whatever the flags are (bef
 unknown kind, a Champion's Plate without a troop type and one with no wave left are dropped. A save in a Town without
 `tavern` (made by a build without the Tavern) rolls its offers on load when the Tavern is on.
 The Wishlist ("The Wishlist" above) saves `wishlist` (type → {item name: how many the type is to hold}, in the order put
-on; decisions-log 300) only with the Towns on and some wish, so a save without one is as before and the format stays
+on; decisions-log 300) only with some wish, so a save without one is as before and the format stays
 version 3. It loads whatever the flags are, after the types' items: a save from before the goals (decisions-log 282:
 type → a list of item names) wishes each for one more than the type holds, as it was wished; a type that isn't a troop
 type, an item name this build doesn't know and a goal under 1 are skipped, an item twice kept once; a save without it has

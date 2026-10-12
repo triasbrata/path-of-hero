@@ -33,8 +33,11 @@ but the troops move freely.
    "Towns: the Tavern"); a drag, the wheel or a trackpad's swipe pans it sideways to look around; "Leave town" goes on
    to the next wave (with Auto Wave on, 5 s after coming in).
 5. **Lose.** A monster crossing the back line costs a life, half a heart: a game starts with 3 hearts
-   (6 lives). Game over at 0 lives or when every troop is dead; then the monsters cheer. The score (kills by rank, won waves, lives left) goes on the
-   scoreboard under the player's name, asked the first time ("Scoreboard", also on the welcome screen).
+   (6 lives). When the whole army falls mid-wave the wave is lost, not the game (decisions-log 322): it costs a heart,
+   the wave's monsters cheer a moment and are swept off, and the same wave is played again after a break to buy the
+   army back ("Your army fell! -1 heart. Wave N again."). Its win's gold, Hero, boss chest and Town come only when it is
+   won. Game over at 0 lives (3 hearts = 3 chances); then the monsters cheer. The score (kills by rank, won waves) goes
+   on the scoreboard under the player's name, asked the first time ("Scoreboard", also on the welcome screen).
 
 ## What the player manages
 
@@ -60,7 +63,7 @@ but the troops move freely.
 - **Relics** (one per troop, a Hero two): crafted at a Town's Smithy from materials, items and gold, twenty small
   relics in three tiers: seven Basic (fang, thorns, fury, guard and the forge's chill, shark tooth and grit), seven
   Strong and six Mighty (assets/config/town.json `relics`).
-- **The store** (a Town's Shop, open in every Town; with the Towns off from wave 15 won): sells only the materials
+- **The store** (a Town's Shop, open in every Town): sells only the materials
   that have dropped (2.5x their sell price), no item or small relic (the Smithy makes them); what is in the bag sells
   back (items and relics for half their worth). Its Artifact shelf (five overpowered artefacts) opens only in a game
   without the Boss Chest: on the board the chest is the Artifacts' one source.

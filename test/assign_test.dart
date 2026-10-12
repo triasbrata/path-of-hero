@@ -19,22 +19,22 @@ void main() {
       expect(p.price, (price, g.priceWith('soldier', Item.sword)));
       expect(p.awaken, (0, 0));
       expect(p.count, ((0, 2), (1, 2)));
-      expect(p.step, ((0, 8), (1, 8))); // the soldier's recipe: 8 items
+      expect(p.step, ((0, 9), (1, 9))); // the soldier's grade I set: its recipe's 8 items and an amulet
       // Only tried on: nothing changed.
       expect((g.countOf('soldier', Item.sword), g.statsOf('soldier').dmg, g.inventory[Item.sword]), (0, base.dmg, 2));
       expect(g.useItem(Item.sword, 'soldier'), isTrue);
       expect((g.statsOf('soldier').dmg, g.priceOf('soldier')), (p.stats.single.$3, p.price!.$2));
     });
 
-    test('the item that completes a recipe previews the awakening: its HP and MP, the cap doubling, the progress full', () {
+    test('the item that completes a grade set previews the awakening: its HP and MP, the progress full', () {
       final g = bareGame();
-      g.upgrades['soldier'] = [Item.sword, Item.sword, Item.shield, Item.shield, Item.bow, Item.gloves, Item.potion];
+      g.upgrades['soldier'] = [Item.sword, Item.sword, Item.shield, Item.shield, Item.bow, Item.gloves, Item.potion, Item.amulet];
       g.inventory[Item.boots] = 1;
       final now = g.statsOf('soldier'), p = g.assignPreview(Item.boots, 'soldier');
       expect(p.why, isNull);
       expect(p.awaken, (0, 1));
-      expect(p.count, ((0, 1), (1, 2)));
-      expect(p.step, ((7, 8), (8, 8)));
+      expect(p.count, ((0, 1), (1, 1))); // grade I's one: grade II's boots are another item (decisions-log 249)
+      expect(p.step, ((8, 9), (9, 9)));
       expect([for (final (k, _, _) in p.stats) k], containsAll([StatKind.hp, StatKind.mp, StatKind.speed]));
       final hp = p.stats.firstWhere((s) => s.$1 == StatKind.hp);
       expect(hp.$2, now.hp);
@@ -52,11 +52,11 @@ void main() {
       final empty = g.assignPreview(Item.sword, 'soldier');
       expect((empty.why, empty.stats.single.$1), (assignRefusals.empty, StatKind.dmg));
       expect(g.useItem(Item.sword, 'soldier'), isFalse);
-      // At its cap: "Bangkit dulu".
+      // At its cap: grade I's two swords (grade II's come with Awaken 1).
       g
         ..inventory[Item.sword] = 1
         ..upgrades['soldier'] = [Item.sword, Item.sword];
-      expect(g.assignPreview(Item.sword, 'soldier').why, refusalNames[Refusal.awakenFirst]);
+      expect(g.assignPreview(Item.sword, 'soldier').why, refusalNames[Refusal.maxed]);
       expect(g.useItem(Item.sword, 'soldier'), isFalse);
     });
   });

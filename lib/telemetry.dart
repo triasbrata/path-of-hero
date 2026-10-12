@@ -30,7 +30,7 @@ import 'settings.dart';
 /// 9: the Towns' events (`townMarked`, `townEntered`, `townLeft`) and a won wave's `town`, what the Town roll after it
 /// did (decisions-log 216); a wave's `materials` (dropped) and its start's (held, decisions-log 221); the Smithy's
 /// `crafted` event, a wave's `crafted`, `materialsUsed` and `gold.craftSpent`, and a `townLeft`'s `crafts` and
-/// `craftSpent` (decisions-log 233). While [Game.towns] is off no Town field is written.
+/// `craftSpent` (decisions-log 233). Every game writes them (decisions-log 321: a test's Towns-off game wrote none).
 /// The Bayangan Dusk's event (`omenDusk`, decisions-log 239) came without a raise: like every Bayangan field it is
 /// written only while [omensOn] is on, which no player's game has yet, so no record changed.
 /// The Tavern's (decisions-log 266: the events `boostBought` and `tavernRerolled`, a wave's `gold.tavernSpent` and
@@ -41,10 +41,11 @@ import 'settings.dart';
 /// `materialsUsed` and `gold.craftSpent` and the events `itemCrafted`, `stoneCrafted`, `itemEnhanced` (decisions-log 249,
 /// 255), and what changed meaning: `dropped` holds no item (none drops, decisions-log 246) and `materials` about three
 /// times as many. The forge-off build, whose records were as at 9, is gone (decisions-log 296).
-/// 11: the Tavern switched on (decisions-log 268): its fields and events, while the Towns are on (its own switch is gone,
-/// decisions-log 296).
+/// 11: the Tavern switched on (decisions-log 268): its fields and events (its own switch is gone, decisions-log 296).
 /// 12: the Bayangan switched on (decisions-log 319): their fields (8's, Dusk's) reach every player's records.
-const telemetryVersion = 12;
+/// 13: an army wiped mid-wave costs a heart and the wave is played again (decisions-log 322): the event `wipe`, and a
+/// wave record's `end` `wiped`.
+const telemetryVersion = 13;
 
 /// Where [HttpSink] posts (`--dart-define=TELEMETRY_SERVER=https://...`). None by default, so nothing is sent.
 const telemetryServer = String.fromEnvironment('TELEMETRY_SERVER');
@@ -54,7 +55,7 @@ const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: 'dev');
 
 /// The events that go out as they happen; the others are only summed into the wave's record.
 const passedOn = {
-  EventKind.fell, EventKind.drop, EventKind.heroMade, EventKind.awakened, //
+  EventKind.fell, EventKind.heroMade, EventKind.awakened, //
   EventKind.bought, EventKind.itemUsed, EventKind.relicUsed, EventKind.storeBought, EventKind.storeSold,
   EventKind.relicTakenOff, EventKind.typeReleased, EventKind.pusakaBound, EventKind.pusakaMoved, EventKind.ascended,
   EventKind.heroRecalled,
@@ -70,6 +71,7 @@ const passedOn = {
   EventKind.itemCrafted, // an item crafted there (decisions-log 249)
   EventKind.stoneCrafted, EventKind.itemEnhanced, // a stone made there and an item enhanced (decisions-log 255)
   EventKind.boostBought, EventKind.tavernRerolled, // a Tavern boost bought, its offers rerolled (decisions-log 266)
+  EventKind.wipe, // an army wiped mid-wave: a heart lost, the wave played again (decisions-log 322)
 };
 
 /// Where the records go.
@@ -256,7 +258,7 @@ String installIdOf(Settings s, {File? file, Random? rng}) {
 }
 
 /// Listens to one [Game] at a time ([attach]) and writes the records to [sinks]: `session` once, `game` on
-/// each attach, `event` for the [passedOn] kinds, and `wave` when a wave ends (won, lost, or left behind by
+/// each attach, `event` for the [passedOn] kinds, and `wave` when a wave ends (won, lost, wiped, or left behind by
 /// [detach]). Each carries [telemetryVersion] (`tv`), what it is (`rec`), the [installId], the [session], the
 /// game's number within the session and the time (`at`, UTC). The sinks are flushed at each wave's end.
 class TelemetryAdapter {
@@ -343,9 +345,6 @@ class TelemetryAdapter {
         _count(w.fallen, type);
         if (hero) w.heroesFallen++;
         if (killer != null) _count2(w.killers, killer, killerTier!.name);
-      case LootDropped(:final item, :final relic):
-        if (item != null) _count(w.dropped, item.name);
-        if (relic != null) _count(w.relicsDropped, relic.name);
       case Bought(:final type, :final cost):
         _count(w.bought, type ?? 'capacity');
         w.spent += cost;
@@ -375,7 +374,7 @@ class TelemetryAdapter {
       case Marched():
         w.marchedAt = e.t;
       case WaveEnded(:final won):
-        _sum(_game!, won ? 'won' : 'lost');
+        _sum(_game!, won ? 'won' : (_game!.over ? 'lost' : 'wiped')); // wiped: played again (wipe.dart)
       case OfferRerolled(:final price):
         w.chestSpent += price; // a Serpihan's reroll is free: 0
       case OfferPicked(:final gain):
@@ -426,6 +425,8 @@ class TelemetryAdapter {
         break;
       case TownMarked() || TownEntered() || TownLeft():
         break; // passed on as they happen // the spawns count the strong foes, the wave record has the Pusaka's; the others are passed on
+      case Wiped():
+        break; // passed on as it happens; the WaveEnded right after closes the record as `wiped` (or `lost`)
     }
   }
 
@@ -439,7 +440,7 @@ class TelemetryAdapter {
   }
 
   /// The `wave` record of the wave begun at [_WaveSum.start], ended now as [end], read off [g]; then a
-  /// fresh sum and a flush. A won one with the Towns on waits for its Town roll ([_held]).
+  /// fresh sum and a flush. A won one waits for its Town roll ([_held]).
   void _sum(Game g, String end) {
     final w = _w, s = w.start;
     _w = _WaveSum();
@@ -447,7 +448,7 @@ class TelemetryAdapter {
       double secs(double t) => ((t - s.t) * 100).round() / 100;
       final record = <String, Object?>{
         'wave': s.wave,
-        'end': end, // won, lost (the game is over) or left (a new game or a save came in mid-wave)
+        'end': end, // won, lost (the game is over), wiped (the army fell: played again) or left (a new game or a save came in mid-wave)
         'secs': secs(g.t), // time to clear
         'marched': w.marchedAt == null ? null : secs(w.marchedAt!), // when it stalled and the monsters marched
         'start': s.data, // the army, awakening levels, Heroes, gold, capacity, lives and bags it began with
@@ -476,8 +477,8 @@ class TelemetryAdapter {
           'asahSpent': w.asahSpent, // on Asah (a Pusaka's star, on the Tas page), since then
           'tempaSpent': w.tempaSpent, // on Tempa (past Bangkit 5, in the Toko), since then
           'leburSpent': w.leburSpent, // on Lebur (a Gudang Pusaka melted into another for a star), since then
-          if (g.towns) 'craftSpent': w.craftSpent, // on relics crafted at a Town's Smithy, since then
-          if (g.towns) 'tavernSpent': w.tavernSpent, // on the Tavern's boosts and rerolls, since then
+          'craftSpent': w.craftSpent, // on relics crafted at a Town's Smithy, since then
+          'tavernSpent': w.tavernSpent, // on the Tavern's boosts and rerolls, since then
           'bonus': end == 'won' ? Game.waveBonus(s.wave) : 0,
         },
         // Each Pusaka owned: its type and stars now, and what it did in the wave (decisions-log 138): `uses` (the
@@ -493,30 +494,30 @@ class TelemetryAdapter {
               'worth': _round(g.pusakaWorth[r]?.worth ?? 0),
             },
         },
-        // The forge's small relics (relics.dart, decisions-log 250), only with the Towns on: each of the nine
-        // that did something, its uses and the damage it added; and each pair a troop wielded (its relics, "@" its type's
-        // Artifact: "fury+giantSlayer", "chill@snareCord"), the troops of it that dealt damage and how much.
-        if (g.towns) ...{
-          'relics': {
-            for (final r in forgeRelics)
-              if (g.relicWorth[r] case final w? when w.uses > 0) r.name: {'uses': w.uses, 'worth': _round(w.worth)},
-          },
-          'relicPairs': {
-            for (final MapEntry(:key, :value) in g.relicPairs.entries) key: {'troops': value.ids.length, 'dealt': _round(value.dealt)},
-          },
+        // The forge's small relics (relics.dart, decisions-log 250): each of the nine that did something, its uses and the
+        // damage it added; and each pair a troop wielded (its relics, "@" its type's Artifact: "fury+giantSlayer",
+        // "chill@snareCord"), the troops of it that dealt damage and how much.
+        'relics': {
+          for (final r in forgeRelics)
+            if (g.relicWorth[r] case final w? when w.uses > 0) r.name: {'uses': w.uses, 'worth': _round(w.worth)},
+        },
+        'relicPairs': {
+          for (final MapEntry(:key, :value) in g.relicPairs.entries) key: {'troops': value.ids.length, 'dealt': _round(value.dealt)},
         },
         // Ukir (pusaka.dart), only when some was fed since the last wave ended: the items fed by kind, their points, and
         // each Pusaka's steps taken.
         if (w.ukirPoints > 0) ...{'ukirItems': w.ukirItems, 'ukirPoints': w.ukirPoints, 'ukirSteps': w.ukirSteps},
         if (w.boostSaved > 0) 'boostSaved': w.boostSaved, // the leaks a Tavern boost forgave (Watchman's Brew)
-        'dropped': w.dropped,
-        'relicsDropped': w.relicsDropped,
-        // The Towns' materials the wave dropped (town.dart; summed, never an event each), only while they are on: read off
-        // the game before a win moves them into the bag.
-        if (g.towns) 'materials': {for (final MapEntry(:key, :value) in g.waveMaterials.entries) key.name: value},
+        // No item or relic drops on the field (decisions-log 246, 321): always empty, kept so the record's shape stays.
+        'dropped': const <String, int>{},
+        'relicsDropped': const <String, int>{},
+        // The Towns' materials the wave dropped (town.dart; summed, never an event each): read off the game before a win
+        // moves them into the bag.
+        'materials': {for (final MapEntry(:key, :value) in g.waveMaterials.entries) key.name: value},
         // The relics crafted at a Town's Smithy since the last wave ended (town.dart's Craft), by kind, and the materials
-        // they took; only while the Towns are on.
-        if (g.towns) ...{'crafted': w.crafted, 'materialsUsed': w.materialsUsed},
+        // they took.
+        'crafted': w.crafted,
+        'materialsUsed': w.materialsUsed,
         'used': w.used, // items given, since the last wave ended
         'relicsUsed': w.relicsUsed,
         'relicsTakenOff': w.relicsTakenOff, // relics taken off troops back into the bag (#91), since the last wave ended
@@ -526,7 +527,7 @@ class TelemetryAdapter {
         'monsterCasts': w.monsterCasts, // monster skill -> rank -> casts (#59)
         'score': g.score,
       };
-      if (end == 'won' && g.towns) {
+      if (end == 'won') {
         _held = record; // [TownRolled] comes later in this tick
         return;
       }
@@ -555,7 +556,7 @@ class _WaveSum {
   final spawns = <String, Map<String, int>>{}, raised = <String, Map<String, int>>{}, killers = <String, Map<String, int>>{};
   final monsterCasts = <String, Map<String, int>>{};
   final casts = <String, int>{}, heroCasts = <String, int>{}, awakenCasts = <String, int>{}, fallen = <String, int>{}, bought = <String, int>{};
-  final dropped = <String, int>{}, relicsDropped = <String, int>{}, used = <String, int>{}, relicsUsed = <String, int>{};
+  final used = <String, int>{}, relicsUsed = <String, int>{};
   final storeBought = <String, int>{}, storeSold = <String, int>{}, relicsTakenOff = <String, int>{};
   final ukirItems = <String, int>{}, ukirSteps = <String, int>{};
   final crafted = <String, int>{}, materialsUsed = <String, int>{};

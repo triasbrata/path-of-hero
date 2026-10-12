@@ -164,7 +164,6 @@ const seen = [Mat.wolfClaw, Mat.slimeGel, Mat.boneShard];
 Game tabsGame() {
   final g = Game(Random(1), Random(2)).boardRules()
     ..townDice = Random(3)
-    ..towns = true
     ..armyMax = null
     ..gold = 40000
     ..wave = 30

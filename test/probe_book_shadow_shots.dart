@@ -5,7 +5,7 @@
 // the book's box). It never touches the real save (flutter_test_config.dart's temp dir); every dice is seeded.
 //
 // At 1600x947 (the owner's window), 1266x713 and 915x412 (`--dart-define=SIZES=1600x947,915x412` for some only): the
-// field between waves (the Towns off) and a Town, the book open; each shot at the bob's top and at its bottom (`-up`,
+// field between waves (no Town marked) and a Town, the book open; each shot at the bob's top and at its bottom (`-up`,
 // `-down`). It prints the book's box and the shadow's rows (none in a Town since decisions-log 304).
 import 'dart:io';
 import 'dart:math';
@@ -31,14 +31,13 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
   }
 }
 
-/// A board game between waves, seeded; with [towns] its Town due after the next win.
-Game board(bool towns) => Game(Random(1), Random(2)).boardRules()
-  ..towns = towns
+/// A board game between waves, seeded; with [town] its Town due after the next win, else none marked.
+Game board(bool town) => Game(Random(1), Random(2)).boardRules()
   ..townDice = Random(3)
   ..armyMax = null
   ..gold = 5000
   ..wave = 5
-  ..townAt = 7;
+  ..townAt = town ? 7 : null;
 
 void main() {
   final sizes = [

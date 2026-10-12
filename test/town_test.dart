@@ -1,8 +1,8 @@
 // The Towns' schedule and state (decisions-log 216; lib/town.dart; docs/loot-items-relics.md "Towns (dark)"): the
 // shipped numbers, the roll (20% at first, +5% a miss, the cap, back to 20% after a Town), the block within 5 waves of
 // the last Town, the first Town before wave 7 at the earliest, the mark two waves ahead, going in and out, the start
-// held while a Town is due, the save, the dice, the boss schedule untouched, the telemetry, and a plain Game() and the
-// board without them.
+// held while a Town is due, the save, the dice, the boss schedule untouched and the telemetry, against games no Town
+// comes to ([noTowns]: every game has the Towns, a plain Game() too, decisions-log 321; town_switch_test.dart).
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -11,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart' show logLine;
 import 'package:tower_defense/telemetry.dart';
+
+import 'real_rules.dart';
 
 /// A die that gives [draws] in turn (and counts them).
 class _Dice implements Random {
@@ -48,7 +50,6 @@ Game towns({TownRules rules = const TownRules(), Random? dice, int seed = 1}) =>
   ..loot = Random(seed + 200)
   ..slots = Random(seed + 400)
   ..draft = Random(seed + 500)
-  ..towns = true
   ..townRules = rules
   ..townDice = dice ?? Random(seed + 600);
 
@@ -117,19 +118,6 @@ void main() {
       'schedule': {'chanceStep': 0.5, 'minGap': 3},
     }).schedule;
     expect((p.chanceStart, p.chanceStep, p.chanceCap, p.minGap, p.firstTownAfter, p.autoLeave), (0.2, 0.5, 1.0, 3, 2, 5.0));
-  });
-
-  test('a plain Game() and a board game with the Towns off (tests only) have no Towns: no roll, no mark, no save key; the '
-      'board has them (decisions-log 237, 296)', () {
-    for (final g in [Game(Random(1)), Game(Random(1)).boardRules()..towns = false]) {
-      g.townDice = _Dice([]); // any draw would throw
-      for (var w = 0; w < 12; w++) {
-        winWave(g);
-      }
-      expect((g.towns, g.townAt, g.townDue, g.inTown, g.canStartWave), (false, null, false, false, true));
-      expect(g.toJson().containsKey('town'), isFalse);
-    }
-    expect(Game().boardRules().towns, isTrue);
   });
 
   test('the roll: blocked (no draw, the chance stays) until wave 5, then 20% and +5% a miss', () {
@@ -247,7 +235,7 @@ void main() {
     expect((left.auto, g.log.entries.whereType<TownEntered>().single.auto), (true, true));
   });
 
-  test('the save: `town` {chance, last, at, in} only while the Towns are on; a save in the Town reopens in it; a passed '
+  test('the save: `town` {chance, last, at, in}; a save in the Town reopens in it; a passed '
       "mark and a stray `in` are dropped; a save without the key counts a Town before its own wave", () {
     final g = towns(dice: _Dice([0.99, 0.99, 0.1, 0.5]));
     for (var w = 1; w <= 7; w++) {
@@ -255,7 +243,7 @@ void main() {
     }
     Map<String, dynamic> save(Game g) => jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>;
     expect(save(g)['town'], {'chance': 0.2, 'last': 2, 'at': 9});
-    Game load(Map<String, dynamic> j) => Game.fromJson(j, Random(1), Random(2), Random(3))..towns = true;
+    Game load(Map<String, dynamic> j) => Game.fromJson(j, Random(1), Random(2), Random(3));
     final marked = load(save(g));
     expect((marked.townChance, marked.townLast, marked.townAt, marked.inTown, marked.townMarked), (0.2, 2, 9, false, true));
     winWave(g);
@@ -276,15 +264,11 @@ void main() {
       'town': {'chance': 0.35, 'last': 2, 'at': 11, 'in': true},
     });
     expect((stray.townChance, stray.townAt, stray.inTown), (0.35, 11, false));
-    // A save from before the Towns (or with them off): no key, so it counts a Town before its own wave.
-    final off = save(g..towns = false);
-    expect(off.containsKey('town'), isFalse);
+    // A save from before the Towns: no key, so it counts a Town before its own wave.
+    final off = save(g)..remove('town');
     expect(load(off).townLast, 8);
     expect(load({...off, 'wave': 0}).townLast, 2, reason: "a new run's start");
     expect(load({...off, 'wave': 1}).townLast, 2);
-    // With the Towns off a loaded mark holds nothing up.
-    final offGame = Game.fromJson(inside, Random(1));
-    expect((offGame.townDue, offGame.canStartWave), (false, true));
   });
 
   test('the dice: the same seeds and the same play give the same Towns; the Town dice alone move them', () {
@@ -294,9 +278,9 @@ void main() {
     expect(run(4, 12), isNot(run(4, 11)));
   });
 
-  test('the boss schedule is untouched: the same queue every wave with the Towns on and off (a mini boss every 3rd, the '
-      'boss every 5th), and the same Boss Chests', () {
-    final on = towns(rules: always)..offers = true, off = towns()..towns = false..offers = true;
+  test('the boss schedule is untouched: the same queue every wave with a Town every 5 waves and with none (a mini boss '
+      'every 3rd, the boss every 5th), and the same Boss Chests', () {
+    final on = towns(rules: always)..offers = true, off = towns(rules: noTowns)..offers = true;
     for (var w = 1; w <= 30; w++) {
       final a = winWave(on), b = winWave(off);
       expect(a, b, reason: 'wave $w');
@@ -308,9 +292,9 @@ void main() {
     expect(on.chests, isNotEmpty);
   });
 
-  test('a Town changes nothing else: a seeded 8-wave run played with the Towns on (a probe going through the Town before '
-      'wave 7) and off is the same, wave by wave, but for the drops (with the Towns on no relic or item drops, the forge\'s '
-      'rule: materials do, decisions-log 221, 246)', () {
+  test('a Town changes nothing else: a seeded 8-wave run played through a Town (a probe going through it before wave 7) '
+      'and with none is the same, wave by wave; no relic or item drops, the forge\'s rule: materials do (decisions-log '
+      '221, 246)', () {
     String digest(Game g) => [
           'wave ${g.wave} t ${g.t} gold ${g.gold} lives ${g.lives} kills ${g.kills} score ${g.score}',
           for (final u in g.units) '${u.side.name} ${u.type} ${u.tier.name} ${u.alive} ${u.hp} ${u.pos}',
@@ -338,15 +322,16 @@ void main() {
       ..capacity = 12;
     // The Bag aside: with the Towns on the forge drops no item (forge_drops_test.dart pins that it draws the same loot dice
     // and throws the items away), and no item is given here.
-    final on = rich(towns(rules: always))..townPolicy = 'leave', off = rich(towns())..towns = false;
+    final on = rich(towns(rules: always))..townPolicy = 'leave', off = rich(towns(rules: noTowns));
     expect(play(on), play(off));
-    expect((on.over, on.wave, on.townLast), (false, 8, 7), reason: 'the Town before wave 7 came');
-    expect((on.relicBag.isEmpty, on.inventory.isEmpty, on.materials.isNotEmpty, off.materials.isEmpty), (true, true, true, true),
-        reason: 'with the Towns on materials drop and relics and items don\'t');
+    expect((on.over, on.wave, on.townLast, off.townLast), (false, 8, 7, 2), reason: 'the Town before wave 7 came, and none');
+    for (final g in [on, off]) {
+      expect((g.relicBag.isEmpty, g.inventory.isEmpty, g.materials.isNotEmpty), (true, true, true),
+          reason: 'materials drop and relics and items don\'t');
+    }
   });
 
-  test('telemetry: the Town events go out as they happen; a won wave record says what the roll after it did; none of it '
-      'with the Towns off', () {
+  test('telemetry: the Town events go out as they happen; a won wave record says what the roll after it did', () {
     expect(telemetryVersion, greaterThanOrEqualTo(9)); // 9 brought the Towns'; later versions keep it (10: the forge's, 11: the Tavern's)
     final sink = _Kept();
     final g = towns(rules: always)..townPolicy = 'leave';
@@ -370,15 +355,6 @@ void main() {
         [('townMarked', 7), ('townEntered', 7), ('townLeft', 7)]);
     expect(sink.records.where((r) => r['rec'] == 'event' && (r['event'] as Map)['kind'] == 'townRolled'), isEmpty,
         reason: 'the roll goes into the wave record only');
-
-    final quiet = _Kept();
-    final h = towns()..towns = false;
-    TelemetryAdapter([quiet], installId: 'i', session: 's', platform: 'test', now: () => DateTime.utc(2026, 10, 4)).attach(h);
-    for (var w = 1; w <= 8; w++) {
-      winWave(h);
-    }
-    expect(quiet.of('wave'), hasLength(8));
-    expect(quiet.of('wave').any((r) => r.containsKey('town')), isFalse);
   });
 
   test("the chip's tooltip: the wave after which the Town comes, the Smithy, the Tavern (decisions-log 268), and the "

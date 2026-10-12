@@ -97,8 +97,6 @@ void main() {
     send(g, MonsterSkillCast(3, 105.6, type: 'orc', tier: Tier.miniBoss, skill: MonsterSkill.warShout));
     send(g, TroopFell(3, 106, name: 'Sari', type: 'archer', killer: 'orc', killerTier: Tier.elite));
     send(g, TroopFell(3, 107, name: 'Budi', type: 'knight', hero: true)); // nothing struck it
-    send(g, LootDropped(3, 108, from: 'werebear', tier: Tier.miniBoss, item: Item.shield));
-    send(g, LootDropped(3, 108, from: 'werebear', tier: Tier.miniBoss, relic: Relic.fury));
     send(g, Bought(3, 110, cost: 50)); // more capacity mid-wave
     send(g, StoreSold(3, 111, loot: Item.sword, n: 1, gain: 500)); // mid-wave (were the store open then)
     send(g, Marched(3, 130.25));
@@ -110,10 +108,13 @@ void main() {
       ..score = 90;
     expect(kept.flushes, 0);
     send(g, WaveEnded(3, 142.5, won: true));
+    expect(kept.flushes, 0); // a won wave's record waits for the Towns' roll, in the same tick
+    send(g, TownRolled(3, 142.5, town: {'blocked': true}));
     expect(kept.flushes, 1);
 
     final w = kept.of('wave').single;
     expect((w['wave'], w['end'], w['secs'], w['marched'], w['livesLost'], w['kills'], w['score']), (3, 'won', 42.5, 30.25, 2, 5, 90));
+    expect(w['town'], {'blocked': true});
     expect(w['start'], jsonDecode(jsonEncode(start.data)));
     expect(w['spawns'], {
       'orc': {'normal': 2, 'elite': 1},
@@ -151,11 +152,13 @@ void main() {
       'asahSpent': 0, // Asah's (asah_test.dart)
       'tempaSpent': 33000, // between waves: never in what the wave earned
       'leburSpent': 0, // Lebur's (lebur_test.dart)
+      'craftSpent': 0, // the Smithy's (town_craft_test.dart)
+      'tavernSpent': 0, // the Tavern's (tavern_test.dart)
       'bonus': Game.waveBonus(3),
     });
     expect([w['dropped'], w['relicsDropped'], w['used'], w['relicsUsed'], w['relicsTakenOff']], [
-      {'shield': 1},
-      {'fury': 1},
+      {}, // nothing drops on the field (decisions-log 321): kept empty
+      {},
       {'bow': 1},
       {},
       {'guard': 1},
@@ -168,10 +171,10 @@ void main() {
       },
     ]);
 
-    // Passed on as they happened: the buys, the store's deals, the item, the falls and the drops; no troop's name.
+    // Passed on as they happened: the buys, the store's deals, the item and the falls; no troop's name.
     final events = [for (final r in kept.of('event')) r['event'] as Map<String, dynamic>];
     expect(events.map((e) => e['kind']),
-        ['bought', 'storeBought', 'storeSold', 'ascended', 'tempa', 'heroRecalled', 'itemUsed', 'relicTakenOff', 'fell', 'fell', 'drop', 'drop', 'bought', 'storeSold']);
+        ['bought', 'storeBought', 'storeSold', 'ascended', 'tempa', 'heroRecalled', 'itemUsed', 'relicTakenOff', 'fell', 'fell', 'bought', 'storeSold']);
     expect(events.any((e) => e.containsKey('name')), isFalse);
     expect(events.firstWhere((e) => e['kind'] == 'fell'), {'v': eventVersion, 'kind': 'fell', 'wave': 3, 't': 106, 'type': 'archer', 'hero': false, 'killer': 'orc', 'killerTier': 'elite', 'relics': []});
 
@@ -183,7 +186,8 @@ void main() {
     send(g, WaveEnded(4, 160, won: false));
     final lost = kept.of('wave').last;
     expect([lost['wave'], lost['end'], lost['secs'], lost['livesLost'], lost['spawns'], lost['fallen'], lost['bought']], [4, 'lost', 10.0, 8, {}, {}, {}]);
-    expect(lost['gold'], {'start': 1020, 'end': 1020, 'earned': 0, 'spent': 0, 'storeSpent': 0, 'storeEarned': 0, 'ascendSpent': 0, 'recallSpent': 0, 'pusakaSpent': 0, 'chestSpent': 0, 'chestEarned': 0, 'asahSpent': 0, 'tempaSpent': 0, 'leburSpent': 0, 'bonus': 0});
+    expect(lost['gold'], {'start': 1020, 'end': 1020, 'earned': 0, 'spent': 0, 'storeSpent': 0, 'storeEarned': 0, 'ascendSpent': 0, 'recallSpent': 0, 'pusakaSpent': 0, 'chestSpent': 0, 'chestEarned': 0, 'asahSpent': 0, 'tempaSpent': 0, 'leburSpent': 0, 'craftSpent': 0, 'tavernSpent': 0,
+        'bonus': 0});
     expect([lost['storeBought'], lost['storeSold']], [{}, {}]);
   });
 

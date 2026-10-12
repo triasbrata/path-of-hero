@@ -57,7 +57,7 @@ abstract final class Words {
   /// name by its save key ([Mat], game.dart), in the game's order.
   static const materials = 'Materials', materialsShort = 'Mats', trophy = 'Trophy', onlyInTown = 'Only in a Town';
 
-  /// What drops where the Smithy makes the items (the Towns on, decisions-log 246, 292): the empty Bag's and
+  /// What drops where the Smithy makes the items (decisions-log 246, 292): the empty Bag's and
   /// the Shop's empty Sell grid's lines ("Monsters drop materials.", "Make items at the Smithy in a Town.").
   static const monstersDropMats = 'Monsters drop materials', makeItemsAtSmithy = 'Make items at the $smithy in a $town';
 

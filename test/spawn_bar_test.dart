@@ -137,7 +137,6 @@ void main() {
     // A Town: no bar (its book keeps its pages).
     tester.view.physicalSize = desk;
     final t = b.state = Game()
-      ..towns = true
       ..townAt = 1;
     expect(t.enterTown(), isTrue);
     await frames(tester, 40);

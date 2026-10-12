@@ -4,8 +4,7 @@ part of 'game.dart';
 // wants items enhanced late in a run. From wave 30 (town.json `enhance.from`) a Town's Smithy takes an item in the Bag
 // one step up, to at most +5 (`enhance.most`), for step n's stone (`enhance.stone`: Mithril for +1 to +3, Starmetal for
 // +4 and +5) and gold (`enhance.gold`). It never fails. Each step adds a tenth (`enhance.per`) of the item's own bonus
-// ([enhancedK]). The stones are Smithy-made materials ([craftedMats], `enhance.stones`). Dark like the rest of the forge:
-// only a game with the Towns on enhances; with them off nothing here acts and the save gains no key.
+// ([enhancedK]). The stones are Smithy-made materials ([craftedMats], `enhance.stones`).
 //
 // An enhanced item is its own stack, (item, plus): in the Bag ([Game.enhancedBag]; +0 stays in [Game.inventory]) and on
 // a troop type ([Game.upgradePlus]: the pluses of its copies in [Game.upgrades], which still lists every item, so the
@@ -32,15 +31,10 @@ String itemLabel(Item item, [int plus = 0]) => plus > 0 ? '${itemNames[item]} +$
 
 /// The Smithy's Enhance (decisions-log 255): the stones, the steps, the Bag's enhanced stacks and the Shop's price.
 extension Enhance on Game {
-  /// Whether this game enhances at all: the Towns on.
-  bool get enhanceOn => towns;
-
-  /// Whether the Smithy's Enhance is open (town.json `enhance.from`, forge-design §12): with [enhanceOn], once wave 30 is
-  /// won (past it, or on it between waves: [Store.storeOpen]'s form of rule). The one place the rule lives: the Smithy's
+  /// Whether the Smithy's Enhance is open (town.json `enhance.from`, forge-design §12): once wave 30 is won (past it, or on it between waves: [Store.storeOpen]'s form of rule). The one place the rule lives: the Smithy's
   /// strip greys its Enhance segment by it and keeps its tab off while closed, and [whyNotEnhance] / [whyNotCraftStone]
   /// refuse by it ([CraftWhy.closed]).
   bool get enhanceOpen {
-    if (!enhanceOn) return false;
     final from = townRules.enhance.from;
     return wave > from || wave == from && !waveActive;
   }
@@ -91,8 +85,8 @@ extension Enhance on Game {
 
   // The stones (town.json `enhance.stones`).
 
-  /// [stone]'s recipe ([EnhanceRules.stones]), or null without [enhanceOn] or for a material that isn't a stone.
-  StoneRecipe? stoneRecipe(Mat stone) => enhanceOn ? townRules.enhance.stones[stone] : null;
+  /// [stone]'s recipe ([EnhanceRules.stones]), or null for a material that isn't a stone.
+  StoneRecipe? stoneRecipe(Mat stone) => townRules.enhance.stones[stone];
 
   /// [stone]'s recipe line by line, as [Craft.craftRows]: each material (Starmetal's Mithril too), then the gold; none
   /// without a recipe.
@@ -104,11 +98,11 @@ extension Enhance on Game {
         null => const [],
       };
 
-  /// Why [stone] can't be made now, or null, in [Craft.whyNotCraft]'s order: the game over, not in a Town, no recipe (the
-  /// Towns off, or not a stone), Enhance not open yet ([enhanceOpen]: "Opens after wave 30"), a material short, the gold.
+  /// Why [stone] can't be made now, or null, in [Craft.whyNotCraft]'s order: the game over, not in a Town, no recipe (not
+  /// a stone), Enhance not open yet ([enhanceOpen]: "Opens after wave 30"), a material short, the gold.
   CraftRefusal? whyNotCraftStone(Mat stone) {
     if (over) return const CraftRefusal(CraftWhy.over);
-    if (!towns || !inTown) return const CraftRefusal(CraftWhy.town);
+    if (!inTown) return const CraftRefusal(CraftWhy.town);
     final rows = stoneCraftRows(stone);
     if (rows.isEmpty) return const CraftRefusal(CraftWhy.recipe);
     if (!enhanceOpen) return CraftRefusal(CraftWhy.closed, need: townRules.enhance.from);
@@ -143,21 +137,19 @@ extension Enhance on Game {
     return plus < 0 || plus >= e.most ? null : (stone: e.stone[plus], gold: e.gold[plus]);
   }
 
-  /// The step from +[plus] line by line, as [Craft.craftRows]: its stone, then its gold; none at [plusMost] or without
-  /// [enhanceOn]. The item itself isn't a row: the Smithy enhances the one picked in the Bag.
-  List<CraftRow> enhanceRows(int plus) => switch (enhanceOn ? enhanceCost(plus) : null) {
+  /// The step from +[plus] line by line, as [Craft.craftRows]: its stone, then its gold; none at [plusMost]. The item
+  /// itself isn't a row: the Smithy enhances the one picked in the Bag.
+  List<CraftRow> enhanceRows(int plus) => switch (enhanceCost(plus)) {
         (:final stone, :final gold) => [(kind: stone, have: materials[stone] ?? 0, need: 1), (kind: null, have: this.gold, need: gold)],
         null => const [],
       };
 
-  /// Why [item] at +[plus] can't go one step up now, or null: the game over, not in a Town, no rule (the Towns off),
-  /// Enhance not open yet ([CraftWhy.closed], "Opens after wave 30"), none of it in the Bag ([CraftWhy.item]), already at
+  /// Why [item] at +[plus] can't go one step up now, or null: the game over, not in a Town, Enhance not open yet ([CraftWhy.closed], "Opens after wave 30"), none of it in the Bag ([CraftWhy.item]), already at
   /// [plusMost] ([CraftWhy.top], "Max: +5"), then its stone short ("Need 1 Starmetal"), the gold. Any item and grade
   /// takes it, and it never fails.
   CraftRefusal? whyNotEnhance(Item item, int plus) {
     if (over) return const CraftRefusal(CraftWhy.over);
-    if (!towns || !inTown) return const CraftRefusal(CraftWhy.town);
-    if (!enhanceOn) return const CraftRefusal(CraftWhy.recipe);
+    if (!inTown) return const CraftRefusal(CraftWhy.town);
     if (!enhanceOpen) return CraftRefusal(CraftWhy.closed, need: townRules.enhance.from);
     if (bagOf(item, plus) == 0) return CraftRefusal(CraftWhy.item, short: item, need: 1);
     if (plus >= plusMost) return CraftRefusal(CraftWhy.top, need: plusMost);
@@ -222,11 +214,9 @@ extension Enhance on Game {
 
   // The save.
 
-  /// The save's Enhance keys, only with [enhanceOn] and something enhanced (a save with the Towns off has none):
-  /// `bagPlus`, the Bag's enhanced stacks as {item, plus, n}, and `upgradePlus`, per type its enhanced copies the same
+  /// The save's Enhance keys, only with something enhanced: `bagPlus`, the Bag's enhanced stacks as {item, plus, n}, and `upgradePlus`, per type its enhanced copies the same
   /// way. Every item stays in `inventory` (+0) and `upgrades` (all), so a save read without these keys is all +0.
   Map<String, Object> get _enhanceJson {
-    if (!enhanceOn) return const {};
     List<Map<String, Object>> rows(Iterable<(Item, int, int)> held) => [
           for (final (i, p, n) in held) {'item': i.name, 'plus': p, 'n': n},
         ];
@@ -242,7 +232,7 @@ extension Enhance on Game {
     return {if (bag.isNotEmpty) 'bagPlus': bag, if (on.isNotEmpty) 'upgradePlus': on};
   }
 
-  /// [j]'s `bagPlus` and `upgradePlus`, whatever [enhanceOn] is (a save without them: all +0). An item name this build
+  /// [j]'s `bagPlus` and `upgradePlus` (a save without them: all +0). An item name this build
   /// doesn't know is skipped, a plus is kept in 1 to [plusMost], and a type keeps at most as many enhanced copies of an
   /// item as [Game.upgrades] lists (its highest). After [Game.upgrades] is read, before the troops take their stats.
   void _loadEnhance(Map<String, dynamic> j) {

@@ -14,7 +14,7 @@ part of 'main.dart';
 // relic picked and its troops listed. Under the heading it scrolls where it doesn't all fit (decisions-log 283, the
 // landscape book shorter; page_scroll.dart): nothing is left out.
 //
-// With the Towns on (decisions-log 254; forge-design §11-13, mockups 12 and 15) the left page has, under "Smithy", the
+// The forge's Smithy (decisions-log 254; forge-design §11-13, mockups 12 and 15): the left page has, under "Smithy", the
 // Bag's segmented strip Items | Relics | Enhance ([SmithyTab]; Enhance greyed until wave 30 is won, [Enhance.enhanceOpen],
 // a tap on it saying so). The Items tab's board is every item at once by grade (decisions-log 277; the owner: "untuk items
 // tidak perlu di buatkan tab grade langsung saja di tampilkan semua"): a section per grade, "Grade I" to "Grade III" over
@@ -70,7 +70,7 @@ List<Item> smithyItemOrder(Game g, int grade) {
   return [...items.where(g.wished), ...items.where((i) => !g.wished(i))];
 }
 
-/// The Smithy's tabs with the Towns on (decisions-log 254; forge-design §11-13), its strip's segments in order: the
+/// The Smithy's tabs (decisions-log 254; forge-design §11-13), its strip's segments in order: the
 /// Wishlist (decisions-log 302: leftmost, where the Smithy first opens), the items by grade, the small relics, and Enhance
 /// (decisions-log 255; greyed until [Enhance.enhanceOpen]).
 enum SmithyTab { wishlist, items, relics, enhance }
@@ -110,8 +110,8 @@ const smithyTabNames = {SmithyTab.wishlist: Words.wishlist, SmithyTab.items: 'It
 String enhanceLocked(Game g) => CraftRefusal(CraftWhy.closed, need: g.townRules.enhance.from).text;
 
 /// The grey line under an item's effect on the Smithy (decisions-log 254): its grade and what it is for. An Awaken
-/// kind's "Grade II: for Awaken 2 (Soldier 2, Knight 3)." with how many each fielded type takes ([Game.gradeSet]; by
-/// kind, [Game.recipeOf], where Awaken doesn't go by grade), or "No type here takes it." for none; a Cap's or a Ring's
+/// kind's "Grade II: for Awaken 2 (Soldier 2, Knight 3)." with how many each fielded type takes ([Game.gradeSet]), or
+/// "No type here takes it." for none; a Cap's or a Ring's
 /// ([outsideAwaken]) that it isn't, and that a better grade swaps out the lowest at a type's cap.
 String smithyGradeLine(Game g, Item item) {
   final grade = gradeTitle(item.grade);
@@ -120,9 +120,9 @@ String smithyGradeLine(Game g, Item item) {
   final takes = [
     for (final type in troopTypes.keys)
       if (fielded.contains(type))
-        if ((g.byGrade ? g.gradeSet(type, item.grade)[item] : g.recipeOf(type)[item]) case final n?) '${troopTypeNames[type] ?? type} $n',
+        if (g.gradeSet(type, item.grade)[item] case final n?) '${troopTypeNames[type] ?? type} $n',
   ];
-  final level = g.byGrade ? awakenName(item.grade) : Words.awaken;
+  final level = awakenName(item.grade);
   return takes.isEmpty ? '$grade: for $level. No type here takes it.' : '$grade: for $level (${takes.join(', ')}).';
 }
 

@@ -213,12 +213,8 @@ void main() {
           for (final r in g.relicsInPlay) {
             expect(all, containsAll([relicNames[r], ...g.relicEffect(r)]), reason: '$r');
           }
-          // The board has the Towns on (decisions-log 237): all eleven, and the forge's nine (decisions-log 272). With them
-          // off (tests only) only the four monsters drop (decisions-log 227).
-          expect(g.relicsInPlay, g.towns ? [...smallRelics, ...forgeRelics] : droppedRelics);
-          for (final r in smallRelics.where((r) => !g.relicsInPlay.contains(r))) {
-            expect(all, isNot(contains(relicNames[r])), reason: '$r: the Smithy\'s, not in this game');
-          }
+          // Every game has the Towns (decisions-log 237, 321): all eleven, and the forge's nine (decisions-log 272).
+          expect(g.relicsInPlay, [...smallRelics, ...forgeRelics]);
           expect(all.where((p) => p == relicSlotsLine), hasLength(1));
         case GuideLive.pusaka:
           for (final r in Relic.values.where((r) => r.pusaka)) {

@@ -7,6 +7,8 @@ import 'package:tower_defense/game.dart';
 import 'package:tower_defense/save.dart';
 import 'package:tower_defense/scores.dart';
 
+import 'real_rules.dart';
+
 void run(Game g, {void Function(Game)? each}) {
   for (var i = 0; i < 6000 && g.waveActive; i++) {
     g.tick(0.05);
@@ -485,16 +487,21 @@ void main() {
     return (g, s);
   }
 
-  test('the game is over when the last troop falls, and then stands still', () {
+  test('the last troop falling costs a heart and the wave is played again (wipe_test.dart); at the last heart the game is '
+      'over, and then stands still', () {
     expect(bare().over, isFalse); // no troops yet is not a wipe-out
     final (g, s) = doomedSoldier();
     g.tick(0.05);
     expect(s.alive, isFalse);
-    expect((g.wipedOut, g.over), (true, true));
+    expect((g.wipedOut, g.over, g.lives, g.waveActive), (true, false, Game.startLives - wipeLives, false));
     expect(g.sfx, contains(Sfx.lose));
-    final t = g.t;
-    g.tick(0.05);
-    expect(g.t, t);
+    final (h, v) = doomedSoldier();
+    h.lives = wipeLives;
+    h.tick(0.05);
+    expect((v.alive, h.wipedOut, h.over), (false, true, true));
+    final t = h.t;
+    h.tick(0.05);
+    expect(h.t, t);
   });
 
   test('a troop falling while another still stands is not game over', () {
@@ -1545,38 +1552,6 @@ void main() {
     expect([for (final u in g.troops) u.post], posts);
   });
 
-  test('a high elite falling drops an item and a relic on lucky rolls; the necromancer always drops bossDrops, a relic on its roll', () {
-    for (final (roll, item, relic) in [(relicChance[Tier.highElite]! - 0.01, true, true), (dropChance - 0.01, true, false), (dropChance, false, false)]) {
-      final g = bare();
-      placeNow(g, 'knight', 2, 3);
-      g.loot = _Dice(roll, Item.boots.index);
-      final slime = Unit(Side.enemy, 'slime', enemyTypes['slime']!, g.troops.single.pos + const Point(10, 0))
-        ..tier = Tier.highElite
-        ..hp = 1
-        ..busyUntil = hold;
-      g.units.add(slime);
-      g.tick(0.05);
-      expect(slime.alive, isFalse);
-      expect(g.drops, item ? [(slime.pos, Item.boots)] : isEmpty, reason: '$roll');
-      expect(g.relicDrops, relic ? [(slime.pos + const Point(0, -6), droppedRelics[Item.boots.index])] : isEmpty, reason: '$roll');
-    }
-
-    for (final (roll, relic) in [(1.0, false), (relicChance[Tier.boss]! - 0.01, true)]) {
-      final g = bare();
-      placeNow(g, 'knight', 2, 3);
-      g.loot = _Dice(roll, Item.potion.index); // the boss drops its items whatever the roll
-      final necro = Unit(Side.enemy, boss, bossStats, g.troops.single.pos + const Point(10, 0))
-        ..tier = Tier.boss
-        ..hp = 1
-        ..busyUntil = hold;
-      g.units.add(necro);
-      g.tick(0.05);
-      expect(g.drops, [for (var i = 0; i < bossDrops; i++) (necro.pos + Point(i * 6.0, 0), Item.potion)]);
-      expect(g.relicDrops, relic ? [(necro.pos + const Point(0, -6), droppedRelics[Item.potion.index % droppedRelics.length])] : isEmpty,
-          reason: '$roll');
-    }
-  });
-
   test('drops roll their own dice and never change the spawn sequence', () {
     List<(String, double)> spawns(double roll) {
       final g = wide(Random(7))..gold = 1000;
@@ -1591,26 +1566,21 @@ void main() {
           out.add((e.type, e.pos.y));
         }
       });
-      expect(g.lastLoot, hasLength(roll < dropChance ? out.length : 0));
+      expect([g.inventory, g.relicBag], everyElement(isEmpty)); // no item or relic drops: the Smithy makes them (decisions-log 321)
       return out;
     }
 
-    expect(spawns(0), spawns(1)); // every monster drops vs none does
+    expect(spawns(0), spawns(1)); // the loot dice still draw for every kill, whatever they roll
   });
 
-  test('winning a wave picks up every drop into the inventory', () {
+  test('winning a wave leaves the items and relics in the bag as they were: none drops (decisions-log 321)', () {
     final g = bare();
     placeNow(g, 'knight', 2, 3);
     g.inventory[Item.sword] = 1;
-    g.drops.addAll([(const Point(100, 20), Item.sword), (const Point(120, 40), Item.sword), (const Point(140, 60), Item.potion)]);
+    g.relicBag[Relic.fang] = 1;
     winWave(g);
-    expect(g.lastLoot, [Item.sword, Item.sword, Item.potion]);
-    expect(g.inventory, {Item.sword: 3, Item.potion: 1});
-    expect(g.drops, isEmpty);
-
     winWave(g);
-    expect(g.lastLoot, isEmpty);
-    expect(g.inventory, {Item.sword: 3, Item.potion: 1});
+    expect([g.inventory, g.relicBag], [{Item.sword: 1}, {Relic.fang: 1}]);
   });
 
   test('an upgrade goes to every living troop of its type and leaves the inventory', () {
@@ -1948,19 +1918,6 @@ void main() {
       s.tick(0.05);
     }
     expect(s.impacts, [(target.pos, 'hit_archer')]);
-  });
-
-  test('winning a wave puts every relic dropped into the bag', () {
-    final g = bare();
-    placeNow(g, 'knight', 2, 3);
-    g.relicBag[Relic.fang] = 1;
-    g.relicDrops.addAll([(const Point(100, 20), Relic.fang), (const Point(120, 40), Relic.guard)]);
-    winWave(g);
-    expect(g.lastRelics, [Relic.fang, Relic.guard]);
-    expect(g.relicBag, {Relic.fang: 2, Relic.guard: 1});
-    expect(g.relicDrops, isEmpty);
-    winWave(g);
-    expect(g.lastRelics, isEmpty);
   });
 
   test('a troop holds one relic: a second one is refused and stays in the bag', () {
@@ -2323,8 +2280,8 @@ void main() {
     }
   });
 
-  test('a mini boss pays its reward and always drops exactly one item, a relic only on the roll', () {
-    for (final (roll, relic) in [(1.0, false), (0.0, true)]) {
+  test('a mini boss pays its reward', () {
+    for (final roll in [1.0, 0.0]) {
       final g = bare();
       placeNow(g, 'knight', 2, 3);
       g.loot = _Dice(roll, Item.bow.index);
@@ -2337,8 +2294,6 @@ void main() {
       g.tick(0.05);
       expect(mini.alive, isFalse);
       expect(g.gold, gold + 19); // a mini boss pays three times the orc's 6, grown two waves: 18 × 1.092 = 19.66
-      expect(g.drops, [(mini.pos, Item.bow)], reason: '$roll');
-      expect(g.relicDrops, hasLength(relic ? 1 : 0), reason: '$roll');
     }
   });
 
@@ -2965,27 +2920,6 @@ void main() {
     expect((h.waveSpawned, h.waveTotal), (0, 0));
   });
 
-  test('won loot is counted once per kind, in the enum\'s order', () {
-    final items = lootCounts([Item.sword, Item.potion, Item.sword, Item.boots, Item.sword]);
-    expect(items, {Item.sword: 3, Item.boots: 1, Item.potion: 1});
-    expect(items.keys.toList(), [Item.sword, Item.boots, Item.potion]);
-    expect(lootCounts(<Relic>[]), isEmpty);
-    final relics = lootCounts([Relic.guard, Relic.fang, Relic.fang]);
-    expect(relics, {Relic.fang: 2, Relic.guard: 1});
-    expect(relics.keys.first, Relic.fang);
-  });
-
-  test('a won wave\'s loot counts what it picked up; the bag gets every one', () {
-    final g = bare();
-    placeNow(g, 'knight', 2, 3);
-    g.drops.addAll([(const Point(100, 20), Item.sword), (const Point(110, 30), Item.sword), (const Point(120, 40), Item.bow)]);
-    g.relicDrops.addAll([(const Point(100, 50), Relic.fang), (const Point(110, 60), Relic.fang)]);
-    winWave(g);
-    expect(lootCounts(g.lastLoot), {Item.sword: 2, Item.bow: 1});
-    expect(lootCounts(g.lastRelics), {Relic.fang: 2});
-    expect((g.inventory[Item.sword], g.inventory[Item.bow], g.relicBag[Relic.fang]), (2, 1, 2));
-  });
-
   test('a refused relic leaves the troop and its price alone, and can go to a troop without one', () {
     final g = bare()..gold = 1000;
     placeNow(g, 'knight', 2, 3);
@@ -3145,14 +3079,15 @@ void main() {
     expect(g.score, 500 + 600);
   });
 
-  test('when the last troop falls every life left scores once; a game lost on lives gets nothing for them', () {
+  test('every life left scores once as the game ends, which leaves none: a wipe ends it only at the last heart (wipe.dart), '
+      'and a game lost on lives gets nothing for them', () {
     final (g, s) = doomedSoldier();
-    g.lives = 7;
+    g.lives = wipeLives;
     g.tick(0.05);
-    expect((s.alive, g.over), (false, true));
-    expect(g.score, 7 * lifeScore);
+    expect((s.alive, g.over, g.lives), (false, true, 0));
+    expect(g.score, 0 * lifeScore);
     g.tick(0.05);
-    expect(g.score, 350);
+    expect(g.score, 0);
 
     final h = bare()..lives = 1;
     placeNow(h, 'knight', 2, 3); // a troop still stands: it ends on lives
@@ -3398,12 +3333,6 @@ void main() {
     expect(loadPlayerName(f), isNull);
   });
 
-  /// [type]'s whole awakening recipe [times] over, kind by kind.
-  List<Item> recipeItems(String type, [int times = 1]) => [
-        for (var n = 0; n < times; n++)
-          for (final MapEntry(key: item, value: count) in awakenRecipe[type]!.entries) ...List.filled(count, item),
-      ];
-
   test('every troop type has an awakening recipe of 8 to 12 items; nothing else has one', () {
     expect(awakenRecipe.keys, unorderedEquals(troopTypes.keys));
     for (final MapEntry(key: type, value: recipe) in awakenRecipe.entries) {
@@ -3441,31 +3370,31 @@ void main() {
     placeNow(g, 'knight', 2, 4);
     placeNow(g, 'soldier', 2, 5);
     final knights = g.troops.where((u) => u.type == 'knight').toList(), soldier = g.troops.last;
-    final recipe = recipeItems('knight');
-    expect(recipe.last, Item.gloves);
-    for (final item in [...recipe, ...recipeItems('soldier')]) {
+    final recipe = awakenItems('knight', 1), n = recipe.length;
+    expect(recipe.last, Item.amulet); // its grade I set: the recipe's kinds, then its own new kind
+    for (final item in [...recipe, ...awakenItems('soldier', 1)]) {
       g.inventory[item] = (g.inventory[item] ?? 0) + 1;
     }
-    for (final item in recipe.take(8)) {
+    for (final item in recipe.take(n - 2)) {
       expect(g.useItem(item, 'knight'), isTrue);
     }
     g
       ..impacts.clear()
       ..sfx.clear();
-    expect(g.useItem(Item.gloves, 'knight'), isTrue); // the 9th: one short
+    expect(g.useItem(recipe[n - 2], 'knight'), isTrue); // one short
     expect(g.awakenLevel('knight'), 0);
     expect(g.impacts, [for (final k in knights) (k.pos, 'upgrade')]);
     expect(g.sfx, [Sfx.magic]);
     g
       ..impacts.clear()
       ..sfx.clear();
-    expect(g.useItem(Item.gloves, 'knight'), isTrue); // the 10th
+    expect(g.useItem(recipe.last, 'knight'), isTrue); // the last
     expect(g.awakenLevel('knight'), 1);
     expect(g.impacts, [for (final k in knights) (k.pos, 'upgrade_awake1')]);
     expect(g.sfx, [Sfx.magic, Sfx.clear]);
 
     // A potion that completes a recipe bursts as an awakening, not a heal.
-    final soldierRecipe = [...recipeItems('soldier').where((i) => i != Item.potion), Item.potion];
+    final soldierRecipe = [...awakenItems('soldier', 1).where((i) => i != Item.potion), Item.potion];
     for (final item in soldierRecipe.take(soldierRecipe.length - 1)) {
       expect(g.useItem(item, 'soldier'), isTrue);
     }
@@ -3474,92 +3403,33 @@ void main() {
     expect(g.impacts, [(soldier.pos, 'upgrade_awake1')]);
   });
 
-  test('an awakened type takes its recipe once more: a 4th sword goes on an awakened knight', () {
-    final g = bare()..upgrades['knight'] = recipeItems('knight');
-    expect((g.awakenLevel('knight'), g.capOf('knight', Item.sword)), (1, 6));
-    g.inventory[Item.sword] = 1;
-    expect(g.useItem(Item.sword, 'knight'), isTrue);
-    expect(g.statsOf('knight').dmg, closeTo(20 * pow(1.25, 4), 1e-9));
-  });
-
-  test('a type awakens up to three times; then it takes no more items', () {
-    final g = bare();
-    final levels = <int>[];
-    for (var n = 0; n < 3; n++) {
-      for (final item in recipeItems('knight')) {
-        g.inventory[item] = 1;
-        expect(g.useItem(item, 'knight'), isTrue, reason: 'round $n ${item.name}');
-      }
-      levels.add(g.awakenLevel('knight'));
-    }
-    expect(levels, [1, 2, 3]);
-    for (final item in Item.values) {
-      g.inventory[item] = 1;
-      expect(g.canUse(item, 'knight'), isFalse, reason: item.name);
-      expect(g.useItem(item, 'knight'), isFalse, reason: item.name);
-    }
-    g.upgrades['knight'] = recipeItems('knight', 4);
-    expect(g.awakenLevel('knight'), 3);
-  });
-
   test('the awakening level comes from the items a type holds, so the save keeps it and the price', () {
-    final g = bare()..upgrades['knight'] = recipeItems('knight');
+    final g = bare()..upgrades['knight'] = awakenItems('knight', 1);
     expect(g.awakenLevel('knight'), 1);
-    g.upgrades['knight'] = recipeItems('knight')..removeLast();
+    g.upgrades['knight'] = awakenItems('knight', 1)..removeLast();
     expect(g.awakenLevel('knight'), 0);
-    g.upgrades['knight'] = recipeItems('knight', 2);
+    g.upgrades['knight'] = awakenItems('knight', 2);
     final h = Game.fromJson(jsonDecode(jsonEncode(g.toJson())) as Map<String, dynamic>);
     expect((h.awakenLevel('knight'), h.priceOf('knight')), (2, g.priceOf('knight')));
   });
 
-  test('an old save\'s items past the caps stay and count, but nothing more of an unlisted kind goes on', () {
-    const old = [Item.shield, Item.shield, Item.sword, Item.boots, Item.potion]; // the owner's knight
-    final j = jsonDecode(jsonEncode((bare()..upgrades['knight'] = [...old]).toJson())) as Map<String, dynamic>;
-    final g = Game.fromJson(j);
-    expect((g.awakenLevel('knight'), g.statsOf('knight').regen), (0, potionRegen));
-    expect((g.canUse(Item.potion, 'knight'), g.canUse(Item.sword, 'knight'), g.capOf('knight', Item.potion)), (false, true, 0));
-    expect(g.upgrades['knight'], old);
-
-    final h = bare()..upgrades['knight'] = [...List.filled(5, Item.sword), ...recipeItems('knight').where((i) => i != Item.sword)];
-    expect(h.awakenLevel('knight'), 1);
-    h.inventory[Item.sword] = 1;
-    expect(h.useItem(Item.sword, 'knight'), isTrue); // the 6th of an awakened knight's 6
-  });
-
   test('every awakening level doubles a type\'s price (triples until decisions-log 318), and buying charges it', () {
     final g = bare();
-    for (final (n, price) in [(1, 200), (2, 600), (3, 1600)]) {
-      g.upgrades['knight'] = recipeItems('knight', n);
+    // (50 + 5 a held item) x2 a level: its grade sets hold 11, 11 and 9 items (decisions-log 249).
+    for (final (n, price) in [(1, 210), (2, 640), (3, 1640)]) {
+      g.upgrades['knight'] = awakenItems('knight', n);
       expect(g.priceOf('knight'), price, reason: '$n');
     }
-    g.upgrades['soldier'] = recipeItems('soldier');
-    expect(g.priceOf('soldier'), 108);
-    g.gold = 107;
+    g.upgrades['soldier'] = awakenItems('soldier', 1);
+    expect(g.priceOf('soldier'), 114); // (30 + 9 x 3) x 2
+    g.gold = 113;
     expect((g.autoPlace('soldier'), g.place('soldier', 2, 3)), (false, false));
-    g.gold = 108;
+    g.gold = 114;
     expect(g.place('soldier', 2, 3), isTrue);
     expect(g.gold, 0);
-    g.gold = 108;
+    g.gold = 114;
     expect(g.autoPlace('soldier'), isTrue);
     expect(g.gold, 0);
-  });
-
-  test('awakening progress counts only the items past the recipes a type already awakened with', () {
-    final g = bare()..upgrades['soldier'] = [Item.sword, Item.sword, Item.shield];
-    expect(g.awakenProgress('soldier'), {
-      Item.sword: (2, 2),
-      Item.shield: (1, 2),
-      Item.boots: (0, 1),
-      Item.bow: (0, 1),
-      Item.gloves: (0, 1),
-      Item.potion: (0, 1),
-    });
-    g.upgrades['knight'] = [...recipeItems('knight'), Item.sword];
-    expect(g.awakenProgress('knight'), {Item.sword: (1, 3), Item.shield: (0, 3), Item.boots: (0, 2), Item.gloves: (0, 2)});
-    g.upgrades['knight'] = recipeItems('knight', 3);
-    expect(g.awakenProgress('knight'), {Item.sword: (3, 3), Item.shield: (3, 3), Item.boots: (2, 2), Item.gloves: (2, 2)});
-    g.upgrades['knight'] = List.filled(5, Item.sword); // an old save past the cap
-    expect(g.awakenProgress('knight')[Item.sword], (3, 3));
   });
 
   test('an awakened troop hits and heals in its level\'s colour; monsters and plain troops as before', () {
@@ -3574,7 +3444,7 @@ void main() {
 
     final k = bare()
       ..gold = 100000
-      ..upgrades['knight'] = recipeItems('knight');
+      ..upgrades['knight'] = awakenItems('knight', 1);
     placeNow(k, 'knight', 2, 3);
     dummy(k, k.troops.single.pos + const Point(10, 0));
     k.tick(0.05);
@@ -3582,7 +3452,7 @@ void main() {
 
     final a = bare()
       ..gold = 100000
-      ..upgrades['archer'] = recipeItems('archer', 2);
+      ..upgrades['archer'] = awakenItems('archer', 2);
     placeNow(a, 'archer', 1, 3);
     final target = dummy(a, a.troops.single.pos + const Point(40, 0));
     a.tick(0.05);
@@ -3601,7 +3471,7 @@ void main() {
 
     final p = bare()
       ..gold = 100000
-      ..upgrades['priest'] = recipeItems('priest');
+      ..upgrades['priest'] = awakenItems('priest', 1);
     placeNow(p, 'priest', 0, 3);
     placeNow(p, 'knight', 2, 3);
     final knight = p.troops.firstWhere((u) => u.type == 'knight')..hp = 50;
@@ -3659,7 +3529,7 @@ void main() {
     g.upgrades['knight'] = [Item.sword, Item.sword];
     expect(g.itemInfo(Item.sword, 'knight').$2, contains('Now: 2/3 on this type, +56%'));
     expect(g.itemInfo(Item.bow, 'knight').$2, contains("This type can't take it"));
-    g.upgrades['knight'] = recipeItems('knight');
+    g.upgrades['knight'] = awakenItems('knight', 1);
     expect(g.itemInfo(Item.sword, 'knight').$2, contains('Cost: troop price +10'));
   });
 
@@ -3717,12 +3587,13 @@ void main() {
       if (heavyTypes.contains(type)) continue; // raised by heavyBuff (their own test)
       expect(identical(g.statsOf(type), troopTypes[type]), isTrue, reason: type);
     }
-    final k = troopTypes['knight']!;
-    for (final (level, hp, mp) in [(1, 175, 25), (2, 210, 30), (3, 245, 35)]) {
-      g.upgrades['knight'] = recipeItems('knight', level);
-      final s = g.statsOf('knight'), items = g.upgrades['knight']!.fold(k, (st, i) => st.upgraded(i));
-      expect((g.awakenLevel('knight'), s.hp, s.mp), (level, hp, mp));
-      expect(s.mpRegen, closeTo(1 + 0.25 * level, 1e-9));
+    // The archer: no kind of its grade sets raises HP (the knight's amulet would).
+    final k = troopTypes['archer']!;
+    for (final (level, hp, mp) in [(1, 75, 38), (2, 90, 45), (3, 105, 53)]) {
+      g.upgrades['archer'] = awakenItems('archer', level);
+      final s = g.statsOf('archer'), items = g.upgrades['archer']!.fold(k, (st, i) => st.upgraded(i, g.itemK(i)));
+      expect((g.awakenLevel('archer'), s.hp, s.mp), (level, hp, mp));
+      expect(s.mpRegen, closeTo(1.5 * (1 + 0.25 * level), 1e-9));
       expect((s.dmg, s.def, s.speed, s.range, s.rate, s.regen), (items.dmg, items.def, items.speed, items.range, items.rate, items.regen));
     }
   });
@@ -3742,30 +3613,30 @@ void main() {
     g.upgrades['knight_templar'] = [Item.shield, Item.shield, Item.sword];
     final s = g.statsOf('knight_templar');
     expect((s.def, s.dmg), (2 * shieldDef * k, t.dmg * swordDmg * k));
-    g.upgrades['knight_templar'] = recipeItems('knight_templar'); // awakened: level 1
+    g.upgrades['knight_templar'] = awakenItems('knight_templar', 1); // awakened: level 1
     expect(g.statsOf('knight_templar').hp, ((t.hp * (1 + awakenHp)).round() * k).round());
     expect(placeNow(g, 'armored_axeman', 2, 3), isTrue);
     expect(g.troops.single.maxHp, (troopTypes['armored_axeman']!.hp * k).round()); // a troop on the field too
   });
 
   test('the item that awakens a type gives its living troops the HP and MP it adds', () {
-    final g = bare();
-    placeNow(g, 'knight', 2, 3);
-    placeNow(g, 'knight', 2, 4);
+    final g = bare(); // the archer: no item of its grade I set raises HP (the knight's amulet would)
+    placeNow(g, 'archer', 1, 3);
+    placeNow(g, 'archer', 1, 4);
     final [hurt, whole] = g.troops.toList();
     hurt
-      ..hp = 100
+      ..hp = 40
       ..mp = 10;
-    final recipe = recipeItems('knight');
+    final recipe = awakenItems('archer', 1);
     for (final item in recipe) {
       g.inventory[item] = (g.inventory[item] ?? 0) + 1;
     }
     for (final item in recipe) {
-      g.useItem(item, 'knight');
+      g.useItem(item, 'archer');
     }
-    expect(g.awakenLevel('knight'), 1);
-    expect((hurt.maxHp, hurt.hp, hurt.mp), (175, 135.0, 15.0));
-    expect((whole.maxHp, whole.hp, whole.mp), (175, 175.0, 25.0));
+    expect(g.awakenLevel('archer'), 1);
+    expect((hurt.maxHp, hurt.hp, hurt.mp), (75, 55.0, 18.0)); // +15 HP, +8 MP (30 x 1.25 = 37.5, 38)
+    expect((whole.maxHp, whole.hp, whole.mp), (75, 75.0, 38.0));
   });
 
   test('every troop type has its MP, and starts full; monsters have no defence, and only necromancers MP', () {
@@ -3852,10 +3723,11 @@ void main() {
       (Item.shield, '${itemNames[Item.shield]} 0/3'),
       (Item.boots, '${itemNames[Item.boots]} 0/2'),
       (Item.gloves, '${itemNames[Item.gloves]} 0/2'),
+      (Item.amulet, '${itemNames[Item.amulet]} 0/1'), // its own new kind (decisions-log 249)
     ]);
-    g.upgrades['knight'] = recipeItems('knight', 3);
+    g.upgrades['knight'] = awakenItems('knight', 3);
     final (maxed, none) = g.awakenInfo('knight');
-    expect((maxed, none.last), (awakenName(3), (null, '${awakenName(4)}: buy in the Shop'))); // no more items: gold buys the rest (#92)
+    expect((maxed, none.last), (awakenName(3), (null, '${awakenName(4)}: buy on the ${Words.army} page'))); // no more items: gold buys the rest (#92)
   });
 
   test('a necromancer raises one tier below its own, and higher tiers only from later bosses\' waves', () {
@@ -4046,8 +3918,8 @@ void main() {
     expect(necros, inInclusiveRange(5, 25)); // about a third of 40
   });
 
-  test('the mini boss necromancer drops one item and pays 163 in wave 8; a raised mini boss pays nothing and drops no relic', () {
-    for (final (roll, relic) in [(1.0, false), (0.0, true)]) {
+  test('the mini boss necromancer pays 163 in wave 8; a raised mini boss pays nothing', () {
+    for (final roll in [1.0, 0.0]) {
       final g = bare()..wave = 8;
       placeNow(g, 'knight', 2, 3);
       g.loot = _Dice(roll, Item.bow.index);
@@ -4058,10 +3930,8 @@ void main() {
       final gold = g.gold;
       g.tick(0.05);
       expect((necro.alive, g.gold - gold), (false, 163), reason: '$roll'); // 40 × 3 × 1.045^7 = 163.3
-      expect(g.drops, [(necro.pos, Item.bow)], reason: '$roll');
-      expect(g.relicDrops, hasLength(relic ? 1 : 0), reason: '$roll');
     }
-    for (final (roll, item) in [(0.0, true), (dropChance - 0.01, true), (dropChance, false)]) {
+    for (final roll in [0.0, dropChance - 0.01, dropChance]) {
       final g = bare();
       placeNow(g, 'knight', 2, 3);
       g.loot = _Dice(roll, Item.boots.index);
@@ -4075,8 +3945,6 @@ void main() {
       final gold = g.gold;
       g.tick(0.05);
       expect((raised.alive, g.gold - gold), (false, 0), reason: '$roll');
-      expect(g.drops, item ? [(raised.pos, Item.boots)] : isEmpty, reason: '$roll');
-      expect(g.relicDrops, isEmpty, reason: '$roll'); // not even on a roll of 0
     }
   });
 
@@ -4322,43 +4190,22 @@ void main() {
     expect(healer.pos, isNot(off)); // on its way back to its spot
   });
 
-  test('an item is refused for a kind outside the recipe, at the cap until the next awakening, or at the cap for good', () {
-    final g = bare();
-    for (var n = 0; n < 3; n++) {
-      expect(g.whyNot(Item.sword, 'knight'), isNull, reason: '$n swords');
-      g.upgrades['knight'] = List.filled(n + 1, Item.sword);
-    }
-    expect(g.whyNot(Item.sword, 'knight'), Refusal.awakenFirst); // 3 of 3 before awakening
-    expect(g.whyNot(Item.sword, 'priest'), Refusal.notInRecipe);
-    expect(g.whyNot(Item.bow, 'lancer'), Refusal.notInRecipe);
-
-    g.upgrades['knight'] = [...recipeItems('knight'), ...List.filled(3, Item.sword)];
-    expect((g.awakenLevel('knight'), g.whyNot(Item.sword, 'knight')), (1, Refusal.awakenFirst)); // 6 of 6 at level 1
-    g.upgrades['knight'] = [...recipeItems('knight', 2), ...List.filled(3, Item.sword)];
-    expect((g.awakenLevel('knight'), g.whyNot(Item.sword, 'knight')), (2, Refusal.maxed)); // 9 of 9: no awakening raises it
-    g.upgrades['knight'] = recipeItems('knight', 3);
-    for (final item in awakenRecipe['knight']!.keys) {
-      expect(g.whyNot(item, 'knight'), Refusal.maxed, reason: item.name);
-    }
-    expect(g.whyNot(Item.bow, 'knight'), Refusal.notInRecipe); // not in the recipe comes first
-  });
-
   test('a bow is refused a melee fighter already at the reach ceiling, before its cap is looked at', () {
     final g = bare()..upgrades['soldier'] = List.filled(6, Item.bow); // an old save: 6 bows on a 1-bow recipe
     expect(g.statsOf('soldier').range, meleeMaxRange);
     expect(g.whyNot(Item.bow, 'soldier'), Refusal.reach);
     g.upgrades['soldier'] = List.filled(4, Item.bow); // over its cap, still short of the ceiling (the 5th reaches it)
     expect(g.statsOf('soldier').range, lessThan(meleeMaxRange));
-    expect(g.whyNot(Item.bow, 'soldier'), Refusal.awakenFirst);
+    expect(g.whyNot(Item.bow, 'soldier'), Refusal.maxed); // its grade I bow full: grade II's comes with Awaken 1
   });
 
   test('an item may go on a type exactly when nothing refuses it', () {
     final states = <String, void Function(Game)>{
       'fresh': (g) {},
       'upgraded': (g) => g
-        ..upgrades['knight'] = [...recipeItems('knight'), Item.sword, Item.sword]
+        ..upgrades['knight'] = [...awakenItems('knight', 1), Item.sword, Item.sword]
         ..upgrades['soldier'] = List.filled(6, Item.bow)
-        ..upgrades['priest'] = recipeItems('priest', 3)
+        ..upgrades['priest'] = awakenItems('priest', 3)
         ..upgrades['archer'] = [Item.bow, Item.bow],
     };
     for (final MapEntry(key: state, value: prepare) in states.entries) {
@@ -4382,17 +4229,17 @@ void main() {
     for (var i = 0; i < 3; i++) {
       expect(g.useItem(Item.sword, 'knight'), isTrue);
     }
-    expect(g.typesFor(Item.sword).firstWhere((e) => e.$1 == 'knight'), ('knight', 3, 3, Refusal.awakenFirst));
+    expect(g.typesFor(Item.sword).firstWhere((e) => e.$1 == 'knight'), ('knight', 3, 3, Refusal.maxed)); // grade I full
   });
 
   // The picker's price preview (#12): what [Game.priceWith] says is what the type costs after the drop.
   final previewStates = <String, void Function(Game)>{
     'fresh': (g) {},
     'upgraded': (g) => g
-      ..upgrades['knight'] = (recipeItems('knight')..remove(Item.gloves)) // a glove short of awakening
+      ..upgrades['knight'] = (awakenItems('knight', 1)..remove(Item.gloves)) // a glove short of awakening
       ..upgrades['soldier'] = List.filled(6, Item.bow, growable: true) // at the reach ceiling
-      ..upgrades['priest'] = (recipeItems('priest', 3)..remove(Item.staff)) // a staff short of level 3
-      ..upgrades['archer'] = recipeItems('archer', 3), // maxed
+      ..upgrades['priest'] = (awakenItems('priest', 3)..remove(Item.crystalStaff)) // a grade III staff short of level 3
+      ..upgrades['archer'] = awakenItems('archer', 3), // maxed
   };
 
   test('the price preview is the price after the item goes on, an awakening it completes included', () {
@@ -4410,8 +4257,8 @@ void main() {
     }
     final g = bare();
     previewStates['upgraded']!(g);
-    expect((g.priceOf('knight'), g.priceWith('knight', Item.gloves)), (50 + 9 * 5, (50 + 10 * 5) * 2)); // it awakens
-    expect((g.priceOf('priest'), g.priceWith('priest', Item.staff)), ((90 + 29 * 9) * 4, (90 + 30 * 9) * 8)); // level 2 → 3
+    expect((g.priceOf('knight'), g.priceWith('knight', Item.gloves)), (50 + 10 * 5, (50 + 11 * 5) * 2)); // it awakens
+    expect((g.priceOf('priest'), g.priceWith('priest', Item.crystalStaff)), ((90 + 35 * 9) * 4, (90 + 36 * 9) * 8)); // level 2 → 3
     expect(bare().priceWith('soldier', Item.sword), 33);
   });
 
@@ -4511,48 +4358,6 @@ void main() {
     expect(counts.keys, ['soldier', 'knight', 'wizard']);
     expect(fallenCounts([]), isEmpty);
     expect(fallenNamesMax, 3);
-  });
-
-  test('a relic drops only from strong monsters, by their rank', () {
-    expect(relicChance, {Tier.normal: 0.0, Tier.elite: 0.0, Tier.highElite: 0.05, Tier.miniBoss: 0.10, Tier.boss: 0.30});
-    for (final tier in Tier.values) {
-      final chance = relicChance[tier]!;
-      for (final roll in {0.0, chance - 0.001, chance, 0.31}) {
-        if (roll < 0) continue;
-        for (final type in tier == Tier.boss ? [boss, 'orc'] : ['orc']) {
-          // (The boss of any type, #58.)
-          final g = bare();
-          placeNow(g, 'knight', 2, 3);
-          g.loot = _Dice(roll, Item.boots.index);
-          final e = Unit(Side.enemy, type, enemyStats(type, tier, 1), g.troops.single.pos + const Point(10, 0))
-            ..tier = tier
-            ..hp = 1
-            ..busyUntil = hold;
-          g.units.add(e);
-          g.tick(0.05);
-          expect(e.alive, isFalse, reason: '$tier $type $roll');
-          expect(g.relicDrops, hasLength(roll < chance ? 1 : 0), reason: '$tier $type $roll');
-          if (tier == Tier.boss) expect(g.drops, hasLength(bossDrops), reason: '$tier $type $roll'); // its items whatever the roll
-        }
-      }
-    }
-  });
-
-  test('a raised minion drops no relic, whatever its rank and the roll, and a raised mini boss no sure item', () {
-    for (final (tier, roll) in [(Tier.highElite, 0.0), (Tier.miniBoss, 0.0), (Tier.miniBoss, 1.0)]) {
-      final g = bare();
-      placeNow(g, 'knight', 2, 3);
-      g.loot = _Dice(roll, Item.boots.index);
-      final at = g.troops.single.pos + const Point(10, 0);
-      g.units.add(Unit(Side.enemy, minion, const Stats(hp: 300, cost: 0, speed: 20, dmg: 8, range: 12, rate: 0.9), at)
-        ..tier = tier
-        ..raisedBy = Unit(Side.enemy, boss, bossStats, at + const Point(80, 0))
-        ..hp = 1
-        ..busyUntil = hold);
-      g.tick(0.05);
-      expect(g.relicDrops, isEmpty, reason: '$tier $roll');
-      expect(g.drops, hasLength(roll < dropChance ? 1 : 0), reason: '$tier $roll');
-    }
   });
 
   test('a mini boss comes every 3rd wave and the boss every 5th; on waves 15 and 30 both, the mini boss first', () {
@@ -4731,6 +4536,7 @@ void main() {
 
   test('a game over stays still whether paused or not', () {
     final (g, _) = doomedSoldier();
+    g.lives = wipeLives; // the army wiped at the last heart (wipe.dart)
     g.tick(0.05);
     expect(g.over, isTrue);
     final t = g.t;
@@ -4861,17 +4667,7 @@ void main() {
     expect(open, unorderedEquals(['wizard', 'priest']));
   });
 
-  test('a monster may drop a staff, and the save keeps staffs in the bag and on a type', () {
-    final g = bare();
-    placeNow(g, 'knight', 2, 3);
-    g.loot = _Dice(0, Item.staff.index); // nextInt(7) is 6
-    final slime = Unit(Side.enemy, 'slime', enemyTypes['slime']!, g.troops.single.pos + const Point(10, 0))
-      ..hp = 1
-      ..busyUntil = hold;
-    g.units.add(slime);
-    g.tick(0.05);
-    expect(g.drops, [(slime.pos, Item.staff)]);
-
+  test('the save keeps staffs in the bag and on a type', () {
     final h = bare()
       ..inventory[Item.staff] = 2
       ..upgrades['wizard'] = [Item.staff];

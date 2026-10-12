@@ -90,6 +90,8 @@ void main() {
         ..loot = Random(seed + 200)
         ..heroes = Random(seed + 300)
         ..slots = Random(seed + 400)
+        ..townDice = Random(seed + 600) // the Towns' dice, and through a due Town (decisions-log 321)
+        ..townPolicy = 'leave'
         ..gold = 3000
         ..capacity = 16;
       var mid = double.nan, front = double.negativeInfinity, ticks = 0, spawns = 0;
@@ -122,6 +124,8 @@ void main() {
       ..loot = Random(seed + 200)
       ..heroes = Random(seed + 300)
       ..slots = Random(seed + 400)
+      ..townDice = Random(seed + 600) // the Towns' dice, and through a due Town (decisions-log 321)
+      ..townPolicy = 'leave'
       ..gold = 3000 // enough to live to its first Hero
       ..capacity = 16;
     const army = ['soldier', 'archer', 'knight', 'priest', 'wizard', 'lancer'];
@@ -139,7 +143,9 @@ void main() {
     final save = oldSave(11);
     Game loaded(int seed) => Game.fromJson(save, Random(seed), Random(seed + 100), Random(seed + 300))
       ..loot = Random(seed + 200)
-      ..slots = Random(seed + 400);
+      ..slots = Random(seed + 400)
+      ..townDice = Random(seed + 600)
+      ..townPolicy = 'leave';
     final la = play(loaded(7), 4, army), lb = play(loaded(7), 4, army);
     expect(la, hasLength(4)); // waves 12-15: a mini boss at 12, a mini boss and the boss at 15
     for (var i = 0; i < la.length; i++) {

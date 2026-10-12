@@ -1,5 +1,5 @@
 // Asah (P6, decisions-log 154; docs/loot-items-relics.md "Asah", ui-hud.md "Tas"): between waves a Pusaka owned gains a
-// star for gold (60k to ★2, 150k to ★3) and 10 small relics from the bag, the most plentiful kind first, once per boss
+// star for gold (60k to ★2, 150k to ★3) and 10 small relics from the bag, the cheapest kinds first, once per boss
 // interval across all Pusaka. The prices, the relics taken, each refusal in the design's order, the stars rising and
 // the troops refitting with the burst, the event, the log's lines and the telemetry's gold.asahSpent, a save round
 // trip; on the Tas page the button in two taps, a refusal's message, and the strip fitting 1266x713 and 915x412. One
@@ -105,14 +105,14 @@ void main() {
     }
   });
 
-  test('the small relics come from the bag one at a time, each from the kind it holds most of then (ties: Taring first): '
-      'the owner\'s bag gives Thorns 8, Fury 2', () {
+  test('the small relics come from the bag one at a time, the cheapest kinds first (by craft gold), among them the kind it '
+      'holds most of then (ties: Taring first): the owner\'s bag gives Thorns 10', () {
     final g = w86();
     expect(bag(g), [17, 29, 23, 21]);
     expect(g.asahRelicsInBag, 90);
-    expect(g.asahTake, {Relic.thorns: 8, Relic.fury: 2});
-    expect(asahTakeLine(g.asahTake), '${relicNames[Relic.thorns]} 8, ${relicNames[Relic.fury]} 2');
-    // An even bag: Taring first on every tie, round and round.
+    expect(g.asahTake, {Relic.thorns: 10}); // Fang and Thorns 300 each, Thorns the more held (town_craft_test.dart)
+    expect(asahTakeLine(g.asahTake), '${relicNames[Relic.thorns]} 10');
+    // An even bag: the 300s (Fang, Thorns) first, then the 400s, Fang first on every tie, round and round.
     for (final r in droppedRelics) {
       g.relicBag[r] = 3;
     }
@@ -143,7 +143,7 @@ void main() {
     expect(g.whyNotAsah(Relic.dragonHeart), isNull);
     expect(g.asah(Relic.dragonHeart), isTrue);
     expect((g.pusaka[Relic.dragonHeart]!.stars, g.pusaka[Relic.dragonHeart]!.type, g.gold), (2, 'knight_templar', gold - 60000));
-    expect(bag(g), [17, 21, 21, 21]);
+    expect(bag(g), [17, 19, 23, 21]);
     // Refit at once: 504 in the book, ×2.2 (Dragon Heart ★2), with the Hero's aura on the field; the HP gained added.
     final maxHp = g.fieldStats('knight_templar').hp;
     expect(maxHp, greaterThan(927));
@@ -164,10 +164,10 @@ void main() {
       'stars': 2,
       'type': 'knight_templar',
       'cost': 60000,
-      'relics': {'thorns': 8, 'fury': 2},
+      'relics': {'thorns': 10},
     });
     expect(eventVersion, greaterThanOrEqualTo(4)); // 4: Asah's event; later versions keep it
-    expect(logLines(e), ['Sharpen: Dragon Heart ★2 on Templar (60k gold)', '${relicNames[Relic.thorns]} 8, ${relicNames[Relic.fury]} 2 from the Bag']);
+    expect(logLines(e), ['Sharpen: Dragon Heart ★2 on Templar (60k gold)', '${relicNames[Relic.thorns]} 10 from the Bag']);
 
     // Once per boss interval, across all Pusaka: waves 86 to 89 are one (the next Asah after the wave-90 boss).
     expect((g.asahAt, g.asahDone, g.asahAgainAt), (86, true, 90));
@@ -245,7 +245,7 @@ void main() {
     expect(g.toJson()['asahAt'], 86);
     final r = reload(g);
     expect((r.asahAt, r.pusaka[Relic.grail]!.stars, r.gold), (86, 2, g.gold));
-    expect(bag(r), [17, 21, 21, 21]);
+    expect(bag(r), [17, 19, 23, 21]);
     expect(r.whyNotAsah(Relic.dragonHeart), asahRefusals.once);
     expect(r.wave, 86);
   });
@@ -259,7 +259,7 @@ void main() {
     final events = [for (final r in kept.records.where((r) => r['rec'] == 'event')) r['event'] as Map<String, dynamic>];
     final e = events.singleWhere((e) => e['kind'] == 'pusakaAsah');
     expect((e['relic'], e['stars'], e['cost']), ('dragonHeart', 2, 60000));
-    expect(e['relics'], {'thorns': 8, 'fury': 2});
+    expect(e['relics'], {'thorns': 10});
     final w = kept.records.lastWhere((r) => r['rec'] == 'wave');
     expect((w['wave'], (w['gold'] as Map)['asahSpent'], w['tv']), (87, 60000, telemetryVersion));
     expect(telemetryVersion, greaterThanOrEqualTo(4)); // 4 brought Asah; later versions keep it
@@ -289,7 +289,7 @@ void main() {
   testWidgets('the Asah button on a Pusaka\'s facing page: two taps raise it and say what was taken; the next one says '
       'why not; mid-wave it is greyed', (tester) async {
     final b = await boot(tester);
-    final g = b.state = w86().boardRules()..towns = false..chests.clear(); // its catch-up chests' popup would take the taps
+    final g = b.state = w86().boardRules()..chests.clear(); // its catch-up chests' popup would take the taps
     g.dismissPusakaNote();
     await frames(tester, 50);
     await openBag(tester, b);
@@ -303,7 +303,7 @@ void main() {
     expect((b.asahArmed, g.pusaka[Relic.dragonHeart]!.stars, g.gold), (Relic.dragonHeart, 1, gold));
     await tapOn(tester, b.asahButton.center);
     expect((b.asahArmed, g.pusaka[Relic.dragonHeart]!.stars, g.gold), (null, 2, gold - 60000));
-    expect(b.message, 'Dragon Heart ★2! -60k, ${relicNames[Relic.thorns]} 8, ${relicNames[Relic.fury]} 2');
+    expect(b.message, 'Dragon Heart ★2! -60k, ${relicNames[Relic.thorns]} 10'); // the cheapest first (Fang, Thorns)
     expect(g.troops.where((u) => u.alive && u.type == 'knight_templar').map((u) => u.maxHp).toSet(), {g.fieldStats('knight_templar').hp});
     // Another Pusaka in the same boss interval: a tap says why, and arms nothing.
     await tapOn(tester, b.bagSlot(Relic.grail).center);
@@ -329,7 +329,7 @@ void main() {
     final b = await boot(tester);
     for (final size in const [Size(1266, 713), Size(915, 412)]) {
       tester.view.physicalSize = size;
-      final g = b.state = w86().boardRules()..towns = false..chests.clear();
+      final g = b.state = w86().boardRules()..chests.clear();
       g.dismissPusakaNote();
       await frames(tester, 50);
       await openBag(tester, b);

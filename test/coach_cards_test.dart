@@ -21,6 +21,7 @@ import 'package:tower_defense/save.dart' show Welcome;
 import 'package:tower_defense/settings.dart';
 
 import 'hud_font.dart';
+import 'real_rules.dart';
 
 const _fixture = 'test/fixtures/save-20261001-2005-pre-awaken.json';
 
@@ -59,9 +60,10 @@ Future<void> tapOn(WidgetTester tester, Rect r) async {
 Set<String> pastIntro() => {guideIntro, ...guidePointers};
 
 /// A board game between waves at wave [wave] (none of K2-K4's, nor a Hero's or a boss's, comes next): no army limit, so
-/// Auto's countdown waits only for what is tested; gold to spare.
+/// Auto's countdown waits only for what is tested; gold to spare; no Town comes (a Town would take a break; the Towns'
+/// cards: town_switch_test.dart).
 Game boardGame([int wave = 5]) => Game(Random(1)).boardRules()
-  ..towns = false // a Town (rolled on an unseeded die) would take a break; the Towns' cards: town_switch_test.dart
+  ..townRules = noTowns
   ..armyMax = null
   ..gold = 200000
   ..wave = wave;
@@ -300,7 +302,7 @@ void main() {
       'and K21 when due; none before its first win here', (tester) async {
     final b = await boot(tester);
     final g = b.state = w86().boardRules()
-      ..towns = false // the Towns' cards: town_switch_test.dart (decisions-log 237)
+      ..townRules = noTowns // the Towns' cards: town_switch_test.dart (decisions-log 237)
       ..capWarnedAt = 1 << 20; // the cap's warning off: its 8 s message would only delay each card
     b.guideSeen = seenFrom(86);
     expect([for (final r in guideRules) if (!b.guideSeen!.contains(r.key)) r.key], ['K14', 'K15', 'K18', 'K20', 'K21', 'K22', 'K23']);

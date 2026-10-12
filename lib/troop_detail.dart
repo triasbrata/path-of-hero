@@ -15,7 +15,7 @@ part of 'main.dart';
 //    Bag" while the bag holds it; from Awaken 3 the Shop's own Awaken / Forge tag ([Board._upgradeButton],
 //    ascend_page.dart: one tap, the same buy and refusals); its Wishlist ([_detailWishlist], wishlist_look.dart,
 //    decisions-log 282: its wishes, a tap to the Smithy, the picker); its Artifact ([_detailPusaka]); its Heroes
-//    ([_detailHeroes]; with the Towns on its fallen Heroes' Recall too, [_recallLines], decisions-log 230); the relics its
+//    ([_detailHeroes]; its fallen Heroes' Recall too, [_recallLines], decisions-log 230); the relics its
 //    troops wear ([_detailRelics]);
 // 3. the foot ([_detailFoot]), one line on the page's bottom edge with no divider over it (decisions-log 288; the owner,
 //    2026-10-09: "tidak perlu ada divider dan button relasenya di buat jangan full width containernya tapi cukup
@@ -37,7 +37,7 @@ const detailTapMin = 44.0;
 /// shorter than that (915x412), the header scrolls with the body as its first lines ([Board._troopDetail]).
 const detailBodyMin = 60.0;
 
-/// The most fallen Heroes of a type the Army detail lists with their Recall (the Towns on, [Board._recallLines]); the rest
+/// The most fallen Heroes of a type the Army detail lists with their Recall ([Board._recallLines]); the rest
 /// say "+1 more" and come up as those are recalled.
 const recallShown = 2;
 
@@ -325,7 +325,7 @@ extension on Board {
         _tip.hints.add((r, j == 0 ? _Hint.hp : _Hint.mp, type));
       } else {
         // By grade (decisions-log 249) the kind's grades together: what it holds of them, the caps of those open.
-        final grades = g.byGrade ? [for (var n = 1; n <= maxAwaken; n++) itemOf(item.slot, n)] : [item];
+        final grades = [for (var n = 1; n <= maxAwaken; n++) itemOf(item.slot, n)];
         final taken = grades.fold(0, (a, i) => a + g.countOf(type, i)), cap = grades.fold(0, (a, i) => a + g.capOf(type, i));
         // A melee type's reach at its ceiling shows as maxed, like a full item: by the rule's own reach (a bow is
         // refused, [Refusal.reach]), not the aura's, which ends with the Hero.
@@ -333,7 +333,7 @@ extension on Board {
         // So does its walk at the fastest a troop of it walks ([walkCap], decisions-log 311): the number is that walk.
         if (item == Item.boots && v >= walkCap(type)) color = _blockedInk;
         // Enhanced (decisions-log 255): the kind's highest plus on the type tints its icon, its "+3" after the count.
-        up = g.enhanceOn ? grades.fold(0, (a, i) => math.max(a, g.plusesOn(type, i).firstOrNull ?? 0)) : 0;
+        up = grades.fold(0, (a, i) => math.max(a, g.plusesOn(type, i).firstOrNull ?? 0));
         _icon(c, item, to, cap > 0 || taken > 0 ? _px : _ghost, up); // kinds outside the type's recipe are faded
         _tip.rows.add((r, item, type));
         if (cap > 0 || taken > 0) {
@@ -370,14 +370,12 @@ extension on Board {
     ];
   }
 
-  /// 3. The Awaken needs. Below Awaken 3: "Awaken 3 needs:", then one recipe item a row, as the owner drew it: `icon name
-  /// have/need where-from` in columns: green once it has enough; where from: "In Bag: 2" (green)
-  /// while the bag holds some it still needs, else "Drops from monsters", from wave 15 "Drops, Shop 2.2k"
-  /// ([Store.buyPrice]); then what it unlocks ([awakenSkillChange]: "Next: Unlocks Disarm"), and while the bag holds it
-  /// the green "Awaken 2 from the Bag". By grade ([Game.byGrade], decisions-log 249): "Awaken 2 needs (grade II):", the
-  /// grade set's items ([Game.gradeSet]) with "Done" (green) once held, "In Bag: 1" (green), "Smithy: can make 3" (green,
-  /// [Craft.canMake]) or "Smithy: needs Leather Strap" (grey, [Craft.whyNotMake]; shorter in steps down to "Smithy"), and
-  /// "Next" adds the grade after it ("Next: Unlocks Unbroken. Awaken 3 needs grade III."). From Awaken 3: "Next: Awaken 4" (at 5 "Next: Forge +5") over the Shop's own
+  /// 3. The Awaken needs. Below Awaken 3, by grade (decisions-log 249): "Awaken 2 needs (grade II):", then the grade set's
+  /// items ([Game.gradeSet]) one a row, as the owner drew it: `icon name have/need where-from` in columns, the count green
+  /// once it has enough; where from: "Done" (green) once held, "In Bag: 1" (green), "Smithy: can make 3" (green,
+  /// [Craft.canMake]) or "Smithy: needs Leather Strap" (grey, [Craft.whyNotMake]; shorter in steps down to "Smithy");
+  /// then what it unlocks and the grade after it ([awakenSkillChange]: "Next: Unlocks Unbroken. Awaken 3 needs grade
+  /// III."), and while the bag holds it the green "Awaken 2 from the Bag". From Awaken 3: "Next: Awaken 4" (at 5 "Next: Forge +5") over the Shop's own
   /// step ([Board._upgradeButton]: "Awaken 4  40k", "Forge +5  33k", or greyed with why, "Awaken 4: Opens after wave
   /// 15"), one tap. First, by grade, a level the type kept from a save before the grades ([Game.keptLevel], decisions-log
   /// 272), in grey: "Awaken 3 (kept from old items)", or "Awaken 3 (kept)" where that doesn't fit.
@@ -393,7 +391,7 @@ extension on Board {
     }
 
     // A level kept from a save before the grades (decisions-log 272), said first: "Awaken 3 (kept from old items)".
-    if (g.byGrade && g.keptLevel(type) > 0) {
+    if (g.keptLevel(type) > 0) {
       final kept = awakenName(g.keptLevel(type));
       final text = _fitFirst(['$kept (${Words.keptFromOld})', '$kept (${Words.kept})'], s.small, w);
       out.add((h: s.line, draw: (top) => _say(c, 'next', text, Offset(x0, top + s.line / 2), s.small, grey)));
@@ -405,7 +403,6 @@ extension on Board {
       // The columns: the names after the icons, the counts after the longest name, where from after the longest count.
       final nameX = x0 + icon + gap, countX = nameX + need.fold(0.0, (m, e) => math.max(m, _textWidth(itemNames[e.key]!, s.small))) + 2 * gap;
       final howX = countX + need.fold(0.0, (m, e) => math.max(m, _textWidth(said(e.value), s.small))) + 2 * gap;
-      final grades = g.byGrade;
       (List<String>, Color) how(Item item, (int, int) p) {
         final inBag = g.inventory[item] ?? 0;
         if (p.$1 >= p.$2) return ([Words.done], green);
@@ -415,11 +412,10 @@ extension on Board {
 
       // The whole set on the Wishlist (decisions-log 300): "Wishlist all" at the line's right puts every item the Awaken
       // still lacks on the type's wishes with its count ([Wishlist.wishSet]); once on, "Remove set" takes them off.
-      final setOn = g.setWished(type), setTag = grades && g.wishOn && g.wishSetOf(type).isNotEmpty ? (setOn ? Words.removeSet : Words.wishAll) : null;
+      final setOn = g.setWished(type), setTag = g.wishSetOf(type).isNotEmpty ? (setOn ? Words.removeSet : Words.wishAll) : null;
       final tagW = setTag == null ? 0.0 : capsuleSize(_textWidth(setTag, s.small), s.small).width + 6 * ts;
-      final needs = grades
-          ? _fitFirst(['${awakenName(level + 1)} ${Words.needs} (${gradeName(level + 1)}):', '${awakenName(level + 1)} ${Words.needs}:'], s.small, w - tagW)
-          : '${awakenName(level + 1)} ${Words.needs}:';
+      final needs =
+          _fitFirst(['${awakenName(level + 1)} ${Words.needs} (${gradeName(level + 1)}):', '${awakenName(level + 1)} ${Words.needs}:'], s.small, w - tagW);
       out.add((
         h: s.line,
         draw: (top) {
@@ -448,8 +444,8 @@ extension on Board {
           },
         ));
       }
-      // By grade, the grade the Awaken after it takes: "Awaken 3 needs grade III." (decisions-log 249).
-      final after = grades && level + 2 <= maxAwaken ? '${awakenName(level + 2)} ${Words.needs} ${gradeName(level + 2)}.' : null;
+      // The grade the Awaken after it takes: "Awaken 3 needs grade III." (decisions-log 249).
+      final after = level + 2 <= maxAwaken ? '${awakenName(level + 2)} ${Words.needs} ${gradeName(level + 2)}.' : null;
       final change = switch (awakenSkillChange(type, level, level + 1)) { (final now, final then) => then ?? now, null => null };
       if (change != null || after != null) {
         final texts = [
@@ -553,7 +549,7 @@ extension on Board {
     return out;
   }
 
-  /// The Recall of [type]'s fallen Heroes in its Heroes section, with the Towns on (decisions-log 230; the Town design's
+  /// The Recall of [type]'s fallen Heroes in its Heroes section (decisions-log 230; the Town design's
   /// section 8: the Shop's Fallen Heroes tab moved here, so they come back between any waves, in a Town or not): one
   /// line per Hero, the last to fall first, at most [recallShown] and then "+1 more": the crown faded, "Fallen: Aldric",
   /// and on the right a green tag "Recall 57k" ([Recall.recallPrice]; with the army or the type full, where it fits,
@@ -620,7 +616,7 @@ extension on Board {
       ];
 
   /// 6. The small relics its living troops wear, summed by kind ("Relics: (Fang) 3 (Guard) 1"), or "Relics: none";
-  /// nothing while none of it lives. With the Towns on each icon has the relic's tooltip ([Game.relicInfo]: its tier).
+  /// nothing while none of it lives. Each icon has the relic's tooltip ([Game.relicInfo]: its tier).
   List<_DetailLine> _detailRelics(Canvas c, Game g, String type, double x0, double x1, _DetailSizes s) {
     const ink = Color(0xFF4A2C17), grey = Color(0xFF9E9080);
     if ((g.troopCounts[type] ?? 0) == 0) return const [];
@@ -642,7 +638,7 @@ extension on Board {
             final n = 'x${worn[r]}';
             if (x + icon + 2 + _textWidth(n, s.small) > x1) break;
             _icon(c, r, Rect.fromLTWH(x, mid - icon / 2, icon, icon));
-            if (g.towns) _tip.hints.add((Rect.fromLTWH(x, mid - icon / 2, icon, icon), _Hint.relic, r.name)); // its tooltip: tier, Best on (decisions-log 227)
+            _tip.hints.add((Rect.fromLTWH(x, mid - icon / 2, icon, icon), _Hint.relic, r.name)); // its tooltip: tier, Best on (decisions-log 227)
             x += icon + 2;
             _say(c, 'relics', n, Offset(x, mid), s.small, ink);
             x += _textWidth(n, s.small) + 6 * s.ts;

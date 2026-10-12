@@ -5,9 +5,8 @@ part of 'game.dart';
 // fight. Today's four (Fang, Thorns, Fury, Guard: the Basic tier) keep their rules in game.dart and pusaka_engine.dart;
 // the seven here are new: Strong Sweep (save key cleave), Venom, Mana Siphon and Spirit Ward, Mighty Iron Will (lastStand),
 // Giant Slayer and Holy Charm (blessing). Their numbers are town.json's `relics` ([TownRules.relics], read through
-// [Relics.relicK]); their tier is their recipe's ([TownRules.recipes]). They exist only with the Towns on: monsters never
-// drop them ([droppedRelics] stays today's four), only the Smithy and the Town's Shop make them (later steps), so with
-// the Towns off nothing here ever runs.
+// [Relics.relicK]); their tier is their recipe's ([TownRules.recipes]). Monsters never drop them: the Smithy makes them
+// (decisions-log 221).
 //
 // Where each acts (all existing sites): a troop's normal attack that lands, a blow ([Game._strike]) or a shot, and a
 // healer's smite ([Game._smite]), call [Relics._relicLanded] (Sweep, Venom, Mana Siphon); a troop healer's heal
@@ -16,9 +15,8 @@ part of 'game.dart';
 // [Relics._ironWill]; [Game.startWave] gives the wards ([Relics._spiritWards]); the heal funnel ([Heal._healTroop])
 // makes a heal bigger ([Relics.charmK]: Holy Charm).
 //
-// The forge's nine (decisions-log 250; forge-design §5, §6), only with the Towns on ([Game.towns]; the forge comes with
-// them since decisions-log 296): a
-// normal attack or a smite as it is made ([Game._strike], [Game._smite]) is multiplied by [Relics._relicBlowK] (Shark
+// The forge's nine (decisions-log 250; forge-design §5, §6), in every game (the forge comes with the Towns,
+// decisions-log 296, 321): a normal attack or a smite as it is made ([Game._strike], [Game._smite]) is multiplied by [Relics._relicBlowK] (Shark
 // Tooth, Grit, Ambush, Hot Streak, Avalanche, Afterglow, Reaper on a boss), so a shot carries it and so does all that
 // reads the blow as fired (a splash, Sweep, Venom, God's Thunder's leaps); that product with the Fury beat and Giant
 // Slayer is at most town.json's `combos.relicMost` ([Combos.relicMost]: the relics' cap; the Artifacts' own powers stay
@@ -60,13 +58,12 @@ const relicBestOn = <Relic, List<String>>{
 
 /// The small relics' rules and words.
 extension Relics on Game {
-  /// The small relics in this game: all of them with the Towns on ([smallRelics], then the forge's nine, [forgeRelics]),
-  /// else (a plain Game(), tests only) the four monsters drop.
-  List<Relic> get relicsInPlay => towns ? [...smallRelics, ...forgeRelics] : droppedRelics;
+  /// The small relics in this game: all of them ([smallRelics], then the forge's nine, [forgeRelics]).
+  List<Relic> get relicsInPlay => [...smallRelics, ...forgeRelics];
 
-  /// The items in this game (decisions-log 245): with the Towns on all of [Item], else (a plain Game(), tests only) the
-  /// seven monsters drop ([droppedItems]). Every list of items the player sees (the Bag, the Shop, the guide) reads it.
-  List<Item> get itemsInPlay => towns ? Item.values : droppedItems;
+  /// The items in this game (decisions-log 245): all of [Item]. Every list of items the player sees (the Bag, the Shop,
+  /// the guide) reads it.
+  List<Item> get itemsInPlay => Item.values;
 
   /// Small relic [relic]'s number [key] (town.json `relics.<relic>.<key>`: Sweep's `share`, Venom's `secs`, …), its
   /// default when the rules lack it.
@@ -142,7 +139,7 @@ extension Relics on Game {
     if (src == Hit.normal && by.holds(Relic.cleave)) _sweep(by, foe, dmg);
     if (src == Hit.normal && by.holds(Relic.venom) && foe.alive) _venom(by, foe, dmg);
     if (by.holds(Relic.manaSiphon) && by.alive) _siphonMp(by);
-    if (!towns || !foe.alive) return;
+    if (!foe.alive) return;
     if (src == Hit.normal && by.holds(Relic.chill)) _chill(by, foe);
     if (by.holds(Relic.weakSpot)) _weakSpot(by, foe);
   }
@@ -210,7 +207,7 @@ extension Relics on Game {
   double charmK(Unit u, HealSrc src) =>
       u.holds(Relic.blessing) && src != HealSrc.regen && src != HealSrc.grail && src != HealSrc.queue ? relicK(Relic.blessing, 'k') : 1;
 
-  // The forge's nine (decisions-log 250; forge-design §5, §6): only with the Towns on.
+  // The forge's nine (decisions-log 250; forge-design §5, §6).
 
   /// A mini boss or the boss: the "bosses" of the forge's relics' cards (Chill's and Weak Spot's half, Reaper's ×), as
   /// Giant Slayer's ([_slayerK]).
@@ -218,9 +215,9 @@ extension Relics on Game {
 
   /// Small relic [relic]'s number [key] for troop [u]: a hidden pairing's ([Combos.secrets], town.json `combos.secret`,
   /// described nowhere in the game) when [u] holds every relic it names and, when it names an Artifact, [u]'s type has
-  /// that bound; else [relicK]. The pairings act only with the Towns on.
+  /// that bound; else [relicK].
   double relicKOf(Unit u, Relic relic, String key) {
-    if (towns && u.relics.isNotEmpty) {
+    if (u.relics.isNotEmpty) {
       for (final s in townRules.combos.secrets.values) {
         if (s.relic != relic || !s.holds.every(u.holds)) continue;
         if (s.set[key] case final v? when s.artifact == null || pusakaLevel(u, s.artifact!) > 0) return v.toDouble();
@@ -314,7 +311,7 @@ extension Relics on Game {
   /// [u] alive under its `below` share of its max HP: it ends [u], the blow taking all [u]'s HP. Never a mini boss or
   /// the boss (their × is in [_relicBlowK]). Its counter: the monsters it ended and the HP it took past the blow.
   double _reap(Unit by, Unit u, double dmg) {
-    if (!towns || !by.holds(Relic.reaper) || _bossy(u) || u.hp - dmg >= u.maxHp * relicK(Relic.reaper, 'below')) return dmg;
+    if (!by.holds(Relic.reaper) || _bossy(u) || u.hp - dmg >= u.maxHp * relicK(Relic.reaper, 'below')) return dmg;
     _relicTally(Relic.reaper)
       ..uses += 1
       ..worth += u.hp - dmg;
@@ -343,7 +340,7 @@ extension Relics on Game {
   /// Hot Streak: troop [by] killed a monster ([Game._hurt]): a stack for its `secs` s, at most its `most` (the oldest
   /// gives way to a new one).
   void _relicKill(Unit by) {
-    if (!towns || !by.holds(Relic.hotStreak)) return;
+    if (!by.holds(Relic.hotStreak)) return;
     final most = relicK(Relic.hotStreak, 'most').round();
     by.streak.removeWhere((end) => t >= end);
     if (most <= 0) return;
@@ -354,10 +351,10 @@ extension Relics on Game {
   /// Afterglow: troop [u] cast a skill (a #10 skill, a Hero's, an awakening's): its next `hits` normal attacks are
   /// charged ([Unit.glow], spent in [_relicBlowK]); a new cast charges them anew.
   void _relicCast(Unit u) {
-    if (towns && u.holds(Relic.afterglow)) u.glow = relicK(Relic.afterglow, 'hits').round();
+    if (u.holds(Relic.afterglow)) u.glow = relicK(Relic.afterglow, 'hits').round();
   }
 
-  /// At a wave's start ([Game.startWave], the Towns on): Afterglow's charges and Hot Streak's stacks are gone, the
+  /// At a wave's start ([Game.startWave]): Afterglow's charges and Hot Streak's stacks are gone, the
   /// counters start afresh and each troop's pair key is taken ([comboKeyOf]).
   void _relicWave() {
     relicWorth.clear();

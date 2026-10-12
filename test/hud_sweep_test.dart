@@ -30,8 +30,7 @@ void main() {
               final g = b.state = Game()
                 ..gold = 99999 // five digits: the widest the row is measured with
                 ..wave = 99 // the tide's badge, and 3-digit counts
-                ..towns = state == 'town'
-                ..townAt = 100;
+                ..townAt = state == 'town' ? 100 : null; // a Town only for the Town's state, no chip on the field
               if (wave) g.startWave();
               if (state == 'town') expect(g.enterTown(), isTrue);
               await frames(tester, 3);

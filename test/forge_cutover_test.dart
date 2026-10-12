@@ -19,9 +19,32 @@ Map<String, dynamic> json(String path) => jsonDecode(File(path).readAsStringSync
 /// [j] loaded as the app loads a save (a board game: the Towns, and with them the forge, on).
 Game load(Map<String, dynamic> j) => Game.fromJson(j, Random(1), Random(2), Random(3)).boardRules();
 
-/// [j] loaded with the Towns off (a plain Game(), tests only): the rules from before the forge, Awaken by the old item
-/// recipe ([Game.oldItemLevel]), as the forge-off board read it.
-Game old(Map<String, dynamic> j) => Game.fromJson(j, Random(1), Random(2), Random(3));
+/// What the game from before the forge read for each type of [w89] and [w8] (its level, Bangkit and Tempa that count, and
+/// its stats): the Towns-off rules, Awaken by the old item recipe, recorded before they went (decisions-log 321).
+const _before = <String, Map<String, (int, int, int, String)>>{
+  'w89': {
+    'soldier': (0, 0, 0, 'hp 113 mp 20 heals false speed 27.5 dmg 12.5 range 14.399999999999999 rate 0.6400000000000001 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.0'),
+    'knight': (0, 0, 0, 'hp 175 mp 20 heals false speed 37.5 dmg 39.0625 range 14.0 rate 0.5120000000000001 shotSpeed 0.0 splash 0.0 regen 0.0 def 5.0 mpRegen 1.0'),
+    'swordsman': (0, 0, 0, 'hp 138 mp 30 heals false speed 28.0 dmg 17.5 range 13.0 rate 0.5 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.5'),
+    'archer': (2, 0, 0, 'hp 113 mp 45 heals false speed 42.96875 dmg 42.91534423828125 range 570.6304286883839 rate 0.10066329600000004 shotSpeed 200.0 splash 0.0 regen 0.0 def 0.0 mpRegen 2.25'),
+    'lancer': (0, 0, 0, 'hp 150 mp 20 heals false speed 63.4765625 dmg 22.5 range 22.0 rate 0.8 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.0'),
+    'priest': (5, 2, 4, 'hp 205 mp 135 heals true speed 20.0 dmg 113.95371093750002 range 286.6544639999999 rate 0.3145728000000001 shotSpeed 0.0 splash 0.0 regen 30.0 def 15.0 mpRegen 6.75'),
+    'armored_axeman': (5, 2, 6, 'hp 815 mp 45 heals false speed 35.15625 dmg 263.59055126085883 range 14.0 rate 0.28835840000000007 shotSpeed 0.0 splash 16.0 regen 30.0 def 27.0 mpRegen 2.25'),
+    'wizard': (5, 2, 1, 'hp 149 mp 180 heals false speed 18.0 dmg 172.10841178894043 range 371.5041853439999 rate 0.18790481920000002 shotSpeed 140.0 splash 20.0 regen 30.0 def 0.0 mpRegen 9.0'),
+    'knight_templar': (2, 0, 0, 'hp 630 mp 60 heals false speed 68.66455078125 dmg 148.773193359375 range 20.16 rate 1.0 shotSpeed 0.0 splash 0.0 regen 45.0 def 18.0 mpRegen 3.0'),
+  },
+  'w8': {
+    'soldier': (0, 0, 0, 'hp 90 mp 20 heals false speed 22.0 dmg 10.0 range 12.0 rate 0.8 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.0'),
+    'knight': (0, 0, 0, 'hp 140 mp 20 heals false speed 24.0 dmg 20.0 range 14.0 rate 0.6400000000000001 shotSpeed 0.0 splash 0.0 regen 0.0 def 2.5 mpRegen 1.0'),
+    'swordsman': (0, 0, 0, 'hp 110 mp 30 heals false speed 28.0 dmg 14.0 range 13.0 rate 0.5 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.5'),
+    'archer': (0, 0, 0, 'hp 60 mp 30 heals false speed 22.0 dmg 9.0 range 64.0 rate 0.6 shotSpeed 200.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.5'),
+    'lancer': (0, 0, 0, 'hp 120 mp 20 heals false speed 26.0 dmg 18.0 range 22.0 rate 1.0 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 1.0'),
+    'priest': (0, 0, 0, 'hp 60 mp 60 heals true speed 20.0 dmg 18.0 range 115.19999999999999 rate 1.2 shotSpeed 0.0 splash 0.0 regen 5.0 def 2.5 mpRegen 3.0'),
+    'armored_axeman': (0, 0, 0, 'hp 216 mp 20 heals false speed 18.0 dmg 26.4 range 14.0 rate 1.1 shotSpeed 0.0 splash 16.0 regen 0.0 def 0.0 mpRegen 1.0'),
+    'wizard': (0, 0, 0, 'hp 50 mp 80 heals false speed 18.0 dmg 22.0 range 72.0 rate 1.4 shotSpeed 140.0 splash 20.0 regen 0.0 def 0.0 mpRegen 4.0'),
+    'knight_templar': (0, 0, 0, 'hp 336 mp 40 heals false speed 18.0 dmg 31.2 range 14.0 rate 1.0 shotSpeed 0.0 splash 0.0 regen 0.0 def 0.0 mpRegen 2.0'),
+  },
+};
 
 String stats(Stats s) => 'hp ${s.hp} mp ${s.mp} heals ${s.heals} speed ${s.speed} dmg ${s.dmg} range ${s.range} rate ${s.rate} '
     'shotSpeed ${s.shotSpeed} splash ${s.splash} regen ${s.regen} def ${s.def} mpRegen ${s.mpRegen}';
@@ -30,36 +53,31 @@ String stats(Stats s) => 'hp ${s.hp} mp ${s.mp} heals ${s.heals} speed ${s.speed
 (int, int, int, String) standing(Game g, String type) => (g.awakenLevel(type), g.ascended[type] ?? 0, g.tempaOf(type), stats(g.statsOf(type)));
 
 void main() {
-  test('the forge plays in every board game; a plain Game() without the Towns plays as before', () {
-    final board = Game().boardRules();
-    expect((board.byGrade, board.enhanceOn, board.forgeShop, board.smithyItems(1).length), (true, true, true, 14));
-    expect(Game().byGrade, isFalse);
-    expect(Game().smithyItems(1), isEmpty);
+  test('the forge plays in every game, a plain Game() too (decisions-log 321)', () {
+    for (final g in [Game().boardRules(), Game()]) {
+      expect((g.smithyItems(1).length, g.toJson().containsKey('awakenKept')), (14, true));
+    }
   });
 
   test("the telemetry's and the events' version 10 or later: the forge's fields reach every player's records now", () {
     expect((telemetryVersion >= 10, eventVersion >= 10), (true, true)); // 11: the Tavern's (decisions-log 268)
-    final g = Game().boardRules();
-    expect((g.towns, passedOn.containsAll([EventKind.itemCrafted, EventKind.stoneCrafted, EventKind.itemEnhanced])),
-        (true, true));
+    expect(passedOn.containsAll([EventKind.itemCrafted, EventKind.stoneCrafted, EventKind.itemEnhanced]), isTrue);
   });
 
   test('the w89 save (items by the old rule, Bangkit 5 and Tempa): every type keeps its level, Bangkit, Tempa and stats',
       () {
-    final off = old(json(w89)), on = load(json(w89));
-    expect(on.byGrade, isTrue);
+    final on = load(json(w89));
     expect(on.awakenKept, {'priest': 3, 'armored_axeman': 3, 'archer': 2, 'wizard': 3, 'knight_templar': 2});
     for (final type in troopTypes.keys) {
-      expect(standing(on, type), standing(off, type), reason: type);
-      expect(on.awakenKept[type] ?? 0, off.oldItemLevel(type), reason: type);
+      expect(standing(on, type), _before['w89']![type], reason: type);
+      expect(on.awakenKept[type] ?? 0, on.oldItemLevel(type), reason: type);
     }
     // What the game from before the forge reads: Awaken 5 with its Tempa for the three that bought Bangkit 5.
     expect([for (final t in ['priest', 'armored_axeman', 'wizard']) (on.awakenLevel(t), on.tempaOf(t))], [(5, 4), (5, 6), (5, 1)]);
     // Without the floor the grade sets would hold nothing: the forge's new kinds are in every set.
     final bare = load(json(w89))..awakenKept.clear();
     expect([for (final type in troopTypes.keys) bare.awakenLevel(type)], everyElement(0));
-    // A game with the Towns off never writes the key (its save is as before the forge); the by-grade game always does.
-    expect(off.toJson().containsKey('awakenKept'), isFalse);
+    // The by-grade game always writes the key.
     expect(on.toJson()['awakenKept'], on.awakenKept);
   });
 
@@ -119,12 +137,12 @@ void main() {
   });
 
   test('the version-2 save at wave 8 loads into the forge: its items keep the level they gave', () {
-    final off = old(json(w8)), on = load(json(w8));
+    final on = load(json(w8));
     for (final type in troopTypes.keys) {
-      expect(standing(on, type), standing(off, type), reason: type);
+      expect(standing(on, type), _before['w8']![type], reason: type);
     }
-    expect(on.gold, off.gold);
-    expect(on.inventory, off.inventory);
-    expect(on.relicBag, off.relicBag);
+    expect(on.gold, 279);
+    expect(on.inventory, {Item.potion: 1, Item.shield: 0, Item.bow: 0, Item.staff: 2, Item.gloves: 1, Item.sword: 1});
+    expect(on.relicBag, isEmpty);
   });
 }

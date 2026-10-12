@@ -10,8 +10,9 @@ part of 'game.dart';
 // ([Game.legendsFound]), and one oath found keeps every other off the cards (batch G-4's six with Oath of One and
 // Alliance: eight, one a run; decisions-log 247). Gold rerolls the cards (Kocok ulang, doubling) or passes the chest
 // over for gold (Lewati); it can't be put off (decisions-log 281: the UI's Nanti is gone, lib/chest_popup.dart). With
-// the chest on ([Game.offers]) the Pusaka come only from it: the store's shelf closes ([artefactShelf]) and the boss's
-// small relic goes ([chestTakesBossRelic]). The four Langka Pusaka's numbers are this file's too: their rows are in [pusakaCatalog]
+// the chest on ([Game.offers]) the Pusaka come only from it: the store's shelf closes ([artefactShelf]); the boss's
+// small relic went with it (`chestTakesBossRelic`, decisions-log 152), as every field drop has since (decisions-log 321:
+// the switch went too). The four Langka Pusaka's numbers are this file's too: their rows are in [pusakaCatalog]
 // (pusaka_catalog.dart), run by the engine (pusaka_engine.dart). Every number the owner may tune is one constant below.
 
 /// Cards in a chest; the most catch-up chests an old save gets (one per [catchUpEvery] boss waves won); the chest in a
@@ -51,10 +52,6 @@ const rerollRise = 2.0, skipShare = 1.0;
 /// Whether the store still sells the epik Pusaka beside the chest (owner decision 4b). False (4a): with the chest on
 /// ([Game.offers]) the Toko's artefact shelf is closed; a plain Game() (no chest) keeps it ([Store.shelfOpen]).
 const artefactShelf = false;
-
-/// With the chest on, the boss's small-relic roll ([relicChance]) is drawn and thrown away (owner decision 6a), so the
-/// [Game.loot] dice stay where they were. False keeps the boss's relic beside the chest.
-const chestTakesBossRelic = true;
 
 /// What a Langka Pusaka is worth ([Store.basePrice]): the Gudang sells one back for [sellShare] of it, and an old
 /// save's copy past ★3 pays back [copyRefund] of it. The store never sells one.

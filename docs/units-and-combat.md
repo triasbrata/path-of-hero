@@ -228,7 +228,7 @@ archer boss shoots from afar. Then:
   share, scaled by the two tiers' damage. Its speed is ×1.1 like any high elite's, and it gets no boss buff
   (high elites get none). So it has a high-elite werebear's HP: wave 50 13,325 HP and 74 damage every 1.5 s;
   wave 60 16,205 and 88. Its gold, score and relic chance are a high elite's: 40 × 2, grown with the wave (691
-  at wave 50), 50 points and 5% (with the Towns on, the board since decisions-log 237, no relic drops: its Dark Gem at
+  at wave 50), 50 points and 5% (a roll that drops nothing since the Towns, decisions-log 237, 321: its Dark Gem at
   35% instead, loot-items-relics.md "Town and Smithy: materials"). Like any high elite it casts its type's signature, Curse of Frailty (1.15×, not
   a mini boss's 1.2×; "Monster skills"), and neither Soul Drain nor Death Nova.
 - A necromancer's raised minions are never raised to a slot (`enemyStats(…, raised: true)`): a raised mini
@@ -999,11 +999,11 @@ high elite one comes in every escort ("Waves"; its stats above).
   - In effect: safe (nobody near, full health), it saves for its ceiling tier; with troops closing
     in, hurt, or being hit, only what it can pay for now scores, so it spends on the strongest tier it
     can afford.
-- **Drops:** the boss (any type, `Tier.boss`) drops `bossDrops` 2 items and a relic at `relicChance` 30%;
-  the wave's mini boss (any type) drops 1 item and a relic at 10%. With the Towns on (the board since decisions-log
-  237) the relic rolls drop nothing (the `loot` dice draw the same) and the kill drops materials instead: a boss 3 of
-  its type's Rare part and a Soul Orb, a mini boss 2 and an Evil Eye (loot-items-relics.md "Town and Smithy:
-  materials").
+- **Drops:** the boss (any type, `Tier.boss`) and the wave's mini boss (any type) drop materials: a boss 3 of its
+  type's Rare part and a Soul Orb, a mini boss 2 and an Evil Eye (loot-items-relics.md "Town and Smithy: materials").
+  No item or relic drops (the Smithy makes them, decisions-log 221, 246); the `loot` dice still roll the boss's
+  `bossDrops` 2 items and its relic at `relicChance` 30%, the mini boss's item and relic at 10%, and throw them away
+  (decisions-log 321), so a seeded game plays the same.
 
 ### The healer (`necro_healer`)
 
@@ -1118,8 +1118,8 @@ melee maka range jangan dinaikkan".
 Heroes falling at wave 66 was a loss the owner cared about, and late gold had nothing to buy (#92). The rules are
 lib/recall.dart. Where a fallen Hero is recalled: on its type's Army detail, a "Recall" tag per fallen Hero in its
 Heroes section (lib/troop_detail.dart `_recallLines`, decisions-log 230; ui-hud.md "Army"), between waves from wave 15
-won (`storeFrom`, the army's buy gate `whyNotRecall` checks first). The Towns-off game's Fallen Heroes side of the
-field's Shop (lib/recall_page.dart) went in decisions-log 296.
+won (`storeFrom`, the army's buy gate `whyNotRecall` checks first). The Fallen Heroes side of the field's Shop of a
+game without the Towns (lib/recall_page.dart) went in decisions-log 296.
 
 - **Kept when it falls** (`Game.fallenHeroes`, a `FallenHero` each): a Hero that falls (`_hurt`) is kept with its
   `name`, `type`, rolled attributes (`stats`), own `skill` and the wave it fell in (`fell`), in the order they fell.
@@ -1463,7 +1463,28 @@ field's Shop (lib/recall_page.dart) went in decisions-log 296.
     never strips it (it is a troop's).
   - **`Status.noHeal`** on a troop: the Bayangan Blight's (a monster's, bad, so a cleanse ends it): in a wave its heal
     ceiling is its HP and the heal funnel gives it nothing ("Bayangan on the field").
-- **Game over** is `lives <= 0` or `wipedOut` (the last troop fell). Then `tick` stops.
+- **Game over** is `lives <= 0`. Then `tick` stops.
+- **An army wiped** (lib/wipe.dart, decisions-log 322; the owner: "Kalah wave: −1 hati, ulang"): checked at the end of
+  `tick`, after the raised joined and before the win, unless the leaks just ended the game. `_armyDown`: a troop fell this wave (`fallen` isn't empty), none
+  is alive (a troop Resurrection raised this tick counts), no Phoenix Plume rise is due (`_risesDue`, counted when its
+  `later` is set, dropped by `_endEffects`), and a monster lives or is queued (the last troop and the last monster
+  falling together is a win; a wave begun with no troop is never a wipe: only its leaks cost). Then `_wipe`:
+  - `wipeLives` 2 lives go (a heart; floor 0), `wipedOut` is set (until the next wave starts), `wipedAt` = `t`, the
+    lose sound, and the event `Wiped` (the lives left and lost, the monsters alive and queued, `over`). At 0 lives the
+    game is over as by leaks: the monsters stay and cheer, the tick's end scores it (`WaveEnded(won: false)`).
+  - Else the sweep: the living monsters leave `units` for `swept` (the UI draws them hopping for joy `wipeCheer` 2.4 s,
+    then each goes in a summon circle, `_sweptGone`), the queue, shots, line shots, beams, zones and the monsters'
+    rings are cleared, the march ends, `_endEffects`, the Grail's watch ends, `WaveEnded(won: false)`, the Tavern's
+    boosts count the wave, the wave's materials lying on the field are lost (`waveMaterials` cleared: they come with a
+    win), "Replace fallen" lists the fallen (not the Heroes: Recall's), Auto's `_autoWon`, no after-wave heal, Lewati's
+    skip buff it carried is owed again (`skipBuffDue`), `lostWave` = the wave and `wave` goes back one.
+  - No `victoryAt`, wave bonus, wave score, Shadow ease, Grudge target, Hero, boss chest or Town roll: they come when
+    the wave is won (the win clears `lostWave`). What the wave paid as it went stays: kill gold, kill score, kills.
+  - Between waves it reads as after the last win: the back line where it was, a Town due by `townAt == wave + 1`
+    (one left before the lost wave isn't due again; one marked after it waits for its win), "from wave 15 won". The next
+    `startWave` rolls the same wave afresh (its number, tide and slots; new dice), and `_omenWave` lands no catch-up
+    on it (`lostWave == wave`).
+  - Saved between waves as `lostWave` (only while set; loaded only when it is `wave` + 1), save version 3.
 
 ### Oaths in a fight (decisions-log 155, 247)
 

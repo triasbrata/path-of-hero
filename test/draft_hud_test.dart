@@ -223,7 +223,7 @@ void main() {
   testWidgets("Start pressed in a boss win's cheer opens its chest and starts no wave; Auto's wave comes only once it is "
       'taken; the "Chest!" chip shows in the cheer, never mid-wave', (tester) async {
     final b = await boot(tester);
-    final g = b.state = boardGame()..towns = false; // no Town due: Start shows in the cheer
+    final g = b.state = boardGame(); // no Town due: Start shows in the cheer
     b.autoStart.set(true);
     await frames(tester, 30);
     g
@@ -259,7 +259,7 @@ void main() {
   testWidgets("with a new Hero's splash due, Start in the cheer opens nothing and starts no wave: the splash, then the chest",
       (tester) async {
     final b = await boot(tester);
-    final g = b.state = boardGame()..towns = false;
+    final g = b.state = boardGame();
     await frames(tester, 30);
     g
       ..startWave()

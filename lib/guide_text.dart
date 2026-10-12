@@ -284,8 +284,8 @@ GuideText guideFor() => GuideText(
         'all troops get +${_pct(auraBoost - 1)}.',
       ]),
     ],
-    // With the Towns on the Shop deals only in a Town (decisions-log 230, 237).
-    // With the Towns on it sells the materials that dropped (decisions-log 248, 272).
+    // The Shop deals only in a Town (decisions-log 230, 237) and sells the materials that dropped (decisions-log 248,
+    // 272).
     'K11': [
       GuidePage(Words.shop, [
         'Every ${Words.town} has a "${Words.shop}" now:',
@@ -309,7 +309,7 @@ GuideText guideFor() => GuideText(
         'and ${_share(releaseRefund)} their gold comes back.',
       ]),
     ],
-    // Recalled from its type's Army detail with the Towns on (decisions-log 230).
+    // Recalled from its type's Army detail (decisions-log 230).
     'K14': const [
       GuidePage('Hero fell', [
         'Your Hero fell.',
@@ -339,7 +339,7 @@ GuideText guideFor() => GuideText(
         'Make your types stronger.',
       ]),
     ],
-    // The dot is on the Army tab with the Towns on: its detail buys Awaken 4-5 and Forge (decisions-log 230).
+    // The dot is on the Army tab: its detail buys Awaken 4-5 and Forge (decisions-log 230).
     'K18': const [
       GuidePage('Spend gold', [
         'Gold is waiting!',

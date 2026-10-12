@@ -10,20 +10,15 @@ import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart' show logLine;
 import 'package:tower_defense/telemetry.dart';
 
+import 'real_rules.dart';
 import 'hero_skill_helpers.dart';
 import 'hud_font.dart';
-
-/// Every item [type]'s awakening recipe asks for, [level] times over: the type at awakening [level].
-List<Item> recipe(String type, int level) => [
-      for (final MapEntry(key: item, value: n) in awakenRecipe[type]!.entries)
-        for (var i = 0; i < n * level; i++) item,
-    ];
 
 /// A game after wave 87 with [gold], and [type] at Bangkit 5 (its items' 3, both bought).
 Game atFive(String type, [int gold = 10000000]) => bareGame()
   ..wave = 87
   ..gold = gold
-  ..upgrades[type] = recipe(type, maxAwaken)
+  ..upgrades[type] = awakenItems(type, maxAwaken)
   ..ascended[type] = maxAscend;
 
 /// Wins the next wave of [g] at once: begun with nothing to spawn, its one monster gone in the tick (asah_test.dart).
@@ -86,7 +81,7 @@ void main() {
     expect(g.whyNotTempa('knight'), isNull);
     g.ascended['archer'] = maxAscend; // bought, but its items are short of Bangkit 3: it isn't at 5
     for (final (type, items) in [('archer', 2), ('wizard', 3)]) {
-      g.upgrades[type] = recipe(type, items);
+      g.upgrades[type] = awakenItems(type, items);
     }
     g.ascended['wizard'] = 1;
     expect((g.whyNotTempa('archer'), g.whyNotTempa('wizard'), g.whyNotTempa('soldier')),
@@ -165,7 +160,7 @@ void main() {
     final withTempa = g.statsOf('knight');
     g.ascended['knight'] = 1; // Bangkit 4
     final four = (bareGame()
-          ..upgrades['knight'] = recipe('knight', maxAwaken)
+          ..upgrades['knight'] = awakenItems('knight', maxAwaken)
           ..ascended['knight'] = 1)
         .statsOf('knight');
     expect((g.tempaOf('knight'), g.statsOf('knight').hp, g.statsOf('knight').dmg), (0, four.hp, four.dmg));
@@ -246,9 +241,11 @@ void main() {
     for (final v in [s.hp, s.dmg, s.def, s.range, s.speed, s.rate, s.regen, s.mp, s.mpRegen, h.maxHp, h.hp]) {
       expect(v.isFinite && v >= 0, isTrue, reason: '$v');
     }
-    // x2.25 (Bangkit 5) x4.32 (Tempa +30) x1.5 (the oath) x3 (the Hero's HP): big, but nowhere near overflowing.
-    final base = troopTypes['knight']!;
-    expect(h.maxHp, closeTo(base.hp * 2.25 * pow(1.05, 30) * oathOneK.k * heroBoost, base.hp * 0.1));
+    // x2.25 (Bangkit 5) x4.32 (Tempa +30) x1.5 (the oath) x3 (the Hero's HP), and its amulets' HP: big, but nowhere near
+    // overflowing.
+    final base = troopTypes['knight']!, hp = base.hp * 2.25 * pow(1.05, 30) * oathOneK.k * heroBoost;
+    final amulets = [for (final i in g.upgrades['knight']!) if (i.slot == ItemSlot.amulet) g.itemK(i)].fold(1.0, (a, k) => a * k);
+    expect(h.maxHp, closeTo(hp * amulets, hp * amulets * 0.01));
     expect(h.maxHp, lessThan(1 << 31));
     expect(s.dmg, greaterThan(g.statsOf('knight').dmg), reason: 'the Hero\'s power x3 on top');
     g
@@ -264,7 +261,7 @@ void main() {
     final g = atFive('knight');
     placeNow(g, 'knight', 2, 3);
     final a = placeNow(g, 'archer', 0, 2);
-    g.upgrades['archer'] = recipe('archer', 2);
+    g.upgrades['archer'] = awakenItems('archer', 2);
     final bar = nudgePurses * purse(88);
     expect(bar, 348000);
     g.gold = bar - 1;
@@ -274,7 +271,7 @@ void main() {
     g.tempa['knight'] = tempaMax;
     expect(g.tokoNudge, isFalse, reason: 'nothing left to buy for it');
     // The Bangkit 2 archer can't buy anything; at Bangkit 3 it can buy Bangkit 4.
-    g.upgrades['archer'] = recipe('archer', 3);
+    g.upgrades['archer'] = awakenItems('archer', 3);
     expect(g.tokoNudge, isTrue);
     a.gone = true; // no archer alive: its Bangkit 4 doesn't count
     expect(g.tokoNudge, isFalse);
@@ -295,11 +292,11 @@ void main() {
       'Troop price stays the same',
       'Price: 22,000 gold',
     ]);
-    expect(g.awakenInfo('knight').$2.reversed.take(2).toList(), [(null, '${tempaName(1)}: buy in the Shop'), (null, "Max: can't Awaken more")]);
+    expect(g.awakenInfo('knight').$2.reversed.take(2).toList(), [(null, '${tempaName(1)}: buy on the ${Words.army} page'), (null, "Max: can't Awaken more")]);
     g.tempa['knight'] = 6;
     expect(g.tempaInfo('knight').$1, tempaName(7));
     expect(g.tempaInfo('knight').$2.reversed.take(2).toList(), ['Price: ${thousands(tempaPrice(87, 6))} gold', 'Now: HP x1.34, attack x1.34']);
-    expect(g.awakenInfo('knight').$2.reversed.take(2).toList(), [(null, '${tempaName(7)}: buy in the Shop'), (null, '${tempaName(6)}: HP x1.34, attack x1.34')]);
+    expect(g.awakenInfo('knight').$2.reversed.take(2).toList(), [(null, '${tempaName(7)}: buy on the ${Words.army} page'), (null, '${tempaName(6)}: HP x1.34, attack x1.34')]);
     final p = atFive('priest')..tempa['priest'] = 1;
     expect(p.tempaInfo('priest').$2.first, 'HP +5%, heal +5%');
     expect(p.awakenInfo('priest').$2.reversed.elementAt(1), (null, '${tempaName(1)}: HP x1.05, heal x1.05'));

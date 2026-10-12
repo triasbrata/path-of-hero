@@ -424,7 +424,8 @@ pause button (#93, which stood in the top left row), in the same place in every 
   - While on, a won wave starts a countdown of `autoStartDelay` 5 s (`AutoStart`, lib/auto_start.dart),
     shown on the toggle's Start: "Start 5", "Start 4" … "Start 1". At 0 the next wave starts as a press on Start
     does (a book opened by hand closes). Real seconds: x2 doesn't hurry it.
-  - Only a win starts one: never before the first wave, after a save is loaded or another game comes in,
+  - Only a win starts one, or a wave lost to a wipe (played again, decisions-log 322; "An army wiped" below): never
+    before the first wave, after a save is loaded or another game comes in,
     nor when Auto is turned on between waves (the next win does). Meanwhile the player can still press
     Start (the countdown ends), place troops and use items.
   - It stands still while paused, while `Board.holdAutoStart` is set (the Hero splash, #47, sets it), while a
@@ -508,7 +509,8 @@ pause button (#93, which stood in the top left row), in the same place in every 
     lost), left to right. `Game.startLives` 6 is 3 hearts (#79, the owner: "jadi 3 heart saja"; it was 10,
     5 hearts): 5 lives show 2½, 2 lives 1 and 2 empty. No number. A save from before #79 comes back with
     at most 6.
-  - A life lost: the heart it went from (`heartsLost`; several with a bigger loss) pops, up to 1.3× from
+  - A life lost: the heart it went from (`heartsLost`; several with a bigger loss: an army wiped takes 2 lives, so a
+    whole heart, or two halves from an odd count) pops, up to 1.3× from
     its centre and back over `_heartPop` 0.35 s, drawn over its neighbours (`_Lives` keeps last frame's
     lives to see it).
   - More lives than `startLives` (none today) would add hearts, making the panel longer.
@@ -589,8 +591,8 @@ yang mati, troops pakai skill, monster drop item, monster high level appear". It
     Templar (60k gold)", 164), Monsters (strong monsters and their skills), Other (a new Hero, a Hero called back
     ("Budi (Knight) is back (57k gold)", #92 part 3), an awakening, an Awaken 4-5 bought ("Knight: Awaken 4 (40k
     gold)", #92 part 2), a wave won or lost). A chip starts the list at the top again. A Loot chip (field drops) went
-    in decisions-log 317: a board game drops no item or relic on the field, so it was always empty; a Towns-off
-    game's drops (the tests') stay under All.
+    in decisions-log 317: a board game drops no item or relic on the field, so it was always empty; the drops' event
+    went in 321, when no game had them any more.
   - Under them the entries, newest on top, 9·k a row, faint lines between: the wave number (small,
     faded), the event's icon (6·k) and its line (`logLine`, cream, 5·k and 11 px at least, cut with ".."
     to the width). The Hero and monster skills keep their English titles.
@@ -608,13 +610,12 @@ yang mati, troops pakai skill, monster drop item, monster high level appear". It
   | `TroopFell`'s 2nd row, when it held relics | "<relic>[, <relic>] back in the Bag" | its first relic's icon | pale gold (`_backInk`) |
   | `GrailSaved` | "Grail saves [Hero ]<name> (<type>)" | the Grail's (the trophy) | the Grail's cyan |
   | `PusakaReport`, a row each bound Pusaka | "Grail (Axeman): 7 saves, 6 lived", "Dragon Heart (Templar): 3 hits lived", "God's Thunder (Wizard): +12.3k damage", "Dawn Star (Priest): +5k damage & heal", "Iron Banner (Knight): +5k damage blocked", "Blood Fang (Lancer): +3.2k HP drained", "Mourning Bell (Priest): rang 3 times, +3.2k HP" ("rang once"), "Dragon Crown (Knight): 3 hits cut, +4.6k HP kept", "Void Eye (Archer): +4.2k damage" (a count of one is singular: "1 save", "1 hit") | the Pusaka's icon | the Pusaka's colour (Void Eye's violet, `_pusakaLogInk`) |
-  | `PusakaReport`, a row each of the forge's nine small relics that did something (only with the forge on, after the Pusaka's rows; decisions-log 250) | "Chill: slowed 12 times" ("slowed once"), "Weak Spot: marked 9 times, +812 damage", "Shark Tooth: +1.2k damage" (`relicCounter`: its own counter only, never a partner) | the relic's icon | pale gold |
+  | `PusakaReport`, a row each of the forge's nine small relics that did something (after the Pusaka's rows; decisions-log 250) | "Chill: slowed 12 times" ("slowed once"), "Weak Spot: marked 9 times, +812 damage", "Shark Tooth: +1.2k damage" (`relicCounter`: its own counter only, never a partner) | the relic's icon | pale gold |
   | `PusakaReport`'s last row, when relics came back | "Back to Bag: Fury ×2, Fang" (every kind, most first) | the relic most sent back | pale gold |
   | `PusakaAsah` (decisions-log 154), and its 2nd row | "Sharpen: Dragon Heart ★2 on Templar (60k gold)"; "Thorns 8, Fury 2 from the Bag" | the Pusaka's icon; the relic taken most | the Pusaka's colour; pale gold |
   | `PusakaLebur` (decisions-log 164) | "Melt: Void Eye into Dragon Heart ★2 on Templar (60k gold)" ("in Vault" for one there); a 2nd row like Sharpen's only while `leburRelics` is above 0 | the target's icon | the target's colour |
   | `SkillCast` (#10) | "<name> uses <skill>" | the MP bolt, blue | cream |
   | `HeroSkillCast` (#48) | "Hero <name>: <English title>" | the skill's mark (`_heroMarkIcon`) | the pops' gold |
-  | `LootDropped` | "<rank> <Monster> drops <item / relic>" | the item's or relic's icon | cream |
   | `StrongFoe` | "<rank> appears: <Monster>" ("Mini Boss appears: Werebear") | the crossed swords (112, 16) | the rank's HP bar colour (`_tierBar`) |
   | `MonsterSkillCast` (#59) | "<rank> <Monster>: <title>" | the crossed swords | the rank's HP bar colour |
   | `HeroMade` | "<name> (<type>) is now a Hero!" | the crown (64, 16) | gold |
@@ -622,6 +623,7 @@ yang mati, troops pakai skill, monster drop item, monster high level appear". It
   | `AwakenSkillCast` (#88) | "<name> uses <skill>" with the level's numeral ("Disarm II") | the full star (48, 0) in the level's colour | cream |
   | `Awakened` | "<type>: Awaken n", and " - <skill>" when the type has a built awakening skill ("Soldier: Awaken 2 - Disarm II") | the full star (48, 0) in the level's colour | the level's colour |
   | `WaveEnded` | "Wave n won" / "Lost at wave n" | the trophy (80, 16) / the dark star (80, 0) | green / light red |
+  | `Wiped` (decisions-log 322) | "Army fell: -1 heart, wave n again" / "Army fell: no hearts left" | the dark heart (32, 0), as a fall's | light red |
   | `OmenGained` (decisions-log 191, only with the Shadows on) | "Monsters got Armor 2 (Boss Chest w90)" (a chest's), "Late Shadow: Wound 2" (the catch-up), "Carve: monsters got Haste 1" | the kind's icon ("Shadows" below) | cream |
   | `OmenEased` | "Shadow eased: Armor down to 1" | the kind's icon | cream |
 
@@ -1123,9 +1125,8 @@ under an icon is the chest card's own (a circle in the ink at 0.3, as under a ca
 
 ## Towns on the HUD (`lib/town_look.dart`, decisions-log 216)
 
-The Towns' rules: loot-items-relics.md "Towns". The board has them since decisions-log 237. **Nothing of it shows
-while `Game.towns` is off** (a plain `Game()` alone, the tests' rules from before the Towns: no build or player path
-turns them off since decisions-log 296, when the TOWNS define went). The scene
+The Towns' rules: loot-items-relics.md "Towns". The board has them since decisions-log 237, every game since 321 (the
+TOWNS define went in 296, and `Game.towns`, the tests' way to the rules from before the Towns, in 321). The scene
 drawn in a Town, its book and its taps are "Town" below.
 
 - **Going in:** once a Town is due (`Game.townDue`) and nothing of the win is left on screen (the cheer's `victoryTime`,
@@ -1199,21 +1200,21 @@ existing art only.
 
 ### The Bag's Materials (decisions-log 221)
 
-The materials' rules: loot-items-relics.md "Town and Smithy: materials". With `Game.towns` off (tests only) none drops,
-so no cell and no pop; the Materials chip shows all the same, its page "No materials yet." (decisions-log 296: the book
-has no Towns-off version; until then the chip went and a Materials page left on went back to All).
+The materials' rules: loot-items-relics.md "Town and Smithy: materials". The Materials chip shows in every game, its
+page "No materials yet." while none is held (decisions-log 296; until then a game without the Towns had no chip and a
+Materials page left on went back to All).
 
 - **A kill's materials lie on the field until the wave is won** (decisions-log 262, the owner: "Material jatuh dan tetap
   terlihat di tanah tempat monster mati sampai wave selesai, lalu terbang ke tas"; `_matPopsIn`, `_matLootDraw`,
   `_matPopsDraw`, `_matFlight` in town_look.dart). Only the look: the tally and the bag move as in loot-items-relics.md
   "Town and Smithy: materials".
   - **The hop:** each kind a kill drops (`Game.matPops`: where, which, how many; drained every frame like the gold pops)
-    hops from where it fell onto the ground there: its own icon (`mat_<key>.png`) at the items' loot size (10 field
+    hops from where it fell onto the ground there: its own icon (`mat_<key>.png`) at the size the items' loot had (10 field
     units), growing in from 60%, up 16 field units at the hop's top and down onto its spot, `_matPopTime` 0.6 s on the
     game clock, drawn over the units while it hops (with the casts' names and Plunder's gold in `_castPops`). Several
     kinds of one kill land 8 field units apart.
-  - **Lying:** then it lies there for the rest of the wave as the items' loot does ("Win popup"): on the ground under
-    the units, so they walk over it and the HP bars and the HUD stay over it, bobbing 2 units on the field's clock.
+  - **Lying:** then it lies there for the rest of the wave as the items' loot did until decisions-log 321: on the ground
+    under the units, so they walk over it and the HP bars and the HUD stay over it, bobbing 2 units on the field's clock.
   - **Piles:** a drop within `_matPileReach` 24 field units of a pile of its kind joins that pile (it hops onto it).
     From 2 the pile's count shows at its bottom right in the Bag's count capsule ("x5", `shortCount`; 12 px on the desk,
     10 and tight on a phone), over every icon. Past `_matPileMost` 40 piles the oldest that has another pile of its kind
@@ -1383,9 +1384,9 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
   Wishlist turns to the Smithy's Items tab on it (`_wishGo`), where outside a Town it says where it is made. Nothing is
   given from the Army detail (giving is the Bag's, in a Town as on the field). The gold's red dot (`tokoNudge`) is on
   the Army tab in a Town too.
-  The Smithy's pages craft the relics, and with the forge the items ("The Smithy" below); the Tavern's sell the boosts
+  The Smithy's pages craft the relics and the items ("The Smithy" below); the Tavern's sell the boosts
   ("The Tavern" below); the Shop's is the Town's Shop on the Bag's code ("The Town's Shop" below).
-  Outside a Town, with the Towns on, the field's book has no Shop tab (Army, Bag, Settings: the Shop is a Town's), and
+  Outside a Town the field's book has no Shop tab (Army, Bag, Settings: the Shop is a Town's), and
   the Army detail recalls the fallen Heroes itself (its Heroes section, "Army").
 - **Taps:** a sign or its building (the bounding box of its cells, or the art of what stands at it: the Smithy's
   wood corner, furnace and ore, the Shop's stalls; `_TownView.hits`) opens the book on its
@@ -1534,7 +1535,7 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
 The Town book's Smithy tab crafts the small relics (the rules: loot-items-relics.md "Town and Smithy: Craft") and the
 items (decisions-log 254; the rules: loot-items-relics.md "The forge: items crafted, Awaken by grade"), on the Bag's own
 code (the owner: "pakai yang existing saja": the Bag's slots, grid, pager, capsules, action rows and the book's one
-bevelled button; no new look). Only in a Town, so only with the Towns on. The rows below are its Relics tab's; the
+bevelled button; no new look). Only in a Town. The rows below are its Relics tab's; the
 forge's strip and its Items and Enhance tabs follow them.
 
 - **The left page:** "Smithy", then the relics' board: every small relic in play (`smithyRelics`: by tier, Basic,
@@ -1865,7 +1866,7 @@ icons; nothing new drawn). In every Town (since decisions-log 268; the Tavern-of
 
 ### The Town's Shop (`lib/shop_page.dart` on `lib/bag.dart`'s code; decisions-log 230 and 269)
 
-With the Towns on, all the Shop's buying and selling is done in a Town (the owner, 2026-10-04: "semua aktifitas shop
+All the Shop's buying and selling is done in a Town (the owner, 2026-10-04: "semua aktifitas shop
 hanya bisa di lakukan di town, di tas di remove, dan di reuse codenya ketika di kota"). The rules: loot-items-relics.md
 "The store". The field's own Shop page of a game without the Towns (the Toko) went in decisions-log 296: the book has no Shop tab
 outside a Town.
@@ -1882,11 +1883,11 @@ outside a Town.
   biar paddingnya tetap sama"): a section per kind of goods the shelf has some of, top to bottom (`shopBuySections`,
   `shopBuyKinds`, `_shopBuyBoard`, on bag.dart's board in sections, `_sections` and `_sectionsLay`, which the Smithy's
   Items board shares since decisions-log 277):
-  - **Items**: the seven items monsters drop (`droppedItems`). **Relics**: the small relics in play (`relicsInPlay`: all
-    eleven with the Towns on, in `Relic` order). **Artifacts**: the store's Artifacts while their shelf is open
-    (`shelfOpen`; never on the board, where they come from the Boss Chest), else no section. **Materials**, with the forge
-    on (`Store.forgeShop`, decisions-log 248): the materials that have dropped, in the order they first did
-    (`Game.matsSeen`).
+  - **Items** (the seven grade-I kinds, `droppedItems`) and **Relics** (the small relics in play, `relicsInPlay`, in
+    `Relic` order): none is on the forge's shelf (`onShopShelf`, decisions-log 248), so neither section shows.
+    **Artifacts**: the store's Artifacts while their shelf is open (`shelfOpen`; never on the board, where they come from
+    the Boss Chest), else no section. **Materials** (decisions-log 248): the materials that have dropped, in the order
+    they first did (`Game.matsSeen`).
   - Each section is a small heading (bold, 13·ts; `_gridHead`), then its cells as the Bag's slots (`bagCellSize`, the
     Bag's gaps) in whole rows, the last row's spare slots empty, and a 6·ts gap before the next heading. The heading's
     words start exactly at the board's leftmost slot: the board and its headings stand on one span (`_gridSpan`: as many
@@ -1923,7 +1924,7 @@ outside a Town.
   Bag. A cell shows its count from 2, no price; one in the sell basket shows its count to sell instead, on ui_bars.png's
   green capsule (the light tags' green, in their dark ink; `BagMarks.basket`), a Vault Artifact's at the top right
   since its stars keep the bottom right. Nothing to sell: the board's grey card
-  "Nothing to sell yet." "Monsters drop materials." (decisions-log 292: no item drops with the Towns on). A tap on a cell puts it in the basket at 1 (when it wasn't in) and picks
+  "Nothing to sell yet." "Monsters drop materials." (decisions-log 292: no item drops). A tap on a cell puts it in the basket at 1 (when it wasn't in) and picks
   it (`_shopSellTap`): the Sell Basket's top shows it. A cell already in the basket is only picked again, its count kept
   (decisions-log 278; until then a tap on the picked cell let it go). The grid turns to the pick's page when the pick
   changes (a line tapped) and is the player's to turn after (`_ShopView.sellTurned`): with a pick always shown, following
@@ -1938,7 +1939,7 @@ outside a Town.
     lines), so the price row and the lines never move with the pick: the Bag's facing page heading (`_detailHeading`: the
     icon, 16 px at 915×412 and 32 on the desk, an enhanced stack's in its level's colour; the name, a stack's "+3" in its
     level's ink, an Artifact's in gold; on the right how many the Bag holds, "x12", or a Pusaka's stars), then under the
-    name, beside the icon, at most 3 lines: the kind line (`_shopKindLine`: an item's grade with the forge on, "Grade I
+    name, beside the icon, at most 3 lines: the kind line (`_shopKindLine`: an item's grade, "Grade I
     item", grey; a small relic's tier, "Strong relic", in its tier's ink; a Vault Artifact's rarity and where, "Rare · in
     Vault"; a material none, what drops it says what it is), a carved Artifact's "Carve +3 is lost" in red, then what it
     does (`_detailDesc`; without its closing sentence where all of it doesn't fit, the last line cut to fit). The pick
@@ -1980,7 +1981,7 @@ outside a Town.
     frame (`shopBasketFit`: a count over what is held comes down to it, a stack held no more leaves), and it empties when
     the book turns away from the Shop, the Town is left, or another game comes in; a new Town or game also opens the
     Shop on Buy, nothing picked.
-- **On the field** the Bag sells nothing (the Towns off too, decisions-log 296): no Sell row for an item, a small relic, a material or a Vault
+- **On the field** the Bag sells nothing (decisions-log 296): no Sell row for an item, a small relic, a material or a Vault
   Artifact, and under the rows a grey line "Sold at the Shop, in a Town." (`Words.soldInTown`, `_bagNote`) for an item,
   a small relic and a Vault Artifact (a material's own grey line says it). A buy or sell asked for outside a Town is
   refused "Only in a Town" (`StoreRefusal.town`).
@@ -2014,7 +2015,7 @@ maka otomatis game jadi ke pause, kalau window tidak focus juga game tetap berja
 
 - **State:** `Game.paused` (game.dart): `tick` does nothing, so nothing moves, fights, spawns, heals or
   counts down. Not saved; a loaded game starts unpaused. Units and bursts run on the game clock, so they
-  stop with it; the field's own screen-clock animations (loot bobbing, the awakening glow and sparks) use
+  stop with it; the field's own screen-clock animations (the materials' piles bobbing, the awakening glow and sparks) use
   `_fieldClock` (the screen clock minus the time spent paused, `_Pause.still`). The book, the troop
   counter's list and the cursor's sparks keep moving.
 - **Pause and resume:** the Start/Pause toggle (its Pause in a wave, its Resume while paused; "Start/Pause toggle"
@@ -2202,9 +2203,9 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     with its red dot, ▶, a Ksatria in Bangkit 1's outline, ui_icons.png's green up arrow; K10 the Hero splash's
     portrait (this game's Hero, else the Pendeta); K11 the Shop tab, ▶, two materials (Orc Tooth, Wolf Claw), a coin (what a Town's Shop sells since the forge; an item and a relic until decisions-log 317); K12 two Legendary
     cards (Dragon Crown, Oath of One); K13 the same two rows as I3; K14 a fallen Hero faded with its crown,
-    ▶, the Shop tab (with the Towns on the Army tab, whose detail recalls it); K15 "36/36" (`armyMaxBoard`) over two full rows of troops; K16 the lives' hearts (full, half, empty) over three
+    ▶, the Army tab, whose detail recalls it; K15 "36/36" (`armyMaxBoard`) over two full rows of troops; K16 the lives' hearts (full, half, empty) over three
     monsters marching; K17 an orc drawn bigger wave by wave with red up arrows between; K18 this game's gold (short,
-    "1812k") over the Shop tab with its dot (with the Towns on the Army tab's), ▶, a Ksatria in Bangkit 4's outline,
+    "1812k") over the Army tab with its dot, ▶, a Ksatria in Bangkit 4's outline,
     the green up arrow; K19 the boss
     with three healing necromancers behind it; K20 a Pusaka, a relic and a coin, ▶, a star; K21 a Pusaka, ▶,
     another, the green plus and a star; K22 a potion and a staff, ▶, a Pusaka, the green plus (no star: Carve is never
@@ -2309,11 +2310,11 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   | K4 | Next: the boss (2 pages) | wave 4 won (`bossEvery` − 1) | 4 |
   | K5 | Pick an Artifact (2 pages: the cards; "Reroll", "Skip", "Take") | a chest waits; over its popup | 5 |
   | K6 | Artifact | a Pusaka bound to a type (not an oath, not in the Gudang) | 5 |
-  | K7 | Relic | a small relic in the bag (`relicsInPlay`: with the Towns on any of the 20) | 7 |
+  | K7 | Relic | a small relic in the bag (`relicsInPlay`: any of the 20) | 7 |
   | K8 | Item limits ("Fill its list: it can Awaken, / grade I, then II, then III.") | a fielded type at its cap for a kind in the bag (`Refusal.awakenFirst`) | 10 |
   | K9 | Awaken ("More HP, MP and a skill.", then "Its levels: grade I, II, III.") | `bagAwakens` (the Tas tab's dot) | 10 |
   | K10 | Hero | a Hero was made (alive or in `fallenHeroes`) | 10 |
-  | K11 | Shop ("Every Town has a "Shop" now": "buy materials that dropped"; sell) | `storeOpen` (from `shopFrom`: the Shop open from wave 1 won as shipped) once a Town is marked (`townAt`: the break the chip comes, a wave before it; decisions-log 253); never with the Towns off, which is the tests' alone (decisions-log 296) | 15 |
+  | K11 | Shop ("Every Town has a "Shop" now": "buy materials that dropped"; sell) | `storeOpen` (from `shopFrom`: the Shop open from wave 1 won as shipped) once a Town is marked (`townAt`: the break the chip comes, a wave before it; decisions-log 253) | 15 |
   | K12 | Legendary | the chest to open shows a Legendary (`Rarity.legenda`); over its popup | 20 |
   | K13 | Type full | a type at its cap (`typeFull`, decisions-log 201; never without the board's caps) | 1 |
   | K14 | Hero fell (""Army": pick its type, / then "Recall" brings it back") | `fallenHeroes` not empty and `storeOpen` | none |
@@ -2326,7 +2327,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   | K21 | Melt (`Words.melt`, likewise) | some Gudang Pusaka can melt (`whyNotLebur` null; the gold isn't asked) | none |
   | K22 | Carve (`Words.carve`; "New: spare items make an Artifact / a bit stronger. / "Bag": tap it, then "Carve". / Or pick an item: "Give".", decisions-log 196) | some Pusaka can take Carve now (`whyNotUkir` null: from wave 40, between waves, spare items) | none |
   | K23 | A Town! (""Smithy": craft items and relics. / "Tavern": buy boosts. / "Leave town" goes on.", decisions-log 237 and 272; the Tavern's line decisions-log 268) | in a Town (`inTown`); the only card there | none |
-  | K24 | Materials ("Monsters drop materials. / They wait in "Bag". / In a Town, the "Smithy" / makes items and relics.") | the Towns on and a material held (after the first wave that drops one) | 1 |
+  | K24 | Materials ("Monsters drop materials. / They wait in "Bag". / In a Town, the "Smithy" / makes items and relics.") | a material held (after the first wave that drops one) | 1 |
   | K25 | Monster Shadows ("Each card hides a Shadow: / a buff for the monsters. / More "!": a stronger one. / "Take" shows what they got." and "Chips show the ones they hold. / Tap one to read them all. / A wave where many troops fall / takes the newest one away.", decisions-log 319) | the chest to open hides a Shadow (`omensOn`, from `omenFrom`); it sits over the popup | `omenFrom` 20 |
 
 - **Which card** (`guideNext(g, seen)`): none mid-wave, while a Town is due and not yet open (`canStartWave` false), or
@@ -2470,7 +2471,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
        (`_awakeStars`, ui_icons.png: one per level reached in that level's colour, blue, crimson, gold, the rest empty
        and faint, glowing from level 3; `awakenTop` 5 once Bangkit 4 was bought, the 4th violet, the 5th white) and at
        Bangkit 5 its Forge "+n" after them (`_tempaMark`, ascend_page.dart; `_besideMark`), their hover the next
-       awakening's recipe ("Awaken 4: buy in the Shop", with the Towns on "buy on the Army page"; "Max: can't Awaken
+       awakening's recipe ("Awaken 4: buy on the Army page"; "Max: can't Awaken
        more", the Forge held and the next); and the
        build name ("Undying Templar", `buildNameOf`, decisions-log 149) in the Artifact's book ink (`_pusakaInk`), grey
        while it sleeps (`_buildNameLine`, pusaka_look.dart; `Board.rowBuildName(type)`), or, for a type Oath of One
@@ -2503,9 +2504,8 @@ the page holds every page and card, and a one-time card opens at its break ("A o
        - **Awaken needs** (`_detailNext`): below Awaken 3, "Awaken 3 needs:", then one recipe item a row as the owner
          drew it, in columns: its icon and name, have/need ("2/3", green once enough; `awakenProgress`), and where it
          comes from today: "Done" (green) once held in full, "In Bag: 2" (green) while the Bag holds some it still needs,
-         else the Smithy's line as by grade below ("Smithy: can make 3", "Smithy: needs Leather Strap"; the old recipe of
-         a game without the Towns, the tests' alone, gets the same: its "Drops from monsters" and "Drops, Shop 2.2k"
-         went in decisions-log 296); its hover the item's. Then what it unlocks, "Next: Unlocks Disarm" or "Next:
+         else the Smithy's line as by grade below ("Smithy: can make 3", "Smithy: needs Leather Strap"; the old recipe's
+         "Drops from monsters" and "Drops, Shop 2.2k" went in decisions-log 296, the old recipe's rows in 321); its hover the item's. Then what it unlocks, "Next: Unlocks Disarm" or "Next:
          Disarm II" (`awakenSkillChange`), and while the bag holds that awakening (`bagLevel`) the green tag "Awaken 3
          from the Bag", which turns the book to the Bag with the first recipe item the type still needs picked
          (`_openBag`, main.dart), so a tap on its row there gives it: 2 taps (3 before). From Awaken 3: "Next: Awaken
@@ -2514,7 +2514,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
          why, the step named first where it fits ("Awaken 4: Opens after wave 15", "Not enough gold", "Only between
          waves", "Already Forge +30 (Max)"), a tap then saying why. One tap buys, through `_ascend` / `_temper` and
          their refusals (the field's Toko had a row per type with the same button until decisions-log 296).
-         - **By grade** (every game with the Towns: `Game.byGrade`, decisions-log 249 and 296;
+         - **By grade** (every game: decisions-log 249, 296 and 321;
            loot-items-relics.md "The forge: items crafted, Awaken by grade"), as the design's mockup drew it: first, for
            a level kept from a save before the grades (`Game.keptLevel`, decisions-log 272), a grey line "Awaken 3 (kept
            from old items)" (`Words.keptFromOld`; "Awaken 3 (kept)", `Words.kept`, where it doesn't fit), at every level;
@@ -2537,8 +2537,8 @@ the page holds every page and card, and a one-time card opens at its break ("A o
            still fit whole beside it (on a phone mostly not; there Wishlist all and the section below put it on): a tap
            puts that one item on the type's wishes with the set's count ("Sword ×3: on Knight's wishlist";
            `_wishOneTap`), and the "+" goes. `troopDetail('wishOne:<item>')` for tests.
-       - **Wishlist** (decisions-log 282; lib/wishlist_look.dart; the rules: loot-items-relics.md "The Wishlist"), with
-         the forge and the Towns on: "Wishlist" and at its right a link tag "Add to wishlist" ("Add" where short),
+       - **Wishlist** (decisions-log 282; lib/wishlist_look.dart; the rules: loot-items-relics.md "The Wishlist"):
+         "Wishlist" and at its right a link tag "Add to wishlist" ("Add" where short),
          "Done" while the picker is open. Under it the type's wishes in the order put on, as the Bag's slots
          (`wishCell`: the Smithy's 22-px small slot on a phone, on the desk the same 16-px art in a 2-px slot, 28 px; 2
          sprite px apart, as many a row as fit), each with "have/need" on the type in the count capsule, tight and tucked
@@ -2572,7 +2572,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
          it; the line's hover the Hero's tooltip (`recallInfo`). `troopDetail('recall:<i>')` (i: its index in
          `fallenHeroes`) and `troopDetailWords('recall')` for tests.
        - **Relics:** "Relics:" and each small relic its living troops wear, icon and "x3", in `Relic` order; "Relics:
-         none"; nothing while none of it lives. With the Towns on each icon has the relic's tooltip (`_Hint.relic`: its
+         none"; nothing while none of it lives. Each icon has the relic's tooltip (`_Hint.relic`: its
          tier and "Best on", decisions-log 227), without the Bag's "Tap, then pick a troop" (`tapLine`; nothing to tap
          here, decisions-log 237).
        Inside the body the buttons are **tags** (`_tag`, `_TagLook`; decisions-log 198, the owner: not every button a
@@ -2660,9 +2660,9 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   tidak ada tidak perlu dibuatkan placeholder langsung hilang saja"). Its words are English ("In-game text" below; the
   mechanic's from `lib/words.dart`).
   - **Layout** (`_bagGrid`): "Bag" (`Words.bag`, 22·ts bold) at the top; under it (`_underTitle`), the category chips
-    (`_bagChips`, max(20, 24·ts) tall): **All**, **Items**, **Relics**, with the Towns on **Materials** ("The Bag's
-    Materials" below; "Mats", `Words.materialsShort`, where the words don't all fit) and, once the store is open (with the Towns on
-    as shipped from wave 1 won) or any Pusaka is owned, **Artifacts**; only one on at a time, kept for the session (not saved). A light segmented control (the owner's
+    (`_bagChips`, max(20, 24·ts) tall): **All**, **Items**, **Relics**, **Materials** ("The Bag's
+    Materials" below; "Mats", `Words.materialsShort`, where the words don't all fit) and, once the store is open (as
+    shipped from wave 1 won) or any Pusaka is owned, **Artifacts**; only one on at a time, kept for the session (not saved). A light segmented control (the owner's
     button rule, decisions-log 198 "Bag chips"; no ui_buttons bevel): one paper strip across the page's writing, the
     Bag slot's card (`_framePlain`, `_bagSlot` at the book's k), cut into a segment per category with no gap between
     them, each its word on the paper in a soft brown (7A5238). The one on is lit as a picked slot (the lit card
@@ -2691,9 +2691,9 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     either (the Shop's shelf still shows every good).
   - **Their order** (`bagKinds`, never by count, stars, binding or the Gudang, so binding, moving, unbinding, Asah and
     Ukir never move a cell): the items in `Item.values` order, the small relics in `droppedRelics` order, the Towns'
-    materials in `Mat.values` order (none with the Towns off), then the Pusaka, the Legenda first, then the Epik, then
+    materials in `Mat.values` order, then the Pusaka, the Legenda first, then the Epik, then
     the Langka, each in `Relic.values` order.
-  - **Enhanced stacks** (the forge on, decisions-log 255; loot-items-relics.md "The forge: Enhance"; forge-design §12,
+  - **Enhanced stacks** (decisions-log 255; loot-items-relics.md "The forge: Enhance"; forge-design §12,
     mockups 11 and 12): an item at +1 to +5 is its own cell, right after the item's +0 cell (an item held only enhanced
     has its stacks' cells alone), lowest plus first (`bagLoot`; the cells, their marks and the picks are keyed by
     `BagLoot`, `(kind, plus)`, every other kind at 0). Its icon is the item's under its level's colour,
@@ -2760,7 +2760,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     button go (Sharpen, Carve, Melt's picker and its target, a held relic's Remove), as another pick does.
   - **Empty** (`_bagEmpty`, grey #9E9080, centred, max(10, 13·ts)): All with nothing owned, ui_icons.png's bag
     ((144, 32), 32 px) over "Your bag is empty." / "Monsters drop materials." / "Make items at the Smithy in a Town."
-    (`Words.monstersDropMats` and `Words.makeItemsAtSmithy`, decisions-log 292: no item drops; the Towns off too, whose
+    (`Words.monstersDropMats` and `Words.makeItemsAtSmithy`, decisions-log 292: no item drops; a game without the Towns'
     "Monsters drop items." went in decisions-log 296; the long line goes on over two where it must); Items "No items yet."; Relics "No relics in
     the bag." and, with some worn, "N worn by troops."; Artifacts "No Artifacts yet." / "Boss Chests give them." and,
     while the Shop's shelf is open, "A Town's Shop sells some.". The board stands round it: the text is on the slot's art
@@ -2801,7 +2801,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     - **What it is** (`_detailLines`, max(10, 13·ts), a line max(14, 1.15·the text) tall): a Pusaka's where line
       (`_pusakaWhere`): its rarity in the rarity's dark ink (`_rarityFrame`; the `Words` rarities) then " · in Vault",
       or " · on Templar (13)" (" · on Wizard (asleep)" while none of its type lives); an oath's "Oath: all troops", or
-      while Oath of One waits "Waiting: 5/2 types" in red (`oathWaitingRowOf`), the Few's "Waiting: 48/24 troops"; with the Towns on a small relic's tier line
+      while Oath of One waits "Waiting: 5/2 types" in red (`oathWaitingRowOf`), the Few's "Waiting: 48/24 troops"; a small relic's tier line
       instead, "Strong relic" (`relicTierLine`; Basic in the page's ink, Strong a Rare's green, Mighty an Epic's violet:
       `_relicTierInk`, decisions-log 227). Then what it is, whole, word by word to
       the page's width (a bracket's words kept together; `_detailDesc`, `_descLines`, `_wrap`), never a word cut: in at
@@ -2809,7 +2809,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
       the heading's icon); one that needs more drops its closing sentence (a Pusaka's "For a whole type, never lost.")
       and shows what it does whole (decisions-log 214). The action rows start under the lines, however many: an item's first effect line "for
       one troop type. Each type takes a few." (`itemEffect`: "+20% attack for one troop type. …"); a small relic's
-      first effect line, with the Towns on who it suits (`relicBestLine`: "Best on: Knight, Templar, Lancer,
+      first effect line, who it suits (`relicBestLine`: "Best on: Knight, Templar, Lancer,
       Swordsman."), and `relicSlotsLine` ("Heals 10% of damage dealt. One relic per troop (Hero: 2)."); a Pusaka's
       first sentence at its stars and Carve (`relicEffect`, `firstSentence`: the card's lines that go on from the first,
       each starting with a small letter, a sign or a digit, joined to it: "When one dies, all troops within 2 tiles heal
@@ -3944,7 +3944,8 @@ follows the game's position, and never changes the game's positions (fights, the
       - their blows show the Hero type's big hit (Chain Hook the axeman's plain one, Spear Wall's the
         lancer's), and a charge's passing blows the `hit_orc_rider` dust.
     - Resurrection says "<name> rises again!" in the message window (`Game.risen`, drained in
-      `_drainCasts`), the one Hero skill that speaks; the troop rises in the gold summon circle
+      `_drainCasts`; not for one fallen again by then, so an army wiped keeps its own message, decisions-log 322), the
+      one Hero skill that speaks; the troop rises in the gold summon circle
       (`awakeFx('summon', 3)`) with a `holy` burst, its death strip played backwards over `riseTime` (`_unit`:
       only `_summoners` have a summon strip).
     - A monster under Slime Hex is drawn with the slime's strips (`tiny_slime_*`), dying one too, with a
@@ -4152,13 +4153,13 @@ follows the game's position, and never changes the game's positions (fights, the
     healer's cast).
   - In every animation (walking, attacking, hurt, dying, casting, cheering at game over); a raised minion
     shows its rank the same way. The ground shadow stays plain, and the HP bar keeps its colour.
-- **Win popup** (`_victory`): "VICTORY!", the wave, the gold bonus and the loot: each kind once, "Nx"
-  (20, white with the dark outline) before its 32 px icon, items then relics in enum order
-  (`lootCounts`), then the Towns' materials (with the Towns on, "The Bag's Materials"), centred.
-  - The loot on the field before the win bobs (2 units, on the field's clock); a relic glints over its icon: the
-    same sparks below in the Hero gold (`_relicGlint`, 16 world units a frame), its own clock set by where it lies
-    (until decisions-log 173 a gold disc drawn under it). At the win the items and relics are gone at once; the Towns'
-    materials lie with them and fly to the Bag (decisions-log 262, "The Bag's Materials").
+- **Win popup** (`_victory`): "VICTORY!", the wave, the gold bonus and the loot: the materials the wave dropped, each
+  kind once in `Mat` order, "Nx" (20, white with the dark outline) before its 32 px icon, centred ("The Bag's
+  Materials"). No item or relic drops, so none is counted (decisions-log 321: until then a game without the Towns
+  counted its items and relics first, `lootCounts`).
+  - The materials lie on the field until the win and fly to the Bag (decisions-log 262, "The Bag's Materials"). Until
+    decisions-log 321 a game without the Towns' items and relics lay there too, bobbing, a relic glinting in the Hero
+    gold.
   - Round it, sparks twinkle: `ui_click.png`'s small x and its bigger x (the click's first two frames, in the steps
     `_sparkSteps` 0, 1, 1, 1, 0, then dark for one, at `_sparkFps` 12 a second) at 14 spots going slowly round an
     ellipse, each on a clock of its own, gold (dyed) and white by turns, 4 screen px a sprite px. Until decisions-log 173 they
@@ -4212,9 +4213,9 @@ follows the game's position, and never changes the game's positions (fights, the
   `update`, #92), and "Replace fallen"'s refusals and partial buys (above).
 - **The army cap's warning** (decisions-log 161; qa-4's finding: on the owner's w63 save the army held with no
   losses until it was down at the cap, then the tide took it in 2-3 waves, and nothing had said so). Two lines in the
-  message window, for `_noteTime` 8 s: "Army full: cap 36 - Tide +87%" / "Make types stronger in the Shop (Awaken)"
-  (`capWarningText`: the cap, then the coming wave's tide as the meter's badge shows it; with the Towns on "... in the
-  Army page (Awaken)", whose detail buys it, decisions-log 237).
+  message window, for `_noteTime` 8 s: "Army full: cap 36 - Tide +87%" / "Make types stronger in the Army page (Awaken)"
+  (`capWarningText`: the cap, then the coming wave's tide as the meter's badge shows it; the Army page's detail buys it,
+  decisions-log 237; a game without the Towns said "in the Shop" until 321).
   - **When** (`Game.capWarning`, asked by `_capNews` in `update` every frame): between waves, while `Game.capPressed`
     holds (the board's `armyMax` on and the capacity at it; the army as it stood in the wave, the living and the
     wave's `fallen`, at the cap or over it, so the owner's 48 counts; the coming wave past the tide's first, its
@@ -4225,6 +4226,13 @@ follows the game's position, and never changes the game's positions (fights, the
     the Hero splash shows, a boss chest is due (`_chestHolds`) or another message is up; then it shows.
   - Its words fit a phone: at 915×412 the window stands 8 px or more inside the screen
     (`test/cap_warning_hud_test.dart`).
+- **An army wiped** (lib/wipe.dart, decisions-log 322; units-and-combat.md "An army wiped"): the heart lost pops as
+  the last troop falls; the monsters left hop for joy where they stood (the game-over hop, `Game.swept`, drawn with the
+  units) for `wipeCheer` 2.4 s, then each goes in a summon circle (`tiny_fx_summon.png`, the necromancer's). `update`
+  sees `Game.wipedAt` change (`_savedWipe`) and, unless the game is over, saves the game at once (the heart lost stays
+  lost), starts Auto Wave's countdown as a win does, and says in the message window for `_noteTime` 8 s: "Your army
+  fell! -1 heart." / "Wave N again." (`Game.wipeNote`). Between waves the army's fallen are on "Replace fallen" and
+  Auto Buy buys them back as the gold allows; the Auto hold waits for the army as after any wave.
 - **Game over** (`_gameOver`, lib/scoreboard.dart): a light dim (the monsters cheer through it), "GAME OVER  -
   Wave N" (36·u, white), "Score N" (30·u, gold, dark outline) and two buttons side by side, 44·u tall:
   "Scoreboard" (180·u) and "Play again" (140·u; a fresh game, the save deleted). u as on the welcome screen.

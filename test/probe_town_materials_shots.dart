@@ -40,7 +40,6 @@ Game board() {
     ..draft = Random(seed + 500)
     ..townDice = Random(seed + 600)
     ..matDice = Random(seed + 700)
-    ..towns = true
     ..armyMax = null
     ..gold = 40000
     ..wave = 20;
@@ -139,14 +138,12 @@ void main() {
       }
       await shot('pop', 6);
 
-      // The win's "VICTORY!" with materials after the items.
+      // The win's "VICTORY!" with the materials the wave dropped.
       for (final u in g.enemies) {
         u.gone = true;
       }
       await frames(tester, 2);
-      g
-        ..lastLoot = [Item.sword, Item.boots]
-        ..lastMaterials = {Mat.wolfFang: 1, Mat.orcTusk: 2, Mat.evilEye: 1, Mat.slimeGel: 3};
+      g.lastMaterials = {Mat.wolfFang: 1, Mat.orcTusk: 2, Mat.evilEye: 1, Mat.slimeGel: 3};
       await shot('victory', 40);
     });
   }

@@ -1,8 +1,8 @@
 // The Towns' materials on screen (decisions-log 221; docs/ui-hud.md "The Bag's Materials"): the Bag's Materials chip
-// (the Towns off too since decisions-log 296, its page then empty), its cells in the game's order, all 30 on one page on the desk and on three at 915x412
+// (its page empty with none held), its cells in the game's order, all 30 on one page on the desk and on three at 915x412
 // (12 a page on the shorter landscape book, decisions-log 283),
 // a material's facing page (what drops it, what it is for, the Smithy's row, no Sell) and its tooltip; the "VICTORY!"
-// line's materials after the items; a dropped material's hop onto the field. One TdGame per widget test.
+// line's materials (no item drops); a dropped material's hop onto the field. One TdGame per widget test.
 //
 // Never let a wave be won or the game end here: the board saves after a pick, into the queue's temp HOME
 // (flutter_test_config.dart), never the real save.
@@ -56,12 +56,10 @@ Future<void> openBag(WidgetTester tester, Board b) async {
   expect(b.bagOpen, isTrue);
 }
 
-/// A board game between waves at wave 20 with the Towns [on] (off: tests only), a soldier beside the free priest, a few
-/// items and, with them on, every one of the 30 dropped materials (the n-th n of it; the forge's two stones are
-/// forge_smithy_ui_test.dart's).
-Game matsGame({bool on = true}) {
+/// A board game between waves at wave 20, a soldier beside the free priest, a few items and, with [materials], every one
+/// of the 30 dropped materials (the n-th n of it; the forge's two stones are forge_smithy_ui_test.dart's).
+Game matsGame({bool materials = true}) {
   final g = Game(Random(1)).boardRules()
-    ..towns = on
     ..armyMax = null
     ..gold = 50000
     ..wave = 20;
@@ -72,7 +70,7 @@ Game matsGame({bool on = true}) {
       ..arriving = false;
   }
   g.inventory.addAll({Item.sword: 3, Item.bow: 1});
-  if (on) g.materials.addAll({for (final (i, m) in droppedMats.indexed) m: i + 1});
+  if (materials) g.materials.addAll({for (final (i, m) in droppedMats.indexed) m: i + 1});
   return g;
 }
 
@@ -124,20 +122,20 @@ void main() {
     });
   }
 
-  testWidgets('with the Towns off (tests only) the Bag has its Materials chip all the same (decisions-log 296: the book '
-      'has no Towns-off version), and a Materials page left on stays, empty: "No materials yet."', (tester) async {
+  testWidgets('a game holding no materials comes in: the Bag has its Materials chip all the same, and a Materials page left '
+      'on stays, empty: "No materials yet."', (tester) async {
     final b = await boot(tester, desk);
     b.state = matsGame();
     await frames(tester, 30);
     await openBag(tester, b);
     await tapOn(tester, b.bagChip(BagCategory.materials).center);
     expect(b.bagCategory, BagCategory.materials);
-    b.state = matsGame(on: false); // another game comes in, the Materials page left on
+    b.state = matsGame(materials: false); // another game comes in, the Materials page left on
     await frames(tester, 30);
     if (!b.bagOpen) await openBag(tester, b);
     expect(b.bagChip(BagCategory.materials), isNot(Rect.zero));
     expect(b.bagChip(BagCategory.artifacts), isNot(Rect.zero), reason: 'the Shop is open at wave 20');
-    expect(b.bagCategory, BagCategory.materials, reason: 'no Towns-off reset to All');
+    expect(b.bagCategory, BagCategory.materials, reason: 'no reset to All');
     expect(b.bagCells, isEmpty, reason: 'no material held');
     expect(b.bagEmpty, ['No ${Words.materials.toLowerCase()} yet.', 'Monsters drop them.']);
     await tapOn(tester, b.bagChip(BagCategory.all).center);
@@ -145,16 +143,15 @@ void main() {
     await frames(tester, 40); // the last tap's gesture timer runs out
   });
 
-  testWidgets('"VICTORY!" lists the materials after the items, each kind once with its count', (tester) async {
+  testWidgets('"VICTORY!" lists the materials the wave dropped, each kind once with its count, in their order', (tester) async {
     final b = await boot(tester, desk);
     final g = b.state = matsGame();
     await frames(tester, 10);
     g
-      ..lastLoot = [Item.sword, Item.sword]
       ..lastMaterials = {Mat.evilEye: 1, Mat.slimeGel: 3}
       ..victoryAt = g.t;
     await frames(tester, 10);
-    expect(b.victoryLoot, [(Item.sword, 2), (Mat.slimeGel, 3), (Mat.evilEye, 1)]);
+    expect(b.victoryLoot, [(Mat.slimeGel, 3), (Mat.evilEye, 1)]);
   });
 
   testWidgets('a dropped material hops onto the field, and lies there (mat_loot_test.dart)', (tester) async {

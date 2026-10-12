@@ -12,13 +12,8 @@ import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
 import 'package:tower_defense/telemetry.dart';
 
+import 'real_rules.dart';
 import 'hero_skill_helpers.dart';
-
-/// Every item [type]'s awakening recipe asks for, [level] times over: the type at awakening [level].
-List<Item> recipe(String type, int level) => [
-      for (final MapEntry(key: item, value: n) in awakenRecipe[type]!.entries)
-        for (var i = 0; i < n * level; i++) item,
-    ];
 
 /// A wave on with nothing to spawn, [type] awakened to [level], and a troop of it at cell (2, 3), full of MP, that
 /// never strikes on its own. The Hero and monster skills are off; the #10 skills stay on. Returns the game and the
@@ -27,7 +22,7 @@ List<Item> recipe(String type, int level) => [
   final g = bareGame(Random(1))
     ..heroSkills = false
     ..monsterSkills = false;
-  g.upgrades[type] = recipe(type, level);
+  g.upgrades[type] = awakenItems(type, level);
   final u = placeNow(g, type, 2, 3);
   g
     ..startWave()
@@ -90,7 +85,7 @@ void main() {
       for (final s in AwakenSkill.values) {
         expect([for (var l = 1; l <= 3; l++) s.costAt(l)], costs[s.type], reason: s.name);
         for (var l = 1; l <= 3; l++) {
-          g.upgrades[s.type] = recipe(s.type, l);
+          g.upgrades[s.type] = awakenItems(s.type, l);
           final pool = g.statsOf(s.type);
           expect(s.costAt(l) + troopSkills[s.type]!.cost, lessThanOrEqualTo(pool.mp), reason: '${s.name} $l');
           expect(s.costAt(l) / pool.mpRegen, closeTo(8, 0.5), reason: '${s.name} $l');
@@ -181,7 +176,7 @@ void main() {
     });
 
     test('a wave\'s start makes the i-th troop of an awakened type ready i % 4 s in; a troop placed later at once', () {
-      final g = bareGame(Random(1))..upgrades['soldier'] = recipe('soldier', 1);
+      final g = bareGame(Random(1))..upgrades['soldier'] = awakenItems('soldier', 1);
       final all = [for (var r = 0; r < 5; r++) placeNow(g, 'soldier', 2, r)];
       final knight = placeNow(g, 'knight', 3, 0);
       g.startWave();
@@ -195,8 +190,8 @@ void main() {
     });
 
     test('awakening mid-wave: the skill is ready over 0-3 s, its name pops over each troop, the log names it', () {
-      final g = bareGame(Random(1))..upgrades['soldier'] = recipe('soldier', 1).sublist(1);
-      final missing = recipe('soldier', 1).first;
+      final g = bareGame(Random(1))..upgrades['soldier'] = awakenItems('soldier', 1).sublist(1);
+      final missing = awakenItems('soldier', 1).first;
       final all = [for (var r = 0; r < 3; r++) placeNow(g, 'soldier', 2, r)];
       g
         ..startWave()
@@ -219,7 +214,7 @@ void main() {
 
     test('the level is kept, and still follows the items the previews try on and take back', () {
       final g = bareGame();
-      final items = recipe('knight', 1), last = items.removeLast();
+      final items = awakenItems('knight', 1), last = items.removeLast();
       g
         ..upgrades['knight'] = items
         ..inventory[last] = 1;
@@ -227,7 +222,7 @@ void main() {
       expect(g.assignPreview(last, 'knight').awaken, (0, 1));
       expect(g.priceWith('knight', last), (troopTypes['knight']!.cost + (items.length + 1) * Game.priceStep('knight')) * awakenPrice);
       expect(g.awakenLevel('knight'), 0, reason: 'taken back');
-      g.upgrades['knight'] = recipe('knight', 2); // a new list
+      g.upgrades['knight'] = awakenItems('knight', 2); // a new list
       expect(g.awakenLevel('knight'), 2);
       g.upgrades['knight']!.removeLast(); // the same list, shorter
       expect(g.awakenLevel('knight'), 1);
@@ -253,7 +248,7 @@ void main() {
         'MP 10, cooldown 11s',
         '${awakenName(1)} needs:',
       ]);
-      g.upgrades['soldier'] = recipe('soldier', 1);
+      g.upgrades['soldier'] = awakenItems('soldier', 1);
       final (title1, lines1) = g.awakenInfo('soldier');
       expect(title1, awakenName(1));
       expect([for (final (_, l) in lines1) l].take(6), [
@@ -265,7 +260,7 @@ void main() {
         '${awakenName(2)} needs:',
       ]);
       expect(g.mpInfo('soldier').$2.skip(3), ['For Hold Fast (5 MP)', 'and Disarm (10 MP)']);
-      g.upgrades['soldier'] = recipe('soldier', 3);
+      g.upgrades['soldier'] = awakenItems('soldier', 3);
       final (title3, lines3) = g.awakenInfo('soldier');
       expect(title3, awakenName(3)); // Bangkit 4 and 5 are bought (#92 part 2, ascend_test.dart)
       expect([for (final (_, l) in lines3) l], [
@@ -274,7 +269,7 @@ void main() {
         'Its attack -20% for 6s (boss -10%)',
         'MP 14, cooldown 9s',
         '${awakenName(4)}: cooldown 7.7s',
-        '${awakenName(4)}: buy in the Shop',
+        '${awakenName(4)}: buy on the ${Words.army} page',
       ]);
       expect(g.mpInfo('wizard').$2.skip(3), ['For Arcane Blast (20 MP)'], reason: 'not awakened: its awakening skill spends nothing yet');
       expect(awakenSkillChange('soldier', 0, 1), ('Unlocks Disarm', null));
@@ -289,7 +284,7 @@ void main() {
         ..skills = false // Hold Fast would take the first tick
         ..heroSkills = false
         ..monsterSkills = false;
-      g.upgrades['soldier'] = recipe('soldier', 2);
+      g.upgrades['soldier'] = awakenItems('soldier', 2);
       final u = placeNow(g, 'soldier', 2, 3), records = <Map<String, dynamic>>[];
       TelemetryAdapter([_Keep(records)], installId: 'i', session: 's', platform: 'test', now: () => DateTime.utc(2026)).attach(g);
       g
@@ -907,10 +902,10 @@ void main() {
           ]
         ),
       ]) {
-        g.upgrades[type] = recipe(type, 1);
+        g.upgrades[type] = awakenItems(type, 1);
         expect([for (final (_, l) in g.awakenInfo(type).$2) l].take(5), lines, reason: type);
       }
-      g.upgrades['archer'] = recipe('archer', 3);
+      g.upgrades['archer'] = awakenItems('archer', 3);
       expect(awakenLines('archer', 3)[1], 'x2.5 silver arrow takes monster buffs (1.5 tiles)');
     });
   });
@@ -925,12 +920,12 @@ void main() {
       final z = g.zones.single;
       expect((z.look, z.side, z.radius, z.until - z.since, z.at), (ZoneLook.consecrate, Side.enemy, consecrationK.radius[0], consecrationK.time[0], at));
       expect(start.$1 - orc.hp, closeTo(hit, 1e-6));
-      expect(start.$3 - skel.hp, closeTo(hit * consecrationK.undead, 1e-6));
+      expect(start.$3 - skel.hp, closeTo(hit * consecrationK.undead * u.stats.darkK, 1e-6)); // and its torches' (decisions-log 251)
       u.stats = u.stats.boosted(2); // a buff after the cast doesn't raise it
       runFor(g, consecrationK.time[0] + 0.5);
       expect(g.zones, isEmpty);
       expect(start.$2 - orc2.hp, closeTo(4 * hit, 1e-6), reason: 'four pulses in 4 s');
-      expect(start.$3 - skel.hp, closeTo(4 * hit * consecrationK.undead, 1e-6));
+      expect(start.$3 - skel.hp, closeTo(4 * hit * consecrationK.undead * u.stats.darkK, 1e-6));
     });
 
     test('its blows are holy: a skeleton it kills never reassembles, and it ends a heap of bones', () {
@@ -1266,7 +1261,7 @@ void main() {
   test('the book tells the movers\' numbers, with their two decimals', () {
     final g = bareGame();
     List<String> lines(String type, int level) {
-      g.upgrades[type] = recipe(type, level);
+      g.upgrades[type] = awakenItems(type, level);
       return [for (final (_, l) in g.awakenInfo(type).$2) l].take(5).toList();
     }
 

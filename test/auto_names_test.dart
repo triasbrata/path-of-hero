@@ -127,7 +127,6 @@ void main() {
       g = b.state = Game()
         ..gold = 99999
         ..wave = 99
-        ..towns = true
         ..townAt = 100;
       expect(g.enterTown(), isTrue);
       await frames(tester, 3);

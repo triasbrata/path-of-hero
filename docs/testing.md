@@ -39,6 +39,11 @@ is the point. A suite test that pumps `GameWidget` directly never uses a size ta
   The constructor takes `rng` and `names`, `fromJson` `heroes` too (what it rolls for an older save's Heroes);
   the rest are set by a cascade. A test that compares waves or needs a slot's type seeds `slots` too (the
   `queues` helper does).
+- Every game plays the rules players play, a plain `Game()` too: the Towns, the forge and the Tavern (decisions-log
+  321; `boardRules()` adds the board's limits, chest and wind-ups). test/real_rules.dart holds what such tests share:
+  `awakenItems(type, level)`, the items that make a type that Awaken level (its grade sets, `Game.awakenNeeds`), and
+  `noTowns`, Town rules whose every roll misses, for a test that must never meet a Town (a long run whose waves must
+  start by themselves).
 - Test names are plain sentences describing the behaviour.
 - #48's parallel branches each keep their tests in a file of their own, so they don't collide:
   `test/hero_shots_test.dart` (branch 2b: the special shots and ground objects, and the eight skills built
@@ -275,11 +280,12 @@ app_identity, game); on a push to main or by hand, the whole suite too.
 
 ## The store tests (#63)
 
-`test/store_test.dart`: the store's rules (it opens once wave 15 is won and deals between waves only; prices
-per kind and how they rise; refusals, a copy of an owned Pusaka "Owned"; selling from the bag only at half the
-base, a Pusaka from the Gudang, a bound one refused; drops never give a Pusaka; a Pusaka bought waits in the Gudang
-and never goes on one troop; the save), plus the book's words (each Pusaka's lines at ★1, ★2 and ★3, and where it
-is). What the Pusaka do is pusaka_test.dart's (below). It uses
+`test/store_test.dart`: the store, a Town's Shop since the Towns-off rules went (decisions-log 321): the five Pusaka
+it alone sells (each one's price, ×1.5 each time it is bought again; a copy of an owned one "Owned"), selling only
+from the bag at its price's share (a Pusaka from the Gudang, a bound one refused), a Pusaka bought waiting in the
+Gudang and never going on one troop, the save, plus the book's words (each Pusaka's lines at ★1, ★2 and ★3, and where
+it is). What the Pusaka do is pusaka_test.dart's (below); the Shop's materials and its opening are forge_shop_test.dart's
+and town_shop_open_test.dart's. It uses
 `test/hero_skill_helpers.dart` (`bareGame`, `placeNow`, `foeAt`, `runFor`).
 
 ## The Pusaka (decisions-log 138)
@@ -564,25 +570,15 @@ clock; the boss chest's first card taken between them), as saved and with each s
 compared). The records' version labels (`"tv"`, `"ev"`, an event's `"v"`) are masked to `_`: it compares what the game
 did, and a version bump changes only the label (the suite's tests pin the versions). Run it on the base (a `git archive`
 mirror) with `--dart-define=OUT=<file>`, then on the branch with `--dart-define=GOLDEN=<that file>`: it fails at the
-first line that differs. It plays the save with the Towns on (`..towns = _towns`, the probe's own `TOWNS` define, true unless
-`--dart-define=TOWNS=false`: no build of the game reads it since decisions-log 296, when the game's `townsOnBoard` went,
-and a base from before 296 reads the same define; every die seeded by `Game.seedDice`, the Town's and the materials'
-at seed + 600 and + 700, the Shadows' at + 900, decisions-log 319; decisions-log 237): since the Towns are on the dump moves with them (the four
-small relics' tooltips gain their tier and "Best on" lines; the telemetry has no small-relic drops, each wave's
-`materials`, `gold.craftSpent` and a blocked `town`), and `--dart-define=TOWNS=false` gives the dump a base from before
-the switch-on gives (a base whose probe file lacks the line copies this one in). With the Towns it plays the forge
-and the Tavern (every game with the Towns: the forge-off and Tavern-off builds are gone, decisions-log 296), so two
-dumps guard two things:
-- **the board dump** (no define): the game players play, the Towns, the forge and the Tavern on, and the troops' skill
-  wind-ups (`..skillWinds`, decisions-log 299), on a save from before the forge (the w89 save's Awaken levels kept,
-  loot-items-relics.md "The forge: items crafted, Awaken by grade"). Every merge compares it against main's; its
-  baseline was named in decisions-log 296 (byte-identical to the forge-on dump the cut-over recorded, decisions-log 272),
-  and a merge that changes the game on purpose records a new one in its own entry (the latest: decisions-log 299's).
-  `--dart-define=WINDS=false` gives it without the wind-ups, the dump of a base from before them. 9,854 lines.
-- **the Towns-off dump** (`--dart-define=TOWNS=false`): a plain `Game()`'s rules, a state only tests reach (the suite's
-  harness and the replay kit play it), without the wind-ups too. 9,946 lines.
-A change meant to move only the Towns' game (a forge rule, a number in town.json) keeps the Towns-off dump the same
-and says what moved in the board one. Measured for `pusakaAt` on the base c3fdf18:
+first line that differs. It plays the game players play, the one every game is since decisions-log 321: the Towns, the
+forge and the Tavern, and the troops' skill wind-ups (`..skillWinds`, decisions-log 299; `--dart-define=WINDS=false`
+gives the dump of a base from before them), on a save from before the forge (the w89 save's Awaken levels kept,
+loot-items-relics.md "The forge: items crafted, Awaken by grade"), every die seeded by `Game.seedDice` (the Town's and
+the materials' at seed + 600 and + 700, the Shadows' at + 900, decisions-log 319). That one dump is the guard: every
+merge compares it against main's, and a merge that changes the game on purpose records a new one in its own entry (the
+latest: decisions-log 319's, 9,863 lines). Its Towns-off twin (the probe's `TOWNS` define, a plain `Game()`'s rules
+before 321) went with those rules in decisions-log 321; on a base from before 321 the same dump is the probe's default
+run. Measured for `pusakaAt` on the base c3fdf18:
 1631 lines, the same on the branch; for the catalog's engine on the base 40d101e: 1754 lines, the same on the branch;
 for the shared hooks (the hit-source tag, the scaler, the near counts) on the bases c87889c, b289601 and defd22b: 1754
 lines, the same.
@@ -612,9 +608,9 @@ before wave `legendFrom` (a Legenda roll an Epik; with no Epik left a Langka; fr
 gaps when the pool runs dry and the free reroll they pay; a duplicate's star where it is bound, a new card bound by the
 default rule with its first move free (`PusakaBound` cost 0) or into the Gudang; no ★3 card, and a card that reached ★3
 since turned Serpihan when opened; Kocok ulang at 700 / 2.5k / 38k doubling and back for the next chest, refused
-short; Lewati's gold, and nothing dealt with mid-wave; the shelf closed with the chest on (items and small relics
-still sold, a Langka never, sold back from the Gudang at half); the boss's relic thrown away with the `loot` dice
-drawing the same (a high elite's kept); catch-up chests (0 / 1 / 2 / 3 / 3 for waves 14 / 15 / 44 / 45 / 90, the w86
+short; Lewati's gold, and nothing dealt with mid-wave; with the chest on a Town's Shop sells no Pusaka (a Langka never,
+sold back from the Gudang at half); the boss's fall drawing the `loot` dice the same with the chest on or off, no relic
+reaching the bag; catch-up chests (0 / 1 / 2 / 3 / 3 for waves 14 / 15 / 44 / 45 / 90, the w86
 fixture's 3, rolled when opened); the save round trip (an unknown card or a small relic loads as a Serpihan; `chests`
 always written); `draftPolicy` ('rarity', 'first', a typo throws; the boss chest taken at the win, catch-up ones by
 `pickChests`); two runs with the chest on and a policy the same wave by wave; each Langka at ★1-★3 (Iron Banner's
@@ -1498,8 +1494,8 @@ booted `TdGame`s.
 ## The book's marks: tabs only (decisions-log 285)
 
 `test/book_marks_test.dart` (ui-hud.md "Bookmarks"): at 1266×713 and 915×412, booted `TdGame`s with no guide,
-the board rendered into flutter_test's `TestRecordingCanvas` on every page of the field's book (the Towns off at wave 20:
-Army, Bag, Shop, Settings; the Towns on: Army, Bag, Settings) and of a Town's (town_scene_test's `intoTown`: Smithy,
+the board rendered into flutter_test's `TestRecordingCanvas` on every page of the field's book (at wave 20: Army, Bag,
+Settings) and of a Town's (town_scene_test's `intoTown`: Smithy,
 Tavern, Shop, Army, Bag, Settings): what it takes from `ui_book_marks.png` is the page tabs only (sheet x < 60), never a ribbon flag
 (x 162 on): no gold or wave ribbon at either size; the gold panel (`heartsGoldPanel`) and the wave meter
 show. Probe: `test/probe_book_ribbons_shots.dart` (`OUT=`): at 1266×713, 1164×777, 915×412, 412×860 and 1600×947 the
@@ -1870,26 +1866,25 @@ The game is landscape only (ui-hud.md "Layouts"; lib/letterbox.dart, main.dart's
 
 ## test/town_test.dart, test/town_hud_test.dart: the Towns (decisions-log 216)
 
-The Towns' schedule and state (loot-items-relics.md "Towns"), on seeded games with `towns` on; a wave is won at
-once (`winWave`: one slime, gone; a due Town gone through first); `_Dice` gives the Town dice's draws in turn.
+The Towns' schedule and state (loot-items-relics.md "Towns"), on seeded games (every game has the Towns since
+decisions-log 321; test/real_rules.dart's `noTowns`, rules whose every roll misses, is a game no Town comes to); a wave
+is won at once (`winWave`: one slime, gone; a due Town gone through first); `_Dice` gives the Town dice's draws in
+turn.
 
 - town_test.dart: the shipped `assets/config/town.json` equals the defaults, every number written out, and a `Game()`
   reads them; `TownRules.parse` keeps a default for another version, not JSON, a number out of range or of the wrong
-  kind, a cap under the start; `patch`. A plain `Game()` (the Towns off, tests only; `..towns
-  = false`) draws nothing, marks nothing, saves no key; the board's `towns` is true (`boardRules`; no define since
-  decisions-log 296). The roll: blocked until wave 5 (no draw, the chance stays 0.20), then +0.05 a
+  kind, a cap under the start; `patch`. The roll: blocked until wave 5 (no draw, the chance stays 0.20), then +0.05 a
   miss; with a 0.5 step the chance stops at the cap, and a hit marks slot n+2 and goes back to 0.20 (`townMarked`'s
   fields, `rolls` 4). Every roll hitting: the first Town before wave 7, then 12, 17, 22, 27, 32. 60 seeds of random
   dice: never before wave 7, never two within 5 waves. In and out (only a due Town, once; no wave while due or in it;
   the last Town and the cleared mark; the events and the battle log's lines). `townPolicy` 'leave'. The save (`town`
-  with `in`; a passed mark and a stray `in` dropped; no key: a Town counted before its own wave; a loaded mark holds
-  nothing up with the Towns off). The dice (the same seeds the same Towns; only the Town dice move them). The boss
-  schedule untouched: 30 waves' queues with the Towns on and off the same (a mini boss every 3rd, the boss every 5th),
-  and the same Boss Chests. A seeded 8-wave run fought for real the same with the Towns on (a probe going through the
-  Town before wave 7) and off, wave by wave, but for the relic bag (with the Towns on no relic drops and materials do,
-  decisions-log 221). Telemetry: the three events passed on, each won wave's `town` (blocked,
-  the hit, marked), none with the Towns off; `telemetryVersion` and `eventVersion` 10 (the Tavern's, decisions-log
-  268: a `townLeft`'s `tavern`, its three offers). The chip's tooltip words (the Tavern's line with it on, none off).
+  with `in`; a passed mark and a stray `in` dropped; no key: a Town counted before its own wave). The dice (the same
+  seeds the same Towns; only the Town dice move them). The boss schedule untouched: 30 waves' queues with a Town every
+  5 waves and with none (`noTowns`) the same (a mini boss every 3rd, the boss every 5th), and the same Boss Chests. A
+  seeded 8-wave run fought for real the same through a Town (a probe going through it before wave 7) and with none,
+  wave by wave; in both no relic or item drops and materials do (decisions-log 221, 246). Telemetry: the three events
+  passed on, each won wave's `town` (blocked, the hit, marked), `telemetryVersion` 9 or later. The chip's tooltip
+  words (the Smithy, the Tavern, the Shop once open).
 - town_hud_test.dart (booted `TdGame`s): the chip at 1266×713 and 915×412 (right-aligned under the meter, clear of the
   open book and its tabs, its words, its tooltip under the mouse, kept mid-wave, gone in the Town); a due Town gone into
   after the cheer and saved, "Leave town" leaving it (saved) and starting no wave, then Start; Auto's countdown in the
@@ -1914,17 +1909,17 @@ knight in a wave kept on by a slime far off, `winNow` wins it.
   version 1 all defaults, a nested `patch`. `dropOf` for every type and rank on a fake die: one draw (none for an
   always-drop or a type without that part), a roll just under the chance drops, at it none; the boss ranks' counts and
   Trophies, the Necromancer's Lich Orb. 3,000 seeded kills a type and rank (normal, elite, high elite) within 0.035 of
-  the chance. Kills fought for real with the Towns on and off: the tally and the pops, the material draws (none for an
-  always-drop or a raised monster), no relic drop with them on and the `loot` dice drawing the same count, the win into
-  `materials` and `lastMaterials`, the next win adding; relics as before with them off on dice that always drop. The
-  save (by name, only when any, an unknown name or a 0 skipped). Telemetry: a won wave's `materials` and its start's,
-  only with the Towns on.
+  the chance. Kills fought for real: the tally and the pops, the material draws (none for an always-drop or a raised
+  monster), the win into `materials` and `lastMaterials` (no item or relic into the bag), the next win adding; no
+  relic or item on dice that always drop. The save (by name, only when any, an unknown name or a 0 skipped).
+  Telemetry: a won wave's `materials` and its start's.
 - town_materials_ui_test.dart (booted `TdGame`s): at 1266×713 the 30 on one page, at 915×412 on three (the
   pager; 12 a page on the shorter landscape book, decisions-log 283), in the game's order, a cell reached on its page
   (`bagTo`, test/bag_pages.dart); the counts' capsules; a pick's facing page (its name and count, what drops it, the grey
   use line, the one Smithy row with its relics and "Only in a Town", no Sell); `matSource` for a Rare part and the
-  Trophies. With the Towns off no Materials chip. The "VICTORY!" line (`Board.victoryLoot`: items, then materials in
-  the enum's order). A dropped material's hop onto the field (`Board.fieldFx`) and its pile (`Board.matLoot`).
+  Trophies. A game holding none still has the Materials chip. The "VICTORY!" line (`Board.victoryLoot`: the wave's
+  materials in the enum's order; no item or relic drops, decisions-log 321). A dropped material's hop onto the field
+  (`Board.fieldFx`) and its pile (`Board.matLoot`).
 - Probe: `test/probe_town_materials_shots.dart` (the Bag's Materials page with Wolf Fang picked, 915×412's second page,
   a material's tooltip, a high elite's and a mini boss's materials hopping onto the field, the "VICTORY!" line; at
   1266×713, 915×412 and 412×860, into `OUT`).
@@ -1950,8 +1945,8 @@ board draining the drops on its next frames), `lying` sums the piles lying by ki
 
 ## test/forge_drops_test.dart: the forge's drops (decisions-log 246)
 
-The forge's drops (loot-items-relics.md "The forge: drops"), on games with the Towns on (the forge's rule) or off (a
-plain `Game()`, tests only) per game. `_Dice` and `kill`/`winNow` as in
+The forge's drops (loot-items-relics.md "The forge: drops"), on `forgeGame`s (the forge's rules, every game's since
+decisions-log 321). `_Dice` and `kill`/`winNow` as in
 town_materials_test.dart; `_Counted` records every `loot` draw in order; `saveText` is a save's text without the troops'
 names (a `bareGame`'s name dice aren't seeded).
 
@@ -1963,14 +1958,14 @@ names (a `bareGame`'s name dice aren't seeded).
 - `dropOf` for every type and rank on a fake die, just under and at each chance: one draw per part with
   a chance, the counts, the Trophies, the Necromancer's Lich Orb and no Common; 4,000 seeded kills a type and rank
   within 0.03 of each part's rate.
-- Kills fought for real on dice that always drop: with the Towns on no item ever lies on the field or reaches the bag,
-  the `loot` draws are the same calls in the same order as with them off (which drops 7 items), and the materials are
-  the forge's.
+- Kills fought for real on dice that always drop: no item or relic reaches the bag, the `loot` draws pinned call by
+  call in the order the monsters fell (each kill's item roll and kind and its relic roll and kind, drawn as before the
+  forge and thrown away; a raised one's item only), and the materials are the forge's.
 - `matsSeen`: first-drop order, each kind once, none from a raised monster; a material put in the bag another way, or
-  sold, never changes it. The save: written in order only with the Towns on and any seen, loaded in order (an unknown
-  name skipped), seeded from the materials held in `Mat` order when missing; byte-identical saves with the Towns off.
+  sold, never changes it. The save: written in order once any was seen, loaded in order (an unknown name skipped),
+  seeded from the materials held in `Mat` order when missing.
   `shopMatPrice` for the 30 (the design's list), unchanged by buys at `matRise` 0, a patched rise and markup rounded up
-  to 5 without float creep. `matSource` and `matFrom` with the Towns on and off.
+  to 5 without float creep. `matSource` and `matFrom`.
 - Probe: `test/probe_forge_drops.dart` (`SEEDS` 4, `WAVES` 20): a board game a seed going
   through each Town, every queue's monster killed at 1 HP by four knights so every wave is won; it checks that no item
   drops and every kind held was seen, and prints the materials held by wave beside the rules' expectation for those
@@ -1978,8 +1973,7 @@ names (a `bareGame`'s name dice aren't seeded).
 
 ## test/forge_relics_test.dart: the forge's nine relics and the combos (decisions-log 250)
 
-Pure Dart (loot-items-relics.md "The forge's nine"). `plain(towns:)` is a `bareGame` with no skills of any kind, the
-Towns on (or off: tests only); `holder` places a troop (a Hero) holding relics, standing until told; `dummy` is a
+Pure Dart (loot-items-relics.md "The forge's nine"). `plain()` is a `bareGame` with no skills of any kind; `holder` places a troop (a Hero) holding relics, standing until told; `dummy` is a
 monster without defence (its HP lost is the blow); `strikeOnce` / `land` / `blow` / `x` measure one strike, as a
 multiple of the attacker's damage.
 - The nine are `forgeRelics`, their numbers town.json's, the cap 3.0.
@@ -1990,16 +1984,15 @@ multiple of the attacker's damage.
   past 2 tiles; Afterglow after a Hero's Cleave (3 hits ×1.5, the 4th plain); Reaper ends a monster left under 15% (not
   at it; its counter), never a mini boss or the boss (×1.5 under the line).
 - The hidden pairings on and off: with the partner, without it, cleared (`TownRules(combos: Combos(secrets: {}))`:
-  a patch merges into the defaults) and with the Towns off.
-- The cap: Giant Slayer with the beat on a boss 1.5, 1.5, 3.0; under Relic Altar 3.75 with the Towns off, 3.0 on; Afterglow
+  a patch merges into the defaults).
+- The cap: Giant Slayer with the beat on a boss 1.5, 1.5, 3.0; under Relic Altar (3.75) cut to 3.0; Afterglow
   with the beat 3.0, with Grit too cut to 3.0; Titan Bane outside it; a patched cap.
 - The combos C1-C9 per hit (the design's figures where they are per hit; C2's, C6's and C7's design figures are
   averages, so the per-hit factors and C7's hits to kill are pinned instead).
 - The cards: none names another relic or an Artifact, nor "combo", "pair" or "secret"; the report's rows (a real won
   wave: Chill and Shark Tooth) and `relicCounter`'s words; the telemetry's `relics` and `relicPairs` (a Hero with two
-  of the nine and an Artifact bound: its pair key, 300 dealt); the Towns off: neither key, no report rows, no pair key.
-- The Towns off (tests only): a troop holding all nine (a test's) deals plain blows, marks, slows and ends nothing; the
-  eleven as before the forge; the save writes none of their state.
+  of the nine and an Artifact bound: its pair key, 300 dealt).
+- The save writes none of their state: a Hero holding two of the nine round-trips as before.
 
 test/probe_forge_f4_shots.dart (a probe, queued on a mirror) writes the nine cards in the Bag, the Army detail's relic
 line and its tooltip, and the battle log open on a report's rows, at 1266×713 and 412×860.
@@ -2024,16 +2017,15 @@ is a board game (the forge's, with the Towns).
   every dropped material in some recipe; the stones' recipes; the forge's relic gold 70% rounded to 50. The combos'
   secrets valid, a bad one left out and noted; Awaken's share and Enhance's step lists, a bad one kept at its default
   and noted, a whole new set of steps read; an edited item, forge change and cap; another version all defaults.
-- The Towns off (a plain `Game()`, tests only): the seven dropped items, the four dropped relics, today's recipes. A
-  board game: every item, the 20 relics and the stones in the Bag, the forge's recipes and gold, the relics' tiers.
+- Every game the forge's (decisions-log 321): a board game and a plain `Game()` alike, every item, the 20 relics and the
+  stones in the Bag, the forge's recipes and gold, the relics' tiers.
 - The save: the version-2 fixture loads forward with nothing discarded and writes back as version 3; the launch keeps
   and offers it; an unknown item or relic name skipped, the forge's names loaded; a stone never in `matsSeen`.
 
 ## test/forge_awaken_test.dart, test/forge_army_detail_test.dart: items crafted, Awaken by grade (decisions-log 249)
 
 The forge's items and Awaken by grade (loot-items-relics.md "The forge: items crafted, Awaken by grade"; ui-hud.md
-"Army"), on games with the Towns turned on per game (`forge()`, `forgeInTown()`); the checks of the game from before the
-forge use a plain `Game()` (the Towns off, tests only).
+"Army"), on `forge()` and `forgeInTown()` games (every game has the forge since decisions-log 321).
 
 - `gradeCount` (0.667 as two thirds, at least 1); each type's `kindRecipe` and grade sets against the design's table (9
   types, items I / II / III), and a patched `share`.
@@ -2043,18 +2035,16 @@ forge use a plain `Game()` (the Towns off, tests only).
   caps at two thirds, 31 items at the top, `typesFor`'s row. The Cap and the Ring: cap 1 to 4 on every type, the swap
   of the lowest grade back to the Bag (`swapOut`, `useItem`, `priceWith`), a lower or equal grade refused.
 - Crafting every item from exactly its recipe (gold by grade, the Cap's and Ring's grade below), the refusals' order,
-  no limit, `canMake` / `whyNotMake` outside a Town, `smithyItems` / `craftableItems`, nothing with the Towns off, no
-  craft in `matsSeen`; `craftItemNeed`, `awakenShort` and `bagLevel` by grade sets.
+  no limit, `canMake` / `whyNotMake` outside a Town, `smithyItems` / `craftableItems`, no craft in `matsSeen`; `craftItemNeed`, `awakenShort` and `bagLevel` by grade sets.
 - Stats per grade: the knight's 3 + 3 + 2 swords ×7.137, shields, potions, heals, boots, gloves, the Cap's `taken`, the
-  Ring's MP regen, a tuned file number used; the Towns off read the constants. A Cap's cut on a werebear's blow. The
+  Ring's MP regen, a tuned file number used. A Cap's cut on a werebear's blow. The
   `ItemCrafted` event: its log line, the telemetry event, the wave record.
-- The Towns off (a plain `Game()`, tests only; `byGrade` false): today's `awakenRecipe`, levels, caps, progress,
-  `awakenShort`, heals and refusals.
+- `awakenRecipe`, the old item recipe the grade sets build on (`forgeAwakenKinds` adds each type's own kind; an old
+  save's level, `oldItemLevel`, reads it); the Awaken by it went with the Towns-off rules (decisions-log 321).
 - The Army detail (booted `TdGame`s at 1266×713 and 915×412): "Awaken 2 needs (grade II):", each grade-II row's
   have/need and where from ("In Bag: 1", "Smithy: can make 3", "Smithy: needs Wolf Claw", "Done"), "Next" with "Awaken 3
   needs grade III.", a stat cell's "4/6"; Awaken 0 and 2; a save's knight at Awaken 1 by the old rule loaded by grade:
-  "Awaken 1 (kept from old items)" first ("(kept)" where it doesn't fit), then the grade-II needs alone; the Towns off
-  as before.
+  "Awaken 1 (kept from old items)" first ("(kept)" where it doesn't fit), then the grade-II needs alone.
 - Probes: `test/probe_forge_f3_shots.dart` (the Army detail by grade at Awaken 0, 1 and 2, three scrolls each, at
   1266×713 and 412×860, into `OUT`), `test/probe_forge_f3_awaken.dart` (`SEED_FROM`,
   `SEEDS` 3, `MAX_WAVE` 40, `SHARE` 0.6: an auto-player with the design model's army that crafts and gives the next
@@ -2064,14 +2054,15 @@ forge use a plain `Game()` (the Towns off, tests only).
 
 Pure Dart, on the old fixtures and a copy of the owner's last save before the cut-over
 (test/fixtures/save-20261008-0438-w13-preforge.json: wave 13, in a Town, no items, 236 materials, two Artifacts).
-`load(j)` loads a save as the app does (a board game: the Towns, so the forge), `old(j)` with the Towns off (a plain
-`Game()`, tests only: the rules from before the forge).
+`load(j)` loads a save as the app does (a board game: the Towns, so the forge). What the rules from before the forge
+read for the w89 and w8 saves (each type's level, Bangkit and Tempa that count, and its stats) is pinned in `_before`,
+recorded on the Towns-off rules before they went (decisions-log 321).
 
-- A board game by grade with Enhance, the forge's Shop and the Smithy's 14 a grade; a plain `Game()` (no Towns) none
-  of it. `telemetryVersion` and `eventVersion` 10 or later (11 the Tavern's).
-- The w89 save (items by the old rule, Bangkit 5 and Tempa): each type's level, Bangkit, Tempa and stats the same in
-  a board game as with the Towns off; `awakenKept` each type's old-rule level (`oldItemLevel`); without it every type
-  would read Awaken 0; a game with the Towns off writes no `awakenKept`, a by-grade one always does.
+- The forge in every game, a plain `Game()` too (decisions-log 321): the Smithy's 14 a grade, its first Town's save
+  `town` and `awakenKept`. `telemetryVersion` and `eventVersion` 10 or later (11 the Tavern's).
+- The w89 save (items by the old rule, Bangkit 5 and Tempa): each type's level, Bangkit, Tempa and stats `_before`'s;
+  `awakenKept` each type's old-rule level (`oldItemLevel`); without it every type would read Awaken 0; the game always
+  writes `awakenKept`.
 - A kept level counts on: the archer at 2 needs the grade-III set alone (`awakenShort`, `awakenProgress`), its old
   bows past the grade-I cap stay and count (`maxed`), grade III open; the set given, Awaken 3; saved and loaded, the
   saved `awakenKept` stands.
@@ -2079,14 +2070,13 @@ Pure Dart, on the old fixtures and a copy of the owner's last save before the cu
   Amulet is Awaken 1 by the old rule, 0 by grade, and 0 again after a save and a load; the same items in a save
   without the key keep Awaken 1.
 - The owner's save: wave, gold, lives, score, troops, the Town, the materials, `matsSeen` seeded from them, the
-  Artifacts; a grade-I item crafted at the Smithy for its gold. The version-2 save at wave 8: the same levels, gold,
-  items and relics in a board game and with the Towns off.
+  Artifacts; a grade-I item crafted at the Smithy for its gold. The version-2 save at wave 8: `_before`'s levels and
+  stats, its gold and items, no relic.
 
 The tests that pinned the Towns' game from before the forge (its own drop table, Shop, Smithy relics page and Craft)
 play the forge since its off switch went (decisions-log 296): town_materials_test.dart and town_materials_ui_test.dart
 the forge's table, town_shop_test.dart and town_shop_ui_test.dart the forge's shelf (their Buy forge_shop_test.dart's),
-town_smithy_ui_test.dart the Smithy's Relics tab, town_craft_test.dart the forge's relic gold (and the old rule's
-`craftItemNeed` with the Towns off). The tests that built an Awaken level from the old recipe on a board game build it
+town_smithy_ui_test.dart the Smithy's Relics tab, town_craft_test.dart the forge's relic gold. The tests that built an Awaken level from the old recipe on a board game build it
 by the game's own rule (`awakenNeeds`): tide_test.dart, town_shadow_test.dart, town_switch_test.dart.
 
 - Probe: `test/probe_forge_cutover.dart` (no define; `SEED` 5, `MID` 12, `OUT`): a fresh board game (the forge with
@@ -2097,13 +2087,12 @@ by the game's own rule (`awakenNeeds`): tide_test.dart, town_shadow_test.dart, t
 ## test/forge_kinds_test.dart: the forge's five new item kinds (decisions-log 251)
 
 The Amulet, Prayer Beads, Torch, Spear and Prism (loot-items-relics.md "The forge: the new kinds' effects"). `board()` is
-a board game, `field()` a bare game with the Towns on (off: tests only) and no skills;
+a board game, `field()` a bare game with no skills;
 `holding(g, type, items)` sets `upgrades[type]` directly (the caps are the Smithy's) and reads `statsOf`, and `whole(s)`
 compares every number of two stats.
 
 - The numbers by grade from town.json `items`, the spear's `reachMost` and the prism's `splashMost` (1.5 each; patched,
-  and refused under 1), `itemK` with
-  the Towns on (the file) and off (the seven's constants).
+  and refused under 1), `itemK` the file's (the first seven's numbers the constants from before the forge).
 - Each kind alone at each grade changes only its own stat; stacking by count (the amulets rounded at each one); the
   Amulet at Awaken 1 (the awakening's HP times the amulet's, MP regen the awakening's) and on a troop in the field (its
   refit keeps the wound); the beads only on a healer, whatever the order with a potion and a staff, and a priest's heal
@@ -2111,9 +2100,7 @@ compares every number of two stats.
   not, and a skeleton's blow on a torch holder as before; the spear on the lancer, never a shooter or a healer, the bow's
   clamp and the aura reading the raised cap, the full set stopping at 33 and 1.5 × `meleeMaxRange` (with Hawk Feather ★3
   and a Hero's aura too); the prism only on the Axeman and the Wizard, stopping at 1.5 × their splash (patched: 2).
-- The Towns off (a plain `Game()`, tests only): a type holding all fifteen
-  fights as without them, a torch holder's blow on the undead is plain, and `Stats.upgraded` without a number leaves the
-  five alone.
+- `Stats.upgraded` without a number leaves the five alone (their fields at their defaults).
 
 ## test/tavern_test.dart: the Tavern's boosts (decisions-log 266)
 
@@ -2140,8 +2127,6 @@ that wave, `only(rarity)` patches the odds so every roll is of one rarity (no fi
 - The save in a Town and out of it, and a load dropping an unknown kind, a typeless Plate and a spent boost; the
   telemetry (`boostBought`, `tavernRerolled`, `townLeft.tavern`, the wave's `gold.tavernSpent`, `boostSaved`,
   `start.boosts`); the log lines and the effect words; the probe policies 'top' and 'all'.
-- The Towns off (a plain `Game()`, tests only; the Tavern's own switch is gone, decisions-log 296): no roll (a die that
-  throws on any draw), no offer, the refusals "Only in a Town", no save key, `statsOf` as a plain game's.
 
 ## test/tavern_ui_test.dart: the Tavern's pages (decisions-log 267)
 
@@ -2221,8 +2206,8 @@ on the board), at 1266×713, 915×412 and the owner's tablet's 1164×777.
   Shop tab.
 - Auto: "Leave town 5"; a press on a tab stops it (the Town stays; left by hand, no wave by itself); with no press it
   leaves at 0 and the wave starts once the fade back is over.
-- No guide card or pointer in a Town; a save made in it reopens in it at once (no fade) on the Smithy; with the Towns off
-  no Town shows and the field's book keeps its Shop tab.
+- No guide card or pointer in a Town but its own; a save made in it reopens in it at once (no fade) on the Smithy; a
+  game out of a Town shows none, and the field's book has no Shop tab.
 - Probe: `test/probe_town_scene_shots.dart` (queue `["test", "test/probe_town_scene_shots.dart"]`): shots at those
   three and 412×860 into the folder `OUT` names: the fade in at ~0.2 s and ~0.5 s, the book on the Smithy, the
   Bag, Settings and the Shop, the book shut (landscape), the fade out and the field after it.
@@ -2292,7 +2277,7 @@ monster skills; `holder` places a troop holding relics; `strikeOnce` lets a troo
 shot); `lost` measures a blow.
 - The enum appended after the last Artifact (the save keys), `smallRelics`, `droppedRelics` the four, none in
   `storeGoods`; the owner's names (none a Hero skill's title); the tiers from the recipes (a patch moves one);
-  `relicsInPlay` the four with the Towns off, all eleven on.
+  `relicsInPlay` all eleven and the forge's nine.
 - Sweep: the nearest other monster within its reach (exactly at it: hit; just past: not) takes its share through its
   defence; only the nearest, no chain; a patched share and reach; a shot sweeps where it lands, a smite doesn't.
 - Venom: the bleed's tick, count and source, all of it landing over its secs; a stronger bleed stays, a weaker one is
@@ -2306,13 +2291,13 @@ shot); `lost` measures a blow.
 - Holy Charm: a healer's heal ×1.4 (the funnel hears the heal asked); its own regen and the Grail's save as they are.
 - A Hero holding Sweep and Venom: one blow does both; a second of a kind and a third refused; a troop holds one.
 - The save: the bag's and the troops' relics by their keys, a Hero's two.
-- The words: each effect line from the rules (a patch shows), the tooltip's tier and "Best on" only with the Towns on.
+- The words: each effect line from the rules (a patch shows), the tooltip's tier and "Best on".
 - Elsewhere: hit_source_test's list has Sweep's `Hit.relic`; heal_funnel_test's table has `HealSrc.lastStand`;
-  item_text_test checks each small relic's tooltip with the Towns on too (font, 412-px width); guide_page_test the
-  guide's relic page with the Towns off (the four, none of the seven); town_materials_test the recipes' names.
+  item_text_test checks each small relic's tooltip (font, 412-px width); guide_page_test the guide's relic page (all
+  eleven and the forge's nine); town_materials_test the recipes' names.
 - Probe: `test/probe_relics_shots.dart` (the seven picked in the Bag with their tier and "Best on", the troops' relic
   rows with a Hero holding two, the Army detail of the soldiers, a relic cell's and an Army relic's tooltip; at
-  1266×713 and 412×860, into `OUT`, the Towns on, the relics put in the bag by hand).
+  1266×713 and 412×860, into `OUT`, the relics put in the bag by hand).
 
 ## test/town_shop_test.dart, test/town_shop_ui_test.dart: the Town's Shop (decisions-log 230 and 269)
 
@@ -2325,17 +2310,14 @@ turned on per game (dark on the board).
   material bought, a sale, the Vault Artifact sold; open in a Town from wave 1 won (shipped `shop.from` 1), `locked` at
   wave 0 and, with `shop.from` patched to 15, at wave 14. A Recall outside a Town. The materials at town.json's price
   (Wolf Claw 25, Skull 60), one and all, the last leaving no entry, `StoreSold`'s `material` (an item's record without
-  it). Sell's grid (`shopSellLoot`), bound Artifacts and oaths left out (Buy's sections: forge_shop_test.dart). With
-  the Towns off (tests only) the store deals on the field as before.
+  it). Sell's grid (`shopSellLoot`), bound Artifacts and oaths left out (Buy's sections: forge_shop_test.dart).
 - town_shop_ui_test.dart (one booted `TdGame` per widget test): the Shop page at 1266×713, 1164×777 and 915×412
   (the strip Buy | Sell opening on Buy, no Bag chips; Buy forge_shop_ui_test.dart's; Sell's grid in the Bag's order; a
   material through the
   Sell Basket, All and Sell all, its cell gone; a Vault Artifact through the basket; every part on the right page and
-  the screen); the field's Bag with the Towns on (no Sell row for each kind,
-  the grey line under the rows; no Shop tab) at 1266×713 and 915×412, and with them off the Sell row back; the Army
-  detail's Recall at the three sizes (newest first, two and "+1 more"), a recall and its splash, a refusal said on a
-  tap, a full army's swap with its refund; the gold's dot on the Army tab with the Towns on (the w89 save), on the
-  Shop's with them off.
+  the screen); the field's Bag (no Sell row for each kind, the grey line under the rows; no Shop tab) at 1266×713 and
+  915×412; the Army detail's Recall at the three sizes (newest first, two and "+1 more"), a recall and its splash, a
+  refusal said on a tap, a full army's swap with its refund; the gold's dot on the Army tab (the w89 save).
 - test/shop_tabs_ui_test.dart (decisions-log 269; booted `TdGame`s in a Town, the forge on): at the three sizes the
   strip, Buy's Materials alone (the shelf at its prices; Items and Relics, none on the forge's shelf, not drawn:
   decisions-log 280), every heading's words
@@ -2361,10 +2343,9 @@ turned on per game (dark on the board).
 - town_shop_open_test.dart (the owner's "shop juga harusnya di buka ketika masuk kota, dan di battle ground tabnya di
   hilangkan", decisions-log 253): the shipped town.json's `shop.from` 1 and nothing skipped; a first Town at wave 1
   won deals (the Shop open, a sale) while Recall still says "Opens after wave 15" (`armyBuysOpen` false);
-  `shopJustOpened` never with the shipped file, at wave 10 alone with `shop.from` patched to 10, at 15 alone with the
-  Towns off. At 1266×713 and 915×412 (booted `TdGame`): the field's tabs Army, Bag, Settings at waves 0, 1, 14, 15
-  and 40 with the Towns on; the first Town's Smithy, Shop, Bag, Settings, its Shop tab opening the page; the Towns off,
-  the field's Army, Bag, Shop, Settings, the Shop tab's "Opens after wave 15" at 14 and its page at 15.
+  `shopJustOpened` never with the shipped file, at wave 10 alone with `shop.from` patched to 10. At 1266×713 and
+  915×412 (booted `TdGame`): the field's tabs Army, Bag, Settings at waves 0, 1, 14, 15 and 40; the first Town's
+  Smithy, Tavern, Shop, Army, Bag, Settings, its Shop tab opening the page.
 
 ## test/town_life_test.dart: the Town's troops (decisions-log 229)
 
@@ -2420,8 +2401,8 @@ The board plays with the Towns, the save's format 2, the guide's Town cards and 
 town_scene_test's `intoTown` / `settle`, town_life_test's `ScriptDice` / `troop` and town_smithy_ui_test's
 `smithyGame`.
 
-- The board: `Game().boardRules().towns` true, a plain `Game()`'s false (the TOWNS define and `townsOnBoard` went in
-  decisions-log 296). A board game rolls Towns:
+- Every game plays with the Towns: the board's (no define since decisions-log 296) and a plain `Game()` (321) save
+  their `town` from the start (`chanceStart`, `firstTownAfter`). A board game rolls Towns:
   seeds 1-3 over 30 waves won at once (`townPolicy` 'leave'), each with Towns, the first at slot 7 or later, 5 apart at
   least, the boss every 5th wave as without them.
 - The save: `v` first, `Game.saveVersion` (3; `Game.saveLoadsFrom` 2); a file with no `v`, `v` 1 or `v` '2' is no
@@ -2429,12 +2410,12 @@ town_scene_test's `intoTown` / `settle`, town_life_test's `ScriptDice` / `troop`
   stay; a `v` 2 save loads and stays; a broken file is no save and stays. At the launch: the owner's pre-Towns w89 save as save.json gives
   a welcome with no "Continue" (`welcomeButtons`) and the file gone; a `v` 2 save in a due Town shows "Continue" at its
   wave and reopens in the Town.
-- The guide: K23 due only in a Town and the only card there, no card while a Town is due; K24 once a material is held,
-  never with the Towns off; K11, K14, K18, K23, K24 and the "Towns" topic's words; K23 opens over the first Town and,
+- The guide: K23 due only in a Town and the only card there, no card while a Town is due; K24 once a material is held;
+  K11, K14, K18, K23, K24 and the "Towns" topic's words; K23 opens over the first Town and,
   seen, never in the next; K24 after the first wave that drops a material.
-- town.json's `shop.from`: 1 as shipped; patched to 10 it opens the Shop after wave 10 ("Opens after wave <from>")
-  with the Towns on, and Awaken 4-5, Forge and Recall stay at wave 15 ("Opens after wave 15") whatever it is
-  (`armyBuysOpen`, waves 0-20 against `storeOpen`); off, all at wave 15. The cap warning and the awakening tooltip send to the Army page with the Towns on.
+- town.json's `shop.from`: 1 as shipped; patched to 10 it opens the Shop after wave 10 ("Opens after wave <from>"),
+  and Awaken 4-5, Forge and Recall stay at wave 15 ("Opens after wave 15") whatever it is (`armyBuysOpen`, waves 0-20
+  against `storeOpen`). The cap warning and the awakening tooltip send to the Army page.
 - The Recall tag at 1266×713 and 915×412: every word starts with "Recall"; the swap's refund in `recallInfo`.
 - A lancer's talk bubble (scripted dice): its bottom between the lance's tip (37 sprite px over its soles' line,
   decisions-log 292; 39 over the old row-59 anchor) and the helmet's top (29).
@@ -2447,9 +2428,8 @@ town_scene_test's `intoTown` / `settle`, town_life_test's `ScriptDice` / `troop`
   close up) and 30 troops in a Town after 10 s.
 
 The Towns-off pages (the field's Shop tab and its store, ascend and recall pages, the Bag's Sell) and the TOWNS define
-went in decisions-log 296: the UI draws the Towns' book whatever `towns` says. The widget tests that keep a
-`..towns = false` game (the rules from before the Towns, a state only tests reach) read the same book; the deleted
-tests: "The Pusaka" above.
+went in decisions-log 296 (the deleted tests: "The Pusaka" above), and the Towns-off rules, `Game.towns` with them, in
+321: no test plays a game without the Towns; one that must see no Town uses test/real_rules.dart's `noTowns`.
 
 ## test/town_art_test.dart: the Town scene's art (decisions-log 222)
 
@@ -2491,7 +2471,7 @@ pixels is `python3 tool/import_smith.py --check` (it needs both packs, in the ma
   the house's walls (`wallL8a` to `blockBR`) and below its window; a tap on him (the book shut, after the Tavern opened
   its page; the wheel bringing each into view, the Town wider than the screen: decisions-log 271) opens the Smithy's
   page: no tap of his own.
-- With the Towns off no Town and no smith. town_scene_test.dart's "nothing on the Smithy's ground floor" loop skips
+- Out of a Town no Town shows, so no smith. town_scene_test.dart's "nothing on the Smithy's ground floor" loop skips
   'smith'.
 - Probe: `test/probe_smith_shots.dart` (queue `["test", "test/probe_smith_shots.dart"]` with the worktree as `dir`;
   `OUT` sets the folder, by default one under `<agents>/shots/`; `SIZES` some sizes only) shoots the Town at
@@ -2932,6 +2912,33 @@ The shots come from `test/probe_foe_splash_shots.dart` (a probe, not in the suit
 `shots/foe-splash/`): the w86 fixture on wave 60, 20 s played, then an armored orc high elite's Bulwark, a necromancer
 high elite's Curse of Frailty and an armored orc boss's Earthshaker (a moment) wind up among the monsters, each with a
 2× crop of the panel, at 1266×713 and 412×860.
+
+## test/wipe_test.dart: an army wiped costs a heart and the wave is played again (decisions-log 322)
+
+Pure Dart (lib/wipe.dart). A soldier at 1 HP beside a werebear makes the wipe (`wipe`); `winNow` wins the wave on.
+- The wipe: 2 lives gone, not over, the wave back one with `lostWave` the lost one, no monster, queue, shot or zone
+  left, the swept ones hopping then gone in summon circles after `wipeCheer`, "Replace fallen" holding the army, the
+  lose sound, the `Wiped` event (and its `wipe` kind) and one `WaveEnded(won: false)`, `wipeNote`; the next start plays
+  the same wave with as many monsters.
+- What the lost wave paid stays (gold, score, kills) and no bonus or wave score comes; its lying materials are lost; the
+  replay's win pays its bonus and score once and clears `lostWave`.
+- The last heart (2 lives, and 1): game over, the monsters stay, no lives score, the clock stands still; leaks taking
+  the last life in the tick the last troop falls are a game lost on lives (no `Wiped`); a wave begun with no troop only
+  leaks.
+- A boss wave (wave 10, a Hero's too) lost: no chest nor Hero; won on the replay: one of each.
+- Towns: one left before the lost wave isn't due again; one marked for after it is due only once the replay is won.
+- The Shadows: the catch-up lands once for the wave number (not on the replay), and Lewati's skip buff owed meets the
+  replay.
+- The save between a wipe and its replay (`lostWave`, the lives, "Replace fallen"), a `lostWave` that isn't the next
+  wave dropped.
+- A Phoenix Plume rise due holds the wipe off; the risen one falling again with none due is a wipe.
+- The auto-player loop with Auto Buy: the army bought back after each wipe, wave 1 three times, lives 4, 2, 0, over.
+
+The shots come from `test/probe_wipe_shots.dart` (a probe, not in the suite; `OUT` sets the folder, default
+`shots/wipe/`): the w89 fixture's wave 90, 12 s played, then the army held at 1 HP beside werebears that don't fall until
+it is down; at 1600×947 and 915×412 the heart's pop with the message and the monsters hopping (`pop`, with 2× crops
+of the hearts and the message), a second on (`hop`) and after the hop (`after`: the summon circles, the meter's next
+wave). The pop shot's field is crowded with the bursts of the ticks played before it.
 
 ## The packs' looks: the shot probes (decisions-log 173)
 

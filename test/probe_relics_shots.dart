@@ -40,7 +40,6 @@ Future<void> frames(WidgetTester tester, [int n = 2]) async {
 /// their posts; every small relic in the bag.
 Game relicGame() {
   final g = Game(Random(1)).boardRules()
-    ..towns = true
     ..armyMax = null
     ..gold = 5000000
     ..wave = 30;

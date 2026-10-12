@@ -136,7 +136,7 @@ void main() {
   testWidgets('a Pusaka binds in two taps from the Bag page; the note\'s Undo, a Move, To Vault, and mid-wave the '
       'rows say why', (tester) async {
     final b = await boot(tester);
-    final g = b.state = w86().boardRules()..towns = false..chests.clear(); // its catch-up chests' popup would take the taps (draft_hud_test.dart)
+    final g = b.state = w86().boardRules()..chests.clear(); // its catch-up chests' popup would take the taps (draft_hud_test.dart)
     await frames(tester, 50); // the book floats in; the save's notes show
     expect(b.message, contains(pusakaNoteLines.first));
     expect(b.message, contains(pusakaNoteSuggested));
@@ -197,7 +197,7 @@ void main() {
   testWidgets('an Army cell shows its Pusaka\'s badge, faded while none of its type lives ("tidur"), and the Pusaka\'s '
       'tooltip over it', (tester) async {
     final b = await boot(tester);
-    final g = b.state = w86().boardRules()..towns = false..chests.clear();
+    final g = b.state = w86().boardRules()..chests.clear();
     await frames(tester, 50);
     expect((b.troopRow('soldier') == Rect.zero, b.pusakaBadge('soldier')), (false, Rect.zero)); // holds none
     await armyTo(tester, b, 'knight_templar');
@@ -236,7 +236,7 @@ void main() {
   testWidgets('the Army page and the Tas page\'s preview show the same HP for the w86 Templar, the field\'s (Game.fieldStats: '
       'the Hero\'s aura in): 927 with Dragon Heart, 580 without; the HP tooltip says the base and the aura', (tester) async {
     final b = await boot(tester);
-    final g = b.state = w86().boardRules()..towns = false..chests.clear();
+    final g = b.state = w86().boardRules()..chests.clear();
     await frames(tester, 50);
     if (b.messageBox != Rect.zero) await tapOn(tester, b.messageBox.center);
     await armyTo(tester, b, 'knight_templar');
@@ -277,7 +277,7 @@ void main() {
     // to them), so they are never all in view at once.
     for (final size in const [Size(1266, 713), Size(1164, 777)]) {
       tester.view.physicalSize = size;
-      final g = b.state = w86().boardRules()..towns = false..chests.clear();
+      final g = b.state = w86().boardRules()..chests.clear();
       g.unbindPusaka(Relic.voidEye); // one in the Gudang, the rest still the save's suggestion: every strip shows
       await frames(tester, 50);
       await openBag(tester, b);
@@ -318,7 +318,7 @@ void main() {
     // to them), so they are never all in view at once.
     for (final size in const [Size(1266, 713), Size(1164, 777)]) {
       tester.view.physicalSize = size;
-      final g = b.state = w86().boardRules()..towns = false..chests.clear();
+      final g = b.state = w86().boardRules()..chests.clear();
       g
         ..dismissPusakaNote()
         ..unbindPusaka(Relic.voidEye);

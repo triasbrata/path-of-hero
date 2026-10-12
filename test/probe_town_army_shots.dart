@@ -120,7 +120,6 @@ void main() {
       // A board game after wave 20 in its Town: a soldier, a knight, an archer and a priest.
       final g = Game(Random(1), Random(2)).boardRules()
         ..townDice = Random(3)
-        ..towns = true
         ..armyMax = null
         ..wave = 20
         ..gold = 40000;

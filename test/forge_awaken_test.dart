@@ -1,9 +1,9 @@
 // The forge's items and Awaken by grade (decisions-log 249; lib/game.dart's awaken rules, lib/town.dart's Craft;
-// docs/loot-items-relics.md "The forge: Awaken by grade, items crafted"), with the Towns on (the forge comes with them;
-// its off switch is gone, decisions-log 296): each type's grade sets (its recipe + its own new kind, grade III at two thirds rounded up), Awaken L from exactly
+// docs/loot-items-relics.md "The forge: Awaken by grade, items crafted"), in every game (the forge comes with the Towns;
+// its off switch is gone, decisions-log 296, 321): each type's grade sets (its recipe + its own new kind, grade III at two thirds rounded up), Awaken L from exactly
 // the grade-L set, the caps per kind and grade and when a grade opens, the Cap's and the Ring's chain and swap at the cap,
 // every item's recipe and gold, the Stats each grade gives (Knight swords 3 + 3 + 2 = x7.137), the event and its
-// telemetry; with the Towns off (a plain Game(), tests only) everything as before the forge.
+// telemetry.
 import 'dart:convert';
 import 'dart:math';
 
@@ -16,7 +16,6 @@ import 'hero_skill_helpers.dart';
 
 /// A game with the Towns and the forge on, [gold].
 Game forge({int gold = 0}) => Game(Random(1), Random(101))
-  ..towns = true
   ..gold = gold;
 
 /// [forge] in the Town before wave [wave] + 1 (the Smithy open).
@@ -72,7 +71,6 @@ void main() {
   test("each type's grade sets: its recipe plus its own new kind, the same counts at Awaken 1 and 2, two thirds at 3 "
       "(the design's table)", () {
     final g = forge();
-    expect(g.byGrade, isTrue);
     const table = {
       // type: {kind: count a level}, then the Awaken 3 counts where they differ, then the items of I / II / III.
       'soldier': ({ItemSlot.sword: 2, ItemSlot.shield: 2, ItemSlot.boots: 1, ItemSlot.bow: 1, ItemSlot.gloves: 1, ItemSlot.potion: 1, ItemSlot.amulet: 1}, <ItemSlot, int>{}, (9, 9, 9)),
@@ -260,10 +258,6 @@ void main() {
     giveRecipe(out, Item.steelSword, 1);
     expect((out.canMake(Item.steelSword), out.whyNotCraftItem(Item.steelSword)!.why), (1, CraftWhy.town));
     expect(out.craftItem(Item.steelSword), isFalse);
-    // The Towns off (tests only): no recipe, nothing to make.
-    final off = Game();
-    expect((off.itemRecipe(Item.sword), off.canMake(Item.sword)), (null, 0));
-    expect(off.smithyItems(1), isEmpty);
     // A craft never shows a material as dropped (the stones least of all).
     final seen = forgeInTown();
     giveRecipe(seen, Item.royalHelm);
@@ -293,7 +287,7 @@ void main() {
   });
 
   test("the Stats each item's grade gives: town.json's numbers (the knight's swords 3 + 3 + 2 = x7.137; heals, the Cap's "
-      'cut and the Ring by grade); the forge off gives the constants', () {
+      'cut and the Ring by grade)', () {
     final g = forge(), plain = forge();
     g.upgrades['knight'] = [...List.filled(3, Item.sword), ...List.filled(3, Item.steelSword), ...List.filled(2, Item.royalSword)];
     final k = g.statsOf('knight').dmg / plain.statsOf('knight').dmg;
@@ -328,24 +322,10 @@ void main() {
       })
       ..upgrades['knight'] = [Item.steelSword];
     expect(tuned.statsOf('knight').dmg / plain.statsOf('knight').dmg, closeTo(1.5, 1e-9));
-    // The forge off: today's constants, whatever the file says.
-    final off = Game()
-      ..townRules = TownRules.patch({
-        'items': {
-          'sword': {'effect': 2.0}
-        }
-      })
-      ..upgrades['knight'] = [Item.sword, Item.potion];
-    expect(off.statsOf('knight').dmg, troopTypes['knight']!.dmg * swordDmg);
-    expect(off.statsOf('knight').regen, potionRegen);
-    expect(off.itemK(Item.sword), swordDmg);
-    expect(troopTypes['knight']!.upgraded(Item.staff).dmg, troopTypes['knight']!.dmg * staffDmg);
-    expect(troopTypes['priest']!.upgraded(Item.potion).dmg, troopTypes['priest']!.dmg + potionHeal);
   });
 
   test("a Cap's cut lands on every blow after the defence", () {
     final g = bareGame()
-      ..towns = true
       ..upgrades['soldier'] = [Item.royalHelm];
     final u = placeNow(g, 'soldier', 2, 3)..busyUntil = hold;
     expect(u.stats.taken, 0.93);
@@ -382,7 +362,7 @@ void main() {
     expect((w['gold'] as Map)['craftSpent'], 60);
   });
 
-  test("the Towns off (a plain Game(), tests only): the recipe, caps, levels, Stats and refusals from before the forge", () {
+  test("the item recipe each type's grade sets build on (forgeAwakenKinds adds its own kind; an old save's level reads it)", () {
     expect(awakenRecipe, {
       'soldier': {Item.sword: 2, Item.shield: 2, Item.boots: 1, Item.bow: 1, Item.gloves: 1, Item.potion: 1},
       'knight': {Item.sword: 3, Item.shield: 3, Item.boots: 2, Item.gloves: 2},
@@ -394,26 +374,5 @@ void main() {
       'wizard': {Item.staff: 2, Item.bow: 3, Item.gloves: 3, Item.potion: 2},
       'knight_templar': {Item.sword: 2, Item.shield: 2, Item.boots: 2, Item.bow: 1, Item.potion: 3},
     });
-    for (final g in [Game()]) {
-      expect(g.byGrade, isFalse);
-      for (final type in troopTypes.keys) {
-        final recipe = awakenRecipe[type]!;
-        for (var level = 0; level <= maxAwaken; level++) {
-          g.upgrades[type] = [for (final MapEntry(key: item, value: n) in recipe.entries) ...List.filled(n * level, item)];
-          expect(g.itemLevel(type), level);
-          for (final MapEntry(key: item, value: n) in recipe.entries) {
-            expect(g.capOf(type, item), n * min(level + 1, maxAwaken));
-            expect(g.awakenProgress(type)[item], (level >= maxAwaken ? n : 0, n));
-          }
-          expect(g.awakenShort(type), level >= maxAwaken ? isEmpty : {for (final MapEntry(key: item, value: n) in recipe.entries) item: n});
-        }
-        expect(g.whyNot(Item.amulet, type), Refusal.notInRecipe);
-        expect(g.whyNot(Item.leatherCap, type), Refusal.notInRecipe);
-      }
-    }
-    // A heal adds the constants, as before.
-    final p = Game()..upgrades['priest'] = [Item.potion, Item.staff];
-    expect(p.statsOf('priest').dmg, troopTypes['priest']!.dmg + potionHeal + staffHeal);
-    expect(p.statsOf('priest').taken, 1);
   });
 }

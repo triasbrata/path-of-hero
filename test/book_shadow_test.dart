@@ -25,9 +25,8 @@ const townSizes = [Size(1600, 947), Size(1266, 713), Size(1164, 777), Size(915, 
 /// The book's pixel scale at a Town's [size] (ui-hud.md "Layouts": 974 px wide at 1600x947, 711 at 1164x777).
 double bookPs(Size size) => switch (size.width) { >= 1500 => 3.0, >= 1100 => 2.0, _ => 1.0 };
 
-/// A board game between waves with the Towns off, seeded: the field's book.
+/// A board game between waves, seeded: the field's book.
 Game fieldGame() => Game(Random(1), Random(2)).boardRules()
-  ..towns = false
   ..armyMax = null
   ..gold = 5000;
 

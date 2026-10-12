@@ -80,7 +80,6 @@ void main() {
       // A board game between waves, wave 3 won, its first Town marked before wave 5.
       Game board() => Game(Random(1), Random(2)).boardRules()
         ..armyMax = null
-        ..towns = true
         ..townRules = shipped
         ..townDice = Random(3)
         ..gold = 5000
@@ -91,7 +90,7 @@ void main() {
       var g = b.state = board();
       await frames(tester, 60);
       // ignore: avoid_print
-      print('$name: towns ${g.towns} storeOpen ${g.storeOpen} armyBuysOpen ${g.armyBuysOpen}');
+      print('$name: storeOpen ${g.storeOpen} armyBuysOpen ${g.armyBuysOpen}');
       await shot('field');
       await tab('bag');
       await shot('fieldbag');

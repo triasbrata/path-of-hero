@@ -2,8 +2,7 @@
 // "Army"): with the forge and the Towns on, "Awaken 2 needs (grade II):", the grade set's items with their have/need,
 // where each comes from ("Done", "In Bag: 1", "Smithy: can make 3", "Smithy: needs Leather Strap"), the "Next" line with
 // the grade after it; a stat cell counts the kind's grades together; a level kept from a save before the grades
-// (decisions-log 272) said first, "Awaken 1 (kept from old items)". With the Towns off (tests only, decisions-log 296:
-// the old recipe) the needs have no grade, and each its Smithy line all the same.
+// (decisions-log 272) said first, "Awaken 1 (kept from old items)".
 // One TdGame per widget test; no wave is ever won.
 import 'dart:convert';
 
@@ -126,12 +125,11 @@ void main() {
     testWidgets('a level kept from a save before the grades at $size: "Awaken 1 (kept from old items)" first, then the '
         'grade-II needs', (tester) async {
       final b = await boot(tester, size);
-      // A knight at Awaken 1 by the rule from before the grades (its recipe once, all grade I) in a game with the Towns off
-      // (tests only: the forge-off build that wrote such saves is gone, decisions-log 296), saved, then loaded by grade.
+      // A knight at Awaken 1 by the rule from before the grades (its recipe once, all grade I) in a save from before them:
+      // no `awakenKept` (the forge-off build that wrote such saves is gone, decisions-log 296), loaded by grade.
       final old = Game();
       old.upgrades['knight'] = [for (final MapEntry(key: item, value: n) in old.recipeOf('knight').entries) ...List.filled(n, item)];
-      final j = jsonDecode(jsonEncode(old.toJson())) as Map<String, dynamic>;
-      expect(j.containsKey('awakenKept'), isFalse, reason: 'a save from before the grades keeps no level');
+      final j = jsonDecode(jsonEncode(old.toJson())) as Map<String, dynamic>..remove('awakenKept'); // it keeps no level
       final g = b.state = Game.fromJson(j).boardRules()
         ..gold = 5000;
       expect((g.keptLevel('knight'), g.awakenLevel('knight')), (1, 1));
@@ -152,22 +150,4 @@ void main() {
       await frames(tester, 5);
     });
   }
-
-  testWidgets('the Towns off (tests only): "Awaken 1 needs:" with no grade, where from the Smithy', (tester) async {
-    final b = await boot(tester);
-    final g = b.state = Game().boardRules()
-      ..towns = false
-      ..gold = 5000;
-    expect(g.autoPlace('knight'), isTrue);
-    await frames(tester, 40);
-    await tester.tapAt(b.troopRow('knight').center);
-    await frames(tester, 4);
-    final next = said(b, 'next');
-    expect(next, startsWith('${awakenName(1)} needs:'));
-    expect(next, contains(Words.smithy));
-    expect(next, isNot(contains(Words.grade)));
-    expect(next, isNot(contains('Drops')));
-    b.state = Game();
-    await frames(tester, 5);
-  });
 }

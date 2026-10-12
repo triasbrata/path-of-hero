@@ -492,7 +492,7 @@ extension Pusaka on Game {
       };
 
   /// What this wave's Pusaka did, at its win ([PusakaReport]): every bound one with its tally, in [Relic] order, each of
-  /// the forge's small relics that did something ([Game.relicWorth], with the Towns on), and the small relics back in
+  /// the forge's small relics that did something ([Game.relicWorth]), and the small relics back in
   /// the bag from falls ([Game.relicsBack]); null when none is bound, none did anything and none came back.
   PusakaReport? _pusakaReport() {
     final lines = <PusakaDone>[
@@ -501,9 +501,8 @@ extension Pusaka on Game {
           (relic: r, type: type, stars: stars, uses: pusakaWorth[r]?.uses ?? 0, worth: pusakaWorth[r]?.worth ?? 0),
     ];
     final relics = <RelicDone>[
-      if (towns)
-        for (final r in forgeRelics)
-          if (relicWorth[r] case final w? when w.uses > 0) (relic: r, uses: w.uses, worth: w.worth),
+      for (final r in forgeRelics)
+        if (relicWorth[r] case final w? when w.uses > 0) (relic: r, uses: w.uses, worth: w.worth),
     ];
     if (lines.isEmpty && relics.isEmpty && relicsBack.isEmpty) return null;
     return PusakaReport(wave, t, lines: lines, relics: relics, returned: {...relicsBack});
@@ -972,25 +971,22 @@ extension Asah on Game {
     return asahPrice[p.stars - 1];
   }
 
-  /// How many small relics the bag holds ([Relics.relicsInPlay]: those an Asah can take; the four with the Towns off, all
-  /// eleven on).
+  /// How many small relics the bag holds ([Relics.relicsInPlay]: those an Asah can take).
   int get asahRelicsInBag => relicsInPlay.fold(0, (n, r) => n + (relicBag[r] ?? 0));
 
-  /// The small relics an Asah would take from the bag now, by kind, in the order taken: one at a time, each from the
-  /// kind the bag holds most of then (ties: [droppedRelics]' order, Taring first), up to [asahRelics], so the bag
-  /// stays even. The owner's wave-86 bag (Taring 17, Duri 29, Amarah 23, Pelindung 21) gives Duri 8, Amarah 2. Fewer
-  /// than [asahRelics] in all when the bag holds fewer. With the Towns on the cheapest first (decisions-log 233, the
-  /// design's decision 10): by craft gold ([Recipe.gold]: Fang and Thorns 300, Fury and Guard 400, the Strong four 1,000,
-  /// Iron Will and Holy Charm 3,000, Giant Slayer 3,500), the dearer ones only once the cheaper are gone; among those of
-  /// one price the most held first, as above (ties: [Relic] order).
+  /// The small relics an Asah would take from the bag now, by kind, in the order taken: one at a time, the cheapest first
+  /// (decisions-log 233, the design's decision 10): by craft gold ([Recipe.gold]: Fang and Thorns 300, Fury and Guard
+  /// 400, the Strong four 1,000, Iron Will and Holy Charm 3,000, Giant Slayer 3,500), the dearer ones only once the cheaper
+  /// are gone; among those of one price the kind the bag holds most of then (ties: [Relic] order), up to [asahRelics].
+  /// The owner's wave-86 bag (Taring 17, Duri 29, Amarah 23, Pelindung 21) gives Duri 10. Fewer than [asahRelics] in all
+  /// when the bag holds fewer.
   Map<Relic, int> get asahTake => _bagTake(asahRelics);
 
   /// [n] small relics from the bag as [asahTake] takes them (Lebur's, [leburRelics], the same way): one at a time, each
-  /// from the kind the bag holds most of then (with the Towns on, among the cheapest kinds still held); fewer when the
-  /// bag holds fewer.
+  /// from the kind the bag holds most of then among the cheapest kinds still held; fewer when the bag holds fewer.
   Map<Relic, int> _bagTake(int n) {
     final kinds = relicsInPlay, left = {for (final r in kinds) r: relicBag[r] ?? 0}, take = <Relic, int>{};
-    int price(Relic r) => towns ? townRules.recipes[r.name]?.gold ?? 0 : 0; // its craft gold; all one with the Towns off
+    int price(Relic r) => townRules.recipes[r.name]?.gold ?? 0; // its craft gold
     for (var i = 0; i < n; i++) {
       final held = [for (final r in kinds) if (left[r]! > 0) r];
       if (held.isEmpty) break;

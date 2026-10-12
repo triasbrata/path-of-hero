@@ -5,7 +5,7 @@
 // storeys and width by the room), its three buildings cell by cell standing right on the street's strip (decisions-log
 // 279), the signs, the anchors for the troops on the street's lane, the book's Town tabs, a
 // tap on a sign or a building opening its page, the bare scene shutting the book, the pans, Leave and its fade back, Auto's countdown and its stop on a press, no guide in a Town, a save
-// reopening in it; and with the Towns off the field's book as before.
+// reopening in it; and out of a Town the field's book.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -357,8 +357,8 @@ void main() {
   });
 
   testWidgets('no guide card or pointer in a Town but its own (K23, seen here; town_switch_test.dart); a save made in it '
-      'reopens in it at once (no fade), the book on the Smithy; with the Towns off (tests only) no Town shows and the field\'s '
-      'book is the Towns\' (no Shop tab: the Toko went in decisions-log 296)', (tester) async {
+      'reopens in it at once (no fade), the book on the Smithy; a game out of a Town shows none, and the field\'s book has no '
+      'Shop tab (the Toko went in decisions-log 296)', (tester) async {
     final b = await boot(tester);
     b.autoStart.set(false);
     final seen = b.guideSeen;
@@ -370,14 +370,13 @@ void main() {
     b.guideSeen = seen;
 
     saveGame(g);
-    final back = loadGame()!..towns = true;
+    final back = loadGame()!;
     expect(back.inTown, isTrue);
     b.state = back;
     await frames(tester, 2);
     expect((b.townShown, b.townFade, b.bookPage), (true, 0.0, 'smithy'));
 
     b.state = Game(Random(1), Random(2)).boardRules()
-      ..towns = false // the Towns off (tests only, decisions-log 296)
       ..wave = 20;
     await frames(tester, 40);
     expect((b.townShown, b.townScene.isEmpty), (false, true));

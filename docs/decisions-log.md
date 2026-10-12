@@ -11256,3 +11256,78 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        use it (that probe's dump with the Towns moves: its save's catch-up meets waves 90 and 91; a new golden).
      - **S5** (code-audit): `OmenKind`, the kinds' data (570 lines), moved from omen.dart to lib/omen_catalog.dart,
        unchanged.
+321. **The tests play the real rules: the Towns-off rules go, `Game.towns` with them** (the owner, 2026-10-12, asked
+     whether the half of the logic tests that still played the rules from before the Towns (a plain `Game()`, which no
+     player plays) should move to the real rules, the Towns-off rules then deleted: "Ya, setelah bug B1–B3" (yes, after
+     B1–B3, decisions-log 317, on main by then)). Step 4 of 296's plan. By towns-only, after a phase 1 inventory.
+     - **Every game has the Towns**, a plain `Game()` too: `Game.towns` and its four aliases (`byGrade`, `forgeShop`,
+       `wishOn`, `enhanceOn`) are deleted and every branch keeps its Towns arm (about 100). So every game awakens by
+       grade, reads the items' numbers from town.json, has the forge's relics, Enhance, the Wishlist, the Tavern, the
+       materials, the Shop only in a Town, the save's `town` and `awakenKept`, the telemetry's Town fields.
+       `awakenRecipe` stays as what the grade sets build on (`kindRecipe`) and what a save from before the forge keeps
+       its levels by (`oldItemLevel`, `awakenKept`, decisions-log 272). `boardRules()` keeps the board's own: the army
+       and type caps, the Boss Chest, the skill wind-ups. A loaded save's troops are fitted once, in `fromJson`
+       (`_loadedHpBack`); `boardRules()` refits nothing (317's B1 fix needed two steps while the load came before the
+       Towns' rules).
+     - **The field drops go**: nothing lay on the field in a game with the Towns. `drops`, `relicDrops`, `lastLoot`,
+       `lastRelics`, the won wave's pick-up, the field's bobbing loot and its relic glint, the `LootDropped` event
+       (`EventKind.drop`, its log line and icon), `lootCounts` and the "VICTORY!" popup's item and relic counts (the
+       materials stay), and `chestTakesBossRelic`. The `loot` dice still draw each kill's item and relic and throw them
+       away, so a seeded game plays the same.
+     - **The Toko's prices go**: store.dart's `itemPrice` and `relicPrice` and their arms. Kept on purpose: the Towns'
+       own Shop knobs that 248 left unused (`TierPrices.shop` / `shopRise` / `priceAfter`, `TownShop.itemRise`,
+       town.json's tier and item buy prices, the Shop's empty Items and Relics sections): rules of the Towns' Shop, not
+       of a game without them; whether to delete them is a design call.
+     - **Nothing a player sees changes**: every player's game had the Towns since 237. Saves: no key and no version
+       changes (`saveVersion` 3). Telemetry: no raise: `dropped` and `relicsDropped` stay in the wave record, always
+       `{}`, and the `drop` event never came from a game with the Towns.
+     - **The tests**: the ~170 tests that pinned the Towns-off rules moved to the real ones or went (the off half of an
+       on/off pair, a rule only the Towns-off game had); about 30 test cases fewer. test/real_rules.dart holds
+       `awakenItems(type, level)` (a type's items for an Awaken level, by grade) and `noTowns` (Town rules whose every
+       roll misses) for a test that must never meet a Town. forge_cutover_test pins what the rules from before the forge
+       read for the w89 and w8 saves, recorded on main before they went. A run with every Town roll hitting, over the 114
+       test files that play waves, found two tests a Town would stop (events_test's Hero wins at wave 5): they use
+       `noTowns`. Found on the way (the shipped game, unchanged): at 915×412 the Bag's facing page of a worn small relic
+       had its second action row 3 px under the page (the Towns' relic text has the tier and "Best on" lines); its test
+       played the Towns-off text and never saw it, and now asks a whole row.
+     - **The identity guard**: the w89 dump with the Towns (319's, `<agents>/probes/shadows-on/w89-on-ff0f91a6.txt`)
+       byte for byte the same after each lib batch; the probe's `TOWNS` define and its Towns-off dump are gone
+       (testing.md).
+     - **The probes**: the off parts of probe_chest_shots, probe_release_foot_shots, probe_room_tent_shots,
+       probe_book_shadow_shots and probe_town_shop_tabs_shots gone; probe_bar_clear and probe_fx_ui_shots draw no field
+       loot. The probe kits outside the repo (the auto-player, the replay kit, the QA runs) go through a due Town at once
+       (`townPolicy` 'leave'; on a ref before 321 a plain `Game()` meets no Town, so it changes nothing there).
+322. **An army wiped mid-wave costs a heart and the wave is played again; the game is over when the hearts run out**
+     (the owner, 2026-10-12, asked what should happen when the whole army dies, and picked "Kalah wave: −1 hati, ulang":
+     an army wipe is no longer game over; the player loses 1 heart (2 lives), the wave's monsters are swept away and
+     the same wave is played again, so he can buy troops again; 3 hearts = 3 chances). Why: the lives never mattered.
+     The balance pass (318) counted 1,681 new-game waves that lost 17 lives, nearly all in a run's last wave, and every
+     run ended in a wipe at full hearts, because the game was over "at 0 lives or when every troop is dead". By
+     lives-rule (lib/wipe.dart; units-and-combat.md "An army wiped", ui-hud.md "An army wiped").
+     - **The wipe** is checked at the end of `tick`, after the raised joined and before the win: a troop fell this
+       wave, none is alive (one Resurrection raised in that tick counts), no Phoenix Plume rise is due, and a monster
+       still lives or is queued. The last troop and the last monster falling together is a win. A wave begun with no
+       troop is never a wipe: as before, only its leaks cost lives.
+     - **It costs** `wipeLives` 2 lives (a heart; at 1 life the half). At 0 the game is over as by leaks: the monsters
+       stay and cheer, the scoreboard. `over` is `lives <= 0` alone.
+     - **The sweep:** the living and queued monsters go with no gold, loot or score. The ones on the field hop for joy
+       2.4 s (the game-over hop), then vanish in the necromancer's summon circle (existing art; no new shape). Effects,
+       zones, shots and what was left for later end as at a wave's end. What the wave paid as it went stays (kill gold,
+       kill score, kills); its materials lying on the field are lost, since they come only with a win (else a replay
+       would pay them twice).
+     - **The replay:** `wave` goes back to the last won one, so between waves everything reads as after that win: the
+       back line, a Town due (one left before the lost wave isn't due again; one marked after it waits for its win), the
+       wave meter's next wave, "from wave 15 won". The next start rolls the same wave afresh (its number and tide, new
+       dice). Its wave bonus and score, Shadow ease, Grudge target, Hero, boss chest and Town roll come once, when it is
+       won. `lostWave` marks it: the Shadows' catch-up doesn't land twice on one wave number, and Lewati's skip buff
+       owed for it is owed again. The Tavern's boosts count the lost wave (it was fought, as a game over counted it).
+     - **Between:** "Replace fallen" lists the army (the Heroes go to Fallen Heroes as ever), Auto Buy buys it back as
+       the gold allows, Auto Wave counts down as after a win (the Auto hold waits below 75% of the cap as ever). The
+       message window says "Your army fell! -1 heart." / "Wave N again." and the heart pops. The game saves at once, so
+       quitting keeps the heart lost. The free priest is a new game's gift and doesn't come again.
+     - **Saves** (additive, `v` stays 3): `lostWave` while set (loaded only when it is the next wave). **Telemetry:**
+       the event `wipe` (`lives`, `livesLost`, `foes`, `over`) and a wave record's `end` `wiped`; `eventVersion` and
+       `telemetryVersion` 13. **The score:** the lives term (`lifeScore`) stays, but a game now always ends at 0
+       lives, so it pays nothing. The battle log adds "Army fell: -1 heart, wave N again".
+     - **What a run's end means now:** a run ends after three wipes, or fewer with leaks. The balance pass weighs where
+       runs end and how many replays they take (lives-rule's probe plan).

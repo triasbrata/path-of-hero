@@ -201,14 +201,9 @@ const _arrows = {'archer', 'skeleton_archer'}; // tiny_arrow_<who>.png, 32x32 po
 const _feetFx = {'summon', 'heal', 'holy'};
 const _fxFps = 15.0, _burstSize = 32.0; // a fx_<name>.png frame is drawn [_burstSize] world units tall
 
-/// The sparks of the "VICTORY!" popup and of a dropped relic's glint: ui_click.png's small x and its bigger x twinkling
-/// (frames 0, 1, 1, 1, 0), then dark for one (-1), [_sparkFps] steps a second.
+/// The sparks of the "VICTORY!" popup: ui_click.png's small x and its bigger x twinkling (frames 0, 1, 1, 1, 0), then
+/// dark for one (-1), [_sparkFps] steps a second.
 const _sparkFps = 12.0, _sparkSteps = [0, 1, 1, 1, 0, -1];
-
-/// A dropped relic's glint (ui_click.png's sparks), dyed the Hero gold.
-final _relicGlint = Paint()
-  ..filterQuality = FilterQuality.none
-  ..colorFilter = _dye(_heroGold);
 const _summoners = {boss, minion}; // tiny_<key>_summon.png: casting / rising from the ground
 // Healers with a tiny_<key>_cast.png strip, played for a heal; their attack strip is then a real attack
 // (the healing necromancer's scythe swing, Unit.swung). Other healers heal with their attack strip.
@@ -679,7 +674,7 @@ class Board extends PositionComponent
   final _welcomeAt = <String, Rect>{}; // its buttons this frame, by label (welcome.dart)
   double get camX => state.cam; // the game moves the camera (it keeps the battle mid-screen)
   int speed = 1;
-  double _clock = 0, _savedWin = double.negativeInfinity;
+  double _clock = 0, _savedWin = double.negativeInfinity, _savedWipe = double.negativeInfinity;
   String? dragging; // the type of [_relocating]
   Unit? _relocating; // troop on the field being dragged to a new spot before the wave
   Vector2? dragAt;
@@ -1130,7 +1125,7 @@ class Board extends PositionComponent
   /// shown); the page shown (from 0), how many there are and how many cells a page holds (alone, and above the pager;
   /// the note's strip, while it shows, taken off both); the pager's 'back' and 'on' buttons (Rect.zero: a single page);
   /// what [loot]'s cell shows (null: no cell shows); and the empty text's lines (none: a cell shows). For tests.
-  /// On the Town's Shop page (the Towns on), its grid's (decisions-log 230).
+  /// On the Town's Shop page, its grid's (decisions-log 230).
   List<(Enum, Rect)> get bagCells => [for (final (cell, r) in _grid.cells) (cell.kind, r)];
   List<Rect> get bagSlots => [..._grid.slots];
   BagCategory get bagCategory => _grid.category;
@@ -1668,6 +1663,16 @@ class Board extends PositionComponent
         autoStart.won();
       }
     }
+    if (g.wipedAt != _savedWipe) {
+      _savedWipe = g.wipedAt;
+      // The army fell and the wave is played again (wipe.dart): saved at once, so the heart lost stays lost, said in
+      // the message window, and Auto Wave counts down as after a win.
+      if (g.wipedOut && !g.over) {
+        saveGame(g);
+        autoStart.won();
+        showMessage(g.wipeNote, time: _noteTime);
+      }
+    }
     // The auto start: its countdown stops once a wave is on (Start pressed early) or the game is over; it
     // stands still while paused, the Hero splash or a guide card shows (coach.dart), the book is turned off Army (to Tas or
     // Settings: the player is busy there, #63, #93), the army is below 75% of its cap ([Game.autoHeld],
@@ -2078,16 +2083,6 @@ class Board extends PositionComponent
       }
     }
 
-    // Loot where monsters fell, bobbing until the wave is won.
-    for (final (p, loot) in [...g.drops, ...g.relicDrops]) {
-      final at = Offset(p.x, p.y - math.sin(_fieldClock * 4 + p.x).abs() * 2);
-      _icon(c, loot, Rect.fromCenter(center: at, width: 10, height: 10));
-      if (loot is Relic) {
-        // A relic glints: ui_click.png's x twinkling over it now and then (the "VICTORY!" popup's sparks), in gold.
-        final f = _sparkSteps[(_fieldClock * _sparkFps + p.x).floor() % _sparkSteps.length];
-        if (f >= 0) c.drawImageRect(_img('ui_click.png'), Rect.fromLTWH(f * 16.0, 0, 16, 16), Rect.fromCenter(center: at, width: 16, height: 16), _relicGlint);
-      }
-    }
     _matLootDraw(c, g); // town_look.dart: the materials lying where they fell, until the wave is won
     _groundZones(c, g); // hero_skill_fx.dart
     _groundRings(c, g); // hero_skill_fx.dart: a monster skill's rings bursting out
@@ -2097,7 +2092,7 @@ class Board extends PositionComponent
     _statusLines(c, g); // skills.dart: a duel's or Shared Wounds' line, under the sprites
     _pusakaLook.refresh(g); // which type holds which Pusaka, for the rings and the bars (pusaka_look.dart)
     // Draw back-to-front so lower sprites overlap higher ones.
-    final drawables = [for (final u in g.units) (u.pos.y, u)]..sort((a, b) => a.$1.compareTo(b.$1));
+    final drawables = [for (final u in g.units) (u.pos.y, u), for (final u in g.swept) (u.pos.y, u)]..sort((a, b) => a.$1.compareTo(b.$1));
     for (final (_, u) in drawables) {
       if (u != _relocating) _unit(c, g, u);
     }
@@ -2256,9 +2251,9 @@ class Board extends PositionComponent
     _braceRing(c, g, u, ground); // hero_move_fx.dart: Spear Wall
     _chain(c, u); // hero_move_fx.dart: Chain Hook pulling it
     _afterimages(c, g, u, k, flip); // skills.dart: a Phantom Rush dash's afterimages (#88)
-    if (g.over && u.side == Side.enemy && u.alive) {
+    if ((g.over || g.swept.contains(u)) && u.side == Side.enemy && u.alive) {
       // The monsters won: they hop for joy like the troops after a won wave (on the screen clock, since
-      // the game clock has stopped).
+      // the game clock has stopped), or a moment before a wipe's sweep takes them (wipe.dart).
       _frame(c, '${k}_idle.png', (_clock * _fps).floor(), feet - Offset(0, math.sin(_clock * 10 + u.pos.y).abs() * 4),
           flip: flip, paint: body, line: line);
       return;
@@ -2475,12 +2470,10 @@ class Board extends PositionComponent
       c.restore();
     }
 
-    // The loot: each kind once, its count before its icon ("3x"), items, relics, then materials. The troops that fell:
-    // by name while few did ("Aldo Ash (Knight)"), else each type once with its count; sprites greyed.
-    // The Towns' materials last, in their order (town.dart).
+    // The loot: the materials the wave dropped (town.dart), each once in their order, its count before its icon ("3x");
+    // no item or relic drops (decisions-log 321). The troops that fell: by name while few did ("Aldo Ash (Knight)"),
+    // else each type once with its count; sprites greyed.
     final won = <MapEntry<Enum, int>>[
-      ...lootCounts(g.lastLoot).entries,
-      ...lootCounts(g.lastRelics).entries,
       for (final m in Mat.values) if (g.lastMaterials[m] case final n?) MapEntry(m, n),
     ];
     _victoryLoot = [for (final e in won) (e.key, e.value)];

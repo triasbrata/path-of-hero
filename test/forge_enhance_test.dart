@@ -13,7 +13,6 @@ import 'package:tower_defense/telemetry.dart';
 
 /// A game with the Towns and the forge on, [gold], at [wave].
 Game forge({int gold = 0, int wave = 30}) => Game(Random(1), Random(101))
-  ..towns = true
   ..gold = gold
   ..wave = wave;
 
@@ -81,8 +80,6 @@ void main() {
     // A patched step share.
     final half = forge()..townRules = TownRules.patch({'enhance': {'per': 0.5}});
     expect(half.itemK(Item.royalSword, 2), closeTo(1.64, 1e-12));
-    // The Towns off (a plain Game(), tests only): an item's constant, whatever the plus.
-    expect(Game().itemK(Item.sword, 5), swordDmg);
   });
 
   test('each step costs its stone and gold: Mithril for +1 to +3, Starmetal for +4 and +5, 20,500 gold in all; none past +5',
@@ -128,20 +125,18 @@ void main() {
     expect(g.stoneRecipe(Mat.evilEye), isNull);
   });
 
-  test('Enhance opens once wave 30 is won (town.json `enhance.from`), only with the forge and the Towns on', () {
+  test('Enhance opens once wave 30 is won (town.json `enhance.from`)', () {
     expect(forge(wave: 29).enhanceOpen, isFalse);
     expect(forge(wave: 30).enhanceOpen, isTrue);
     expect(forge(wave: 44).enhanceOpen, isTrue);
     final fighting = forge(wave: 30)..queue.add(('slime', Tier.normal));
     expect(fighting.enhanceOpen, isFalse, reason: 'wave 30 still being fought');
-    expect((forge(wave: 30)..towns = false).enhanceOpen, isFalse);
     expect((forge(wave: 12)..townRules = TownRules.patch({'enhance': {'from': 12}})).enhanceOpen, isTrue);
   });
 
   test('an item goes up to +5 one step at a time, each its own Bag stack, and every step works (no dice)', () {
     for (final seed in [1, 2, 3]) {
       final g = Game(Random(seed), Random(seed + 100))
-        ..towns = true
         ..gold = 0
         ..wave = 30
         ..townAt = 31;
@@ -176,7 +171,7 @@ void main() {
     expect(itemLabel(Item.sword), itemNames[Item.sword]);
   });
 
-  test('why an Enhance is refused, in order: game over, not in a Town, the forge off, not open, none held, at +5, the '
+  test('why an Enhance is refused, in order: game over, not in a Town, not open, none held, at +5, the '
       'stone, the gold', () {
     String? why(Game g, [Item item = Item.royalSword, int plus = 0]) => g.whyNotEnhance(item, plus)?.text;
     final g = forgeInTown();
@@ -192,7 +187,6 @@ void main() {
     expect(why(forgeInTown(wave: 29)), 'Opens after wave 30');
     expect(forgeInTown(wave: 29).whyNotEnhance(Item.royalSword, 0)!.why, CraftWhy.closed);
     expect(why(forge()), Words.onlyInTown, reason: 'between Towns');
-    expect(why(Game()..wave = 30), Words.onlyInTown, reason: 'the Towns off');
     g.lives = 0;
     expect(why(g), Words.gameOver);
     final at5 = forgeInTown()..enhancedBag[(Item.ring, 5)] = 1;
@@ -231,7 +225,7 @@ void main() {
     expect(forgeInTown().whyNotCraftStone(Mat.evilEye)!.why, CraftWhy.recipe, reason: 'not a stone');
   });
 
-  test('on a type an enhanced item fights at its plus; the Towns off read none', () {
+  test('on a type an enhanced item fights at its plus', () {
     final g = forge()..upgrades['knight'] = sets(forge(), 'knight', 3);
     final plain = g.statsOf('knight');
     expect(g.plusesOn('knight', Item.royalSword), [0, 0]);
@@ -241,10 +235,6 @@ void main() {
     expect(up.dmg, closeTo(plain.dmg * 1.48 / 1.32, 1e-9));
     expect(up.def, closeTo(plain.def + 3 + 1.2, 1e-9), reason: 'Royal Shield 6 → 9 at +5 and 7.2 at +2');
     expect((up.hp, up.speed, up.rate), (plain.hp, plain.speed, plain.rate));
-    g.towns = false;
-    final off = g.statsOf('knight');
-    g.upgradePlus.clear();
-    expect(off.dmg, g.statsOf('knight').dmg, reason: 'the pluses act only with the Towns on');
   });
 
   test('giving an enhanced item: from its own stack, onto the type with its plus, the Awaken counts unchanged', () {
@@ -362,7 +352,7 @@ void main() {
     expect((w['gold'] as Map)['craftSpent'], 1500);
   });
 
-  test('the save: the plus keys round-trip; a save without them loads all +0; the forge off writes none', () {
+  test('the save: the plus keys round-trip; a save without them loads all +0', () {
     final g = forge();
     g.upgrades['knight'] = [Item.royalSword, Item.royalSword, Item.royalShield];
     g.upgradePlus['knight'] = {Item.royalSword: [4, 2]};
@@ -379,8 +369,7 @@ void main() {
       ],
     });
     expect(j['v'], Game.saveVersion);
-    final back = Game.fromJson(j)
-      ..towns = true;
+    final back = Game.fromJson(j);
     expect(back.upgradePlus, g.upgradePlus);
     expect(back.enhancedBag, g.enhancedBag);
     expect(back.statsOf('knight').dmg, closeTo(g.statsOf('knight').dmg, 1e-9));
@@ -395,10 +384,6 @@ void main() {
     expect(plain.enhancedBag, isEmpty);
     expect(plain.upgrades['knight'], [Item.royalSword, Item.royalSword, Item.royalShield]);
 
-    // The Towns off (tests only) write no key, whatever they hold.
-    final off = forge()..towns = false;
-    off.enhancedBag[(Item.sword, 1)] = 1;
-    expect(saved(off).keys, isNot(anyOf(contains('bagPlus'), contains('upgradePlus'))));
     // Nothing enhanced: no key.
     expect(saved(forge()).keys, isNot(anyOf(contains('bagPlus'), contains('upgradePlus'))));
 

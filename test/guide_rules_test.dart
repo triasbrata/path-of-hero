@@ -101,18 +101,15 @@ void main() {
     expect(isDue('K7', g), isTrue);
   });
 
-  test('K8 item limits and K9 Bangkit: a fielded type at its cap for a kind in the bag; the bag can awaken one', () {
+  test('K8 item limits and K9 Bangkit: a fielded type that must awaken first for an item in the bag; the bag can awaken '
+      'one', () {
     final g = bareGame()..wave = 10;
-    final recipe = g.recipeOf('archer');
-    g.upgrades['archer'] = [for (var i = 0; i < recipe[Item.bow]!; i++) Item.bow]; // at its cap of bows until it awakens
-    g.inventory[Item.bow] = 1;
+    g.inventory[Item.longBow] = 1; // grade II: open from Awaken 1 (decisions-log 249)
     expect((isDue('K8', g), isDue('K9', g)), (false, false)); // no archer on the field
     placeNow(g, 'archer', 0, 0);
-    expect(g.whyNot(Item.bow, 'archer'), Refusal.awakenFirst);
+    expect(g.whyNot(Item.longBow, 'archer'), Refusal.awakenFirst);
     expect((isDue('K8', g), isDue('K9', g)), (true, false));
-    for (final MapEntry(key: item, value: n) in recipe.entries) {
-      if (item != Item.bow) g.inventory[item] = n; // the rest of its recipe in the bag
-    }
+    g.inventory.addAll(g.gradeSet('archer', 1)); // its grade I set in the bag
     expect((g.bagAwakens, isDue('K9', g)), (true, true));
   });
 
@@ -126,11 +123,9 @@ void main() {
   });
 
   test('K11 Shop: from the Shop\'s opening (every Town\'s, from wave 1\'s win, once a Town is marked, decisions-log 253; '
-      'the Towns off never: no Town, and the field\'s Toko went in decisions-log 296); K14 Hero fell: from wave 15\'s win, '
-      'when Recall opens', () {
+      'the field\'s Toko went in decisions-log 296); K14 Hero fell: from wave 15\'s win, when Recall opens', () {
     FallenHero fell() => FallenHero(name: 'Hera Quill', type: 'priest', stats: const [], fell: 12);
     expect((isDue('K11', at(0)..townAt = 2), isDue('K11', at(6)), isDue('K11', at(6)..townAt = 8)), (false, false, true));
-    expect((isDue('K11', at(storeFrom - 1)..towns = false), isDue('K11', at(storeFrom)..towns = false)), (false, false));
     expect(isDue('K14', at(storeFrom)), isFalse);
     expect(isDue('K14', at(storeFrom - 1)..fallenHeroes.add(fell())), isFalse);
     expect(isDue('K14', at(storeFrom)..fallenHeroes.add(fell())), isTrue);

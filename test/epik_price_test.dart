@@ -35,7 +35,9 @@ void main() {
   });
 
   test('the Vault sells an Epik for sellShare of epikPrice, a Langka still 8,000, a Legenda unchanged', () {
-    final g = Game()..wave = storeFrom;
+    final g = Game()
+      ..wave = storeFrom
+      ..inTown = true; // the Shop buys only in a Town
     for (final (r, price) in [(Relic.hawkFeather, epikPrice), (Relic.ironBanner, langkaPrice), (Relic.dragonCrown, legendaPrice)]) {
       g.givePusaka(r);
       final gold = g.gold;

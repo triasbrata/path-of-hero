@@ -30,9 +30,8 @@ Color _pusakaLogInk(Relic r) => switch (r) {
 /// The relic most sent back to the bag (the first by kind among equals).
 Relic _mostBack(Map<Relic, int> back) => back.entries.reduce((a, b) => b.value > a.value || (b.value == a.value && b.key.index < a.key.index) ? b : a).key;
 
-/// The filter chips over the log, and the kinds each shows. A field drop ([EventKind.drop]) had a Loot chip of its own
-/// until decisions-log 317: no item or relic lies on the field of a board game (the Smithy makes them), so it was always
-/// empty; a game with the Towns off (the tests') still lists its drops under All.
+/// The filter chips over the log, and the kinds each shows. A field drop had a Loot chip of its own until decisions-log
+/// 317: no item or relic lies on the field (the Smithy makes them), so it was always empty; its event went in 321.
 enum _LogChip {
   all('All', EventKind.values), // the log holds no TraceEvents
   fell('Fallen', [EventKind.fell]),
@@ -40,6 +39,7 @@ enum _LogChip {
   pusaka(Words.artifact, [EventKind.grailSaved, EventKind.pusakaReport, EventKind.offerPicked, EventKind.pusakaAsah, EventKind.pusakaLebur]), // decisions-log 149, 152, 154, 164
   foe('Monsters', [EventKind.strongFoe, EventKind.monsterSkill, EventKind.omenGained, EventKind.omenEased, EventKind.omenDusk]), // decisions-log 180, 239
   rest('Other', [EventKind.heroMade, EventKind.heroRecalled, EventKind.awakened, EventKind.ascended, EventKind.tempa, EventKind.waveWon, EventKind.waveLost, //
+    EventKind.wipe, // decisions-log 322
     EventKind.townMarked, EventKind.townEntered, EventKind.townLeft, EventKind.crafted, EventKind.itemCrafted, //
     EventKind.stoneCrafted, EventKind.itemEnhanced, //
     EventKind.boostBought, EventKind.boostEnded, EventKind.boostSaved]); // decisions-log 216, 233, 249, 255, 268
@@ -62,8 +62,6 @@ String logLine(GameEvent e) => switch (e) {
       SkillCast(:final name, :final skill) => '$name uses $skill',
       HeroSkillCast(:final name, :final skill) => 'Hero $name: ${skill.title}',
       AwakenSkillCast(:final name, :final skill, :final level) => '$name uses ${skill.titleAt(level)}',
-      LootDropped(:final from, :final tier, :final item, :final relic) =>
-        '${_foeName(from, tier)} drops ${item != null ? itemNames[item] : relicNames[relic]}',
       StrongFoe(:final type, :final tier) => '${tierNames[tier]} appears: ${_monsterName(type)}',
       MonsterSkillCast(:final type, :final tier, :final skill) => '${_foeName(type, tier)}: ${skill.title}',
       HeroMade(:final name, :final type) => '$name (${troopTypeNames[type] ?? type}) is now a Hero!',
@@ -78,6 +76,7 @@ String logLine(GameEvent e) => switch (e) {
       PusakaLebur(:final fodder, :final relic, :final stars, :final type, :final cost) =>
         '${Words.melt}: ${relicNames[fodder]} into ${relicNames[relic]} ★$stars ${_whereAt(type)} (${shortPrice(cost)} gold)',
       WaveEnded(:final wave, :final won) => won ? 'Wave $wave won' : 'Lost at wave $wave',
+      Wiped(:final wave, :final over) => over ? 'Army fell: no hearts left' : 'Army fell: -1 heart, wave $wave again', // wipe.dart
       GrailSaved(:final name, :final type, :final hero) =>
         '${pusakaShortName(Relic.grail)} saves ${hero ? 'Hero ' : ''}$name (${troopTypeNames[type] ?? type})',
       PusakaReport() => pusakaReportLines(e).firstOrNull ?? '',
@@ -282,7 +281,7 @@ extension on Board {
   /// last row's: the relic most sent back); the Town's hammer for a Town marked, gone into or left; the relic or the item the Smithy crafted.
   void _logIcon(Canvas c, GameEvent e, Rect to, [int row = 0]) => switch (e) {
         TroopFell(:final relics) when row > 0 => _icon(c, relics.first, to), // what went back to the bag
-        TroopFell() => _uiIcon(c, _icDarkHeart, to),
+        TroopFell() || Wiped() => _uiIcon(c, _icDarkHeart, to), // a wipe's: the heart it cost (wipe.dart)
         GrailSaved() => _icon(c, Relic.grail, to),
         PusakaAsah(:final relics) || PusakaLebur(:final relics) when row > 0 => _icon(c, relics.keys.first, to), // the most taken from the bag
         PusakaAsah(:final relic) || PusakaLebur(:final relic) => _icon(c, relic, to),
@@ -299,7 +298,6 @@ extension on Board {
         AwakenSkillCast(:final level) || Awakened(:final level) || Ascended(:final level) =>
           c.drawImageRect(_img('ui_icons.png'), _icStar & const Size(16, 16), to, level == maxAwaken ? _px : _awakeFxPaints[level - 1]),
         Tempered() => c.drawImageRect(_img('ui_icons.png'), _icStar & const Size(16, 16), to, _awakeFxPaints[tempaFrom - 1]), // Bangkit 5's white
-        LootDropped(:final item, :final relic) => _icon(c, (item ?? relic)!, to),
         StrongFoe() || MonsterSkillCast() => _uiIcon(c, _icSwords, to),
         HeroMade() || HeroRecalled() => _uiIcon(c, _icCrown, to),
         OfferPicked(:final pick) => pick == null ? _uiIcon(c, _icChest, to) : _icon(c, pick, to), // chest_popup.dart
@@ -325,7 +323,7 @@ extension on Board {
         GrailSaved() => _pusakaLogInk(Relic.grail),
         PusakaAsah(:final relic) || PusakaLebur(:final relic) => _pusakaLogInk(relic),
         PusakaReport(:final lines) => row < lines.length ? _pusakaLogInk(lines[row].relic) : _backInk, // the small relics' rows pale gold
-        TroopFell() || WaveEnded(won: false) => const Color(0xFFFF8A80),
+        TroopFell() || WaveEnded(won: false) || Wiped() => const Color(0xFFFF8A80),
         HeroSkillCast() || HeroMade() || HeroRecalled() => _heroPop,
         OfferPicked(:final pick?) => _rarityInk[pick.rarity]!,
         StrongFoe(:final tier) || MonsterSkillCast(:final tier) => _tierBar[tier]?.$1 ?? Colors.white,

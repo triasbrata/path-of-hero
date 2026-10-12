@@ -704,7 +704,6 @@ Future<void> b4(
     WaveEnded(86, 0, won: true),
     StrongFoe(86, 1, type: 'greatsword_skeleton', tier: Tier.highElite),
     StrongFoe(86, 1, type: 'werebear', tier: Tier.miniBoss),
-    LootDropped(86, 2, from: 'greatsword_skeleton', tier: Tier.highElite, relic: Relic.thorns),
     MonsterSkillCast(86, 2, type: 'orc_rider', tier: Tier.miniBoss, skill: MonsterSkill.values.firstWhere((s) => s.type == 'orc_rider')),
     TroopFell(86, 3, name: 'Kael Drake', type: 'armored_axeman', hero: true, killer: 'greatsword_skeleton', killerTier: Tier.highElite, relics: const [Relic.fury, Relic.fang]),
     TroopFell(86, 3, name: 'Budi', type: 'soldier', killer: 'orc_rider', killerTier: Tier.miniBoss),

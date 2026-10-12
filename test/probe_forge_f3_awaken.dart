@@ -47,7 +47,6 @@ void main() {
         ..monsterSkills = false
         ..capacity = 6 * rows
         ..gold = 1000000;
-      expect((g.towns, g.byGrade), (true, true));
       final killers = [1, 3, 5, 7], knights = [for (final r in killers) placeNow(g, 'knight', 3, r)];
       var income = 0, spent = 0, crafted = 0, towns = 0;
       int? grade3;

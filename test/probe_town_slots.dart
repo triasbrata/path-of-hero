@@ -38,7 +38,6 @@ void main() {
     final counts = <int>[];
     for (var seed = 1; seed <= seeds; seed++) {
       final g = board(seed);
-      expect(g.towns, isTrue);
       final line = [for (var w = 0; w < waves; w++) winWave(g)];
       final slots = [for (final e in g.log.entries.whereType<TownLeft>()) e.slot];
       final gaps = [for (var i = 1; i < slots.length; i++) slots[i] - slots[i - 1]];

@@ -391,8 +391,10 @@ extension on Board {
     }
     g.goldPops.clear();
     _matPopsIn(g); // a material dropped (town_look.dart)
-    for (final u in g.risen) {
-      showMessage('${u.name} rises again!'); // Resurrection: the one Hero skill that speaks
+    for (final u in g.risen.where((u) => u.alive)) {
+      // Resurrection: the one Hero skill that speaks. Not for one fallen again since: its army may be wiped, whose
+      // message stands (wipe.dart).
+      showMessage('${u.name} rises again!');
     }
     g.risen.clear();
     _pops.removeWhere((p) => g.t - p.$3 >= _popTime || !p.$1.alive);

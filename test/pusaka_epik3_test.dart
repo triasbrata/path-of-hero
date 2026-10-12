@@ -186,14 +186,18 @@ void main() {
       // The Shop never sells one; one in the Vault sells to it at its share of epikPrice.
       expect(storeGoods.where(batch.contains), isEmpty, reason: 'never in the Shop');
       for (final r in batch) {
-        final g = Game()..wave = storeFrom;
+        final g = Game()
+          ..wave = storeFrom
+          ..inTown = true; // the Shop buys only in a Town
         expect(g.basePrice(r), epikPrice, reason: '$r');
         g.givePusaka(r);
         final gold = g.gold;
         expect(g.whyNotSell(r), isNull, reason: '$r in the Vault');
         expect(g.sell(r), 1, reason: '$r');
         expect((g.gold - gold, g.pusaka.containsKey(r)), (epikPrice ~/ 2, false), reason: '$r');
-        final bound = Game()..wave = storeFrom;
+        final bound = Game()
+          ..wave = storeFrom
+          ..inTown = true; // the Shop buys only in a Town
         bound.givePusaka(r, type: 'knight');
         expect(bound.whyNotSell(r), StoreRefusal.bound, reason: '$r: equipped');
       }
