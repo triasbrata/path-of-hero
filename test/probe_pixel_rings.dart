@@ -142,8 +142,8 @@ void main() {
       final k = b.toScreen(1, 0).dx - b.toScreen(0, 0).dx, view = Offset.zero & size;
       // A free cell the archer could go to, in view, away from the others.
       (int, int)? free;
-      for (var c = (g.baseX / tile).floor() + 5; free == null && c < (g.baseX / tile).floor() + 40; c++) {
-        for (var r = 1; free == null && r < rows - 1; r++) {
+      for (var c = (g.baseX / tile).floor(); free == null && c < (g.baseX / tile).floor() + 40; c++) {
+        for (var r = rows - 2; free == null && r > 4; r--) {
           if (g.canPlace(c, r) && view.deflate(40).contains(b.toScreen(c * tile + tile / 2, r * tile + tile / 2))) free = (c, r);
         }
       }

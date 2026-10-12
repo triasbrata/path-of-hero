@@ -2982,12 +2982,15 @@ splash took.
   and a Barrier only on the effects' 18 × 8 and 14 × 6 cells; a braced knight (a monster on the field, so the wave is
   on) only on the brace ring's cells in its rows under the feet (its body takes the thrust), 80% of them showing.
 
-The shots and the frame time are `test/probe_pixel_rings.dart` (not part of the suite): the owner's wave-30 save
-(`SAVE`), 8 s into its wave at 1600×947 and 915×412, the whole frame and 6× close-ups round a plain troop, a Hero and an
+The shots and the frame time are `test/probe_pixel_rings.dart` (not part of the suite). `SECTION=gallery`: each shape
+alone on a bare field at 1600×947 and 915×412, between waves (Holy Shield's and Hold Fast's guards, a Hero's halo, an
+archer dragged over a free cell with its reach) and then with monsters on (Spear Wall's brace, a slow and a Barrier,
+Impale's dashed ring), with a close-up of each. `SECTION=fight`: the owner's wave-30 save (`SAVE`), 8 s into its wave at
+1600×947 and 915×412, the whole frame and 6× close-ups round a plain troop, a Hero and an
 awakened troop of bound types (at their drawn bodies, `Board.drawnAt`); a guard, Spear Wall's brace, a monster's slow
 and Barrier, a Hero's halo and a dragged troop's reach put on for one frame (`others-<size>`), with their close-ups;
 then 40 s of the wave at 1600×947, each frame's `Board.render` timed and every 10th rasterised. Queue it on the branch
-(`TAG=after`) and on a mirror of main (`TAG=before`, the file copied in if main lacks it).
+(`TAG=after`) and on a mirror of main (`TAG=before`, the file copied in if main lacks it); without `SECTION`, both.
 
 ## The packs' looks: the shot probes (decisions-log 173)
 
