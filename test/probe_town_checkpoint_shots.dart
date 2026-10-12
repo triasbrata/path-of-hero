@@ -157,12 +157,21 @@ void main() {
       // ignore: avoid_print
       print('$name: chip ${b.weakChip}, meter ${b.waveMeter}, tooltip ${b.tooltipShown}');
       final tip = await grab();
-      await zoom(tip, b.weakChip.inflate(8).expandToInclude(Rect.fromLTWH(b.weakChip.right - 380, b.weakChip.top, 380, 160)),
+      await zoom(tip, Rect.fromLTRB(b.weakChip.right - 420, b.weakChip.top - 150, b.weakChip.right + 8, b.weakChip.bottom + 60),
           'town-tip');
       await mouse.moveTo(Offset.zero);
 
-      // The Town left, wave 90 begun weakened.
+      // The Town left, the army bought back ("Replace fallen"), wave 90 begun weakened.
       g.leaveTown();
+      final back = g.replaceFallen();
+      for (final u in g.troops.where((u) => u.alive)) {
+        u
+          ..pos = u.post
+          ..entered = true
+          ..arriving = false;
+      }
+      // ignore: avoid_print
+      print('$name: bought back ${back.bought} of ${back.of} (${back.why}), gold ${g.gold}');
       await frames(tester, 90);
       g.startWave();
       for (var i = 0; i < 90; i++) {
