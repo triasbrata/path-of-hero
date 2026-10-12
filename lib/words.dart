@@ -121,4 +121,9 @@ abstract final class Words {
   /// The Tavern's (decisions-log 266): what it sells, an offer bought, and every offer bought (no reroll left to make);
   /// a boost's longest length (decisions-log 331), as the offer and the running boost say it, and where that is too long.
   static const boost = 'Boost', sold = 'Sold', soldOut = 'Sold out', untilNextTown = 'Until next $town', untilTown = 'Until $town';
+
+  /// After a wipe (decisions-log 333, wipe.dart): the dialog's title and its two answers, and the monsters weakened until
+  /// the next Town (the wave meter's chip, short where it is too long).
+  static const armyFell = 'Your army fell!', tryAgain = 'Try again', giveUp = 'Give up';
+  static const weakenedFoes = 'Weakened foes', weakened = 'Weakened';
 }

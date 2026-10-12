@@ -1,5 +1,6 @@
 // An army wiped mid-wave (lib/wipe.dart, decisions-log 322; game-overview.md "Lose"): a heart lost and the same wave
-// played again, the game over only when the hearts run out.
+// played again (before the first Town; after one, back to it: town_checkpoint_test.dart, decisions-log 333), the game over
+// only when the hearts run out.
 import 'dart:convert';
 import 'dart:math';
 
@@ -53,7 +54,7 @@ void main() {
     expect((w.wave, w.lives, w.lost, w.over, w.foes), (1, 4, 2, false, g.swept.length + roster - g.waveSpawned));
     expect(events.whereType<WaveEnded>().map((e) => (e.wave, e.won)), [(1, false)]);
     expect(w.toJson()['kind'], 'wipe');
-    expect(g.wipeNote, 'Your army fell! -1 heart.\nWave 1 again.');
+    expect(g.wipeNote, 'Your army fell! -1 heart.\nWave 1 again, foes weakened.');
     // The swept monsters go after their hop, each in a summon circle.
     g.impacts.clear();
     runFor(g, wipeCheer + 0.1);
@@ -143,22 +144,32 @@ void main() {
     expect((g.chests.length, g.heroCount), (1, 1));
   });
 
-  test('Towns: one left before the lost wave is not due again; one marked after it waits for its win', () {
+  test('Towns: one marked and not gone into yet waits for the lost wave\'s win (no checkpoint before the first Town)', () {
+    final g = armyOfOne()
+      ..wave = 7
+      ..townAt = 9; // before wave 9, as a roll after wave 7 marks it
+    placeNow(g, 'soldier', 4, 1);
+    wipe(g); // wave 8
+    expect((g.wave, g.townDue, g.townAt, g.canStartWave, g.checkpoint), (7, false, 9, true, null));
+    placeNow(g, 'soldier', 4, 2);
+    g.startWave();
+    winNow(g); // wave 8 again
+    expect((g.wave, g.townDue), (8, true));
+  });
+
+  test('Towns: once one was gone into, a wipe goes back to it (decisions-log 333), a later mark dropped', () {
     final g = armyOfOne()
       ..wave = 7
       ..townAt = 8;
     placeNow(g, 'soldier', 4, 1);
     expect((g.townDue, g.enterTown(), g.leaveTown()), (true, true, true));
-    g.townAt = 10; // the next, before wave 10 (as a roll after wave 8 would mark it)
+    g.townAt = 13; // the next, as a roll would mark it
     wipe(g); // wave 8
-    expect((g.wave, g.townDue, g.townAt, g.canStartWave), (7, false, 10, true));
+    expect((g.wave, g.townAt, g.townAgain, g.townDue, g.canStartWave, g.checkpoint), (7, 8, true, true, false, 8));
+    expect((g.enterTown(), g.leaveTown(), g.townAt), (true, true, null));
     placeNow(g, 'soldier', 4, 2);
     g.startWave();
-    winNow(g); // wave 8 again
-    expect((g.wave, g.townDue), (8, false));
-    g.startWave();
-    winNow(g); // wave 9
-    expect((g.wave, g.townDue), (9, true));
+    expect(g.wave, 8);
   });
 
   test('the Shadows: the catch-up lands once a wave number, and Lewati\'s skip buff owed meets the replay too', () {

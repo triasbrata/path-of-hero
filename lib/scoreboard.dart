@@ -107,7 +107,7 @@ extension on Board {
     if (_score.naming != null || _score.view != null) return;
     final u = _screenScale(Size(size.x, size.y)), mid = Offset(size.x / 2, size.y / 2);
     c.drawRect(Offset.zero & Size(size.x, size.y), Paint()..color = Colors.black.withValues(alpha: 0.35)); // light enough to see the monsters cheer
-    _text(c, 'GAME OVER  -  Wave ${g.wave}', mid - Offset(0, 64 * u), size: 36 * u, anchor: Anchor.center);
+    _text(c, 'GAME OVER  -  Wave ${g.waveReached}', mid - Offset(0, 64 * u), size: 36 * u, anchor: Anchor.center);
     _text(c, 'Score ${g.score}', mid - Offset(0, 14 * u), size: 30 * u, color: const Color(0xFFFFD65A), anchor: Anchor.center,
         outline: const Color(0xFF3C1E0A));
     final top = mid.dy + 30 * u, h = 44 * u, gap = 8 * u;

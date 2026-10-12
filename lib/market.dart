@@ -167,8 +167,9 @@ const _marketTowns = [
 extension Market on Game {
   MarketRules get _m => townRules.market;
 
-  /// The Town whose market the prices read: the one the player is in, else the next one.
-  int get marketTown => inTown ? max(1, townCount) : townCount + 1;
+  /// The Town whose market the prices read: the one the player is in (or goes back to after a wipe, [Towns.townAgain]),
+  /// else the next one.
+  int get marketTown => inTown || townAgain ? max(1, townCount) : townCount + 1;
 
   /// [marketTown]'s identity.
   TownIdentity get townIdentity => identityOf(marketTown);
