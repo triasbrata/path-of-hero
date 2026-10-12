@@ -345,10 +345,7 @@ extension on Board {
     c.translate(feet.dx, feet.dy);
     c.scale(k);
     _frame(c, 'tiny_${type}_shadow.png', 0, Offset.zero, flip: flip);
-    if (ring != null) {
-      c.drawOval(Rect.fromCenter(center: const Offset(0, -1), width: _pusakaRingSize.width, height: _pusakaRingSize.height),
-          _pusakaRings[ring] ?? _pusakaRingElse);
-    }
+    if (ring != null) _ringUnder(c, Offset.zero, ring);
     _frame(c, 'tiny_${type}_$anim.png', f ?? (_clock * _fps).floor(), Offset.zero, flip: flip, paint: paint, line: line);
     c.restore();
   }
