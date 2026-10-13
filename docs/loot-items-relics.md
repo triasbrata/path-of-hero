@@ -225,7 +225,8 @@ rules and every constant are `lib/tempa.dart` (`extension Tempa on Game`); it is
 - **Lepas jenis** keeps the levels and refunds none of them: its refund stays half the troops' price; the type bought
   again fights with its Tempa.
 - **The Army tab's dot** (`armyNudge`, the owner's decision 4 a): while the gold is at least `nudgePurses` 3 × purse(wave +
-  1) and a type with a living troop can buy its next Bangkit or Tempa level now (`whyNotAscend` / `whyNotTempa` null),
+  1) and a type with a living troop can buy its next Bangkit or Tempa level now (`whyNotAscend` / `whyNotTempa` null), or
+  a Train level ("Train" below, decisions-log 334),
   a red dot on the Army's tab (ui-hud.md "Bookmarks"; the Toko's tab had it until decisions-log 296). Between waves only, since mid-wave the store refuses.
 - **Saved:** `tempa` (type → levels), only once one is bought, loaded before the troops so they come back at their
   Tempa HP; an unknown type is dropped and a count over 30 cut to 30. Saves from before it have none.
@@ -1956,6 +1957,81 @@ Bag's stack cells and the tint are ui-hud.md's ("The Smithy", the Bag's "Enhance
   the refusals, an enhanced item on a type, the swap at the cap and the Cap's chain, the Shop's price, the events, the
   save and a save without the keys).
 
+## Train (every item +5, decisions-log 334)
+
+The owner, 2026-10-13: "setelah enhance sudah penuh di late game user bisa bebas mengupgrade attribute dari troopsnya
+tapi untuk attack speed dan walkspeed ini ada limitnya, selain itu bisa di enhance semua". Once a troop type's items are
+all +5 it buys levels of eight attributes, per type (its troops now and later), for gold and a material. The rules and
+every constant are lib/train.dart (`extension Train on Game`); it is bought on the type's Army detail between waves, as
+Forge is (ui-hud.md "Army"). Forge stays as it is (Tempa above): the two are bought side by side.
+
+- **The gate** (`trainOpen`, the owner's "Semua item troop sudah +5"): every item of the type's three grade sets
+  (`trainItems`: `gradeSet` of Awaken 1, 2 and 3; the knight 31, the soldier 27, the priest 36) held at +5
+  (`plusMost`, town.json `enhance.most`), as many of each as its set takes. The Cap and the Ring don't count (the owner:
+  "Setuju, Cap/Ring tidak dihitung"; no Awaken counts them and a type needn't wear one), nor do copies past a set's count
+  (a save from before the grades holds extra grade-I ones); a level kept from old items (`awakenKept`) still needs the
+  sets. Awaken 4-5 isn't asked. `trainProgress(type)` is (have, need): the copies at +5 counted up to each set's count,
+  and the sets' items. Once met it stays: nothing takes a +5 copy off (Enhance's swap at a cap only sends out a lower
+  "+"). The levels count only while the gate holds (`trainOf`), as Tempa's at Bangkit 5: a town.json that raised
+  `enhance.most` would pause them until the type is at the new top. Memoised per type on its item and plus lists
+  (`_trainGates`), since `statsOf` asks it.
+- **What a level gives** (`_trainStats`, in `statsOf` right after the Forge, `_ownStats`: before the heavy types' +20%,
+  the stat Pusaka, the oath, the Tavern's and the pocket's boosts; a Hero's ×3 and the aura on top, as for every stat):
+
+  | Attribute (`TrainStat`) | A level | Cap | Material (`trainParts`) |
+  |---|---|---|---|
+  | HP (`hp`) | ×1.05 (`trainPct`), compounding | none (the guard `trainMax` 50) | Bear Claw (Werebear) |
+  | Damage, a healer's heal (`power`) | ×1.05 | none | Orc Heart (Veteran Orc) |
+  | Defence (`defence`) | +2.5 (`trainDef`, a grade-I Shield's) | none | Iron Tusk (Armored Orc) |
+  | MP (`mp`) | ×1.05 | none | Teal Gem (Necro Healer) |
+  | MP regen (`mpRegen`) | ×1.05 | none | Dark Gem (Necromancer) |
+  | Attack speed (`rate`) | the pause ÷1.1 (`trainFast`) | the attack floor, `minAttackInterval` 0.3 s | Wolf Fang (Werewolf) |
+  | Walk speed (`speed`) | ×1.1 | the walk cap, `walkCap` (`walkMost` 6 × the type's base) | Warg Fang (Orc Rider) |
+  | Reach (`range`) | ×1.1 | a melee fighter's `Stats.reachCap` (27.2, a Lancer's spears 40.8); a shooter's or a healer's `trainReachMost` 320 (one screen, `cols` tiles) | Bone Bow (Skeleton Archer) |
+
+  The caps (`trainCapOf`) are the existing ones (the owner: "Batas yang sudah ada"), and they still hold after the Hero,
+  the aura and boots, as before: the floor in `attackEvery`, the walk cap in `Unit.walkSpeed`, a melee fighter's reach
+  cap in `Stats.boosted`. A capped level stops the stat on its cap, never past; a stat its items already took past
+  (boots, gloves, bows) is left as it is, never cut (a ranged Hero's ×3 reach too, as today). `trainCapped(type, stat)`:
+  at its cap, nothing more is sold and its row says "Max".
+- **At the gate**, the capped three (each type's sets at +5, no levels bought): attack speed is at the floor for eight
+  of the nine (their gloves; the owner: "Ya, biarkan begitu"), only the Templar (no gloves) has room, 13 levels (1.0 s
+  to 0.3); walk speed has 8 levels left for the Soldier, Archer and Axeman, 19 for the Priest and Wizard, none for the
+  Knight, Swordsman, Lancer and Templar (their boots); reach has 7 for the Knight and Axeman, 8 for the Swordsman, 3 for
+  the Lancer (33 to 40.8), none for the Soldier and Templar (a bow takes them to 27.2) nor the Archer, Priest and Wizard
+  (their bows take them to 543-1,487, past one screen). Pinned in test/train_test.dart.
+- **Price** (`trainPrice(wave, n)`, `trainCostOf(type, stat)`): level n + 1 of an attribute costs `trainK` 0.15 ×
+  `purse(wave)` × `trainRise` 1.2^n gold, rounded to `trainRound` 1000 (at least that), `wave` the last one won; and
+  `trainPartCount(n)` = 1 + n ÷ 2 (1, 1, 2, 2, 3 …) of its material. Each attribute is its own ladder (the owner: "Oke,
+  mulai dari sini"; the PROBE PLAN weighs it):
+
+  | Level | 1 | 2 | 3 | 4 | 5 | 10 | 20 |
+  |---|---|---|---|---|---|---|---|
+  | after wave 60 (purse 23k) | 3k | 4k | 5k | 6k | 7k | 18k | 110k |
+  | after wave 90 (purse 130k) | 20k | 23k | 28k | 34k | 40k | 101k | 623k |
+  | material | 1 | 1 | 2 | 2 | 3 | 5 | 10 |
+
+  Forge's level costs 0.2 purses for HP and damage together; a Train level 0.15 for one attribute.
+- **Buying** (`trainUp(type, stat)`): the gold and the material go, the level rises (`Game.train`: type → attribute →
+  level), every living troop of the type is refitted (`_refit`: the HP and MP gained come with it) and bursts
+  `awakeFx('upgrade', level)` in its awakening's colour, `Sfx.magic` then `Sfx.clear`, and a `Trained` event (type,
+  stat, level, cost, mat, n) goes to the battle log ("Axeman: Train HP Lv 4 (38k gold, 3 Bear Claw)", the material's icon)
+  and the telemetry (telemetry.md: `trained`, `gold.trainSpent`, `materialsUsed`). The troop's price stays.
+- **Refusals** (`whyNotTrain(type, stat)`, in this order): the store's own (`_armyClosed`: "Opens after wave 15", "Only
+  between waves", "Game over"), then `trainRefusals`: "Needs every item +5", at the cap "Max: attack floor" / "Max:
+  walk cap" / "Max: reach cap", at the guard "Max: Lv 50", the material as the Smithy says it ("Need 2 Bear Claw",
+  "Need 1 more Bear Claw"), "Not enough gold". A refused buy changes nothing and plays `Sfx.error`.
+- **Lepas jenis** keeps the levels and refunds none of them, as Forge's.
+- **The Army tab's dot** (`armyNudge`, Tempa above): a type with a living troop that can buy a Train level now
+  (`trainAny`) counts as one that can buy a Bangkit or Forge level.
+- **Saved:** `train` (type → {attribute name → level}), only once one is bought, loaded before the troops so they come
+  back at their Train HP; an unknown type or attribute and a level under 1 are skipped, a level over 50 cut to 50. Saves
+  from before it have none, and the format stays version 3.
+- **Tests:** test/train_test.dart (the constants and prices, the gate and its progress, the Cap and Ring and a kept level,
+  no swap-out at +5, each attribute's level, the caps at the gate per type and at the cap, the Range row's rule, a Hero's
+  ×3, the aura and boots, the refusals, the buy, Lepas jenis, the save, the dot, the tooltip, the telemetry, the font),
+  test/train_hud_test.dart (the section on the Army detail).
+
 ## The Wishlist (decisions-log 282, 300, 302, 303, 323)
 
 The owner, 2026-10-09: the player puts the Smithy's products they mean to make on a list, per troop type, as a target.
@@ -2546,7 +2622,8 @@ are skipped (so a build from before the Smithy's seven drops them: `cleave`, `ve
 level a save from before the grades kept too: `awakenKept`, type → level, written by every by-grade game, `{}` when
 none; a save without it gets it from its items, "The forge: items crafted, Awaken by grade" above), Bangkit 4-5 from `ascended` (type →
 levels bought, only once one is; none in saves from before #92 part 2) and Tempa from `tempa` (type → levels, only once
-one is; none in saves from before decisions-log 163). The fallen Heroes the Army detail can call back are
+one is; none in saves from before decisions-log 163) and Train from `train` (type → {attribute → level}, only once one is;
+decisions-log 334, "Train" above). The fallen Heroes the Army detail can call back are
 `fallenHeroes` (units-and-combat.md "Hero Gugur"; none in saves from before #92 part 3). The last Asah's wave is
 `asahAt` (only once one was done; none in saves from before Asah, so the first is free to come). Ukir adds `ukir` and
 `feed` to a Pusaka's entry (each only when above 0; a step past +5 loads as +5, a bar past its step's cost under it, an

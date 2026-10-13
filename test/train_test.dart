@@ -92,9 +92,9 @@ void main() {
     expect(trainStatName(TrainStat.power, heals: true), 'Heal');
   });
 
-  test('the prices: wave 90 20k, 23k, 28k, 34k, 40k, 101k at level 10, 622k at 20; wave 60 3k; never under 1k', () {
+  test('the prices: wave 90 20k, 23k, 28k, 34k, 40k, 101k at level 10, 623k at 20; wave 60 3k; never under 1k', () {
     expect([for (var n = 0; n < 5; n++) trainPrice(90, n)], [20000, 23000, 28000, 34000, 40000]);
-    expect((trainPrice(90, 9), trainPrice(90, 19)), (101000, 622000));
+    expect((trainPrice(90, 9), trainPrice(90, 19)), (101000, 623000));
     expect([for (final n in [0, 4, 9]) trainPrice(60, n)], [3000, 7000, 18000]);
     expect(trainPrice(1, 0), trainRound);
     final g = atGate('knight');
@@ -340,7 +340,9 @@ void main() {
     expect((back.trainOpen('knight'), back.trainOf('knight', TrainStat.hp)), (true, 2));
     final u = back.troops.single;
     expect((u.maxHp, u.hp), (k.maxHp, k.hp), reason: 'loaded at its Train HP');
-    expect(jsonEncode(back.toJson()), jsonEncode(g.toJson()));
+    // Written back the same (from the loaded game: a test's materials have no `matsSeen` until a load gives them one).
+    expect(jsonEncode(Game.fromJson(jsonDecode(jsonEncode(back.toJson())) as Map<String, dynamic>).toJson()), jsonEncode(back.toJson()));
+    expect((back.toJson()['train'] as Map)['knight'], {'hp': 2, 'range': 1});
     final old = Game.fromJson(Map.of(j)..remove('train'));
     expect(old.train, isEmpty);
     expect(old.toJson().containsKey('train'), isFalse);
