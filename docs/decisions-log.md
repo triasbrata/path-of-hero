@@ -12294,4 +12294,7 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        english_text_test and the Town and book tests the door and the tab touch (town_scene, town_scroll, town_army,
        tavern_ui, town_shop_open and their neighbours, 60 files) pass; tool/test_import_dungeon.py passes; the shots at
        the three sizes looked at beside the mockups. The w89 identity dump on d6c3e987 is SAME as main's (538915a3's
-       golden), 9,860 lines byte for byte: a trip's code changes nothing in the wave run.
+       golden), 9,860 lines byte for byte: a trip's code changes nothing in the wave run. The whole suite on main
+       after the merge (+2797 −1) caught the heal funnel's static guard: the Dungeon's two HP writes (a party member
+       made at full HP, a unit falling inside a trip) are no heal and are listed in it now (heal_funnel_test with the
+       Dungeon's tests +51 −0).

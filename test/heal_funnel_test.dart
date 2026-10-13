@@ -264,6 +264,10 @@ const notHeals = <String, List<String>>{
   'boss_skills.dart': [
     'm.hp = m.maxHp * graveCallK.hp;', // Grave Call: a monster raised from a grave
   ],
+  'dungeon.dart': [
+    '..hp = c.stats.hp.toDouble()', // a Dungeon party member made: a new copy of a picked troop at full HP (the army's untouched)
+    '..hp = 0', // a unit falling inside a trip (_dungeonFell): no heal
+  ],
   'game.dart': [
     'u.hp = min(u.hp + max(0, u.maxHp - before), u.maxHp.toDouble());', // _refit: the HP its new max HP brings
     'u.hp = min(hp, u.maxHp.toDouble());', // _loadedHpBack: the saved HP, capped (fromJson)

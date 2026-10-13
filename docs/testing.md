@@ -534,7 +534,8 @@ after-wave heal carried into a wave stays `between`; regen after the win is `bet
 healing necromancer's heal on a monster isn't heard. A static guard reads lib/: every HP write but the two funnels'
 (the troops' and, since decisions-log 184, the monsters' `_healMonster`) is in its list of what is no heal (`_refit`,
 the load, Resurrection, a hex, Grave Call's raised monster, Reassemble's heap, the Grail's save from 0, the Bayangan
-Deathless's 1 HP), so a new heal
+Deathless's 1 HP, a Dungeon party member made at full HP and a unit falling inside a trip, decisions-log 337), so a new
+heal
 of either side outside its funnel fails with its file and line. Wound's factor
 (`Game.woundForce`) halves a healer's heal, regen and a fang in a wave, and never the Grail's save, the after-wave
 heal or regen between waves; with none set a heal is exactly what it was. The heal past full HP. The ward: at most
