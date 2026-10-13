@@ -117,6 +117,7 @@ extension on Board {
             ),
           ('stats', _detailStats(c, g, type, x0, x1, s)),
           ('next', _detailNext(c, g, type, x0, x1, s)),
+          ('train', _detailTrain(c, g, type, x0, x1, s)),
           ('wishlist', _detailWishlist(c, g, type, x0, x1, s, ps)),
           ('pusaka', _detailPusaka(c, g, type, x0, x1, s)),
           ('heroes', _detailHeroes(c, g, type, x0, x1, s)),
@@ -464,6 +465,74 @@ extension on Board {
     }
     out.add((h: s.button, draw: (top) => button(top, step: step)));
     return out;
+  }
+
+  /// 3b. Train (decisions-log 334, train.dart), once the type holds its three grade sets (Awaken 3 from items): until every
+  /// item of them is +5, one grey line with how far ("Train: needs every item +5 (14/31)"); then "Train" and a row per
+  /// attribute ([TrainStat]), as the Awaken needs' rows: its icon (the heart, the bolt, the item that raises it), its
+  /// name, its level ("Lv 3", grey at 0), what the next one gives ("+5%", green), its material's icon and count (red
+  /// while short), and at the right a tag with its price ("20k", green), "Max" at its cap, greyed when refused; a tap
+  /// buys ([_train]) or says why.
+  List<_DetailLine> _detailTrain(Canvas c, Game g, String type, double x0, double x1, _DetailSizes s) {
+    const ink = Color(0xFF4A2C17), grey = Color(0xFF9E9080), green = Color(0xFF2E8B3A);
+    if (g.recipeOf(type).isEmpty || g.itemLevel(type) < maxAwaken) return const [];
+    final w = x1 - x0, ts = s.ts;
+    if (!g.trainOpen(type)) {
+      final (have, need) = g.trainProgress(type);
+      final text = _fitFirst(['${Words.train}: ${trainRefusals.closed.toLowerCase()} ($have/$need)', '${Words.train}: +5 all ($have/$need)'], s.small, w);
+      return [(h: s.line, draw: (top) => _say(c, 'train', text, Offset(x0, top + s.line / 2), s.small, grey))];
+    }
+    final heals = troopTypes[type]!.heals, icon = (s.small * 1.2).roundToDouble(), gap = math.max(3.0, (4 * ts).roundToDouble());
+    final names = {for (final stat in TrainStat.values) stat: trainStatName(stat, heals: heals)};
+    String lv(TrainStat stat) => '${Words.lv} ${g.train[type]?[stat] ?? 0}';
+    // The columns: the names after the icons, the levels after the longest name, the gain after the longest level.
+    final nameX = x0 + icon + gap, lvX = nameX + names.values.fold(0.0, (m, n) => math.max(m, _textWidth(n, s.small))) + gap;
+    final gainX = lvX + TrainStat.values.fold(0.0, (m, st) => math.max(m, _textWidth(lv(st), s.small))) + gap;
+    final matX = gainX + TrainStat.values.fold(0.0, (m, st) => math.max(m, _textWidth(trainGain(st), s.small))) + gap;
+    final out = <_DetailLine>[
+      (h: s.line, draw: (top) => _say(c, 'train', _fitFirst(['${Words.train}: every item +5', Words.train], s.small, w), Offset(x0, top + s.line / 2), s.small, ink)),
+    ];
+    for (final stat in TrainStat.values) {
+      out.add((
+        h: s.line,
+        draw: (top) {
+          final mid = top + s.line / 2, to = Rect.fromLTWH(x0, (mid - icon / 2).roundToDouble(), icon, icon);
+          switch (stat) {
+            case TrainStat.hp:
+              c.drawImageRect(_img('ui_icons.png'), _heartIcon, to, _px);
+            case TrainStat.mp:
+              c.drawImageRect(_img('ui_icons.png'), _boltIcon, to, _mpPaint);
+            default:
+              _icon(c, trainIcon(type, stat), to);
+          }
+          final why = g.whyNotTrain(type, stat), cost = g.trainCostOf(type, stat), capped = why != null && why.startsWith('Max');
+          _say(c, 'train', names[stat]!, Offset(nameX, mid), s.small, ink);
+          final n = g.train[type]?[stat] ?? 0;
+          _say(c, 'train', lv(stat), Offset(lvX, mid), s.small, n > 0 ? ink : grey);
+          if (!capped) _say(c, 'train', trainGain(stat), Offset(gainX, mid), s.small, green);
+          final label = capped || cost == null ? 'Max' : shortPrice(cost.gold);
+          final tagW = capsuleSize(_textWidth(label, s.small), s.small).width + 3;
+          if (!capped && cost != null && matX + icon + _textWidth('${cost.n}', s.small) <= x1 - tagW - gap) {
+            _icon(c, cost.mat, Rect.fromLTWH(matX, (mid - icon / 2).roundToDouble(), icon, icon));
+            final short = (g.materials[cost.mat] ?? 0) < cost.n;
+            _say(c, 'train', '${cost.n}', Offset(matX + icon + 1, mid), s.small, short ? _blockedInk : ink);
+          }
+          final row = Rect.fromLTRB(x0, top, x1, top + s.line);
+          final hit = _tag(c, Rect.fromLTRB(x1 - tagW, top, x1, top + s.line), why == null ? () => _train(type, stat) : () => showMessage(why), label, s.small,
+              look: why == null ? _TagLook.go : _TagLook.off, into: _detail.hits);
+          _detail.at['train:${stat.name}'] = hit;
+          (_detail.words['train:${stat.name}'] ??= []).add(label);
+          _tip.hints.add((Rect.fromLTRB(x0, top, hit.left, row.bottom), _Hint.train, '$type:${stat.name}'));
+        },
+      ));
+    }
+    return out;
+  }
+
+  /// Buys [type]'s next level of [stat] ([Train.trainUp]); the message window says it: "Knight: Train HP Lv 4!".
+  void _train(String type, TrainStat stat) {
+    final g = state;
+    if (g.trainUp(type, stat)) showMessage('${troopTypeNames[type]}: ${trainLine(type, stat, g.train[type]![stat]!)}!');
   }
 
   /// Where a by-grade Awaken item comes from when the Bag holds none (decisions-log 249): "Smithy: can make 3" (green)

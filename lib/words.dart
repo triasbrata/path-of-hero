@@ -32,7 +32,11 @@ abstract final class Words {
   /// A troop's attributes as the Army page's detail names them (decisions-log 218): the short names, and what each one
   /// means in a few words, the longest first (a narrow page takes the first that fits). A healer's power is its heal.
   static const hp = 'HP', mp = 'MP', defence = 'Def', damage = 'Dmg', heal = 'Heal', range = 'Range', speed = 'Speed',
-      rate = 'Rate', regen = 'Regen';
+      rate = 'Rate', regen = 'Regen', mpRegen = 'MP regen';
+
+  /// Train (decisions-log 334, train.dart): a troop type whose items are all +5 buys levels of its attributes, on its Army
+  /// detail; a level is "Lv 3".
+  static const train = 'Train', lv = 'Lv';
   /// A healer's MP pays for its heals too, 6 MP each ([healMp], decisions-log 297): [healerMpHelp], and its heal's help
   /// names the cost.
   static const hpHelp = ['Damage it can take', 'Its life'], mpHelp = ['Fills up for skills', 'For skills'],

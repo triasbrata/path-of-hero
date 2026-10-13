@@ -109,10 +109,11 @@ extension Tempa on Game {
   }
 
   /// Gold piles up and the Army has something for it: the gold is at least [nudgePurses] × [purse] of the next wave,
-  /// and some type with a living troop can buy its next Bangkit or Tempa level now. The Army tab's dot (named for the
-  /// Toko, whose tab had it until decisions-log 296).
+  /// and some type with a living troop can buy its next Bangkit or Tempa level, or a Train level ([Train.trainAny],
+  /// decisions-log 334), now. The Army tab's dot (named for the Toko, whose tab had it until decisions-log 296).
   bool get armyNudge {
     if (gold < nudgePurses * purse(wave + 1)) return false;
-    return {for (final u in troops) if (u.alive) u.type}.any((type) => whyNotAscend(type) == null || whyNotTempa(type) == null);
+    return {for (final u in troops) if (u.alive) u.type}
+        .any((type) => whyNotAscend(type) == null || whyNotTempa(type) == null || trainAny(type));
   }
 }

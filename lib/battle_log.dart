@@ -70,6 +70,8 @@ String logLine(GameEvent e) => switch (e) {
         '${troopTypeNames[type] ?? type}: ${awakenName(level)}${switch (awakenSkillOf(type)) { final s? => ' - ${s.titleAt(level)}', _ => '' }}',
       Ascended(:final type, :final level, :final cost) => '${troopTypeNames[type] ?? type}: ${awakenName(level)} (${shortPrice(cost)} gold)',
       Tempered(:final type, :final level, :final cost) => '${troopTypeNames[type] ?? type}: ${tempaName(level)} (${shortPrice(cost)} gold)',
+      Trained(:final type, :final stat, :final level, :final cost, :final mat, :final n) =>
+        '${troopTypeNames[type] ?? type}: ${trainLine(type, stat, level)} (${shortPrice(cost)} gold, $n ${mat.label})', // train.dart
       OfferPicked() => offerLine(e),
       PusakaAsah(:final relic, :final stars, :final type, :final cost) =>
         '${Words.sharpen}: ${relicNames[relic]} ★$stars ${_whereAt(type)} (${shortPrice(cost)} gold)',
@@ -315,6 +317,7 @@ extension on Board {
         AwakenSkillCast(:final level) || Awakened(:final level) || Ascended(:final level) =>
           c.drawImageRect(_img('ui_icons.png'), _icStar & const Size(16, 16), to, level == maxAwaken ? _px : _awakeFxPaints[level - 1]),
         Tempered() => c.drawImageRect(_img('ui_icons.png'), _icStar & const Size(16, 16), to, _awakeFxPaints[tempaFrom - 1]), // Bangkit 5's white
+        Trained(:final mat) => _icon(c, mat, to), // the material it took (train.dart)
         StrongFoe() || MonsterSkillCast() => _uiIcon(c, _icSwords, to),
         HeroMade() || HeroRecalled() => _uiIcon(c, _icCrown, to),
         OfferPicked(:final pick) => pick == null ? _uiIcon(c, _icChest, to) : _icon(c, pick, to), // chest_popup.dart
@@ -345,7 +348,7 @@ extension on Board {
         OfferPicked(:final pick?) => _rarityInk[pick.rarity]!,
         StrongFoe(:final tier) || MonsterSkillCast(:final tier) => _tierBar[tier]?.$1 ?? Colors.white,
         Awakened(:final level) || Ascended(:final level) => _awakeColors[level - 1],
-        Tempered() => _awakeColors[tempaFrom - 1],
+        Tempered() || Trained() => _awakeColors[tempaFrom - 1],
         WaveEnded(won: true) => const Color(0xFF9BE37A),
         _ => const Color(0xFFFFF1D6),
       };

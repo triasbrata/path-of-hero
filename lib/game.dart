@@ -24,6 +24,7 @@ part 'skill_strips.dart';
 part 'store.dart';
 part 'ascend.dart';
 part 'tempa.dart';
+part 'train.dart';
 part 'recall.dart';
 part 'pusaka.dart';
 part 'pusaka_catalog.dart';
@@ -2515,7 +2516,8 @@ class Game {
   /// What a troop of [type] fights with now: its base stats with every upgrade of its type, and its HP
   /// and MP raised by [awakenHp] / [awakenMp] of the base for every awakening level, its damage (a healer's heal)
   /// times [ascendPower] for each bought past [maxAwaken], and at Bangkit 5 its HP and damage times its Tempa's
-  /// ([Tempa.tempaFactors], lib/tempa.dart); a heavy one's HP, attack and defence then times 1 +
+  /// ([Tempa.tempaFactors], lib/tempa.dart) ([_ownStats]); then its Train levels once every item is +5 ([Train._trainStats],
+  /// lib/train.dart, decisions-log 334); a heavy one's HP, attack and defence then times 1 +
   /// [heavyBuff] ([heavyTypes]); then its type's stat Pusaka (Dragon Heart's HP and regen, Dawn Star's power,
   /// pusaka.dart); then the oath's, for the whole army ([Pusaka._oathStats]: Oath of One's, the Few's and Alliance's
   /// HP and damage ×[_oathK], decisions-log 155; the Wall's, Blood Oath's and the Vanguard's own, decisions-log 247);
@@ -2523,6 +2525,19 @@ class Game {
   /// the prisms' splash stop at their ceilings ([_ceilings]), and what the amulets add to its HP and the rings to its MP
   /// regen stays on top of the awakening's (decisions-log 251).
   Stats statsOf(String type) {
+    var s = _trainStats(type, _ownStats(type)); // its Train levels (train.dart, decisions-log 334)
+    if (heavyTypes.contains(type)) {
+      const k = 1 + heavyBuff;
+      s = s._with(hp: (s.hp * k).round(), dmg: s.dmg * k, def: s.def * k);
+    }
+    if (pusaka.isNotEmpty) s = _pusakaStats(type, s); // its stat Pusaka: Dragon Heart, Dawn Star (pusaka.dart)
+    if (_oathOn != null) s = _oathStats(s); // the oath's, the whole army's (pusaka.dart)
+    return boosts.isEmpty && pocketBoosts.isEmpty ? s : _boostStats(type, s); // the Tavern's and the pocket's boosts (tavern.dart)
+  }
+
+  /// [type]'s own stats, the first steps of [statsOf]: its base with its items ([_itemsOn], [_ceilings]), its awakening's
+  /// HP and MP and Bangkit 4-5's damage, and its Forge ([Tempa.tempaFactors]). Train's caps read it (train.dart).
+  Stats _ownStats(String type) {
     final base = troopTypes[type]!, level = awakenLevel(type), items = _itemsOn(type, base);
     final up = 1 + awakenMp * level, held = _ceilings(base, items);
     var s = level == 0
@@ -2533,13 +2548,7 @@ class Game {
       final (hp, dmg) = tempaFactors(type);
       s = s._with(hp: (s.hp * hp).round(), dmg: s.dmg * dmg);
     }
-    if (heavyTypes.contains(type)) {
-      const k = 1 + heavyBuff;
-      s = s._with(hp: (s.hp * k).round(), dmg: s.dmg * k, def: s.def * k);
-    }
-    if (pusaka.isNotEmpty) s = _pusakaStats(type, s); // its stat Pusaka: Dragon Heart, Dawn Star (pusaka.dart)
-    if (_oathOn != null) s = _oathStats(s); // the oath's, the whole army's (pusaka.dart)
-    return boosts.isEmpty && pocketBoosts.isEmpty ? s : _boostStats(type, s); // the Tavern's and the pocket's boosts (tavern.dart)
+    return s;
   }
 
   /// [base] with every item [type] holds ([upgrades], in order), each at its own number ([itemK]). An enhanced type's
@@ -2857,6 +2866,14 @@ class Game {
   /// one is. They count only at Bangkit 5 ([Tempa.tempaOf]); Lepas jenis keeps them (no refund). Saved; saves from before
   /// decisions-log 163 have none.
   final tempa = <String, int>{};
+
+  /// The Train levels each troop type bought, by attribute ([Train.trainUp], lib/train.dart; decisions-log 334): none
+  /// until one is. They count only while every item of the type's grade sets is +5 ([Train.trainOpen]); Lepas jenis keeps
+  /// them (no refund). Saved; saves from before it have none.
+  final train = <String, Map<TrainStat, int>>{};
+
+  /// [Train.trainOpen]'s memo: per type, the items and pluses it read, the items' length, the top plus and the answer.
+  final _trainGates = <String, (List<Item>, int, Map<Item, List<int>>, int, bool)>{};
 
   /// [awakenLevel] from the items alone: the grade sets [type] holds in a row from grade I ([gradeSet], decisions-log
   /// 249), on from the level it kept ([keptLevel]). Items past a cap (from saves made before the caps) stay and count.
@@ -3237,6 +3254,7 @@ class Game {
         if (ascended.isNotEmpty) 'ascended': ascended,
         'awakenKept': awakenKept, // empty too: this save's items are by grade (decisions-log 272)
         if (tempa.isNotEmpty) 'tempa': tempa,
+        ..._trainJson, // Train's levels (train.dart): no key with none bought
         if (fallenHeroes.isNotEmpty) 'fallenHeroes': [for (final f in fallenHeroes) f.toJson()],
         // The boss chests waiting (draft.dart), always written: a save without the key is from before them and gets its
         // catch-up chests.
@@ -3387,6 +3405,7 @@ class Game {
     for (final e in ((j['tempa'] as Map?) ?? {}).entries) {
       if (troopTypes.containsKey(e.key)) tempa[e.key as String] = (e.value as int).clamp(0, tempaMax);
     }
+    _loadTrain(j); // Train's levels (train.dart), before the troops too; none in older saves
     _loadBoosts(j); // the Tavern's boosts running (tavern.dart), before the troops too
     // The fallen Heroes to call back (recall.dart); none in saves from before it, and one of an unknown type is dropped.
     for (final f in (j['fallenHeroes'] as List?) ?? const []) {
