@@ -23,8 +23,8 @@ void main() {
     final a = Game(Random(7), Random(107))..seedDice(7), b = Game(Random(7), Random(107))..seedDice(7);
     expect(draws(a), draws(b));
     final c = Game()..seedDice(7);
-    expect(draws(c).skip(2), [for (final k in [200, 300, 400, 500, 900, 800, 600, 700]) Random(7 + k).nextDouble()],
-        reason: 'loot, heroes, slots, draft, omenDice, tavernDice, townDice, matDice');
+    expect(draws(c).skip(2), [for (final k in [200, 300, 400, 500, 900, 800, 600, 700, 1000]) Random(7 + k).nextDouble()],
+        reason: 'loot, heroes, slots, draft, omenDice, tavernDice, townDice, matDice, dungeonDice');
   });
 
   test('a seeded game with the Shadows on draws the same faces each run', () {

@@ -144,4 +144,22 @@ abstract final class Words {
   /// the next Town (the wave meter's chip, short where it is too long).
   static const armyFell = 'Your army fell!', tryAgain = 'Try again', giveUp = 'Give up';
   static const weakenedFoes = 'Weakened foes', weakened = 'Weakened';
+
+  /// The Dungeon (decisions-log 336, 337; docs/dungeon-design.md section 9's words, M1's share): the place, its
+  /// floors, the save point and its Leave, the party and its leader's crown row, the live action panel ("Now", a row's
+  /// "Ready", "then", "+2 more", "target lost"), the target, the Action chain's steps and tabs, the chips, the trip's
+  /// ends, the hints, the door's page and its refusals.
+  static const dungeon = 'Dungeon', floor = 'Floor', savePoint = 'Save point', leave = 'Leave', party = 'Party';
+  static const gambits = 'Gambits', gambitsOn = 'Gambits on', gambitsOff = 'Gambits off', wait = 'Wait';
+  static const now = 'Now', then = 'then', more = 'more', targetLost = 'target lost'; // a row's "Ready": [ready]
+  static const target = 'Target', foes = 'Foes', hostile = 'Hostile', neutral = 'Neutral', follow = 'Follow';
+  static const action = 'Action', attack = 'Attack', who = 'Who?', what = 'what?', onWhom = 'on whom?'; // and [heal]
+  static const pausedStep = 'Paused: step', stepOf = 'of';
+  static const floorCleared = 'Floor cleared', partyFell = 'The party fell', leftDungeon = 'Back from the Dungeon';
+  static const enter = 'Enter', pickParty = 'Pick up to 3 troops', yourParty = 'Your party', noFoes = 'No foe in sight';
+  static const hintMove = 'WASD: move', hintLeader = 'Arrows: leader', hintAction = 'Enter: action', hintGambits = 'G: gambits',
+      hintMenu = 'Esc: menu', hintUpDown = 'Up / Down: move', hintTab = 'Left / Right: tab', hintPick = 'Enter: pick',
+      hintBack = 'Esc: back';
+  static const dungeonInside = 'Already in the Dungeon', dungeonTownOnly = 'Only in a Town',
+      dungeonPickParty = 'Pick 1 to 3 troops';
 }

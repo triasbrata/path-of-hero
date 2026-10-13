@@ -45,6 +45,10 @@ part 'pocket.dart';
 part 'wishlist.dart';
 part 'auto_replace.dart';
 part 'wipe.dart';
+part 'dungeon.dart';
+part 'dungeon_gen.dart';
+part 'dungeon_nav.dart';
+part 'gambits.dart';
 
 const tile = 16.0;
 const cols = 20, rows = 8; // one screen: cols x rows of battlefield under the backdrop
@@ -2337,12 +2341,12 @@ class Game {
 
   /// Every die the game rolls ([rng] and [names] first, as [Game] and [Game.fromJson] take them). A new die goes here
   /// and in [seedDice] (test/dice_test.dart holds both to the `Random` fields).
-  List<Random> get dice => [rng, names, loot, heroes, slots, draft, omenDice, tavernDice, townDice, matDice];
+  List<Random> get dice => [rng, names, loot, heroes, slots, draft, omenDice, tavernDice, townDice, matDice, dungeonDice];
 
   /// Seeds every die after [rng] and [names] from [seed] for a probe or a test that must replay ([dice]), at the offsets
   /// the probes have used: [loot] +200, [heroes] +300, [slots] +400, [draft] +500, [townDice] +600, [matDice] +700,
-  /// [tavernDice] +800 and [omenDice] +900 (none seeded it before decisions-log 319, so a run with the Shadows on was
-  /// never the same twice). The game itself never calls it: a player's dice are unseeded.
+  /// [tavernDice] +800, [omenDice] +900 (none seeded it before decisions-log 319, so a run with the Shadows on was
+  /// never the same twice) and [dungeonDice] +1000. The game itself never calls it: a player's dice are unseeded.
   Game seedDice(int seed) => this
     ..loot = Random(seed + 200)
     ..heroes = Random(seed + 300)
@@ -2351,7 +2355,8 @@ class Game {
     ..townDice = Random(seed + 600)
     ..matDice = Random(seed + 700)
     ..tavernDice = Random(seed + 800)
-    ..omenDice = Random(seed + 900);
+    ..omenDice = Random(seed + 900)
+    ..dungeonDice = Random(seed + 1000);
 
   /// The Bayangan the enemy holds (omen.dart, decisions-log 180): one entry a level, oldest first, so a kind's level is
   /// its count ([Omens.omenLevel]) and the ease takes the last. Saved, only while [omensOn] is on.
@@ -2436,6 +2441,21 @@ class Game {
   /// The materials' dice ([Materials._dropMaterials]): one draw a kill whose drop has a chance (none for an always-drop),
   /// apart so the [loot] dice and the rest of the game roll as they did. Not saved; a probe seeds it with seed + 700.
   Random matDice = Random();
+
+  /// The Dungeon's dice (dungeon.dart, decisions-log 336, 337): a Town's floor seed, where monsters appear and when, apart
+  /// so a trip never shifts the wave run's rolls. Not saved; a probe seeds it with seed + 1000.
+  Random dungeonDice = Random();
+
+  /// The Dungeon's trip while one lasts (dungeon.dart; null: none): [tick] hands it every tick, the army is set aside.
+  /// Not saved: a save made during a trip writes the game as it was at the door ([toJson]).
+  Dungeon? dungeon;
+
+  /// How the last trip ended and on which floor, for the Town's news; the UI clears it once shown. Not saved.
+  ({TripEnd end, int floor})? tripNews;
+
+  /// The floor seed of the Town [_dungeonSeedTown]'s dungeon ([DungeonTrip._dungeonSeed]). Not saved in M1.
+  int? _dungeonSeedNow;
+  int _dungeonSeedTown = -1;
 
   /// The market's memory (decisions-log 326, market.dart): each product's pressure ([Market.marketKey] -> 1 ..
   /// [MarketRules.most]), a piece sold or a material bought, less [MarketRules.recover] at each new Town. Saved.
@@ -3223,8 +3243,12 @@ class Game {
   static const saveLoadsFrom = 2;
 
   /// Everything needed to pick up between waves. Troops still waiting for the after-wave heal are saved healed. Its
-  /// format first ([saveVersion]).
-  Map<String, Object> toJson() => {
+  /// format first ([saveVersion]). During a Dungeon trip, the game as it was at the door (dungeon.dart): a trip isn't
+  /// saved in M1, so an autosave or a quit inside writes the army whole, never its party nor the floor's monsters.
+  Map<String, Object> toJson() =>
+      dungeon == null ? _toJson() : Map<String, Object>.from(jsonDecode(dungeon!.saved) as Map<String, dynamic>);
+
+  Map<String, Object> _toJson() => {
         'v': saveVersion,
         'gold': gold,
         'lives': lives,
@@ -3490,7 +3514,7 @@ class Game {
     return {for (final t in troopTypes.keys) t: ?n[t]};
   }
 
-  bool get waveActive => queue.isNotEmpty || _anyEnemy;
+  bool get waveActive => dungeon == null && (queue.isNotEmpty || _anyEnemy); // a trip's monsters are no wave (dungeon.dart)
 
   /// Whether a monster is in [units] ([enemies] isn't empty), looked for from the end, where the monsters come in after
   /// the troops: [waveActive] is read thousands of times a tick late in a wave, and [enemies] walked every troop first
@@ -3668,7 +3692,7 @@ class Game {
   /// A wave can start: none is on, the game isn't over and no Town is due ([Towns.townDue]: marked for the next wave,
   /// until it is left), nor a wipe's choice waiting ([wipeAsk]). The Start/Pause toggle starts a wave only then
   /// (ui-hud.md); in a Town it says "Leave town".
-  bool get canStartWave => !waveActive && !over && !townDue && !wipeAsk;
+  bool get canStartWave => !waveActive && !over && !townDue && !wipeAsk && dungeon == null;
 
   void startWave() {
     if (townPolicy != null) _townByPolicy(); // a probe's due Town, gone through first (town.dart)
@@ -4400,12 +4424,13 @@ class Game {
     );
   }
 
-  /// [u] attacks [foe] now: a shot, or a blow (with its splash).
-  void _strike(Unit u, Unit foe) {
+  /// [u] attacks [foe] now: a shot, or a blow (with its splash). [k]: the blow's share of a field blow (a Dungeon
+  /// Attack's two blows, dungeon.dart; 1 on the field).
+  void _strike(Unit u, Unit foe, {double k = 1}) {
     u.cd = attackEvery(u); // its rate, quicker while Rampage lasts
     u.attackedAt = t;
     if (omensOn && u.side == Side.troop) u.lastFoe = (foe: foe, at: t); // whom it fights, for the Bayangan Blindside (omen.dart)
-    var dmg = u.stats.dmg * _blowK(u, u.stats.dmg, foe); // a worn fury's every 3rd blow, and its type's War Drum's (pusaka_engine.dart)
+    var dmg = u.stats.dmg * k * _blowK(u, u.stats.dmg * k, foe); // a worn fury's every 3rd blow, and its type's War Drum's (pusaka_engine.dart)
     if (u.relics.isNotEmpty) dmg *= _relicBlowK(u, foe, dmg); // the forge's nine, under the relics' cap (relics.dart)
     final pummel = omensOn && u.side == Side.enemy && _omenPummel(u); // a monster's every 3rd under Pummel (omen.dart)
     final sap = omensOn && u.side == Side.enemy && _omenSapBlow(u); // and its every 4th under Sap, on the same count
@@ -4750,6 +4775,7 @@ class Game {
     u
       ..hurtBefore = u.hurtAt
       ..hurtAt = t;
+    if (dungeon != null) _dungeonStruck(u, by); // a monster at peace turns on its hitter (dungeon.dart)
     if (u.side == Side.troop && !u.stats.heals) {
       u.hurtLog
         ..removeWhere((h) => t - h.$1 > retreatPolicy.brain.threatWindow)
@@ -4783,6 +4809,7 @@ class Game {
     if (u.hp <= 0 && ub != null) _fxLethal(ub, u, by); // its type's `lethal` Fx: the Grail, once a wave
     if (u.hp <= 0 && _reassembles(u)) return dealt; // Reassemble (monster_skill_signatures.dart)
     if (u.hp > 0) return dealt;
+    if (dungeon != null) return _dungeonFell(u, by, dealt); // a knock-out or a monster's fall inside, no field death (dungeon.dart)
     u.dying = 0;
     if (u.side == Side.enemy) {
       gold += _boostGold(_omenGold(u.stats.cost)); // less under the Bayangan Thrift (omen.dart), more under a Tavern boost (tavern.dart)
@@ -4853,13 +4880,13 @@ class Game {
   /// [u] heals [o] by [_healOf] (never past full; a troop through the heal funnel, heal.dart) and starts its cast; a
   /// troop healer pays [healMp] MP for it (a healing necromancer has paid its own, [necroHealCost]); a monster's heal
   /// opens [o]'s window.
-  void _castHeal(Unit u, Unit o) {
+  void _castHeal(Unit u, Unit o, {double k = 1}) {
     u
       ..cd = attackEvery(u)
       ..attackedAt = t
       ..swung = false;
-    if (u.side == Side.troop) u.mp = max(0.0, u.mp - healMp);
-    final heal = _healOf(u);
+    if (u.side == Side.troop) u.mp = max(0.0, u.mp - healMp * k); // [k]: a Dungeon heal's share of field heals (dungeon.dart)
+    final heal = _healOf(u) * k;
     final past = _healUnit(o, heal, HealSrc.heal); // a troop's through the funnel (heal.dart)
     o.healedAt = t;
     if (u.side == Side.enemy) _openHealWindow(u, o);
@@ -5084,13 +5111,13 @@ class Game {
 
   /// [u], a troop healer, "heals" the dark monster [o] and starts its cast: holy light that takes
   /// [holyShare] of the heal off instead, a blow like any other (gold, loot, the relics that answer one).
-  void _smite(Unit u, Unit o) {
+  void _smite(Unit u, Unit o, {double k = 1}) {
     u
       ..cd = attackEvery(u)
       ..attackedAt = t
       ..swung = false;
     impacts.add((o.pos, 'holy')); // the heal burst in holy colours, whatever the healer's awakening
-    var dmg = _healOf(u) * holyShare * _blowK(u, _healOf(u) * holyShare, o);
+    var dmg = _healOf(u) * holyShare * k * _blowK(u, _healOf(u) * holyShare * k, o); // [k]: a Dungeon blow's share (dungeon.dart)
     if (u.relics.isNotEmpty) dmg *= _relicBlowK(u, o, dmg); // the forge's nine, under the relics' cap (relics.dart)
     _holyHurt(o, dmg, u, Hit.smite);
     if (u.relics.isNotEmpty) _relicLanded(u, o, dmg, Hit.smite); // Mana Siphon (relics.dart)
@@ -5518,8 +5545,48 @@ class Game {
     }
   }
 
+  /// The shots fly: a shot whose target fell or left flies on to where it was, and lands there as on it (decisions-log
+  /// 327). [tick]'s and the Dungeon's ([DungeonTrip._dungeonTick]).
+  void _flyShots(double dt) {
+    for (final s in shots) {
+      final e = s.target;
+      if (s.to == null && !e.alive) s.to = e.pos; // frozen where it went
+      final at = s.aim, dist = s.pos.distanceTo(at), mv = (s.speed ?? s.from.stats.shotSpeed) * dt;
+      if (dist <= mv) {
+        s.done = true;
+        impacts.add((at, _fxOf(s.from, shotHitFx(s))));
+        if (s.ring case final look?) rings.add(Ring(at, radius: max(s.splash, tile), since: t, look: look));
+        if (s.spent) continue; // in the air when the wave ended: its look alone
+        final on = s.to == null ? e : _standingOn(at, e.side); // its target, or the unit standing where it was, if any
+        _deflected = false;
+        _pummeled = s.pummel;
+        _sapped = s.sap;
+        if (s.splash > 0) {
+          for (final o in units.toList()) {
+            if (o.side == e.side && o.alive && o.pos.distanceTo(at) <= s.splash) {
+              final dealt = _hurt(o, s.dmg, o == on || s.src != Hit.normal ? s.src : Hit.extra, s.from); // a normal shot's splash past its target is extra
+              if (o != on && s.src == Hit.normal) _fxSplash(s.from, at, o, dealt, s.splash); // Wide Blows' counter (pusaka_engine.dart)
+              s.onHit?.call(o);
+            }
+          }
+        } else if (on != null) {
+          _hurt(on, s.dmg, s.src, s.from);
+          s.onHit?.call(on);
+        }
+        _pummeled = _sapped = false;
+        if (on == null) continue; // nobody where its target was: the splash alone, or its look
+        if (!_deflected) _fxLanded(s.from, on, s.dmg); // its type's `landed` Fx: God's Thunder (pusaka_engine.dart); none on a Deflected hit (omen.dart)
+        if (!_deflected && s.src == Hit.normal && s.from.relics.isNotEmpty) _relicLanded(s.from, on, s.dmg, Hit.normal); // relics.dart
+      } else {
+        s.pos += (at - s.pos) * (mv / dist);
+      }
+    }
+    shots.removeWhere((s) => s.done);
+  }
+
   void tick(double dt) {
     if (over || paused) return;
+    if (dungeon != null) return _dungeonTick(dt); // a trip: the Dungeon's rules, none of the waves' (dungeon.dart)
     final wasActive = waveActive;
     final start = {for (final u in units) u: u.pos}; // for the right-edge limit on shoves, and the stall detector
     t += dt;
@@ -5774,41 +5841,7 @@ class Game {
       // was gone and cost a life, half a heart.
     }
 
-    // A shot whose target fell or left flies on to where it was, and lands there as on it (decisions-log 327).
-    for (final s in shots) {
-      final e = s.target;
-      if (s.to == null && !e.alive) s.to = e.pos; // frozen where it went
-      final at = s.aim, dist = s.pos.distanceTo(at), mv = (s.speed ?? s.from.stats.shotSpeed) * dt;
-      if (dist <= mv) {
-        s.done = true;
-        impacts.add((at, _fxOf(s.from, shotHitFx(s))));
-        if (s.ring case final look?) rings.add(Ring(at, radius: max(s.splash, tile), since: t, look: look));
-        if (s.spent) continue; // in the air when the wave ended: its look alone
-        final on = s.to == null ? e : _standingOn(at, e.side); // its target, or the unit standing where it was, if any
-        _deflected = false;
-        _pummeled = s.pummel;
-        _sapped = s.sap;
-        if (s.splash > 0) {
-          for (final o in units.toList()) {
-            if (o.side == e.side && o.alive && o.pos.distanceTo(at) <= s.splash) {
-              final dealt = _hurt(o, s.dmg, o == on || s.src != Hit.normal ? s.src : Hit.extra, s.from); // a normal shot's splash past its target is extra
-              if (o != on && s.src == Hit.normal) _fxSplash(s.from, at, o, dealt, s.splash); // Wide Blows' counter (pusaka_engine.dart)
-              s.onHit?.call(o);
-            }
-          }
-        } else if (on != null) {
-          _hurt(on, s.dmg, s.src, s.from);
-          s.onHit?.call(on);
-        }
-        _pummeled = _sapped = false;
-        if (on == null) continue; // nobody where its target was: the splash alone, or its look
-        if (!_deflected) _fxLanded(s.from, on, s.dmg); // its type's `landed` Fx: God's Thunder (pusaka_engine.dart); none on a Deflected hit (omen.dart)
-        if (!_deflected && s.src == Hit.normal && s.from.relics.isNotEmpty) _relicLanded(s.from, on, s.dmg, Hit.normal); // relics.dart
-      } else {
-        s.pos += (at - s.pos) * (mv / dist);
-      }
-    }
-    shots.removeWhere((s) => s.done);
+    _flyShots(dt);
     _moveSpecials(dt); // hero_shots.dart
     _watchGrail(); // a Grail save kept once its troop has lived [keptAfter] s since (pusaka.dart)
     if (pusaka.isNotEmpty) _oathWatch(); // a type died out or came back: Alliance's multiplier moves (pusaka.dart)
