@@ -101,14 +101,15 @@ void main() {
       await frames(tester);
     }
 
-    /// Scrolls the detail's body so that its Train section's top shows.
+    /// Scrolls the detail's body so that its Train section's heading is at the body's top.
     Future<void> toTrain() async {
       await frames(tester, 3);
-      for (var i = 0; i < 40 && b.troopDetail('train:hp') == Rect.zero; i++) {
-        b.troopDetailScroll = b.troopDetailScroll + 20;
+      for (var i = 0; i < 80 && b.troopDetail('train:hp') == Rect.zero; i++) {
+        b.troopDetailScroll = b.troopDetailScroll + 10;
         await frames(tester, 2);
       }
-      b.troopDetailScroll = b.troopDetailScroll + 2 * (b.troopDetailBody.height / 3);
+      final hp = b.troopDetail('train:hp');
+      b.troopDetailScroll = b.troopDetailScroll + hp.top - b.troopDetailBody.top - hp.height - 2;
       await frames(tester, 3);
       // ignore: avoid_print
       print('train words: ${[for (final s in TrainStat.values) '${s.name}=${b.troopDetailWords('train:${s.name}')}']} ${b.troopDetailWords('train')}');
@@ -138,8 +139,9 @@ void main() {
         final row = b.troopDetail('train:power');
         if (row != Rect.zero) {
           final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
-          await gesture.addPointer(location: Offset(row.left - 60, row.center.dy));
-          await frames(tester, 60);
+          await gesture.addPointer(location: Offset(row.left - 80, row.center.dy - 4));
+          await gesture.moveTo(Offset(row.left - 60, row.center.dy));
+          await frames(tester, 80);
           await shot('$tag-tip', 2);
           await gesture.removePointer();
         }

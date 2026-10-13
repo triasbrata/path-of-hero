@@ -147,7 +147,7 @@ extension on Board {
       d.at[key] = _inView(Rect.fromLTRB(x0, top, x1, y), view);
     }
     c.restore();
-    for (final key in ['upgrade', 'change', 'bag', 'shop', ...d.at.keys.where((k) => k.startsWith('recall:'))]) {
+    for (final key in ['upgrade', 'change', 'bag', 'shop', ...d.at.keys.where((k) => k.startsWith('recall:') || k.startsWith('train:'))]) {
       if (d.at[key] case final r?) d.at[key] = _inView(r, view);
     }
     _cutTo(d.hits, hits, view, (e, r) => (r, e.$2));
