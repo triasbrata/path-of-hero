@@ -8,10 +8,12 @@ checkout's raw_sprites/gandalfhardcore-platformer/: never raw_assets/, never ano
   behind and above), its moss lip (the line at the wall's foot, tiled along x), its moss-topped block (the near ledge),
   its stalactite strip (the ceiling, tiled every 64 px), BG Dirt1's flat earth (the floor band), its slab with two
   tunnel holes and its pillar (the back wall). The slab and the pillar are one island on the sheet, split by the
-  column where the pillar ends (x 32).
+  column where the pillar ends (x 32). And Floor Tiles2's moss-topped block, its top two rows of 32-px cells (the
+  corners, the top, the sides and the fill): the Town's door, a rock mound built cell by cell.
 - dungeon_props.png: the props (PROPS), packed the same way: Decor's mossy boulder pile, rocks, a rock and pebbles,
   three gravestones and a cross, Ores.png's four crystal rocks (each cut to its own pixels, its largest island), and
-  Torch.png's wall torch, lit, its six frames side by side (each 12x31 cell from its 32-px column, its sparks in it).
+  Torch.png's wall torch, lit, its six frames side by side (each 12x31 cell from its 32-px column, its sparks in it),
+  and its standing torch (row 1, 10x31 a frame), the door's two.
 - dungeon_portal.png: the Portal sheet as it is (the stairs down): 64x64 frames, ten in a row.
 The save point's campfire is the Town's town_campfire.png (tool/import_town.py). Every file is written as 8-bit RGBA
 (the pixels unchanged). lib/dungeon_art.dart holds the files' names, the portal's frame grid and each named cell's rect
@@ -43,6 +45,7 @@ TILES = [
     ("earth", DIRT1, 80, 48, 8, 8, True),  # BG Dirt1's flat earth: the floor band
     ("slab", DIRT1, 32, 33, 160, 95, True),  # the back wall's slab, its two holes the tunnels
     ("pillar", DIRT1, 0, 0, 32, 128, True),  # the back wall's pillar
+    ("block", FT2, 0, 0, 96, 64, True),  # the moss-topped block's top two rows of 32-px cells: the door's rock mound
 ]
 # The props: (name, pack file, x, y, w, h, frames) — an animation's next frames 32 px along its sheet's row.
 PROPS = [
@@ -59,6 +62,7 @@ PROPS = [
     ("ore2", "Ores.png", 6, 90, 53, 38, 1),
     ("ore3", "Ores.png", 70, 90, 53, 38, 1),
     ("torch", "Torch.png", 0, 97, 12, 31, 6),  # row 3: the wall torch, lit (sprites 21-29, the sparks with them)
+    ("standTorch", "Torch.png", 11, 33, 10, 31, 6),  # row 1: the standing torch, lit (sprites 3-11): the door's
 ]
 PORTAL = ("dungeon_portal.png", "Animated Sprites/GandalfHardcore Portal sheet.png", 64)
 TILES_W, PROPS_W, FRAME_STEP = 256, 256, 32
@@ -143,7 +147,7 @@ def dart(made):
         "typedef DungeonCell = ({int x, int y, int w, int h});",
         "",
         f"/// The cave's pieces ([dungeonTileCells]), {tw}x{th}: the fill, the moss lip, the ledge, the stalactites, the",
-        "/// floor band's earth, the back wall's slab and pillar.",
+        "/// floor band's earth, the back wall's slab and pillar, the door's moss-topped block (its 32-px cells).",
         "const dungeonTiles = 'dungeon_tiles.png';",
         "",
     ]
