@@ -265,7 +265,7 @@ extension Train on Game {
     final heals = troopTypes[type]!.heals, name = trainStatName(stat, heals: heals), n = train[type]?[stat] ?? 0;
     final cap = trainCapOf(type, stat);
     return ('${Words.train} $name', [
-      '${trainGain(stat)} ${switch (stat) { TrainStat.rate => 'attack wait', TrainStat.defence => 'defence', _ => name }} a level',
+      '${trainGain(stat)} ${switch (stat) { TrainStat.rate => 'attack wait', TrainStat.defence => 'defense', _ => name }} a level',
       if (cap == null) 'Stacks each level' else 'Stacks up to its cap',
       allOfType,
       if (n > 0) 'Now: ${Words.lv} $n',

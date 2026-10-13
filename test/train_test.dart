@@ -380,7 +380,7 @@ void main() {
     g.train['knight'] = {TrainStat.range: 2};
     expect(g.trainInfo('knight', TrainStat.range).$2, ['+10% Range a level', 'Stacks up to its cap', 'All troops of this type, now and later', 'Now: Lv 2', 'Price: 28,000 gold, 2 Bone Bow']);
     expect(g.trainInfo('knight', TrainStat.rate).$2.last, 'Max: attack floor');
-    expect(g.trainInfo('knight', TrainStat.defence).$2.first, '+2.5 defence a level');
+    expect(g.trainInfo('knight', TrainStat.defence).$2.first, '+2.5 defense a level');
     expect(atGate('priest').trainInfo('priest', TrainStat.power).$1, 'Train Heal');
   });
 

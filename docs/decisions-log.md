@@ -12050,3 +12050,40 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        test/town_checkpoint_hud_test.dart (the dialog after the hop at 1600×947, 1266×713 and 915×412: on the screen,
        44-px buttons, Enter, Esc, taps; the chip in the Town and on the field, its tooltip), test/wipe_test.dart, and
        shots at 1600×947 and 915×412 (test/probe_town_checkpoint_shots.dart).
+334. **Train: once every item of a troop type is +5, the type buys levels of its attributes for gold and a material;
+     attack speed, walk speed and reach stop at the existing caps, the rest has no end** (the owner, 2026-10-13: "setelah
+     enhance sudah penuh di late game user bisa bebas mengupgrade attribute dari troopsnya tapi untuk attack speed dan
+     walkspeed ini ada limitnya, selain itu bisa di enhance semua", once enhance is full, late in a run, the player can
+     freely upgrade his troops' attributes, attack speed and walk speed with a limit, everything else without one; his
+     answers to the orchestrator: "enhance full" = "Semua item troop sudah +5"; the attributes HP, damage/heal, defence,
+     MP and MP regen, attack speed and walk speed, and range (with a cap too, knowing an unlimited reach lets an archer
+     shoot from the screen's edge); the limits "Batas yang sudah ada"; "Per tipe, gold + material"; Forge (163) stays.
+     On the phase-1 rules: "Setuju, Cap/Ring tidak dihitung"; for the shooters' and healers' range, always at its cap:
+     "Sembunyikan baris Range"; attack speed at the floor for 8 of 9 types: "Ya, biarkan begitu"; the price "Oke, mulai
+     dari sini"). Why: past Enhance +5 and Forge the late gold and the late monsters' Rare parts had nothing new to buy,
+     and the owner wanted the player to shape a type's stats himself. By attr-upgrade (lib/train.dart; loot-items-relics.md
+     "Train", ui-hud.md "Army", units-and-combat.md, telemetry.md, game-overview.md).
+     - **The gate** (`trainOpen`): every item of the type's three grade sets (`gradeSet` of Awaken 1-3: the knight 31,
+       the priest 36) held at +5, as many of each as its set takes; the Cap and the Ring out, copies past a set out, a
+       kept Awaken 3 still needing the sets, Awaken 4-5 not asked. Once met it stays (Enhance's swap only sends out a
+       lower "+"); the levels count only while it holds, as Forge's at Awaken 5.
+     - **A level** (in `statsOf` after the Forge, before the heavy +20%, Artifacts, oaths and boosts): HP, power, MP and
+       MP regen ×1.05 compounding and defence +2.5 (a Shield), no cap (a guard at 50); the attack pause ÷1.1 to the floor
+       0.3 s, walk ×1.1 to the walk cap, reach ×1.1 to a melee fighter's reach cap or one screen (320) for the rest. The
+       caps hold after the Hero, the aura and boots as before. At the gate only the Templar has attack-speed room (13
+       levels; gloves take the other eight under the floor); walk 8 levels for the Soldier, Archer and Axeman, 19 for
+       the Priest and Wizard, none for the booted four; reach 7, 8 and 3 for the Knight and Axeman, Swordsman and Lancer,
+       no row for the other five (their bows already took it there).
+     - **Price:** 0.15 × the wave's purse × 1.2ⁿ gold a level of that attribute (rounded to 1k: wave 90 20k, 40k at the
+       5th, 101k at the 10th) and 1 + n ÷ 2 of the attribute's late Rare part (Bear Claw, Orc Heart, Iron Tusk, Teal Gem,
+       Dark Gem, Wolf Fang, Warg Fang, Bone Bow). A late sink beside Forge, not a way round it: the gate is all the
+       Enhance a type can take (about 2.5M gold of stones and steps for a 31-item type at the market's prices).
+     - **On the Army detail** between waves, anywhere (as Forge): "Train: every item +5" and a row per attribute (icon,
+       name, "Lv 3", "+5%", material and count, a green price tag or "Max"); short of +5, "Train: needs every item +5
+       (30/34)". Refusals: the store's, "Needs every item +5", "Max: attack floor / walk cap / reach cap", "Max: Lv 50",
+       "Need 2 Bear Claw", "Not enough gold". The Army tab's dot counts it. Lepas jenis keeps the levels, no refund.
+     - **Saves** (additive, `v` stays 3): `train` (type → {attribute → level}). **Telemetry** (`eventVersion` and
+       `telemetryVersion` 19): the event `trained`, a wave's `gold.trainSpent` and the material in `materialsUsed`. The
+       battle log: "Axeman: Train HP Lv 4 (38k gold, 3 Bear Claw)".
+     - **Checked:** test/train_test.dart, test/train_hud_test.dart (1600×947 and 915×412), shots at both sizes
+       (test/probe_train_shots.dart). Nobody in the w89 save is at the gate, so its replay is unchanged.

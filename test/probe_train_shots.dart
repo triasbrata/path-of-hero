@@ -140,6 +140,11 @@ void main() {
       await shot('$tag-wizard');
       // ignore: avoid_print
       print('$tag: wizard ${g.trainProgress('wizard')} ${b.troopDetailWords('train')}');
+      await tap(b.troopRow('archer').center);
+      await toTrain();
+      await shot('$tag-archer');
+      // ignore: avoid_print
+      print('$tag: archer open ${g.trainOpen('archer')} ${b.troopDetailWords('train')}');
       await tap(b.troopRow('armored_axeman').center);
       await toTrain();
       final hp = b.troopDetail('train:hp');
@@ -160,12 +165,6 @@ void main() {
           await gesture.removePointer();
         }
       }
-      await tap(b.troopRow('archer') == Rect.zero ? b.armyPager.$1.center : b.troopRow('archer').center);
-      if (b.troopRow('archer') != Rect.zero) await tap(b.troopRow('archer').center);
-      await toTrain();
-      await shot('$tag-archer');
-      // ignore: avoid_print
-      print('$tag: archer open ${g.trainOpen('archer')} ${b.troopDetailWords('train')}');
       b.state = Game();
       await frames(tester, 5);
     }

@@ -6,7 +6,7 @@ Purpose: troop and monster stats, attacks, waves and the boss.
 
 | Field | Meaning |
 |---|---|
-| `hp`, `cost` | Health, and base price (a troop costs `Game.priceOf(type)`, which its type's items and awakening raise: loot-items-relics.md; for monsters: the gold their kill pays, the type's base × its tier's gold grown with the wave, `killGold`, set by `enemyStats`). A troop's HP rises only through awakening (`awakenHp`), never through items. |
+| `hp`, `cost` | Health, and base price (a troop costs `Game.priceOf(type)`, which its type's items and awakening raise: loot-items-relics.md; for monsters: the gold their kill pays, the type's base × its tier's gold grown with the wave, `killGold`, set by `enemyStats`). A troop's HP rises through awakening (`awakenHp`), the Amulet, Forge and Train (loot-items-relics.md). |
 | `def` | Defence: taken off every blow the unit takes (`hitTaken`, below). Troops get it from shields; monsters have none of their own and gain it with the wave (`waveDef`, below). |
 | `mp`, `mpRegen` | The most MP it holds and the MP back per second (0: it has none); what a unit has now is `Unit.mp`. The necromancers spend theirs on summons and heals (below), the troops on their skills (below), and a troop healer on its heals too (`healMp` 6 a heal, "Healers" below; decisions-log 297). Every troop type has MP, full at the start of a wave: soldier, knight, lancer, armored_axeman 20 (+1/s); swordsman, archer 30 (+1.5); knight_templar 40 (+2); priest 60 (+3); wizard 80 (+4). Awakening raises a troop's (`awakenMp`), and so do a Hero and its aura (Heroes, below); the other monsters have none. |
 | `speed` | Units per second. A troop walks at most `walkMost` 6 × its type's base `speed`, whatever raises the stat (`walkCap`, `Unit.walkSpeed`: "The walk cap", below). |
@@ -1148,7 +1148,8 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
   - So monsters drive troops back only by fighting: a hurt troop falls back (`_fallBackTo`), a fallen one leaves
     a gap. Skills still move troops and monsters through each other: Trample's charge, Swoop's and Pounce's leaps,
     the knockbacks (below), and the stall march (#39).
-- **The attack floor** (#71, decisions-log 90): whatever speeds a unit up (gloves, awakening, a Hero's ×,
+- **The attack floor** (#71, decisions-log 90; Train's attack-speed levels stop at it, decisions-log 334): whatever
+  speeds a unit up (gloves, awakening, a Hero's ×,
   War Cry, Rampage, the wave's growth), it never attacks or heals more often than once every
   `minAttackInterval` 0.3 s; the wave's boss (`Tier.boss`) may go down to `bossMinAttackInterval` 0.2 s.
   `attackEvery` applies it after every multiplier, and the book's troop row shows the rate floored the same
@@ -1158,7 +1159,8 @@ game without the Towns (lib/recall_page.dart) went in decisions-log 296.
 - **The walk cap** (decisions-log 311; the owner, shown the Hero knight sliding its feet, picked "Batasi kecepatan
   jalan", a slower Hero knight, over a quicker stride): no troop walks faster than `walkMost` 6 × its type's base `speed`
   (`walkCap(type)`: soldier and archer 132, knight 144, swordsman 168, lancer 156, priest 120, armored_axeman, wizard and
-  knight_templar 108), whatever raises its speed stat: boots, a Hero's ×3, the aura, an Artifact. 6× is the quickest
+  knight_templar 108), whatever raises its speed stat: boots, a Hero's ×3, the aura, an Artifact. Train's walk levels stop
+  at it (decisions-log 334, loot-items-relics.md "Train"). 6× is the quickest
   the walk strip strides with its feet planted on a 60 fps screen (ui-hud.md "Troops drawn moving").
   - The stat stays as it is (`Stats.speed`); what walks reads `Unit.walkSpeed`, min(the stat, the cap): the walk to a
     spot or a foe, kiting, falling back, the catch-up pace (`speedTo`: at most 2× its walk and never past its cap), the
