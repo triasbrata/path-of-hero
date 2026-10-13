@@ -21,6 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from build_atlas import read_png  # noqa: E402
+from import_dungeon import props_layout as dungeon_props_layout, tiles_layout as dungeon_tiles_layout  # noqa: E402
 from import_town import props_layout, yards_layout  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -69,6 +70,7 @@ LICENSED = [
     ("assets/images/town_ground_*.png", "town"),
     ("assets/images/town_yards.png", "town"),
     ("assets/images/town_smith.png", "npc"),
+    ("assets/images/dungeon_*.png", "town"),  # the Dungeon's cave, the same pack (tool/import_dungeon.py)
 ]
 OWN = [
     "assets/ai/*.json",  # RetreatBrain's thresholds
@@ -126,7 +128,10 @@ KINDS = {
             "and the props' atlas (town_props), its rects in cells; the Towns' identities (decisions-log 326): the "
             "Autumn and Winter sets (town_autumn_bg_1..5, town_autumn_castle, town_winter_*), drawn as the Normal one, "
             "their streets (town_ground_autumn, town_ground_winter) and the yards' atlas (town_yards), its rects in "
-            "cells (an animation's frames side by side in its cell)",
+            "cells (an animation's frames side by side in its cell); the Dungeon's cave (tool/import_dungeon.py, "
+            "lib/dungeon_art.dart, decisions-log 337): the tiles' and the props' atlases (dungeon_tiles, dungeon_props), "
+            "their rects in cells (the torch's frames side by side in its cell), and the portal's 64x64 frames in a row "
+            "(dungeon_portal)",
     "npc": "the Town's smith (tool/import_smith.py, lib/town_smith_art.dart, decisions-log 265): the Mana Seed "
            "Character Base demo's paper doll (body, outfit, hair, the mace for a hammer) facing right at Pixel "
            "Crawler's anvil, a strip of frames (backswing, raised, swing, strike, rest), the anvil at the same place in "
@@ -145,10 +150,12 @@ def smith_frame():
 # campfire frames; the smith's frames.
 GRID = {"ui_icons.png": (16, 16), "ui_buttons.png": (32, 16), "ui_click.png": (16, 16), "ui_loading.png": (16, 16),
         "artifact_icons.png": (32, 32), "town_house.png": (16, 16), "town_smithy.png": (64, 64),
-        "town_campfire.png": (32, 32), "town_smith.png": smith_frame()}
+        "town_campfire.png": (32, 32), "town_smith.png": smith_frame(), "dungeon_portal.png": (64, 64)}
 # The atlases the code cuts by rects of their own ([x, y, w, h] a cell): the Town's props and yards (tool/import_town.py).
 CELLS = {"town_props.png": [list(r) for r in props_layout()[0].values()],
-         "town_yards.png": [list(r) for r in yards_layout()[0].values()]}
+         "town_yards.png": [list(r) for r in yards_layout()[0].values()],
+         "dungeon_tiles.png": [list(r) for r in dungeon_tiles_layout()[0].values()],
+         "dungeon_props.png": [list(r) for r in dungeon_props_layout()[0].values()]}
 FEET = (50, 59)
 SHADOW_INK, SHADOW_ROWS = (83, 69, 69), (55, 59)
 

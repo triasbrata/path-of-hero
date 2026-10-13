@@ -99,6 +99,7 @@ app.*.map.json
 /assets/images/town_ground_*.png
 /assets/images/town_yards.png
 /assets/images/town_smith.png
+/assets/images/dungeon_*.png
 /assets/.placeholders
 # The platform app icons: a pack derivative, in the vault too.
 /android/app/src/main/res/mipmap-*/ic_launcher*.png

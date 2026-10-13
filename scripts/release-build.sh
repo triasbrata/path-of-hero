@@ -51,6 +51,7 @@ ALLOWED_ASSETS=(
   'assets/images/battle_floor.png'
   'assets/images/battle_props.png'
   'assets/images/battle_step.png'
+  'assets/images/dungeon_*.png'
   'assets/images/fx_hit_*.png'
   'assets/images/fx_upgrade.png'
   'assets/images/item_*.png'

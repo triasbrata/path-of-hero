@@ -446,6 +446,18 @@ def town(e):
         for k in range(5):
             img.ellipse(w * (.25 + k * .12), h * (.45 + k % 2 * .2), 2, 3, (110, 200, 240, 255))
         img.outline((0, 0, w, h), INK)
+    elif name == "dungeon_portal":  # the stairs down: a dark mound with a glint, frame by frame
+        fs = e["frame"][0]
+        for f in range(e["frames"]):
+            x0 = f * fs
+            for y in range(fs // 4, fs):
+                half = (y - fs / 4) / (fs * .75) * fs * .45
+                img.rect(x0 + fs / 2 - half, y, x0 + fs / 2 + half, y, (24, 20, 30, 255))
+            img.ellipse(x0 + fs * (.35 + f % 4 * .08), fs * .7, 2, 2, (170, 90, 200, 255))
+    elif name == "dungeon_tiles":  # the cave's pieces: dark earth in each cell, a mossy line on top
+        for x0, y0, cw, ch in e["cells"]:
+            img.rect(x0, y0, x0 + cw - 1, y0 + ch - 1, (40, 34, 38, 255))
+            img.rect(x0, y0, x0 + cw - 1, y0 + min(2, ch - 1), (90, 130, 60, 255))
     elif name == "town_pine":
         img.rect(w / 2 - 3, h * .45, w / 2 + 2, h - 1, WOOD)
         for k in range(2):  # the cone and one tier over a tall trunk, as the pine
