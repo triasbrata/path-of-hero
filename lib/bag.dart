@@ -580,10 +580,11 @@ extension on Board {
   /// the Bag's slots ([_bagCell] on [b], [b]'s slot: [_BagGrid.small]) in whole rows, the last row's spare slots empty; a
   /// section with no cells its muted note in place of its rows; a gap between sections ([_sectionsLay]). Where they don't
   /// all fit, the Bag's pager ([_bagPager] on [b]) at the area's bottom turns pages. The page turns to [held] when it has
-  /// a cell, else stays the grid's. Returns each heading drawn (its section and where its words are), each note drawn
-  /// (its section and its words), and the board's height on the page.
+  /// a cell, else stays the grid's. The sections in [priced] are the Shop's Sell tab's High demand (decisions-log 335): their
+  /// cells show what one sells for here ([_bagCell]'s demand). Returns each heading drawn (its section and where its words
+  /// are), each note drawn (its section and its words), and the board's height on the page.
   ({List<(int, Rect)> heads, Map<int, String> notes, double height}) _sections(Canvas c, Game g, Rect area, _BagGrid b, List<_Section> secs,
-      BagLoot? held, double ts, double ps) {
+      BagLoot? held, double ts, double ps, {Set<int> priced = const {}}) {
     const grey = Color(0xFF9E9080);
     final lay = _sectionsLay(area, secs, ts, ps, small: b.small);
     final (:cols, :size, :fs, :noteH, :notes, :pages, height: _, tallest: _) = lay;
@@ -620,7 +621,7 @@ extension on Board {
           final i = piece.row * cols + col, r = Offset(span.left + col * (size.width + gapX), y) & size;
           b.slots.add(r);
           if (i < s.loot.length) {
-            _bagCell(c, g, s.loot[i].kind, r, ps, ts, on: b, plus: s.loot[i].plus);
+            _bagCell(c, g, s.loot[i].kind, r, ps, ts, on: b, plus: s.loot[i].plus, demand: priced.contains(piece.sec));
           } else if (s.title.isNotEmpty) {
             _bagSlot(c, r, ps);
           }
@@ -808,7 +809,7 @@ extension on Board {
 /// gold star at the top left (decisions-log 282; on a 22-px slot tucked 2 px out, clear of the ▲). Registered for the tooltips, taps
   /// and drags ([_slots] with its plus, [_relicSlots], [_matSlots]; the Shop's and the Smithy's cells are never dragged,
   /// [_cellsStay]).
-  void _bagCell(Canvas c, Game g, Enum kind, Rect r, double k, double ts, {_BagGrid? on, int plus = 0}) {
+  void _bagCell(Canvas c, Game g, Enum kind, Rect r, double k, double ts, {_BagGrid? on, int plus = 0, bool demand = false}) {
     final b = on ?? _grid, relic = kind is Relic ? kind : null, own = relic != null && relic.pusaka ? g.pusaka[relic] : null;
     final cell = (kind: kind, plus: plus), pick = b.smithy ? _smithyShownAt(g) : null, need = pick == null ? null : _smithyMats(g, pick);
     final held = b.smithy
@@ -832,16 +833,19 @@ extension on Board {
 
     final n = own == null ? (kind is Item ? g.bagOf(kind, plus) : g.inBag(kind)) : 0;
     final isNew = plus == 0 && !b.shop && !b.smithy && !b.seen.contains(kind);
-    final price = plus == 0 && b.shop && !b.sell && own == null && onShopShelf(g, kind) ? g.buyPrice(kind) : null; // an Artifact owned is sold out
-    final basket = b.sell ? _shop.basket[cell] : null;
+    final price = demand
+        ? g.sellPrice(kind) // the Sell tab's High demand: what one sells for here (decisions-log 335)
+        : plus == 0 && b.shop && !b.sell && own == null && onShopShelf(g, kind) ? g.buyPrice(kind) : null; // an Artifact owned is sold out
+    final basket = b.sell && !demand ? _shop.basket[cell] : null;
     final short = kind is Mat && n < (need?[kind] ?? 0);
     final ready = made ? craftable : kind is Item && !b.enhance && _bagReady(g, kind), asleep = relic != null && g.pusakaAsleep(relic);
     final counted = n >= 2 || n >= 1 && (short || made); // the Smithy's relics and items, and a short material, from 1
     // The Wishlist's star (decisions-log 282, 300, 302): an item on the Smithy's Items board, a relic a free line has on its
     // Relics board, a material its open wishes take in the Bag's Materials and the Shop's Buy.
-    final wished = !b.enhance &&
-        !b.sell &&
-        switch (kind) { final Item i => b.smithy && g.wished(i), final Relic r => b.smithy && g.freeWished(r), final Mat m => g.wishMats.contains(m), _ => false };
+    final wished = demand && kind is Item && g.wished(kind) || // High demand's (decisions-log 335)
+        !b.enhance &&
+            !b.sell &&
+            switch (kind) { final Item i => b.smithy && g.wished(i), final Relic r => b.smithy && g.freeWished(r), final Mat m => g.wishMats.contains(m), _ => false };
     if (isNew) {
       // The "!" (4x14 of its 16-px icon, at x 6) in a dark capsule 10x16 like the counts', so it reads on any icon.
       final box = Rect.fromLTWH(r.left + k, r.top + k + sink, 10, 16);
@@ -901,6 +905,7 @@ extension on Board {
     } else if (own != null && relic!.oath) {
       _uiIcon(c, Board._icSwords, box);
     }
+    if (demand) _shop.demand.add((cell, r));
     b
       ..cells.add((cell, r))
       ..marks[cell] = (
@@ -942,12 +947,11 @@ extension on Board {
   }
 
   /// What the Bag would hold, when no cell shows: All's bag icon and "Your bag is empty.", or the category's own line;
-  /// Relics counts those worn, Artifacts says where they come from. The Town's Shop's Sell grid (decisions-log 269): that
-  /// the Bag holds nothing it buys. What drops (decisions-log 292): monsters drop no item, only materials, and the Smithy
-  /// makes the items (decisions-log 246), so "Monsters drop materials." and All's "Make items at the Smithy in a Town.".
+  /// Relics counts those worn, Artifacts says where they come from (the Town's Shop's Sell tab says it under Items in Bag,
+  /// decisions-log 335). What drops (decisions-log 292): monsters drop no item, only materials, and the Smithy makes the
+  /// items (decisions-log 246), so "Monsters drop materials." and All's "Make items at the Smithy in a Town.".
   List<String> _bagEmptyLines(Game g) {
     const drops = '${Words.monstersDropMats}.';
-    if (_grid.shop) return [shopNothingToSell, drops];
     final worn = g.troops.where((u) => u.alive).fold(0, (n, u) => n + u.relics.length);
     return switch (_grid.category) {
       BagCategory.all => ['Your bag is empty.', drops, '${Words.makeItemsAtSmithy}.'],
@@ -967,7 +971,7 @@ extension on Board {
   /// bag) at [ts].
   ({double fs, double lineH, double icon}) _bagEmptyType(double ts) {
     final fs = math.max(10.0, 13 * ts);
-    return (fs: fs, lineH: (fs * 1.4).roundToDouble(), icon: _grid.category == BagCategory.all && !_grid.shop ? 32.0 : 0.0);
+    return (fs: fs, lineH: (fs * 1.4).roundToDouble(), icon: _grid.category == BagCategory.all ? 32.0 : 0.0);
   }
 
   /// [_bagEmptyLines] as drawn [width] wide at [fs]: a line too long for it goes on over a few.

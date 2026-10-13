@@ -51,6 +51,12 @@ abstract final class Words {
   /// a product sold so much its price falls; the Town chip's tooltip, what the next Town pays well for.
   static const hotIn = 'Hot in', flooded = 'Flooded: price falling', paysWellFor = 'Pays well for';
 
+  /// The Shop's Sell tab (decisions-log 335): its two sections' headings, and on the Sell Basket page a High demand
+  /// product's line ("Demand: 16 more, 182 each"), its Wishlist tag once on it, and what stands in its price row's place
+  /// while the Bag holds none.
+  static const highDemand = 'High demand', itemsInBag = 'Items in Bag', demand = 'Demand', each = 'each',
+      onWishlist = 'On wishlist', noneInBag = 'None in your Bag';
+
   /// The Smithy's Craft (decisions-log 233): its button, and what is said once a relic is made ("Sweep crafted!"); what
   /// the Smithy's page lists under a relic (decisions-log 235); and the forge's late step, its strip's third tab
   /// (decisions-log 254), and what is said once an item goes a step up ("Royal Sword enhanced to +4!", decisions-log 255).

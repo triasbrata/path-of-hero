@@ -114,6 +114,22 @@ int shopBasketGold(Game g, Map<BagLoot, int> basket) => [for (final MapEntry(key
   return (pieces: pieces, gold: g.gold - before);
 }
 
+/// The Sell tab's High demand (decisions-log 335; the owner, 2026-10-13: "hight demand / `<list product>`"): the products
+/// this Town wants that are hot now ([Market.marketWord]: a kind of [TownIdentity.wants] whose fresh margin is 2 or more,
+/// not flooded), each grade's item at +0, by what one sells for here ([Store.sellPrice]), the most first (the Town's
+/// order, then the grade's, between equal ones). An enhanced stack is never on it (it is no product the Smithy makes nor
+/// the Wishlist holds); one the Bag holds keeps its arrow under Items in Bag.
+List<BagLoot> shopDemandLoot(Game g) {
+  final items = [
+    for (final slot in g.townIdentity.wants)
+      for (final i in Item.values)
+        if (i.slot == slot && g.marketWord(i) == MarketWord.hot) i,
+  ];
+  final order = {for (final (n, i) in items.indexed) i: n};
+  items.sort((a, b) => switch (g.sellPrice(b).compareTo(g.sellPrice(a))) { 0 => order[a]!.compareTo(order[b]!), final d => d });
+  return [for (final i in items) (kind: i, plus: 0)];
+}
+
 /// The Town's Shop's pages between frames.
 class _ShopView {
   ShopTab tab = ShopTab.buy; // the strip's tab on: Buy each time the Shop opens ([leave])
@@ -139,14 +155,17 @@ class _ShopView {
   final texts = <String, String>{};
   final lines = <(BagLoot, Rect, String)>[];
   final arrows = <BagLoot, (MarketWord, Rect)>{}; // the Sell grid's market arrows drawn (decisions-log 326)
+  final demand = <(BagLoot, Rect)>[]; // the Sell tab's High demand cells drawn (decisions-log 335)
 
   /// The tab's grid.
   _BagGrid get grid => tab == ShopTab.buy ? buy : sell;
 
-  /// The book turned away from the Shop ([Board._open]): it opens on Buy again, the basket empty.
+  /// The book turned away from the Shop ([Board._open]): it opens on Buy again, the basket empty, Sell's board on its
+  /// first page (High demand's, decisions-log 335).
   void leave() {
     tab = ShopTab.buy;
     basket.clear();
+    sell.pages.clear();
   }
 
   void clear() {
@@ -157,6 +176,7 @@ class _ShopView {
     at.clear();
     texts.clear();
     lines.clear();
+    demand.clear();
   }
 }
 
@@ -170,11 +190,12 @@ extension on Board {
     const ink = Color(0xFF4A2C17);
     final v = _shop;
     if (!identical(v.game, g) || v.townAt != g.townAt || !g.inTown) {
-      // Another game or another Town: the Shop on Buy, nothing picked, its basket empty.
+      // Another game or another Town: the Shop on Buy, nothing picked, its basket empty, Sell's board on its first page.
       _storePickAt = null;
       v
         ..tab = ShopTab.buy
         ..basket.clear()
+        ..sell.pages.clear()
         ..game = g
         ..townAt = g.townAt;
     }
@@ -187,9 +208,11 @@ extension on Board {
       v.tabs[t] = at[i];
     }
     final area = Rect.fromLTRB(left.left, top + _chipsHeight(ts) + math.max(4.0, 5.5 * ts), left.right, left.bottom);
-    // A pick sold out goes, as the Bag's does; on Sell the pick is always a line of the basket, the last added while none
-    // is picked (decisions-log 278: the page's top shows it).
-    if (_storePickAt case final held? when !_gridLoot(g, v.grid, BagCategory.all).contains(held) || v.tab == ShopTab.sell && !v.basket.containsKey(held)) {
+    // A pick sold out goes, as the Bag's does; on Sell the pick is a line of the basket, the last added while none is
+    // picked (decisions-log 278: the page's top shows it), or a High demand product (decisions-log 335: held or not).
+    final demand = shopDemandLoot(g);
+    if (_storePickAt case final held?
+        when v.tab == ShopTab.buy ? !_gridLoot(g, v.grid, BagCategory.all).contains(held) : !v.basket.containsKey(held) && !demand.contains(held)) {
       _storePickAt = null;
     }
     if (v.tab == ShopTab.sell && _storePickAt == null && v.basket.isNotEmpty) _storePickAt = v.basket.keys.last;
@@ -198,12 +221,12 @@ extension on Board {
       _shopBuyBoard(c, g, area, pick, ts, ps);
       return _assignPage(c, g, pick, right, ts, ps, null);
     }
-    // The Sell grid turns to the pick's page when the pick changes (a line tapped) and is the player's to turn after: on
-    // Sell there is always a pick while the basket has lines (decisions-log 278), and following it every frame would hold
-    // the grid on its page.
+    // The Sell board turns to the pick's page when the pick changes (a line tapped; a cell tapped is in sight already,
+    // [_shopSellTap]) and is the player's to turn after: on Sell there is always a pick while the basket has lines
+    // (decisions-log 278), and following it every frame would hold the board on its page.
     final turnTo = pick == v.sellTurned ? null : pick;
     v.sellTurned = pick;
-    _bagBoard(c, g, area, turnTo, ts, ps);
+    _shopSellBoard(c, g, area, demand, turnTo, ts, ps);
     _shopSellArrows(c, g);
     _shopSellPage(c, g, pick, right, ts, ps);
   }
@@ -241,11 +264,34 @@ extension on Board {
       ..texts['nothing'] = shown.join(' ');
   }
 
-  /// A tap on Sell's cell [loot] (decisions-log 269 and 278): it goes in the basket at 1 if it wasn't in, and is picked,
-  /// so the Sell Basket page's top shows it; one already in is only picked, its count kept.
+  /// Sell's board in [area] (decisions-log 335; the owner, 2026-10-13: "nga perlu ada pita, cukup di tulis aja ... hight
+  /// demand / `<list product>` ... item on bag / `<list product on bag>`"): the board in sections ([_sections], Buy's), each
+  /// its heading over the board's leftmost slot: High demand ([shopDemandLoot], while the Town has any: each cell its price
+  /// here in the dark capsule as Buy's cells, the Wishlist's star on one wished for), then Items in Bag (the Bag's goods,
+  /// [shopSellLoot], as the Sell grid was: counts, the basket's, the market's arrows; with none its muted line). Where they
+  /// don't all fit (915x412) the Bag's pager turns pages, a section going on with its heading again. The page turns to
+  /// [held] (its Items in Bag cell where it has one).
+  void _shopSellBoard(Canvas c, Game g, Rect area, List<BagLoot> demand, BagLoot? held, double ts, double ps) {
+    final v = _shop, titles = [if (demand.isNotEmpty) Words.highDemand, Words.itemsInBag];
+    final secs = [
+      if (demand.isNotEmpty) (title: Words.highDemand, loot: demand, note: ''),
+      (title: Words.itemsInBag, loot: shopSellLoot(g), note: '$shopNothingToSell ${Words.monstersDropMats}.'),
+    ];
+    final (:heads, :notes, height: _) = _sections(c, g, area, v.sell, secs, held, ts, ps, priced: {if (demand.isNotEmpty) 0});
+    for (final (i, r) in heads) {
+      v.at['head:${titles[i]}'] = r;
+    }
+    for (final MapEntry(key: i, value: words) in notes.entries) {
+      v.texts['note:${titles[i]}'] = words;
+    }
+  }
+
+  /// A tap on Sell's cell [loot] (decisions-log 269, 278 and 335): it is picked, so the Sell Basket page's top shows it,
+  /// and one the Bag holds goes in the basket at 1 if it wasn't in (one already in keeps its count; a High demand product
+  /// the Bag doesn't hold is only shown, with its Add to wishlist). The board stays on its page.
   void _shopSellTap(BagLoot loot) {
-    _storePickAt = loot;
-    _shop.basket.putIfAbsent(loot, () => 1);
+    _storePickAt = _shop.sellTurned = loot;
+    if (shopHeld(state, loot) > 0) _shop.basket.putIfAbsent(loot, () => 1);
   }
 
   /// Sets [loot]'s count in the basket to [n], kept to what is held; at 0 its line leaves (and, picked, the pick: the
@@ -286,10 +332,21 @@ extension on Board {
     final list = Rect.fromLTRB(x0, row.bottom + 2 * gap, x1, bar.top - 2 * gap);
     final pad = _shopLinePad(ps); // a line's padding: the price row's subtotal ends where the lines' do
 
-    // 1, 2. The pick and its price row; nothing in the basket, what to do (with lines in it, there is always a pick).
-    if (pick != null && v.basket[pick] != null) {
-      final indent = _shopSellDetail(c, g, pick, detail, fs, lineH, ts, ps);
-      _shopPriceRow(c, g, pick, v.basket[pick]!, Rect.fromLTRB(indent, row.top, x1 - pad, row.bottom), fs, ts);
+    // 1, 2. The pick and its price row; nothing in the basket, what to do (with lines in it, there is always a pick). A
+    // High demand product (decisions-log 335) shows held or not, its demand and its Wishlist tag on the detail; with none
+    // in the Bag, "None in your Bag." in its price row's place.
+    final demanded = pick != null && shopDemandLoot(g).contains(pick);
+    if (pick != null && (v.basket[pick] != null || demanded)) {
+      final indent = _shopSellDetail(c, g, pick, detail, fs, lineH, ts, ps, demanded: demanded);
+      if (v.basket[pick] case final n?) {
+        _shopPriceRow(c, g, pick, n, Rect.fromLTRB(indent, row.top, x1 - pad, row.bottom), fs, ts);
+      } else {
+        const none = '${Words.noneInBag}.';
+        _text(c, none, Offset(indent, row.center.dy), size: fs, color: grey);
+        v
+          ..at['none'] = Rect.fromLTWH(indent, row.top, _textWidth(none, fs), row.height)
+          ..texts['none'] = none;
+      }
     } else {
       final hint = this._wrap(shopTapToAdd, fs, detail.width, 2), y = (top + 24 * ts - lineH / 2).roundToDouble();
       for (final (i, line) in hint.indexed) {
@@ -338,8 +395,12 @@ extension on Board {
   /// and under the name, beside the icon, [shopDetailLines] lines at most: its kind line ([_shopKindLine]: an item's
   /// grade, a small relic's tier, an Artifact's rarity and where it is), a carved Artifact's "Carve +3 is lost" in red,
   /// then what it does ([Board._detailDesc]; without its closing sentence where all of it doesn't fit, the last line cut
-  /// to fit). [fs] is the words' size, [lineH] a line's height. Returns the words' left edge, the price row's indent.
-  double _shopSellDetail(Canvas c, Game g, BagLoot pick, Rect area, double fs, double lineH, double ts, double ps) {
+  /// to fit). A High demand product ([demanded], decisions-log 335; the owner: "di bagian detail atas ada informasi jumlah
+  /// request demannya berapa dan add to whitelist untuk bisa di forge di smitty") has after its kind line its demand,
+  /// "Demand: 16 more, 182 each" ([Market.demandLeft], [Store.sellPrice]), and its Wishlist tag ([_shopWishTag]) at that
+  /// line's end where it fits, else on the line under it. [fs] is the words' size, [lineH] a line's height. Returns the
+  /// words' left edge, the price row's indent.
+  double _shopSellDetail(Canvas c, Game g, BagLoot pick, Rect area, double fs, double lineH, double ts, double ps, {bool demanded = false}) {
     const ink = Color(0xFF4A2C17);
     final (:kind, :plus) = pick;
     final v = _shop;
@@ -363,6 +424,23 @@ extension on Board {
       said.add('$shown');
       y += lineH;
     }
+    if (demanded && kind is Item) {
+      final line = '${Words.demand}: ${g.demandLeft(kind)} more, ${shortPrice(g.sellPrice(kind))} ${Words.each}';
+      final tagW = _shopWishTagW(g, kind, fs), sp = math.max(4.0, (6 * ts).roundToDouble());
+      final oneLine = _textWidth(line, fs) + sp + tagW <= w;
+      final shown = _fit(line, fs, w);
+      _text(c, shown, Offset(x, y + lineH / 2), size: fs, color: _haveInk);
+      v
+        ..at['demand'] = Rect.fromLTWH(x, y, _textWidth(shown, fs), lineH)
+        ..texts['demand'] = shown;
+      said.add(shown);
+      if (!oneLine) {
+        y += lineH;
+        said.add('');
+      }
+      _shopWishTag(c, g, kind, oneLine ? Rect.fromLTRB(area.right - tagW, y, area.right, y + lineH) : Rect.fromLTWH(x, y, tagW, lineH), fs);
+      y += lineH;
+    }
     final carved = kind is Relic ? g.pusaka[kind]?.ukir ?? 0 : 0;
     if (carved > 0) {
       final lost = _fit('${Words.carve} +$carved is lost', fs, w);
@@ -374,7 +452,7 @@ extension on Board {
 
     // What it does: all of it where it fits, else without its closing sentence, cut to the lines left.
     final room = shopDetailLines - said.length;
-    var desc = this._wrap(_detailDesc(g, kind, plus: plus), fs, w, 1 << 20);
+    var desc = room <= 0 ? const <String>[] : this._wrap(_detailDesc(g, kind, plus: plus), fs, w, 1 << 20);
     if (desc.length > room) desc = this._wrap(_detailDesc(g, kind, tail: false, plus: plus), fs, w, room);
     for (final (i, line) in desc.indexed) {
       _text(c, line, Offset(x, y + (i + 0.5) * lineH), size: fs, color: ink);
@@ -384,6 +462,28 @@ extension on Board {
       ..texts['desc'] = desc.join('\n');
     return x;
   }
+
+  /// The Wishlist's tag for High demand's [item] (decisions-log 335; the owner's "add to whitelist untuk bisa di forge di
+  /// smitty"): "Add to wishlist" ("Add" where short) puts it on the Smithy's Wishlist as a free line for one more than the
+  /// Bag holds ([Wishlist.wishFreeAdd], decisions-log 302: its star on the Smithy's Items board, its recipe's materials
+  /// starred); once some wish has it ([Wishlist.wished]) the green "On wishlist", whose tap says where it is made. In [r],
+  /// its capsule at the right; the tap on tap up ([_assign.taps]).
+  void _shopWishTag(Canvas c, Game g, Item item, Rect r, double fs) {
+    final on = g.wished(item), label = on ? Words.onWishlist : _fitFirst([Words.addToWishlist, Words.add], fs, r.width);
+    final name = itemNames[item]!, list = Words.wishlist.toLowerCase();
+    void tap() {
+      if (g.wished(item)) return showMessage('$name: on the $list. ${Words.craftInTown}.');
+      if (g.wishFreeAdd(item)) showMessage('$name ×1: on the $list');
+    }
+
+    _shop
+      ..at['wish'] = _tag(c, r, tap, label, fs, look: on ? _TagLook.go : _TagLook.link, into: _assign.taps)
+      ..texts['wish'] = label;
+  }
+
+  /// How wide [_shopWishTag]'s capsule stands for [item] at [fs] (its longest words while off the Wishlist).
+  double _shopWishTagW(Game g, Item item, double fs) =>
+      capsuleSize(_textWidth(g.wished(item) ? Words.onWishlist : Words.addToWishlist, fs), fs).width + 3;
 
   /// [kind]'s kind line on the Sell Basket page, in parts and their inks (decisions-log 278): an item's grade ("Grade II
   /// item", grey); a small relic's tier ("Strong relic", in its tier's ink, [Relics.relicTierLine]);
@@ -414,6 +514,7 @@ extension on Board {
   void _shopSellArrows(Canvas c, Game g) {
     final v = _shop..arrows.clear();
     for (final (loot, r) in v.sell.cells) {
+      if (v.demand.contains((loot, r))) continue; // High demand's are hot by its heading (decisions-log 335)
       final word = g.marketWord(loot.kind, loot.plus), arrow = _marketArrow(g, loot.kind, loot.plus);
       if (word == null || arrow == null) continue;
       final a = math.max(16.0, (r.width / 2).roundToDouble());

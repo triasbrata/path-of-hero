@@ -286,10 +286,27 @@ extension Market on Game {
   /// flooded; else none.
   MarketWord? marketWord(Enum kind, [int plus = 0]) {
     if (!marketed(kind)) return null;
-    final fresh = freshMargin(kind, plus), now = marginOf(kind, plus);
-    if (fresh > _m.floor + 1e-9 && (fresh - now) / (fresh - _m.floor) > 0.5) return MarketWord.flooded;
-    if (kind case final Item i when townIdentity.wants.contains(i.slot) && fresh >= 2.0) return MarketWord.hot;
+    if (_floodedAt(kind, plus, 0)) return MarketWord.flooded;
+    if (kind case final Item i when townIdentity.wants.contains(i.slot) && freshMargin(kind, plus) >= 2.0) return MarketWord.hot;
     return null;
+  }
+
+  /// Whether [kind] at +[plus] is flooded once [ahead] more are sold: its margin more than half way from fresh to the floor.
+  bool _floodedAt(Enum kind, int plus, int ahead) {
+    final fresh = freshMargin(kind, plus);
+    return fresh > _m.floor + 1e-9 && (fresh - marginOf(kind, plus, ahead)) / (fresh - _m.floor) > 0.5;
+  }
+
+  /// How many more pieces of [kind] at +[plus] this Town buys before it is flooded ([marketWord]; decisions-log 335: the
+  /// Sell tab's "Demand: 16 more"): each sold at a price still under half way to the floor. 16 for a fresh one (the
+  /// pressure 16 of [MarketRules.most] 24 is past half way at the curve 1.5), 0 once flooded; [MarketRules.most] for what
+  /// never floods (a margin at the floor already, or no product).
+  int demandLeft(Enum kind, [int plus = 0]) {
+    var n = 0;
+    while (n < _m.most && !_floodedAt(kind, plus, n)) {
+      n++;
+    }
+    return n;
   }
 
   /// [n] pieces of [kind] at +[plus] sold: its pressure rises by [n], at most [MarketRules.most].

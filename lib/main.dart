@@ -962,6 +962,10 @@ class Board extends PositionComponent
   Rect shopCountAt(BagLoot loot) => _shop.sell.counts[loot] ?? Rect.zero; // a Sell cell's count capsule (none: Rect.zero)
   Map<BagLoot, (MarketWord, Rect)> get shopArrows => {..._shop.arrows}; // the Sell grid's market arrows (decisions-log 326)
 
+  /// The Sell tab's High demand cells as drawn this page (shop_page.dart, decisions-log 335), each product and where; its
+  /// sections' headings are [shopAt] 'head:High demand' and 'head:Items in Bag'. For tests.
+  List<(BagLoot, Rect)> get shopDemandCells => [..._shop.demand];
+
   /// The Smithy's pages this frame (smithy_page.dart, decisions-log 235): the relic picked (null: none yet), its board's
   /// cells in order and what [relic]'s shows ([BagMarks]: its count from 1, the ▲, faded, lit; null: no cell); where a part
   /// is by [key] ('kinds', 'recipe', 'craft', 'noLimit', 'equip'; Rect.zero: not shown) and the words drawn ('kinds',
