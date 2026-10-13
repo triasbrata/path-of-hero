@@ -1259,6 +1259,23 @@ purses, and the Tas rows' "+4" (`Board.tempaMarks`, `storeAt('armyDot')`). The s
 +14, on the Pasukan, Toko (before and after a buy) and Tas pages at 1266×713 and 412×860, and a Tempa row's card
 (the Toko's shots went with it in decisions-log 296).
 
+## Train (decisions-log 334)
+
+`test/train_test.dart`, pure Dart on `bareGame` with a type's three grade sets put on at +5 (`fillSets`): the constants
+and prices (wave 90 20k … 101k at level 10, 623k at 20; wave 60 3k), the parts; the gate and its progress (every
+type's count, +0 and +4 not +5, one short), the Cap and Ring and extra copies left out, a kept Awaken 3 still asking
+for the sets, no swap-out at +5; HP, power, MP and MP regen ×1.05ⁿ and defence +2.5n (the heavy +20% after), the
+levels waiting once shut; the capped three at the gate for all nine types (`levelsToCap`) and the stat on its cap, never
+past nor cut; the Range row's rule (`trainShown`); a Hero's ×3, the aura and boots on the caps; the refusals in order;
+the buy (gold, material, refit, burst, event, log line); Lepas jenis; the save (round trip, the troop's HP at load, an
+old save, odd entries); the Army tab's dot; the tooltip; the telemetry (`trained`, `gold.trainSpent`,
+`materialsUsed`); every line in the HUD's font. `test/train_hud_test.dart` boots its own `TdGame` at 1600×947 and
+915×412: every Train row's tag inside the detail's body with its price or "Max", a tap that buys ("Knight: Train HP Lv
+1!"), a "Max" tap that says why, the archer's Range row gone, the priest's closed line ("0/36"). The shots come from
+`test/probe_train_shots.dart` (a probe; `OUT`, default `<agents>/shots/train/`): the w89 fixture with the axeman's sets
+at +5 and a few levels, the wizard's four short and the archer's at +5, at 1600×947 and 915×412: the Army tab, the
+axeman's Train rows, the archer's (no Range row), the wizard's closed line, a buy and a row's tooltip.
+
 ## Hero Gugur (#92 part 3)
 
 `test/recall_test.dart`, pure Dart on `bareGame`: the price (42k / 57k / 81k / 195k at waves 65 / 72 / 80 / 100); a

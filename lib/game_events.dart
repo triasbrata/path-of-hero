@@ -31,7 +31,8 @@ part of 'game.dart';
 /// 17: the Town checkpoint (decisions-log 333): [Wiped] checkpoint and debuff, [TownEntered] again, [WaveStarted]
 /// weakened and again, and [WipeChosen].
 /// 18: the pocket items ([PocketUsed], [PocketCrafted], [WaveStarted.pocket]; decisions-log 332).
-const eventVersion = 18;
+/// 19: Train ([Trained]; decisions-log 334).
+const eventVersion = 19;
 
 /// How many events [Game.log] keeps, the oldest going first.
 const logSize = 200;
@@ -57,6 +58,7 @@ enum EventKind {
   wipe, // an army wiped mid-wave: a heart lost, the wave played again (decisions-log 322)
   wipeChoice, // after it, "Try again" or "Give up" (decisions-log 333)
   pocketUsed, pocketCrafted, // the pocket items (decisions-log 332)
+  trained, // Train (decisions-log 334)
 }
 
 /// Something that happened, in wave [wave] at game time [t].
@@ -227,6 +229,23 @@ final class Tempered extends GameEvent {
 
   @override
   Map<String, Object?> get data => {'type': type, 'level': level, 'cost': cost};
+}
+
+/// A troop type whose items are all +5 bought Train [level] of [stat] on its Army detail for [cost] gold and [n] of its
+/// material [mat] ([Train.trainUp], decisions-log 334).
+final class Trained extends GameEvent {
+  Trained(super.wave, super.t, {required this.type, required this.stat, required this.level, required this.cost, required this.mat, required this.n});
+
+  final String type;
+  final TrainStat stat;
+  final int level, cost, n;
+  final Mat mat;
+
+  @override
+  EventKind get kind => EventKind.trained;
+
+  @override
+  Map<String, Object?> get data => {'type': type, 'stat': stat.name, 'level': level, 'cost': cost, 'mat': mat.name, 'n': n};
 }
 
 /// Pusaka [relic] gained a star by Asah, to [stars] ([Asah.asah], pusaka.dart): bound to [type] (null: in the Gudang),

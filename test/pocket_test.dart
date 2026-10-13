@@ -485,7 +485,7 @@ void main() {
     expect(wave['pocket'], {'fireBomb': 1});
     expect(wave['crafted'], {'fireBomb': 1});
     expect(wave['start']['pocket'], {'fireBomb': 1});
-    expect(telemetryVersion, 18);
-    expect(eventVersion, 18);
+    expect(telemetryVersion, greaterThanOrEqualTo(18)); // 18 brought the pocket's; later versions keep it (19: Train's)
+    expect(eventVersion, greaterThanOrEqualTo(18));
   });
 }

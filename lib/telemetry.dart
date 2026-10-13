@@ -59,7 +59,9 @@ import 'settings.dart';
 /// 18: the pocket items (decisions-log 332): the events `pocketUsed` and `pocketCrafted`, a wave's `pocket` (each kind's
 /// uses since the last wave ended, between-wave bottles too), the pockets made in a wave's `crafted`, `materialsUsed` and
 /// `gold.craftSpent`, and a wave start's `pocket` (the kinds held).
-const telemetryVersion = 18;
+/// 19: Train (decisions-log 334): the event `trained` (type, stat, level, cost, mat, n), a wave's `gold.trainSpent` and
+/// its material in `materialsUsed`.
+const telemetryVersion = 19;
 
 /// Where [HttpSink] posts (`--dart-define=TELEMETRY_SERVER=https://...`). None by default, so nothing is sent.
 const telemetryServer = String.fromEnvironment('TELEMETRY_SERVER');
@@ -88,6 +90,7 @@ const passedOn = {
   EventKind.wipe, // an army wiped mid-wave: a heart lost, the wave played again (decisions-log 322)
   EventKind.wipeChoice, // then "Try again" or "Give up" (decisions-log 333)
   EventKind.pocketUsed, EventKind.pocketCrafted, // a pocket item used, one made at the Smithy (decisions-log 332)
+  EventKind.trained, // a Train level bought (train.dart, decisions-log 334)
 };
 
 /// Where the records go.
@@ -399,6 +402,9 @@ class TelemetryAdapter {
         w.asahSpent += cost; // between waves only, so never in a wave's own earnings
       case Tempered(:final cost):
         w.tempaSpent += cost; // between waves only, like Asah
+      case Trained(:final cost, :final mat, :final n):
+        w.trainSpent += cost; // between waves only, like Tempa
+        w.materialsUsed[mat.name] = (w.materialsUsed[mat.name] ?? 0) + n;
       case PusakaLebur(:final cost):
         w.leburSpent += cost; // between waves only, like Asah
       case UkirFed(:final items, :final points):
@@ -500,6 +506,7 @@ class TelemetryAdapter {
           'chestEarned': w.chestEarned, // from passing boss chests over (Lewati), since then
           'asahSpent': w.asahSpent, // on Asah (a Pusaka's star, on the Tas page), since then
           'tempaSpent': w.tempaSpent, // on Tempa (past Bangkit 5, in the Toko), since then
+          'trainSpent': w.trainSpent, // on Train (every item +5, on the Army detail), since then
           'leburSpent': w.leburSpent, // on Lebur (a Gudang Pusaka melted into another for a star), since then
           'craftSpent': w.craftSpent, // on relics crafted at a Town's Smithy, since then
           'tavernSpent': w.tavernSpent, // on the Tavern's boosts and rerolls, since then
@@ -575,7 +582,7 @@ class _WaveSum {
   int kills = 0, heroesFallen = 0, spent = 0, spentOn = 0, storeSpent = 0, storeSpentOn = 0, storeEarned = 0, storeEarnedOn = 0;
   int ascendSpent = 0, ascendSpentOn = 0, recallSpent = 0, recallSpentOn = 0;
   int chestSpent = 0, chestEarned = 0;
-  int pusakaSpent = 0, asahSpent = 0, tempaSpent = 0, leburSpent = 0, craftSpent = 0, tavernSpent = 0;
+  int pusakaSpent = 0, asahSpent = 0, tempaSpent = 0, trainSpent = 0, leburSpent = 0, craftSpent = 0, tavernSpent = 0;
   double? marchedAt;
   final spawns = <String, Map<String, int>>{}, raised = <String, Map<String, int>>{}, killers = <String, Map<String, int>>{};
   final monsterCasts = <String, Map<String, int>>{};

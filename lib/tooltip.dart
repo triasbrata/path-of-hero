@@ -35,7 +35,7 @@ enum _Aim { down, left, right, up }
 /// tooltip ([Game.relicInfo], its tier among its lines; decisions-log 227); and the spawn bar's "+Room" (spawn_bar.dart,
 /// the Army header's until decisions-log 283): what the capacity buy does and costs ([Game.roomTip], decisions-log 260,
 /// 292).
-enum _Hint { hp, mp, awaken, hero, tide, recall, pusaka, omens, carve, town, relic, room, boost, troop, autoReplace, weak, pocket, pocketBoost }
+enum _Hint { hp, mp, awaken, hero, tide, recall, pusaka, omens, carve, town, relic, room, boost, troop, autoReplace, weak, pocket, pocketBoost, train }
 
 /// The tooltip's state between frames.
 class _Tips {
@@ -120,6 +120,7 @@ extension on Board {
       _Hint.autoReplace => _plain(state.autoTip), // the spawn bar's Auto (auto_replace.dart)
       _Hint.pocket => _plain(state.pocketSlotTip(int.parse(type!), keys: !_touch)), // a pocket slot (pocket_look.dart)
       _Hint.pocketBoost => _plain(state.pocketBoostTip(int.parse(type!))), // a pocket boost's chip (tavern_look.dart)
+      _Hint.train => _plain(state.trainInfo(_trainType(type!), _trainStat(type))), // a Train row (troop_detail.dart)
       // A small relic on the Army detail (troop_detail.dart): what it is, without the Bag's "Tap, then pick a troop".
       _Hint.relic => _plain(switch (state.relicInfo(Relic.values.byName(type!))) { (final t, final l) => (t, [...l]..remove(tapLine)) }),
       _ => state.awakenInfo(type!),
@@ -170,6 +171,15 @@ extension on Board {
         }
       case _Hint.pocketBoost:
         _icon(c, state.pocketBoosts[int.parse(type!)].kind, titleIcon);
+      case _Hint.train:
+        switch (_trainStat(type!)) {
+          case TrainStat.hp:
+            c.drawImageRect(_img('ui_icons.png'), _heartIcon, titleIcon, _px);
+          case TrainStat.mp:
+            c.drawImageRect(_img('ui_icons.png'), _boltIcon, titleIcon, _mpPaint);
+          case final stat:
+            _icon(c, trainIcon(_trainType(type), stat), titleIcon);
+        }
       default:
         _icon(c, what, titleIcon, null, plus);
     }
@@ -184,6 +194,10 @@ extension on Board {
       _text(c, l, Offset(x, y), size: lineSize, color: i == 0 ? _effectInk : _tipInk); // the effect first, in green
     }
   }
+
+  /// A Train row's hint key ("knight:hp", troop_detail.dart's [_detailTrain]): its type and its attribute.
+  String _trainType(String key) => key.split(':').first;
+  TrainStat _trainStat(String key) => TrainStat.values.byName(key.split(':').last);
 
   /// [key] is what the pointer is on now (null: nothing with a tooltip). Moving from one tooltip straight
   /// onto the next shows it at once.

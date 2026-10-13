@@ -151,6 +151,7 @@ void main() {
       'chestEarned': 0,
       'asahSpent': 0, // Asah's (asah_test.dart)
       'tempaSpent': 33000, // between waves: never in what the wave earned
+      'trainSpent': 0, // Train's (train_test.dart)
       'leburSpent': 0, // Lebur's (lebur_test.dart)
       'craftSpent': 0, // the Smithy's (town_craft_test.dart)
       'tavernSpent': 0, // the Tavern's (tavern_test.dart)
@@ -186,7 +187,7 @@ void main() {
     send(g, WaveEnded(4, 160, won: false));
     final lost = kept.of('wave').last;
     expect([lost['wave'], lost['end'], lost['secs'], lost['livesLost'], lost['spawns'], lost['fallen'], lost['bought']], [4, 'lost', 10.0, 8, {}, {}, {}]);
-    expect(lost['gold'], {'start': 1020, 'end': 1020, 'earned': 0, 'spent': 0, 'storeSpent': 0, 'storeEarned': 0, 'ascendSpent': 0, 'recallSpent': 0, 'pusakaSpent': 0, 'chestSpent': 0, 'chestEarned': 0, 'asahSpent': 0, 'tempaSpent': 0, 'leburSpent': 0, 'craftSpent': 0, 'tavernSpent': 0,
+    expect(lost['gold'], {'start': 1020, 'end': 1020, 'earned': 0, 'spent': 0, 'storeSpent': 0, 'storeEarned': 0, 'ascendSpent': 0, 'recallSpent': 0, 'pusakaSpent': 0, 'chestSpent': 0, 'chestEarned': 0, 'asahSpent': 0, 'tempaSpent': 0, 'trainSpent': 0, 'leburSpent': 0, 'craftSpent': 0, 'tavernSpent': 0,
         'bonus': 0});
     expect([lost['storeBought'], lost['storeSold']], [{}, {}]);
   });

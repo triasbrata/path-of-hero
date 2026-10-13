@@ -84,6 +84,10 @@ but the troops move freely.
 - **Forge** (Tempa in the code, decisions-log 163): past Awaken 5 the same Army page keeps selling levels, "Forge +1",
   "Forge +2", …: +5% HP and damage each, compounding, for a fifth of a late wave's gold, ×1.2 a level. A dot on the
   Army tab says when gold piles up (3 waves' worth) and something there can be bought.
+- **Train** (decisions-log 334): once every item of a type's three grade sets is +5, the same Army page sells levels of
+  its attributes, each for gold (15% of a late wave's gold, ×1.2 a level) and a late monster's Rare part: HP, damage
+  (a heal), MP and MP regen +5% a level, defence +2.5, without end; attack speed, walk speed and reach +10% a level up to
+  the attack floor, the walk cap and the reach caps.
 - **Fallen Heroes** (Hero Gugur in the code, #92 part 3): a fallen Hero is kept, and its type's Army page calls it
   back ("Recall") between waves for about one wave's income (42k at wave 65): the same name,
   attributes and skill; its relics stay in the bag. With the army full it swaps: one troop of its type goes home for

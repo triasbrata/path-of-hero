@@ -2653,7 +2653,7 @@ the page holds every page and card, and a one-time card opens at its break ("A o
   - **The right page: the picked type's detail** (`_troopDetail`, lib/troop_detail.dart): the header at the top, the
     foot at the bottom, the body between them. Words are max(10, 13·ts), a line max(13, 18·ts), a tag's line max(18,
     26·ts) tall, max(3, 5·ts) between sections. `Board.troopDetail(key)` is where a section ('heading', 'stats',
-    'next', 'pusaka', 'heroes', 'relics'; cut to the body's view, Rect.zero when scrolled out of it) or a button
+    'next', 'train', 'pusaka', 'heroes', 'relics'; cut to the body's view, Rect.zero when scrolled out of it) or a button
     ('upgrade', 'change', 'bag', 'shop'; the foot's as drawn, 'release', 'confirm', 'replace', and their press areas,
     'releaseTap', 'releaseConfirm', 'replaceTap') is this frame (Rect.zero: not shown), `troopDetailWords(key)` the
     words drawn there (a section's whether scrolled into view or not); `Board.releaseChip(type)` is the foot's Release
@@ -2732,6 +2732,23 @@ the page holds every page and card, and a one-time card opens at its break ("A o
            still fit whole beside it (on a phone mostly not; there Wishlist all and the section below put it on): a tap
            puts that one item on the type's wishes with the set's count ("Sword ×3: on Knight's wishlist";
            `_wishOneTap`), and the "+" goes. `troopDetail('wishOne:<item>')` for tests.
+       - **Train** (decisions-log 334, `_detailTrain`; the rules: loot-items-relics.md "Train"), under the Awaken needs,
+         once the type holds its three grade sets (Awaken 3 from items): until every item of them is +5 one grey line
+         with how far, "Train: needs every item +5 (30/34)" ("Train: +5 all (30/34)" where it doesn't fit); then
+         "Train: every item +5" and a row per attribute, as the Awaken needs' rows, in columns: its icon (the heart for
+         HP, the blue bolt for MP, else the item that raises it: the power item, Shield, Ring for MP regen, Gloves,
+         Boots, Bow), its name (`trainStatName`: "HP", "Dmg" or a healer's "Heal", "Def", "MP", "MP regen", "Rate",
+         "Speed", "Range"), its level ("Lv 3"; grey at 0), what the next gives in green ("+5%", "+2.5", "-9%" for the
+         pause, "+10%"; none at the cap), its material's icon and count (red while the Bag holds fewer; where it fits),
+         and at the right a tag (`_tag`): the price, green (`_TagLook.go`, "20k", `shortPrice`), "Max" at its cap, greyed
+         when refused (`_TagLook.off`). A tap buys (`_train`: the message "Knight: Train HP Lv 4!") or says why in the
+         message window ("Max: attack floor", "Need 2 Bear Claw", "Not enough gold"). The Range row isn't there where
+         reach can't rise (`trainShown`: at its cap with no level of it bought; the owner, 2026-10-13: "Sembunyikan baris
+         Range"), so the Archer, Priest, Wizard, Soldier and Templar have none at the gate; Rate and Speed at their caps
+         show "Max". Hover or long-press a row: its tooltip (`_Hint.train`, `trainInfo`: "Train Dmg", "+5% Dmg a level",
+         "Stacks each level" or "Stacks up to its cap", "All troops of this type, now and later", "Now: Lv 2", the price
+         or the Max). `troopDetail('train:<stat>')` is a row's tag (cut to the body's view), `troopDetailWords('train')`
+         the section's words, `troopDetailWords('train:<stat>')` a tag's.
        - **Wishlist** (decisions-log 282; lib/wishlist_look.dart; the rules: loot-items-relics.md "The Wishlist"):
          "Wishlist" and at its right a link tag "Add to wishlist" ("Add" where short),
          "Done" while the picker is open. Under it the type's wishes in the order put on, as the Bag's slots
@@ -3298,7 +3315,8 @@ the page holds every page and card, and a one-time card opens at its break ("A o
     Tas (the bag, `ui_icons.png` (144, 32); a red dot, dark-rimmed, on its icon's top right while a type with a living
     troop could awaken further from the bag's items, `bagAwakens`, #92 part 2: `_bagTabDot`) and Settings (gear); on
     Pasukan's the same red dot while gold piles up, at least 3 purses of the next wave, and a type with a living troop
-    can buy its next Bangkit or Tempa level (`armyNudge`, decisions-log 163: `_armyTabDot`). Until decisions-log 296 a
+    can buy its next Bangkit or Tempa level, or a Train level (`armyNudge`, decisions-log 163, 334: `_armyTabDot`). Until
+    decisions-log 296 a
     game without the Towns had a fourth, Toko, the Shop (the coin stack, grey until the store opened, `_lockedTab`),
     with that dot. A Town's tabs: "Town". The open page's tab is the tall paper
     one (its fill is the page's colour); its last two rows cover the cover's top line (sprite row 6) and
