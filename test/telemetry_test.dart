@@ -151,6 +151,7 @@ void main() {
       'chestEarned': 0,
       'asahSpent': 0, // Asah's (asah_test.dart)
       'tempaSpent': 33000, // between waves: never in what the wave earned
+      'trainSpent': 0, // Train's (train_test.dart)
       'leburSpent': 0, // Lebur's (lebur_test.dart)
       'craftSpent': 0, // the Smithy's (town_craft_test.dart)
       'tavernSpent': 0, // the Tavern's (tavern_test.dart)
