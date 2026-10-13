@@ -19,6 +19,7 @@ README.md, then [dev-workflow.md](dev-workflow.md).
 | [ui-hud.md](ui-hud.md) | The book HUD, the landscape layout and its letterbox, buttons, bars, cursor — and which sprite rects they use |
 | [assets.md](assets.md) | Which asset packs are used, how their files were made, naming, the licence rule, the asset vault (the licensed art encrypted, its hooks) and the placeholder art |
 | [testing.md](testing.md) | How tests are written and run, and how to check visuals |
+| [dungeon-design.md](dungeon-design.md) | The Dungeon's design before it is built: its rules, numbers, screens, code plan and milestones |
 | [decisions-log.md](decisions-log.md) | What the owner asked for and why things are the way they are |
 
 ## Rules for keeping it useful

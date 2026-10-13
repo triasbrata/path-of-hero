@@ -12139,3 +12139,67 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        first page on reopening, a flooded one gone, the empty Bag's line), the Shop's tests moved to Items in Bag's cells
        (test/town_shop_ui_test.dart, test/shop_tabs_ui_test.dart, test/forge_shop_ui_test.dart), and shots of Millbrook,
        Ironvale and Frostgate at the four sizes (test/probe_town_wants_shots.dart, `<agents>/shots/town-wants/`).
+336. **The Dungeon, designed (nothing built yet): a mode entered from a Town where a party of three explores side-view
+     cave floors and fights in real time, by gauges, reach and gambits; trips free while in the Town, leaving only at
+     save points** (the owner, 2026-10-13: "game di dalam dungeonnya harusnya user bisa menggerakkan characternya, dan
+     memilih apa yang akan di lakukan user. dan monsternya tidak lagnsung datang tapi spawn di tempat tempat random dan
+     character user harus mendekat dulu baru bisa di serang jadi kaya ada jarak serangnya, terus ada juga monster yang
+     agresif yang langsung serang tapi ada juga monster yang friendly yang mereka hanya menyerang jika mereka di serang
+     duluan", in the dungeon the player moves his character and picks what it does; the monsters don't come at once but
+     appear at random places, and his character must get near before it can attack, an attack range; some monsters are
+     aggressive and attack at once, others friendly, attacking only when attacked first. His answers to the
+     orchestrator: where, "opsi 1 tapi nga ada wave, yang ada floor jadi semakin jauh floornya maka akan semakin ganas
+     monsternya dan auto battle ini di tidak seperti mekanik di tower defence, tergantung jenis monsternya apakah
+     aggresif atau tidak, lalu juga nengikutin menakinsme atb dan gambitnya", a mode entered from a Town, with no waves
+     but floors, the deeper the fiercer, its fights not the tower defence's but by each monster's temper, with gauges
+     and gambits; who, "Satu party kecil", a small party; the controls, "opsi 2 tapi di saat yang bersamaan juga user
+     bisa pilih action yang mau di lakukan user. mirip seperti battlenya [another RPG]", moving directly (a joystick,
+     WASD) and at the same time picking the action; the goal, "3 tapi user tidak bisa keluar kapan saja, harus di save
+     point yang tersebar di setiap lantai", free exploration, leaving only at the save points spread over each floor;
+     and as his reference a pasted description of [another RPG]'s battle system, which the design describes in its own
+     words only. The art, after the first brief: "jangan pakai Pixel Crawler pakai ~/Downloads/GandalfHardcore FREE
+     Platformer Assets.zip saja", not Pixel Crawler but the GandalfHardcore set, byte for byte the pack the Town already
+     uses. On the design and its mockups: the view "a. 2.5D pita kedalaman", the depth band; a wipe "Hilang loot yang
+     dibawa saja", only the loot carried is lost; the trips "Bebas selama di kota", free while in the Town, instead of
+     the proposed one trip a Town; the rest of the proposals "Setuju semua"; and the reference's name written here as
+     "[another RPG]", as proposed). Why: the owner wanted a second way to play beside the waves, with the army he
+     builds, where he moves and chooses himself. By dungeon-design (docs/dungeon-design.md, the design and its
+     milestones; game-overview.md and the other docs change as each milestone is built).
+     - **The view:** side view, the field's look, with a shallow floor band the units walk in x and in depth (the
+       owner's pick, "a"), over a platformer: our reach, separation and kiting are already distances on a 2D floor,
+       three members and six monsters spread in depth, followers and monsters path on a grid without jumping, the Tiny
+       RPG units have no jump or climb frames, the pack has no ladders, and a joystick maps one to one. The cave is cut
+       from the GandalfHardcore sheets: the dark earth fill and the stalactite piece of Floor Tiles, the BG Dirt slabs
+       and pillars as the back wall (their holes the tunnels monsters walk out of), the moss, rust and snow lips by
+       depth, wall torches, ores, Decor's rocks, graves and crates, water and planks, the portal as the stairs, the
+       campfire as the save point. Missing: a chest (the crates stand in), traps (none), a boss arena's gate.
+     - **The fight:** every unit's gauge fills in twice its attack time (at least 1 s) and an Attack is two blows, so
+       each unit keeps the field's damage a second and everything that makes a troop strong carries over (`statsOf`:
+       items, Awaken, Forge, Train, a Hero, its relics). An action fires only in reach; the leader walks into reach by
+       itself when the stick is let go (a setting turns it off). Commands Attack, Skill, Item (the pocket items) and
+       Lead; Wait stops time while a list is open (the default), Active doesn't.
+     - **Gambits:** each troop's own ordered "condition → action" rules, the first that fits acting; 4 slots, one more
+       at floors 5, 10, 15 and 20; the rarer conditions found in crates; default lists by type; the editor a page of
+       the book. "Gambit" is the common English word, nothing borrowed from the reference.
+     - **Monsters:** the field's roster; the undead, wolves, riders and bats aggressive, each with an aggro radius; the
+       slimes, orcs on foot and bears neutral (the owner's "friendly"), the orcs calling their gang when one is hit; a
+       leash of 320 units, then home to mend. They appear at random points as the party nears a room, never all at
+       once, and never come back. A floor's monsters are the field's at its depth wave, 3 + 4 × (floor − 1); a mini boss
+       at the stairs from floor 3, a boss arena every 5th floor.
+     - **Free trips and farming:** each Town makes its own dungeon at its first trip (its floors from the Town's seed)
+       and keeps it until "Leave town": what fell stays fallen and opened crates stay open whatever the number of
+       trips, so a Town pays at most its floors' contents down to the party's depth. Two save points a floor; Rest
+       saves, heals, revives and banks the carried loot; Leave goes back to the Town. A wipe loses only the carried
+       loot: no heart, no troop. Gold is half the field's kill gold; materials go to the Bag. The probe plan (the doc's
+       section 10) weighs a Town's trips against the waves to the next Town, with three levers ready if they pay too
+       much.
+     - **The code:** the trip runs inside the run's own `Game` in a dungeon mode (the skills and effects are written
+       against `Game`), with its own dice, a walk grid and A* per room, new save keys with defaults, new telemetry.
+     - **Milestones:** M1 one floor (the door, walking, following, spawns by temper, gauges, Attack by reach, the
+       default gambits, a save point and the portal); M2 the commands, skills, items, Wait / Active and the gambit
+       editor; M3 floors and depth, ranks and bosses, Rest and Leave, the Town's dungeon, loot and crates; M4 the trip
+       saved at a Rest, telemetry, the hunt chain, ambush and side rooms, the relics' audit, the guide.
+     - **Mockups** (composed from the packs and the game's images, nothing of them committed), each at 1600×947 and
+       915×412: the floor band in a fight, the same with the Skill list open in Wait, the platformer, the gambit
+       editor, the door in a Town (`<agents>/shots/dungeon-design/`).
+     - **Dropped:** the first brief's top-down look with Pixel Crawler's tiles, the platformer, one trip a Town.
