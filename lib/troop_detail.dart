@@ -469,7 +469,7 @@ extension on Board {
 
   /// 3b. Train (decisions-log 334, train.dart), once the type holds its three grade sets (Awaken 3 from items): until every
   /// item of them is +5, one grey line with how far ("Train: needs every item +5 (14/31)"); then "Train" and a row per
-  /// attribute ([TrainStat]), as the Awaken needs' rows: its icon (the heart, the bolt, the item that raises it), its
+  /// attribute ([TrainStat]; reach only where it can rise, [Train.trainShown]), as the Awaken needs' rows: its icon (the heart, the bolt, the item that raises it), its
   /// name, its level ("Lv 3", grey at 0), what the next one gives ("+5%", green), its material's icon and count (red
   /// while short), and at the right a tag with its price ("20k", green), "Max" at its cap, greyed when refused; a tap
   /// buys ([_train]) or says why.
@@ -483,16 +483,17 @@ extension on Board {
       return [(h: s.line, draw: (top) => _say(c, 'train', text, Offset(x0, top + s.line / 2), s.small, grey))];
     }
     final heals = troopTypes[type]!.heals, icon = (s.small * 1.2).roundToDouble(), gap = math.max(3.0, (4 * ts).roundToDouble());
-    final names = {for (final stat in TrainStat.values) stat: trainStatName(stat, heals: heals)};
+    final shown = [for (final stat in TrainStat.values) if (g.trainShown(type, stat)) stat]; // reach that can't rise: no row
+    final names = {for (final stat in shown) stat: trainStatName(stat, heals: heals)};
     String lv(TrainStat stat) => '${Words.lv} ${g.train[type]?[stat] ?? 0}';
     // The columns: the names after the icons, the levels after the longest name, the gain after the longest level.
     final nameX = x0 + icon + gap, lvX = nameX + names.values.fold(0.0, (m, n) => math.max(m, _textWidth(n, s.small))) + gap;
-    final gainX = lvX + TrainStat.values.fold(0.0, (m, st) => math.max(m, _textWidth(lv(st), s.small))) + gap;
-    final matX = gainX + TrainStat.values.fold(0.0, (m, st) => math.max(m, _textWidth(trainGain(st), s.small))) + gap;
+    final gainX = lvX + shown.fold(0.0, (m, st) => math.max(m, _textWidth(lv(st), s.small))) + gap;
+    final matX = gainX + shown.fold(0.0, (m, st) => math.max(m, _textWidth(trainGain(st), s.small))) + gap;
     final out = <_DetailLine>[
       (h: s.line, draw: (top) => _say(c, 'train', _fitFirst(['${Words.train}: every item +5', Words.train], s.small, w), Offset(x0, top + s.line / 2), s.small, ink)),
     ];
-    for (final stat in TrainStat.values) {
+    for (final stat in shown) {
       out.add((
         h: s.line,
         draw: (top) {

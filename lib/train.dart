@@ -192,6 +192,12 @@ extension Train on Game {
     };
   }
 
+  /// Whether [type]'s row of [stat] shows on the Army detail: every attribute's but reach where it can't rise (the owner,
+  /// 2026-10-13: "Sembunyikan baris Range"): at its cap with no level of it bought, by the rule (a shooter's or a healer's
+  /// past [trainReachMost] with its bows, a melee fighter's at its reach cap from bows). Attack speed and walk speed at
+  /// their caps show "Max" instead ("Ya, biarkan begitu").
+  bool trainShown(String type, TrainStat stat) => stat != TrainStat.range || (train[type]?[stat] ?? 0) > 0 || !trainCapped(type, stat);
+
   /// Whether [type]'s [stat] is at its cap ([trainCapOf]) with the levels it has: the next level would add nothing, so
   /// none is sold and the row says "Max". A capped stat that boots, gloves or bows already took past it is at it from
   /// the start (at the gate eight of the nine types are at the attack floor).

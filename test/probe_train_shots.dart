@@ -6,7 +6,8 @@
 //
 // At 1600x947 and 915x412 (`big-` / `wide-`): army (the Army tab, its dot), axeman (its detail scrolled to Train: the
 // rows, prices, materials, Max), bought (after a tap on the HP row's price: the message, Lv 4), wizard (Train closed:
-// "needs every item +5 (27/31)"), tip (the HP row's tooltip).
+// "needs every item +5 (30/34)"), tip (the Dmg row's tooltip), archer (Train open, no Range row: its bows took it past
+// one screen; Rate Max).
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -53,6 +54,7 @@ Game load() {
   final j = jsonDecode(File('test/fixtures/save-20261002-2222-w89-sellbug.json').readAsStringSync()) as Map<String, dynamic>;
   fill(j, 'armored_axeman');
   fill(j, 'wizard', short: 4);
+  fill(j, 'archer');
   j['train'] = {
     'armored_axeman': {'hp': 3, 'power': 2, 'defence': 1, 'speed': 8},
   };
@@ -128,6 +130,18 @@ void main() {
       await tap(b.troopRow('armored_axeman').center);
       await toTrain();
       await shot('$tag-axeman');
+      await tap(b.troopRow('wizard').center);
+      await frames(tester, 3);
+      for (var i = 0; i < 80 && !b.troopDetailWords('train').any((w) => w.startsWith('Train')); i++) {
+        b.troopDetailScroll = b.troopDetailScroll + 10;
+        await frames(tester, 2);
+      }
+      b.troopDetailScroll = b.troopDetailScroll + 40;
+      await shot('$tag-wizard');
+      // ignore: avoid_print
+      print('$tag: wizard ${g.trainProgress('wizard')} ${b.troopDetailWords('train')}');
+      await tap(b.troopRow('armored_axeman').center);
+      await toTrain();
       final hp = b.troopDetail('train:hp');
       // ignore: avoid_print
       print('$tag: axeman open ${g.trainOpen('armored_axeman')}, hp ${g.statsOf('armored_axeman').hp}, why ${[for (final s in TrainStat.values) g.whyNotTrain('armored_axeman', s)]}');
@@ -146,17 +160,12 @@ void main() {
           await gesture.removePointer();
         }
       }
-      await tap(b.troopRow('wizard') == Rect.zero ? b.armyPager.$1.center : b.troopRow('wizard').center);
-      if (b.troopRow('wizard') != Rect.zero) await tap(b.troopRow('wizard').center);
-      await frames(tester, 3);
-      for (var i = 0; i < 40 && !b.troopDetailWords('train').any((w) => w.startsWith('Train')); i++) {
-        b.troopDetailScroll = b.troopDetailScroll + 20;
-        await frames(tester, 2);
-      }
-      b.troopDetailScroll = b.troopDetailScroll + 40;
-      await shot('$tag-wizard');
+      await tap(b.troopRow('archer') == Rect.zero ? b.armyPager.$1.center : b.troopRow('archer').center);
+      if (b.troopRow('archer') != Rect.zero) await tap(b.troopRow('archer').center);
+      await toTrain();
+      await shot('$tag-archer');
       // ignore: avoid_print
-      print('$tag: wizard ${g.trainProgress('wizard')} ${b.troopDetailWords('train')}');
+      print('$tag: archer open ${g.trainOpen('archer')} ${b.troopDetailWords('train')}');
       b.state = Game();
       await frames(tester, 5);
     }
