@@ -8,9 +8,9 @@ describe the game (game-overview.md, units-and-combat.md, ui-hud.md, …) and ma
 ## What the owner asked for
 
 - A mode entered from a Town. No waves: **floors**, and the deeper the floor, the fiercer its monsters.
-- The player **moves his character** (a virtual joystick on a touch screen, WASD on the desktop) and, at the same time,
-  **picks what it does** (attack, a skill, an item).
-- **A small party**: he moves the leader; the others follow and fight on their own.
+- The player **moves a character** (a virtual joystick on a touch screen, WASD on the desktop) and, at the same
+  time, **picks what it does** (attack, a skill, an item).
+- **A small party**: the player moves the leader; the others follow and fight on their own.
 - Monsters don't all come at once: they **appear at random places**, and a unit must **get near enough to reach**
   before it can hit (the attack range matters).
 - **Aggressive** monsters attack on sight; **neutral** ones attack only once they are attacked.
@@ -19,30 +19,31 @@ describe the game (game-overview.md, units-and-combat.md, ui-hud.md, …) and ma
 - Free exploration, but the party **can't leave at any time**: only at the **save points** spread over each floor.
 - The art: the GandalfHardcore platformer set the Town already uses, so the Dungeon is **side view**, like the field.
 
-The owner's reference was a description of another game's real-time party battles. This design takes the mechanics he
-asked for and describes them in our own words; no name or text of that game goes into the game or this repository.
+The owner's reference was a description of another game's real-time party battles. This design takes the mechanics
+requested and describes them in our own words; no name or text of that game goes into the game or this repository.
 "Gambit" is used as the common English word (a chess opening's planned move).
 
 ## 1. Entry and exit
 
-- **The door.** Every Town, from the first (before wave 7 at the earliest), has a cave mouth at its street's far end: a
-  mossy rock mound with a dark portal at its foot, two lit torches and the Town's sign ribbon "Dungeon" (mockup D). A
-  tap on it (or the Town book's new **Dungeon** tab beside Smithy, Shop and Tavern) opens the Dungeon page: pick the
+- **The door.** Every Town, from the first (before wave 7 at the earliest), has a cave mouth at its street's far end:
+  a mossy rock mound with a dark portal at its foot, two lit torches and the Town's sign ribbon "Dungeon" (mockup D).
+  A tap on it (or the Town book's new **Dungeon** tab beside Smithy, Shop and Tavern) opens the Dungeon page: pick the
   party (section 2), pick the floor to start on, and **Enter**.
 - **Free trips while in the Town** (the owner's answer, decisions-log 336): a **trip** lasts from Enter until the
   party leaves at a save point or falls; back in the Town the player may craft, sell, buy, change the party and go
-  in again, as often as he likes, until "Leave town".
-- **Each Town has its own dungeon.** The first trip in a Town makes it: its floors come from the Town's seed (section 9),
-  and it lasts until "Leave town"; the next Town makes a new one. What happens in it stays for every trip of that
-  Town: a room's monsters that fell stay fallen, cleared rooms stay empty, opened crates stay open; monsters that lived
-  through a fight go home and mend. So the trips of one Town share one fixed amount of loot, the floors' contents down
-  to where the party can go: leaving and coming back never refills anything, and a Town can't be farmed (section 7).
+  in again, as often as they like, until "Leave town".
+- **Each Town has its own dungeon.** The first trip in a Town makes it: its floors come from the Town's seed (section
+  9), and it lasts until "Leave town"; the next Town makes a new one. What happens in it stays for every trip of that
+  Town: a room's monsters that fell stay fallen, cleared rooms stay empty, opened crates stay open; monsters that
+  lived through a fight go home and mend. So the trips of one Town share one fixed amount of loot, the floors'
+  contents down to where the party can go: leaving and coming back never refills anything, and a Town can't be farmed
+  (section 7).
 - **The start floor**, on the door's page: floor 1; the save point where the last trip of this Town left or last
-  rested ("Back to Floor 4"); or the deepest floor the run has reached (its arrival save point touched), "Floor 6". The run remembers its
-  deepest floor (`dungeon.deepest` in the save); a new Town's dungeon is new even there.
-- **The wave run waits.** While the party is inside, the run stays in the Town as it was left: no wave can start,
-  Auto Wave's countdown stops, the Tavern's boosts (counted in waves) don't run down, and the rest of the army waits in
-  the Town. Coming back puts the player in the Town again, where "Leave town" goes on to the next wave as before.
+  rested ("Back to Floor 4"); or the deepest floor the run has reached (its arrival save point touched), "Floor 6".
+  The run remembers its deepest floor (`dungeon.deepest` in the save); a new Town's dungeon is new even there.
+- **The wave run waits.** While the party is inside, the run stays in the Town as it was left: no wave can start, Auto
+  Wave's countdown stops, the Tavern's boosts (counted in waves) don't run down, and the rest of the army waits in the
+  Town. Coming back puts the player in the Town again, where "Leave town" goes on to the next wave as before.
 - **Leaving only at a save point.** A save point is a campfire on the floor (the pack's animated campfire). Each floor
   has two: one where the party arrives and one about halfway. Walking into its light, with no monster hostile to the
   party, shows two buttons:
@@ -64,9 +65,10 @@ asked for and describes them in our own words; no name or text of that game goes
   army's size do nothing inside; the full list is written when M4 audits them). Not the Tavern's boosts (they belong
   to waves), not the tide, not "Weakened foes". HP and MP start full.
 - **No reserve**: the three picked at the door are the trip's party (the owner agreed); another trip may take others.
-- **The leader** is the member the player moves; the camera follows it. The lead switches at any time: a tap on a
-  member's card, Tab, or 1-3 on the keyboard. A knocked-out member can't lead; if the leader is knocked out the lead
-  passes to the next standing member.
+- **The leader** is the member the player moves; the camera follows it. The lead switches at any time, at once:
+  Up / Down on the desk, a tap on the member on a touch screen, a click on it or its party row on the desk (section
+  3, "Switching the leader"). A knocked-out member can't lead; if the leader is knocked out the lead passes to the
+  next standing member.
 - **Following.** Each follower keeps a spot behind the leader by its role: melee 24 units behind, long range and
   healers 40-56 behind, spread 20 units apart in depth. Farther than 32 units from its spot it walks there by a path
   on the floor's grid (section 9); farther than 400 (off screen, after stairs) it is put beside the leader.
@@ -77,53 +79,155 @@ asked for and describes them in our own words; no name or text of that game goes
 
 ## 3. The fight: gauges in real time
 
-- **Every unit has a gauge** (party and monsters). It fills over the unit's **turn time** and the unit acts when it is
-  full; then it empties and fills again.
+- **Every unit has a gauge** (party and monsters). It fills over the unit's **turn time**, then the unit acts, the
+  gauge empties and fills again.
   - Turn time = 2 × the unit's time between attacks on the field (`Game.attackEvery`, with everything that changes it:
-    gloves, Train's rate, War Cry, Rampage, the Rage Tonic, a slow), at least 1.0 s. A soldier's 0.8 s attack is a 1.6 s
-    turn, a wizard's 1.4 s a 2.8 s turn, a unit at the attack floor (0.3 s) a 1.0 s turn.
+    gloves, Train's rate, War Cry, Rampage, the Rage Tonic, a slow), at least 1.0 s. A soldier's 0.8 s attack is a 1.6
+    s turn, a wizard's 1.4 s a 2.8 s turn, a unit at the attack floor (0.3 s) a 1.0 s turn.
   - An **Attack** deals the unit's damage × turn time ÷ attack time (2× a field blow; at the floor 3.3×), played as
     two swings or two shots. So every unit does the same **damage per second** as on the field, and everything that
     makes a troop strong on the field makes it strong here.
   - A stun stops the gauge; slows make it fill slower; haste faster.
-- **Reach.** An action fires only when its target is within the unit's reach (the field's rule, `reaches`: its range
-  plus the slack). Melee reach is 12-27 units, a body or two; long range 60-96. Until then the action waits.
-  - **Followers** walk into reach by themselves.
-  - **The leader** goes where the stick says. When the stick is let go with an action waiting, the leader walks into
-    reach by itself (the owner agreed; a setting turns it off for players who want to close in by hand). Out
-    of reach, the target line shows red and "Out of reach" (mockup A).
-  - Units act standing: a melee unit stops to swing, an archer stops to shoot; moving never empties the gauge.
-- **The commands** (the leader's; the buttons at the bottom right, mockup A):
-  - **Attack** (J or Space): attack the target. It stays the leader's order, every time the gauge fills, until the
-    target falls or another command is given.
-  - **Skill** (K): the list of the leader's skills: its type's skill, its Hero skill, its Awaken skill, each with its
-    MP, its reach and its cooldown (the field's costs and cooldowns). A skill takes the full gauge, the MP and its
-    cooldown. Area skills centre on the caster or the target as on the field.
-  - **Item** (L): the four pocket slots (loot-items-relics.md "Pocket items", decisions-log 332), from the Bag's
-    stock, with the field's cooldowns. Every kind works inside: the bottles, the Rage Tonic, the Iron Draught, Holy
-    Water and the Pocket Watch act on the party; the bombs on every foe on screen. An item is instant (no gauge).
-  - **Lead** (Tab): the next member leads.
-  - **Target**: the leader's target is the nearest foe ahead until the player picks one: a tap on a foe, or Q / E for
-    the previous / next foe on screen. The target wears the red pointer (ui_icons.png's red arrow).
+- **The flow of an action** (the owner, decisions-log 336: "ketika atb penuh langsung melakukan action yang dipilih
+  tadi dan mendekat ke target actionnya", when the gauge is full the chosen action is done at once, and the unit goes
+  to its action's target):
+  1. An action is **given** to a member **with its target**: by the player through the Action chain (below; any
+     member) or by the member's gambits (section 4). The live action panel shows it ("Kira Thorn Attack ▸
+     Skeleton").
+  2. The member **walks toward that target** until it is within reach (the field's rule, `reaches`: its range plus
+     the slack; melee 12-27 units, a body or two; long range 60-96), **while its gauge fills**. Moving never empties
+     the gauge, and a new action never restarts it.
+  3. **Full and in reach: the action fires at once.** Full but not yet in reach: its row says "Ready" and the action
+     fires **the moment it arrives**. Units act standing: a melee unit stops to swing, an archer stops to shoot.
+  4. Gambit actions follow the same steps; when one is about to fire its condition is checked again, and if it no
+     longer holds (the ally was healed above 50% meanwhile) the rules are read again, so no heal is wasted.
+  - **The 75% rule** (the owner, decisions-log 336: "atb bisa di queue selama atb sudah 75% kalau di bawah itu
+    langsung terganti", an action can be queued once the gauge is at 75%; below that it is replaced at once). A new
+    action given to a member whose gauge is **under 75%** replaces its current one at once: the gauge is kept, the
+    walk turns to the new target. At **75% or more** it is **queued**: the current action fires first, then the
+    queued one becomes the current one and the gauge fills again from 0. **One queue slot:** a later action given at
+    75% or more replaces the queued one, never the current one. The live action panel shows the queued one on a line
+    under the member's row ("▸ then Circle Slash"). Monsters have no queue (their own rules pick when they act).
+  - **The player's command first.** An action given through the chain (or a tap on a foe) is done once, then the
+    member's gambits take over if they are on. With its gambits off (the leader's, by default) an Attack repeats on
+    the same target each time the gauge fills, until the target falls or another action is given; a skill or an item
+    is done once and the member then waits. A gambit never replaces a command the player gave, current or queued; how
+    gambits use the 75% rule is in section 4.
+  - **The target falls or gets away** before the action fires (it dies, or walks off the screen going home): the
+    action is dropped and the member's row says "target lost" for a moment; the gauge stays as it was (full stays
+    full). The queued action, if any, comes next; else its gambits, if on, pick the next action at once; else it
+    waits for the player.
+  - **The leader and the stick.** The stick always wins: while it is held the leader goes where it says, its action
+    still given and its gauge filling; let go, the leader walks on to its target by itself. A setting turns that walk
+    off for players who want to close in by hand.
+- **Commands: the Action chain** (the owner, decisions-log 336: "attack item dan skill harusnya di trigger dari
+  action sih jadi user gunakan panah dan enter untuk pilih characternya lalu pilih actionnya (attack, item, skill)
+  baru pilih sub actionnya kalau ada, lalu pilih targetnya", Attack, Item and Skill come from one Action: the arrows
+  and Enter pick the character, then the action, then the sub-action if there is one, then the target). One entry
+  opens it: **Enter** or **Space** on the desk (or a click on the Action button), the **Action** button on a touch
+  screen. In Wait time stands still for the whole chain. Inside it Up / Down move the pointer (ui_icons' pointing
+  hand), Enter picks, **Esc** or **Backspace** goes back a step (from step 1 it closes the chain); on a touch screen
+  taps instead, and a **Back** button (44 px) at the chain's top right.
+  1. **The character:** the party panel's rows are the list, the pointer on the leader's row first; any member can
+     be given an action, not only the leader.
+  2. **The action:** **Attack**, **Skill**, **Item**.
+  3. **The sub-action**, when there is one: the member's skills (its type's, its Hero's, its Awaken skill; each with
+     its MP and reach, greyed with "ready in 6 s" while cooling down or short of MP) or the pocket items (each with its
+     count in the Bag and its cooldown). Attack has none.
+  4. **The target:** the units on screen as rows (name, rank, Hostile or Neutral; a member's HP), two tabs **Foes**
+     and **Party**, Left / Right switch them; the list opens on the side the action works on (Attack and bombs on
+     Foes, heals and buffs on Party). The pointed unit shows its name over it and a ring under it (the necromancer's
+     summon ring from `tiny_fx_summon`, recoloured red for a foe, its own green for a member). Enter gives the action
+     to the character with that target (the flow and the 75% rule above). Area skills centred on the caster and the
+     items that act on the whole party or every foe on screen skip this step.
+  - **On the desk** the lists cascade to the left of the party panel, each step's beside the last (the picked rows
+    lit), and a row of the chain's keys shows over them. **On a phone** one panel across the bottom shows one step at a
+    time (the joystick and the party panel under it while it is open): the members as 44 px rows, the actions as three
+    tiles, the skills and targets in two columns of 44 px rows; the step's question at its top ("Who?", "Mira Snow:
+    what?", "Healing Prayer: on whom?").
+  - A skill takes the full gauge, its MP and its cooldown, paid when it fires. An item fires at once (no gauge, no
+    walk) with the field's cooldowns, and leaves the member's action and gauge as they were. Every pocket item works
+    inside: the bottles, the Rage Tonic, the Iron Draught, Holy Water and the Pocket Watch on the party, the bombs on
+    every foe on screen.
   - There is no Flee: walking away is fleeing (monsters give up at their leash, section 5), except in a boss arena.
-- **Wait and Active.** In **Wait** (the default) time stands still while a list is open (Skill, Item, the book,
-  the gambit editor): the field dims and a ribbon says "Paused: pick a skill" (mockup A, the menu). The Attack
-  button, a tap on a foe and Lead never stop time. **Active** keeps time running with a list open. A chip at the top
-  right switches them; Settings keeps the choice.
-- **Desktop keys:** WASD or the arrows move; J / Space Attack; K Skill; L Item; Q / E target; Tab or 1-3 lead; G
-  gambits on/off; Esc the book (pause). The buttons show their key (mockup A at 1600x947).
-- **Touch:** the joystick at the bottom left (a large slot from ui_all.png with ui_icons' arrows and a knob), the
-  action buttons at the bottom right (Attack the largest), the party cards along the top on a phone and at the bottom
-  centre on a large screen. Every control is at least 44 px (ui-hud.md).
+- **Switching the leader** (the owner, decisions-log 336: "dan untuk ganti lead cukup pakai arrow maka langsung pindah
+  leadnya", the arrows alone switch the leader, at once). With the chain closed, **Up** / **Down** make the previous
+  / next standing member the leader at once, in the party panel's order (wrapping round); Left / Right do nothing.
+  There is no Lead action and no Tab (with three members the arrows reach any of them in two presses at most). On a
+  touch screen a **tap on a member** on the field makes it the leader (its hit area at least 44 px) and a **long
+  press** (0.4 s) on it opens the Action chain at step 2 for that member; the Action button opens it at step 1. On
+  the desk a click on a member or its party row makes it the leader. The leader's row is lit (the orange slot) in the
+  party panel and in the live action panel, and its crown is over it on the field.
+- **Shortcuts:** a tap or a click on a foe on the field gives the leader an Attack on it (the fastest way on a touch
+  screen, the same as the chain's leader → Attack → that foe, under the 75% rule). G turns every member's gambits on
+  or off; Esc with no chain open opens the book (pause). WASD (and the joystick) always move the leader, the chain
+  open or not (in Wait the world is still while it is open).
+- **Wait and Active.** In **Wait** (the default) time stands still while the chain, the book or the gambit editor is
+  open, and a ribbon says so ("Paused: step 2 of 4"). A tap on a foe never stops time. **Active** keeps time running
+  with the chain open. A chip at the top left switches them; Settings keeps it.
+- **Desktop keys:** WASD move; Up / Down switch the leader; Enter or Space open the Action chain, whose arrows and
+  Enter drive it and Esc / Backspace go back; G gambits on/off; Esc (no chain open) the book. A row of hints shows
+  them: "WASD: move", "Arrows: leader", "Enter: action", "G: gambits", "Esc: menu".
+
+### The battle HUD
+
+The owner's layout (decisions-log 336: "untuk ui ketika battle harusnya seperti ini", the battle UI should look like
+this, with reference pictures of another game's battle screen; then "tidak perlu ada linenya cukup pakai status bar
+di kanan atas kaya battle log / <entity> <action> <to> <entity> / tapi ini real time ... atbnya juga di pindah di
+battle log itu saja", no lines, a status panel at the top right like a battle log, "who, action, to whom", but live,
+with the gauges in it), drawn with our own kit and words (mockup A and the Action chain's steps 1-4):
+
+- **The live action panel** (top right): the game's dark panel headed "Now", a row per unit that has an action, live
+  (a row comes when a unit is given an action and goes when it has none): the unit's name, its action, ui_icons'
+  small play arrow, the target ("Kira Thorn  Attack ▸ Skeleton", "Skeleton Archer  Volley ▸ Ash Vale"), and at the
+  row's end the unit's **gauge** (ui_bars' yellow strip in its dark capsule, "Ready" over it when full). The party's
+  rows first, the leader's on top (the orange slot and the crown), then the foes engaged with the party, the soonest
+  to fire first; a foe's name in red, or its rank's colour (Elite silver, High elite gold, Mini boss purple, Boss
+  orange). A cog (ui_icons' gear) before a member's name when a gambit chose the action. A queued action shows on a
+  short line under its row ("▸ then Circle Slash"); a dropped one shows "target lost" in the row for a moment. At
+  most **6 rows on the desk and 4 on a phone** (at 915x412 more would cover the fight), then "+2 more". Neutral
+  monsters at peace have no row. It replaces the first designs' log, target arcs and the gauges in the party panel:
+  a foe's skill shows here as it readies it.
+- **The party panel** (bottom right on the desk; on a phone at the bottom between the joystick and the Action
+  button): the game's dark panel, a row per member: its current action, right-aligned ("Attack", the skill's or the
+  item's name, "Follow" when it has none), the cog when a gambit chose it, the crown before the leader's name, HP
+  now/most, MP. No gauge (it is in the live action panel). The orange slot lights the leader's row, and in the Action
+  chain the pointed or picked one. It is the chain's step 1 on the desk (a click on a row makes that member the
+  leader); on a phone its 26 px rows are only read (under the tap rule) and step 1 is the chain panel's 44 px rows.
+- **The target** (top left, beside the pause button): the leader's target, or the pointed one while a list is open:
+  its name, its rank in the rank's colour, Hostile, Neutral or Party, an HP bar (ui_bars' red strip, green for a
+  member; a foe's numbers are not shown).
+- **The minimap** (under the target): the floor as a strip of rooms (ui_bars' capsules, the rooms seen lighter), the
+  save points (the campfire), the stairs (the portal), the party (the crown), the foes seen (red squares) and the
+  floor's number. Under it the **Wait** and **Gambits on** chips (a tap or a click switches them). The top left holds
+  what changes slowly, the top right what changes every second.
+- **Bars over units:** the field's 12×8 box: the members' HP green and MP blue, the foes' HP red (outlined in their
+  rank's colour), the hostile ones' yellow "!" and the leader's crown above. No gauge over units.
+- **Numbers:** the damage a blow does rises over the unit and fades in 0.8 s, in the HUD font with an outline: white
+  on a foe, red on a member, green a heal ("+24"). Where the field's skills stop a blow, a word instead: "Parry" (the
+  soldier Hero's Parry), "Blocked" (Shield Up, Bulwark), "Immune" (Holy Water's ward). The field has no misses, so
+  there is no "Miss".
+- **The chain** (M4): "Chain 3" in gold over the party panel's right end, the chained monster type beside it.
+- **The Action button** (one; the orange slot with ui_icons' crossed swords): bottom right on a phone (60 px, at the
+  thumb), bottom left on the desk with its key ("Enter") and the hints row ("WASD: move", "Arrows: leader", "Enter:
+  action", "G: gambits", "Esc: menu"); while the chain is open the hints are its keys ("Up / Down: move", "Left /
+  Right: tab", "Enter: pick", "Esc: back"). No separate Attack, Skill or Item buttons (the Action chain). The
+  **joystick** on touch screens, bottom left: a large ui_all slot with ui_icons' arrows and an orange knob. Every
+  control is at least 44 px (ui-hud.md).
+- **The ribbon** (ui_ribbons): "Paused: step 2 of 4" at the top between the two top panels while the chain is open in
+  Wait.
 
 ## 4. Gambits
 
 - **Each member has an ordered list of rules**, each "condition → action", each with its own On/Off. When the
-  member's gauge fills (and the player gave it no command), the rules are read from the top: the **first rule whose
-  condition finds a target and whose action can be paid** (MP, cooldown, an item in stock) is what it does. If none
-  fits, it follows the leader.
+  member has no action, and again every 0.5 s while its gauge is under 75% (section 3, "The 75% rule"), the rules
+  are read from the top: the **first rule whose condition finds a target and whose action can be paid** (MP,
+  cooldown, an item in stock) is what it does. A rule above the current one that now fits replaces it at once (the
+  same rule keeps its target while it holds); at 75% or more it only takes the queue slot. If none fits, it follows
+  the leader.
 - The leader's rules are **off** by default (the player plays it); turning them on lets the leader fight by itself
-  while the stick is idle. A command from the player always wins over the rules for that gauge.
+  while the stick is idle. A command from the player always wins over the rules: it is done once (an Attack repeats
+  while the rules are off), then the rules take over; a rule never replaces it, current or queued.
 - **"Gambits on"** at the top right (G) switches every member's rules on or off at once.
 - The rules are **the troop's own**, saved with the troop (its save entry), so a troop taken again keeps its rules.
   A troop that never had any starts from its type's default list.
@@ -179,7 +283,7 @@ asked for and describes them in our own words; no name or text of that game goes
   - The **necro healer** never starts a fight: it follows the nearest hostile monster and heals as on the field.
   - Deeper is fiercer here too: from floor 10 the elites and stronger of the neutral types are aggressive (radius 96),
     and from floor 15 every aggro radius is 25% wider.
-- **Marks:** a hostile monster shows ui_icons' yellow "!" over its HP bar; a neutral one shows none (mockup A).
+- **Marks:** a hostile monster shows ui_icons' yellow "!" over its HP bar; a neutral one shows none (mockups A).
 - **Chase and leash.** A hostile monster chases the party member nearest to it (or the one that hit it last). It gives
   up past its **leash**, 320 units from where it appeared, or after 10 s without reaching anyone: it walks back home,
   mending 20% of its HP a second, a neutral one neutral again, an aggressive one aggressive again once home.
@@ -207,8 +311,8 @@ asked for and describes them in our own words; no name or text of that game goes
 
 - **A floor is a side-scrolling level**: 6-10 rooms in a row, left to right. The party arrives at the left end (the
   arrival save point), a second save point stands about halfway, and the stairs down (the portal) are at the right
-  end, guarded by the mini boss's room (from floor 3) or the boss arena (every 5th floor). Walking into the portal goes
-  down; the floor below starts at its arrival save point.
+  end, guarded by the mini boss's room (from floor 3) or the boss arena (every 5th floor). Walking into the portal
+  goes down; the floor below starts at its arrival save point.
 - **Made from hand-made rooms**: a few dozen room templates, picked and mirrored by the floor's dice (the Town's
   dungeon seed and the floor number: every trip of a Town meets the same floors, section 9):
   - a **hall**: a wide floor band (96-112 units deep), 1.5 screens long;
@@ -279,14 +383,14 @@ they are and plays well with a joystick; the owner chose A.
 
 - **Scale:** one pixel of the pack is one world unit, as the units' (the Town's rule); drawn at the field's screen
   scale (section 6).
-- **Depth sorting:** units and the props on the band are drawn by their feet's y (nearer = lower = later), as the field
-  does; the wall and its props behind, the near ledge in front. The units' shadows (`tiny_<type>_shadow`) make depth
-  readable.
+- **Depth sorting:** units and the props on the band are drawn by their feet's y (nearer = lower = later), as the
+  field does; the wall and its props behind, the near ledge in front. The units' shadows (`tiny_<type>_shadow`) make
+  depth readable.
 - **Facing:** units face left or right by where they walk or what they hit, flipped as on the field.
 - **What the pack gives a cave** (each piece mapped before use, then cut by exact boxes or cells by a new import
   tool, as the Town's `tool/import_town.py` does):
-  - `Floor Tiles1/2.png`: the dark earth fill (the cave behind and above), the moss / autumn / snow top edges (the line
-    at the wall's foot and the near ledge), the stalactite ceiling piece (cells 7-8 of the block rows), floating
+  - `Floor Tiles1/2.png`: the dark earth fill (the cave behind and above), the moss / autumn / snow top edges (the
+    line at the wall's foot and the near ledge), the stalactite ceiling piece (cells 7-8 of the block rows), floating
     platforms;
   - `BG Dirt1/2.png`: the earth slabs with two tunnel holes and the pillars (the back wall; the holes are where
     monsters walk out); BG Dirt2's red earth for the Rust Caves;
@@ -302,18 +406,24 @@ they are and plays well with a joystick; the owner chose A.
   - a cave back wall that tiles (the wall is the dark fill with the slabs placed on it, which reads well in mockup A);
   - light: no darkness or glow effect; the torches are the light. A dark vignette would be drawn in code, so it is
     not planned.
-- **The HUD** uses the game's kit: the top row's dark panels (the field's), ui_bars.png's portrait frame with three
-  bars for each member's card (HP green, MP blue, the gauge yellow), the field's 12×8 HP/MP box over every unit with a
-  thin gauge under the party's, ui_all.png's slots for the action buttons and the joystick, ui_icons.png's icons (the
-  sword, the bolt, the crown, the "!", the red pointer, the small marks of the target line), ui_bars' capsules for
-  chips, the book for the gambit editor, ui_ribbons.png for "Paused: pick a skill".
+- **The HUD** (section 3, "The battle HUD") uses the game's kit: the field's dark panels (the live action panel, the
+  party panel, the target, the minimap), ui_bars.png's capsules and fill strips (the gauges, the HP bars, the
+  minimap's rooms, the chips), the field's 12×8 HP/MP box over every unit, ui_all.png's slots (the leader's row, the
+  list rows, the Action button, the joystick) and its card frame (the lists), ui_icons.png's icons (the crossed
+  swords, the crown, the "!", the cog, the pointing hand, the small play arrow, the arrows), the campfire and the
+  portal small on the minimap, the necromancer's summon ring recoloured as the target ring, the book for the gambit
+  editor, ui_ribbons.png for "Paused: step 2 of 4".
 - **Drawn in code (exceptions for the owner):** none planned in the game. The mockups' dashed aggro ring is a design
   aid only, and the pause button's two bars were drawn for the mockup (the game has its own).
-- **Mockups** (made from the packs and the game's images, not in the repository; the owner looked at them before
-  approving), each at 1600x947 and 915x412:
-  - A, a floor band in a fight (the party: knight leader, archer, priest; an aggressive skeleton chasing, a neutral
-    orc, a slime; a save point; the gauges, the action buttons, WASD or the joystick);
-  - A with the Skill list open in Wait;
+- **Mockups** (made from the packs and the game's images, not in the repository; the owner looked at them), each
+  at 1600x947 and 915x412:
+  - A, a floor band in a fight with the battle HUD (the party: the knight leader walking to its Attack's target with
+    Circle Slash queued, the archer's gambit Attack Ready, the priest's gambit Healing Prayer; an aggressive skeleton
+    and bat and an elite skeleton archer readying Volley, a neutral orc and slime; a save point; the live action
+    panel, the numbers, the target, the minimap and the chips, the chain count, the Action button and the hints row,
+    or the joystick);
+  - A, steps 1-4 of the Action chain in Wait: the character (Mira), the action (Skill), the sub-action (Healing
+    Prayer), the target (Party: Kira, its name and green ring);
   - B, the same scene as a platformer;
   - C, the gambit editor;
   - D, the door in a Town.
@@ -330,13 +440,14 @@ they are and plays well with a joystick; the owner chose A.
   On leaving, the party's members go back to the army (healed, as the field's troops between waves) and the set-aside
   units return.
 - **The tick:** the field's (`g.tick(min(dt, 0.1) × speed)`), Speed x1/x2 too. Order per tick: the leader's input,
-  each unit's decision (the player's command, else its gambits; monsters: temperament, leash, target), movement (paths,
-  separation as the field's), gauges, actions that fire, shots and effects, knock-outs, drops and pickups, room
-  spawns, the camera.
+  each unit's decision (the player's command, else its gambits; monsters: temperament, leash, target), movement
+  (paths, separation as the field's), gauges, actions that fire, shots and effects, knock-outs, drops and pickups,
+  room spawns, the camera.
 - **Lib files (new):** `dungeon.dart` (the trip, floors, rooms, spawns, temperament, leash, gauges, loot),
   `dungeon_gen.dart` (rooms from templates by the dice), `gambits.dart` (conditions, actions, the reading of a list,
   defaults by type), `dungeon_nav.dart` (the walk grid, A*), `dungeon_scene.dart` and `dungeon_art.dart` (drawing,
-  the tile rects the import tool writes), `dungeon_hud.dart` (cards, buttons, joystick, the Skill / Item lists),
+  the tile rects the import tool writes), `dungeon_hud.dart` (the live action panel, the party panel, target,
+  numbers, minimap, chips, buttons, joystick, the lists),
   `gambit_page.dart` (the editor), `dungeon_page.dart` (the door's page in the Town book).
 - **Walls and collision.** Each room has a walk grid of 8-unit cells over its band (a 900 × 100 room is 113 × 13
   cells); props marked solid, water and pillars block cells. Units are circles (the field's body sizes) kept out of
@@ -346,10 +457,10 @@ they are and plays well with a joystick; the owner chose A.
   or home); a path is re-asked at most every 0.25 s per unit, or when its goal moved more than 16 units. The grids are
   small, so this is cheap.
 - **Dice and determinism.** The Dungeon has its own dice (`dungeonDice`), like `names`, `loot` and `matDice`, so a
-  trip never shifts the wave run's rolls. A Town's dungeon seed comes from the run and the Town count; a floor's layout
-  and its rooms' monsters (kinds, ranks, count) from (that seed, the floor number); where they appear, the fights and
-  the drops from the dungeon dice. Tests and probes run a trip at a fixed `dt`
-  and get the same floor and fights.
+  trip never shifts the wave run's rolls. A Town's dungeon seed comes from the run and the Town count; a floor's
+  layout and its rooms' monsters (kinds, ranks, count) from (that seed, the floor number); where they appear, the
+  fights and the drops from the dungeon dice. Tests and probes run a trip at a fixed `dt` and get the same floor and
+  fights.
 - **Save** (lib/save.dart): new keys with defaults, so older saves load unchanged (no `saveVersion` step unless a
   milestone needs one):
   - `dungeon`: `deepest`, `slots`, `found` (the conditions and actions found); `town`, the Town's dungeon (its seed,
@@ -360,10 +471,10 @@ they are and plays well with a joystick; the owner chose A.
   - each troop's `gambits` in its own entry.
   A Rest saves the game (it is still "between waves"); a relaunch mid-trip resumes at that save point.
 - **Telemetry** (`GameEvent`s, telemetry.md; `eventVersion` +1): `TripStarted` (Town, the trip's number in it, start
-  floor, the party's types, Heroes, power), `FloorReached` (floor, time), `TripRest` (floor, point), `TripEnded` (left / wiped, floor, time,
-  gold and materials banked, lost), `DungeonKill` (type, rank, floor, by whom), and per trip the gambit and command
-  counts (rules fired, menu commands, items). They answer: how deep does an army of wave W go, how many trips a Town
-  takes, and does a Town's dungeon pay more than the waves to the next Town.
+  floor, the party's types, Heroes, power), `FloorReached` (floor, time), `TripRest` (floor, point), `TripEnded` (left
+  / wiped, floor, time, gold and materials banked, lost), `DungeonKill` (type, rank, floor, by whom), and per trip the
+  gambit and command counts (rules fired, menu commands, items). They answer: how deep does an army of wave W go, how
+  many trips a Town takes, and does a Town's dungeon pay more than the waves to the next Town.
 - **Reused:** `Stats`, `statsOf` / `fieldStats`, `Unit`, `enemyStats`, `Tier`, `bossBuff`, `poolOf`, `killGold`, the
   drop tables, the skills (type, Hero, Awaken, monster), shots and effects, pocket items (their scope adapted: the
   party / the foes on screen), the Bag, the unit drawing (`_frame`, outlines, rank tints, awakening looks), the
@@ -372,8 +483,11 @@ they are and plays well with a joystick; the owner chose A.
   their mapped boxes and cells into `assets/images/dungeon_*.png` (tiles, wall pieces, props, the campfire, the
   portal, torches, water), with `--check`; the new files go on the release allowlist, the asset manifest and the
   asset vault, and assets.md's table.
-- **New words** (`Words`, ui-hud.md "In-game text"): Dungeon, Floor, Save point, Rest, Leave, Gambits, Lead, Out of
-  reach, Wait, Active, "Back to Floor 4", "The party fell", Chain.
+- **New words** (`Words`, ui-hud.md "In-game text"): Dungeon, Floor, Save point, Rest, Leave, Gambits, Ready, Now,
+  "then", "+2 more", Target, Foes, Party, Hostile, Neutral, Follow, Action, Back, "Who?", "what?", "on whom?",
+  "target lost", "Paused: step 2 of 4", Parry, Blocked, Immune, Wait, Active, "Back to Floor 4", "The party fell",
+  Chain, and the hints ("WASD: move", "Arrows: leader", "Enter: action", "G: gambits", "Esc: menu", "Up / Down:
+  move", "Left / Right: tab", "Enter: pick", "Esc: back").
 
 ## 10. Milestones
 
@@ -383,15 +497,19 @@ Each one is playable on its own and goes through the full checks (decisions-log 
    in the Mossy Halls look; WASD and the joystick; the party following on paths; monsters appearing at random points
    as the party nears, aggressive and neutral, aggro radius, chase, leash; gauges; Attack by reach (melee and shots)
    with the field's damage per second; the default gambits running (no editor); knock-outs; the arrival save point
-   (Leave) and the portal at the end (back to the Town: "Floor cleared"); a wipe back to the Town. The HUD: party
-   cards, Attack, the joystick. The import tool and the art. *The owner sees: walk a cave, fight by reach, monsters
-   that hunt or mind their own.*
-2. **M2: commands and gambits (L).** Skill, Item and Lead; targeting (tap, Q / E); Wait and Active; the skills
-   (type, Hero, Awaken) through the commands and the rules; pocket items inside; the gambit editor in the book; slots
-   and the free conditions and actions (every one unlocked while M3's crates don't exist yet).
+   (Leave) and the portal at the end (back to the Town: "Floor cleared"); a wipe back to the Town. The action flow
+   (walk to the target, fire when full) and the 75% rule. The HUD: the live action panel with the gauges, the party
+   panel, the target, the bars and numbers, the Action chain with Attack (steps 1, 2, 4; Foes), the tap on a foe,
+   the leader's switch (the arrows, a tap or a click on a member), the Action button and the hints, the joystick. The
+   import tool and the art. *The owner sees: walk a cave, fight by reach, monsters that hunt or mind their own.*
+2. **M2: commands and gambits (L).** The chain's Skill and Item with their sub-action lists; the Party tab; Wait and
+   Active; the long press on a member; the skills (type, Hero, Awaken) through the commands and the rules; pocket
+   items inside; the gambit editor in the book; slots and the free conditions and actions (every one unlocked while
+   M3's crates don't exist yet).
 3. **M3: floors and depth (XL, may split in two).** Stairs down and floors by depth (depth wave, themes, ranks, the
    mini boss at the stairs, the boss arena every 5th floor); two save points a floor with Rest; the deepest floor and
-   the start choices at the door; the Town's dungeon (free trips, the fallen stay fallen until "Leave town"); drops,
+   the start choices at the door; the minimap; the Town's dungeon (free trips, the fallen stay fallen until "Leave
+   town"); drops,
    pickups, carried and banked loot, gold; crates with the gambit finds; slots by floor.
 4. **M4: saves, telemetry and polish (M).** The trip saved at a Rest and resumed after a relaunch; the telemetry
    events; the hunt chain; ambush rooms; side rooms; the relics' and Pusaka's audit inside; How to Play's cards and
@@ -401,12 +519,13 @@ Each one is playable on its own and goes through the full checks (decisions-log 
 default gambits, the leader's rules on, no player input:
 - **Depth:** the deepest floor an army reaches, a floor's time, knock-outs, wipes. A problem: past floor 15 at wave
   30, or under floor 3 at wave 60.
-- **A Town's pay with free trips:** a bot that goes in, clears down to where it wipes or a floor takes over 10 minutes,
-  leaves at a save point, comes back and repeats until nothing is left above its depth; the total gold and materials
-  banked in that Town against the gold and materials of the waves to the next Town (the run's own telemetry). A
-  problem: the Town's dungeon pays more than those waves, or a Rare part Train needs comes faster than one a Town.
-- **No refill:** after a trip, another trip of the same Town finds every felled monster still gone and every crate open,
-  and its pay is only what was left; the same after a wipe.
+- **A Town's pay with free trips:** a bot that goes in, clears down to where it wipes or a floor takes over 10
+  minutes, leaves at a save point, comes back and repeats until nothing is left above its depth; the total gold and
+  materials banked in that Town against the gold and materials of the waves to the next Town (the run's own
+  telemetry). A problem: the Town's dungeon pays more than those waves, or a Rare part Train needs comes faster than
+  one a Town.
+- **No refill:** after a trip, another trip of the same Town finds every felled monster still gone and every crate
+  open, and its pay is only what was left; the same after a wipe.
 - **The levers** if the pay is too high are in section 7.
 
 ## 11. The owner's answers (decisions-log 336)
@@ -418,3 +537,20 @@ default gambits, the leader's rules on, no player input:
 4. Everything else as proposed ("Setuju semua"): the leader walks into reach by itself (a setting turns it off), no
    reserve, no respawn, gambits 4 → 8 slots with conditions found in crates and the word "Gambits", the hunt chain in
    M4, the door in every Town from the first, Wait as the default on every device.
+5. The battle screen and the flow, from the owner's reference pictures: "untuk ui ketika battle harusnya seperti ini
+   ... dan ketika atb penuh langsung melakukan action yang dipilih tadi dan mendekat ke target actionnya": the party
+   panel, the target, the target list and the minimap (section 3, "The battle HUD"), and the action walked to its
+   target and fired the moment the gauge is full (section 3, "The flow of an action").
+6. The commands: "attack item dan skill harusnya di trigger dari action sih jadi user gunakan panah dan enter untuk
+   pilih characternya lalu pilih actionnya (attack, item, skill) baru pilih sub actionnya kalau ada, lalu pilih
+   targetnya": one Action chain, character → action → sub-action → target (section 3, "Commands: the Action
+   chain").
+7. No lines; a live panel instead: "tidak perlu ada linenya cukup pakai status bar di kanan atas kaya battle log /
+   <entity> <action> <to> <entity> / tapi ini real time dan atb bisa di queue selama atb sudah 75% kalau di bawah itu
+   langsung terganti. atbnya juga di pindah di battle log itu saja": the live action panel at the top right with the
+   gauges in it, the 75% rule with one queue slot (section 3); the target, the minimap and the chips moved to the top
+   left.
+8. The leader: "dan untuk ganti lead cukup pakai arrow maka langsung pindah leadnya": Up / Down switch the leader at
+   once, no Lead action, no Tab; a tap on a member on a touch screen (section 3, "Switching the leader").
+9. The revised screen and flow (the live action panel, the 75% rule, the arrows for the leader): **approved** ("Setuju,
+   lanjut ke M1"); M1 is next.

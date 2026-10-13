@@ -12145,9 +12145,9 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      memilih apa yang akan di lakukan user. dan monsternya tidak lagnsung datang tapi spawn di tempat tempat random dan
      character user harus mendekat dulu baru bisa di serang jadi kaya ada jarak serangnya, terus ada juga monster yang
      agresif yang langsung serang tapi ada juga monster yang friendly yang mereka hanya menyerang jika mereka di serang
-     duluan", in the dungeon the player moves his character and picks what it does; the monsters don't come at once but
-     appear at random places, and his character must get near before it can attack, an attack range; some monsters are
-     aggressive and attack at once, others friendly, attacking only when attacked first. His answers to the
+     duluan", in the dungeon the player moves a character and picks what it does; the monsters don't come at once but
+     appear at random places, and the character must get near before it can attack, an attack range; some monsters are
+     aggressive and attack at once, others friendly, attacking only when attacked first. The owner's answers to the
      orchestrator: where, "opsi 1 tapi nga ada wave, yang ada floor jadi semakin jauh floornya maka akan semakin ganas
      monsternya dan auto battle ini di tidak seperti mekanik di tower defence, tergantung jenis monsternya apakah
      aggresif atau tidak, lalu juga nengikutin menakinsme atb dan gambitnya", a mode entered from a Town, with no waves
@@ -12156,14 +12156,28 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      bisa pilih action yang mau di lakukan user. mirip seperti battlenya [another RPG]", moving directly (a joystick,
      WASD) and at the same time picking the action; the goal, "3 tapi user tidak bisa keluar kapan saja, harus di save
      point yang tersebar di setiap lantai", free exploration, leaving only at the save points spread over each floor;
-     and as his reference a pasted description of [another RPG]'s battle system, which the design describes in its own
+     and as the reference a pasted description of [another RPG]'s battle system, which the design describes in its own
      words only. The art, after the first brief: "jangan pakai Pixel Crawler pakai ~/Downloads/GandalfHardcore FREE
      Platformer Assets.zip saja", not Pixel Crawler but the GandalfHardcore set, byte for byte the pack the Town already
      uses. On the design and its mockups: the view "a. 2.5D pita kedalaman", the depth band; a wipe "Hilang loot yang
      dibawa saja", only the loot carried is lost; the trips "Bebas selama di kota", free while in the Town, instead of
      the proposed one trip a Town; the rest of the proposals "Setuju semua"; and the reference's name written here as
-     "[another RPG]", as proposed). Why: the owner wanted a second way to play beside the waves, with the army he
-     builds, where he moves and chooses himself. By dungeon-design (docs/dungeon-design.md, the design and its
+     "[another RPG]", as proposed. Then on the battle screen, with four pictures of the reference's: "untuk ui ketika
+     battle harusnya seperti ini [four pictures] dan ketika atb penuh langsung melakukan action yang dipilih tadi dan
+     mendekat ke target actionnya", the battle UI should look like this, and when the gauge is full the chosen action
+     is done at once, and the unit goes to its action's target; and on the commands: "attack item dan skill harusnya
+     di trigger dari action sih jadi user gunakan panah dan enter untuk pilih characternya lalu pilih actionnya
+     (attack, item, skill) baru pilih sub actionnya kalau ada, lalu pilih targetnya", Attack, Item and Skill come from
+     one Action: the arrows and Enter pick the character, then the action, then the sub-action if any, then the
+     target; then on the battle screen again: "tidak perlu ada linenya cukup pakai status bar di kanan atas kaya
+     battle log / <entity> <action> <to> <entity> / tapi ini real time dan atb bisa di queue selama atb sudah 75%
+     kalau di bawah itu langsung terganti. atbnya juga di pindah di battle log itu saja", no lines, a status panel at
+     the top right like a battle log, "who, action, to whom", but live; an action can be queued once the gauge is at
+     75%, below that it is replaced at once; the gauges move into that panel; and on the leader: "dan untuk ganti lead
+     cukup pakai arrow maka langsung pindah leadnya", the arrows alone switch the leader, at once; and on that revised
+     screen and flow: "Setuju, lanjut ke M1", agreed, on to M1). Why: the owner
+     wanted a second way to play beside the waves, with the army the player builds, moving and choosing for oneself.
+     By dungeon-design (docs/dungeon-design.md, the design and its
      milestones; game-overview.md and the other docs change as each milestone is built).
      - **The view:** side view, the field's look, with a shallow floor band the units walk in x and in depth (the
        owner's pick, "a"), over a platformer: our reach, separation and kiting are already distances on a 2D floor,
@@ -12176,8 +12190,36 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      - **The fight:** every unit's gauge fills in twice its attack time (at least 1 s) and an Attack is two blows, so
        each unit keeps the field's damage a second and everything that makes a troop strong carries over (`statsOf`:
        items, Awaken, Forge, Train, a Hero, its relics). An action fires only in reach; the leader walks into reach by
-       itself when the stick is let go (a setting turns it off). Commands Attack, Skill, Item (the pocket items) and
-       Lead; Wait stops time while a list is open (the default), Active doesn't.
+       itself when the stick is let go (a setting turns it off). Commands Attack, Skill and Item (the pocket items);
+       Wait stops time while a list is open (the default), Active doesn't.
+     - **The flow and the battle screen** (the owner's pictures and live panel, in our kit and words): an action is
+       given with its target, the member walks to it while its gauge fills, and it fires the moment the gauge is full
+       and the target in reach (on arrival when full earlier; a gambit's condition checked again then). The 75% rule:
+       a new action under 75% of the gauge replaces the current one at once (the gauge kept); at 75% or more it is
+       queued behind it, in one slot, a later one replacing the queued one, never the current. The player's command
+       first: done once, then the gambits (with them off, the leader's by default, an Attack repeats); the gambits read
+       their rules when the member is idle and every 0.5 s under 75%, at 75% or more only into the queue slot, never
+       over the player's. A target lost: the action is dropped ("target lost" in its row), the queued one or the
+       gambits next. The screen: the live action panel at the top right, a row per unit with an action ("Kira Thorn
+       Attack ▸ Skeleton"), its gauge at the row's end with "Ready", a cog when a gambit chose it, the queued one on a
+       line under it ("then Circle Slash"), the party first (the leader on top), then the foes engaged, the soonest
+       first, 6 rows on the desk and 4 on a phone, then "+N more"; the party panel at the bottom right (the action, the
+       cog, the name, HP, MP; no gauge); the pause, the target, the minimap and the Wait and Gambits chips at the top
+       left; damage numbers and "Parry" / "Blocked" / "Immune"; the pointed target's name and a ring under it (the
+       summon ring recoloured); the hunt chain over the party panel. The first round's log and the dotted arcs from
+       each action to its target went with the live panel, as did the first mockups' portrait cards. The reference
+       pictures stay outside the repository.
+     - **The Action chain:** one entry (Enter or Space on the desk; one Action button) opens four steps in Wait: the
+       character (the party panel's rows, any member), the action (Attack, Skill, Item), the sub-action (the skills or
+       the pocket items) when there is one, the target (Foes / Party tabs). The arrows and Enter drive it, Esc or
+       Backspace go back a step; on a phone one panel across the bottom shows a step at a time in 44 px rows with a
+       Back button. WASD and the joystick still move the leader. The separate Attack, Skill and Item buttons of the
+       first HUD went with it. Kept as a shortcut: a tap or click on a foe is the leader's Attack on it.
+     - **The leader:** with the chain closed, Up / Down switch it at once (the previous / next standing member, in the
+       party panel's order); no Lead action, no Tab, Left / Right do nothing. On a touch screen a tap on a member makes
+       it the leader and a long press (0.4 s) opens the chain at step 2 for it; on the desk a click on a member or its
+       party row. The leader's row is lit in both panels. The desk's hints: "WASD: move", "Arrows: leader", "Enter:
+       action", "G: gambits", "Esc: menu".
      - **Gambits:** each troop's own ordered "condition → action" rules, the first that fits acting; 4 slots, one more
        at floors 5, 10, 15 and 20; the rarer conditions found in crates; default lists by type; the editor a page of
        the book. "Gambit" is the common English word, nothing borrowed from the reference.
@@ -12200,6 +12242,7 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        editor; M3 floors and depth, ranks and bosses, Rest and Leave, the Town's dungeon, loot and crates; M4 the trip
        saved at a Rest, telemetry, the hunt chain, ambush and side rooms, the relics' audit, the guide.
      - **Mockups** (composed from the packs and the game's images, nothing of them committed), each at 1600×947 and
-       915×412: the floor band in a fight, the same with the Skill list open in Wait, the platformer, the gambit
-       editor, the door in a Town (`<agents>/shots/dungeon-design/`).
-     - **Dropped:** the first brief's top-down look with Pixel Crawler's tiles, the platformer, one trip a Town.
+       915×412: the floor band in a fight with the battle screen, the Action chain's four steps, the platformer, the
+       gambit editor, the door in a Town (`<agents>/shots/dungeon-design/`).
+     - **Dropped:** the first brief's top-down look with Pixel Crawler's tiles, the platformer, one trip a Town, the
+       battle log and the target arcs (the live panel), Lead in the action list and Tab (the arrows).
