@@ -12284,3 +12284,14 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        about 16 s), as the design says; how it feels is the owner's to say.
      - **For tests and probes:** `Game.endTripNow` and `Game.addDungeonFoe`; `test/probe_dungeon_shots.dart` takes the
        shots at the three sizes (page, picked, cave, fight, the chain's steps, Leave, back).
+     - **Flagged, not changed:** an Attack's two blows a turn keep the field's damage a second, but at the 1.0 s turn
+       floor (a unit attacking every 0.3 s on the field) they come two a second, not 3.3: the effects counted in blows
+       (the every-3rd-blow fury, War Drum, the relics' per-blow procs) fire less often than on the field. The probes
+       after the merge weigh it (the damage parity and floor 1 with an army at wave 20 and at wave 60).
+     - **Checks:** analyze clean; dungeon_test, dungeon_trip_test, dice_test, the new dungeon_hud_test (1600×947,
+       1266×713, 915×412: in from the page, the HUD's parts, every tap 44 px, nothing over the band's middle, the live
+       panel's cap and "+N more", the chain's steps by keys and by taps, time still in it, the leader, Leave),
+       english_text_test and the Town and book tests the door and the tab touch (town_scene, town_scroll, town_army,
+       tavern_ui, town_shop_open and their neighbours, 60 files) pass; tool/test_import_dungeon.py passes; the shots at
+       the three sizes looked at beside the mockups. The w89 identity dump on d6c3e987 is SAME as main's (538915a3's
+       golden), 9,860 lines byte for byte: a trip's code changes nothing in the wave run.
