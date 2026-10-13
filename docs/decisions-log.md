@@ -12109,8 +12109,8 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
      - **The left page on Sell** is two headed sections on Buy's board in sections: High demand, then Items in Bag (the
        Sell grid as before: counts, the basket's counts, the market's arrows). Where they don't all fit, the Bag's pager
        turns pages, a section going on with its heading again: 1600×947 and 1266×713 one page, 1164×777 two, 915×412 four
-       with Millbrook's twelve (High demand's eight, then its four and the Bag); the owner is to look at the phone's paging
-       later. The board opens on its first page each time the Shop opens or another Town comes.
+       with Millbrook's twelve (High demand's eight, then its four and the Bag; the owner, on the 915×412 shots: "oke sih
+       itu", that's fine). The board opens on its first page each time the Shop opens or another Town comes.
      - **High demand** lists exact products, not kinds: every grade (I-III, at +0) of the Town's four wanted kinds that is
        hot now (the market's own word: a fresh margin of 2 or more, not flooded), by what one sells for here, the most
        first: Millbrook twelve (Wind Boots 595 to Boots 182), Frostgate eight (its grade I at 1.3 x 1.3 isn't hot). Each
