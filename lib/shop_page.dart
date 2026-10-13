@@ -16,14 +16,17 @@ part of 'main.dart';
 // materialsnya di sejajarkan dengan posisi box yang paling kiri biar paddingnya tetap sama") and its cells as the Bag's
 // slots, each its buy price in its capsule; a section the shelf has none of is left out, the next moving up (decisions-log
 // 280, the owner: "ini di takeout saja kalau productnya tidak ada"), and with none at all one muted line says so. The
-// facing page of a Buy pick is the Bag's with the Buy row ([Board._shopActions]). Sell's board is one grid of everything
-// in the Bag that no troop or type is using, in the Bag's order ([shopSellLoot]): every item stack, small relic, material
-// and Vault Artifact. A tap on a cell puts it in the sell basket at 1 ([_ShopView.basket]) and picks it. The facing page
+// facing page of a Buy pick is the Bag's with the Buy row ([Board._shopActions]). Sell's board is two sections
+// (decisions-log 335, [Board._shopSellBoard]): High demand, the products this Town wants that are hot now, each its price
+// here ([shopDemandLoot]), then Items in Bag, everything in the Bag that no troop or type is using, in the Bag's order
+// ([shopSellLoot]): every item stack, small relic, material and Vault Artifact. A tap on a cell picks it and, held, puts
+// it in the sell basket at 1 ([_ShopView.basket]). The facing page
 // is a page of its own, the Sell Basket ([Board._shopSellPage]; reworked in decisions-log 278, the owner: "<section detail
 // item> <space> <harga> * <+ jumlah - > = <sub total harga item> <----divider---> <list item yang mau dijual> <total coin
-// yand didapat> <btn sell>"): the pick's detail, its price row "1500 x [-] 2 [+] [All] = 3000", the basket's lines (the
-// book's printed line between them until decisions-log 305), and at the bottom one bevelled Sell for the whole basket,
-// the gold it brings on it with the coin (decisions-log 306; the total left of it until then).
+// yand didapat> <btn sell>"): the pick's detail (a High demand product's with its demand and Add to wishlist), its price
+// row "1500 x [-] 2 [+] [All] = 3000", the basket's lines (the book's printed line between them until decisions-log
+// 305), and at the bottom one bevelled Sell for the whole basket, the gold it brings on it with the coin (decisions-log
+// 306; the total left of it until then).
 
 /// The Town's Shop's tabs (decisions-log 269), its strip's segments in order.
 enum ShopTab { buy, sell }
@@ -143,10 +146,13 @@ class _ShopView {
   Game? game;
   int? townAt;
   // This frame, for tests: the strip's segments, Buy's section headings (where their words are), where each part of the
-  // pages is by key (Buy's 'nothing', its line with nothing on the shelf, decisions-log 280; the Sell Basket page's,
-  // decisions-log 278: 'detail' its top band, there 'kind', 'desc' or with the basket empty 'empty'; the price row
+  // pages is by key (Buy's 'nothing', its line with nothing on the shelf, decisions-log 280; Sell's section headings
+  // 'head:High demand' and 'head:Items in Bag', decisions-log 335; the Sell Basket page's, decisions-log 278: 'detail' its
+  // top band, there 'kind', a High demand product's 'demand' and 'wish' (and 'none' in its price row's place while not
+  // held), 'desc' or with the basket empty 'empty'; the price row
   // 'price', its 'unit', 'minus', 'count', 'plus', 'all' and 'subtotal'; 'lines'; the bottom bar's 'sell' and the coin on
-  // it 'sellCoin', decisions-log 306) and its words ('nothing', 'kind', 'lost', 'desc', 'empty', 'price' as "1500 x 2 =
+  // it 'sellCoin', decisions-log 306) and its words ('nothing', 'kind', 'lost', 'demand', 'wish', 'none', 'desc', 'empty',
+  // Items in Bag's muted line 'note:Items in Bag', 'price' as "1500 x 2 =
   // 3000", 'count', 'subtotal', 'sell' as "Sell 3000", the coin between), and the basket's lines as drawn (each its "2 x
   // 1500 = 3000").
   final tabs = <ShopTab, Rect>{};
@@ -182,7 +188,7 @@ class _ShopView {
 
 extension on Board {
   /// The Town's Shop pages (decisions-log 230 and 269): on [left] "Shop", the strip Buy | Sell ([_chips]) and the tab's
-  /// board (Buy's sections, [_shopBuyBoard]; Sell's grid, [_bagBoard]); on [right] a Buy pick's facing page
+  /// board (Buy's sections, [_shopBuyBoard]; Sell's, High demand and Items in Bag, [_shopSellBoard]); on [right] a Buy pick's facing page
   /// ([_assignPage]: the Buy row; nothing picked, the book's blank paper, decisions-log 248) or the Sell Basket page
   /// ([_shopSellPage]). A pick sold out, or no longer on the tab's board, goes. [ts] is the page's text scale, [ps] the
   /// book's pixel scale.
@@ -404,7 +410,7 @@ extension on Board {
     const ink = Color(0xFF4A2C17);
     final (:kind, :plus) = pick;
     final v = _shop;
-    var y = _detailHeading(c, g, kind, area, ts, ps, plus: plus);
+    var y = _detailHeading(c, g, kind, area, ts, ps, plus: plus, bare: demanded); // no "x0" (the owner: "Sembunyikan x0")
     final x = _assign.detail['name']!.left.roundToDouble(), w = area.right - x, said = <String>[];
 
     // The kind line, its parts one after another, the last cut to the room left.
@@ -472,7 +478,7 @@ extension on Board {
     final on = g.wished(item), label = on ? Words.onWishlist : _fitFirst([Words.addToWishlist, Words.add], fs, r.width);
     final name = itemNames[item]!, list = Words.wishlist.toLowerCase();
     void tap() {
-      if (g.wished(item)) return showMessage('$name: on the $list. ${Words.craftInTown}.');
+      if (g.wished(item)) return showMessage('$name: on the $list. Craft it at the ${Words.smithy}.');
       if (g.wishFreeAdd(item)) showMessage('$name ×1: on the $list');
     }
 

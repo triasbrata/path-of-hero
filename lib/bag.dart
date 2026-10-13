@@ -1960,19 +1960,23 @@ extension on Board {
   /// name (an artefact's, a Pusaka's, in gold) and on the right the bag's count in the book's capsule ("x86"; a Pusaka's
   /// stars and Carve steps, "★2+3"). An item's enhanced stack (+[plus], decisions-log 255; forge-design §12): its icon in
   /// the level's colour ([_plusPaint]), its name and then "+3" in the level's ink on paper ([_plusPaperInk]), its stack's
-  /// count. Returns the band's bottom.
-  double _detailHeading(Canvas c, Game g, Enum loot, Rect area, double ts, double ps, {int plus = 0}) {
+  /// count. [bare]: no count while the Bag holds none (the Sell Basket's High demand product, decisions-log 335; the owner:
+  /// "Sembunyikan x0"), the name to the band's right. Returns the band's bottom.
+  double _detailHeading(Canvas c, Game g, Enum loot, Rect area, double ts, double ps, {int plus = 0, bool bare = false}) {
     const ink = Color(0xFF4A2C17);
     // A Pusaka owned shows its stars; the Shop's shelf Artifact not owned, its count (0) as the goods (decisions-log 230).
     final a = _assign, artefact = loot is Relic && (loot.store || loot.pusaka), pusaka = loot is Relic && loot.pusaka && g.pusaka.containsKey(loot);
     final cy = area.top + (24 * ts).roundToDouble(), side = bagHeadIcon(ps);
     final icon = _whole(Rect.fromLTWH(area.left, cy - side / 2, side, side));
     _icon(c, loot, icon, null, plus);
-    final count = pusaka ? '$_starGlyph${g.pusaka[loot]?.stars ?? 0}' : 'x${loot is Item ? g.bagOf(loot, plus) : g.inBag(loot)}';
+    final held = loot is Item ? g.bagOf(loot, plus) : g.inBag(loot);
+    final count = pusaka ? '$_starGlyph${g.pusaka[loot]?.stars ?? 0}' : (bare && held == 0 ? '' : 'x$held');
     final tail = pusaka ? ukirMark(g.pusaka[loot]?.ukir ?? 0) : null;
-    final countAt = _capsule(c, count, math.max(10.0, 11 * ts), Offset(area.right, cy), anchor: Anchor.centerRight, tail: tail);
+    final countAt = count.isEmpty
+        ? Rect.zero // none: the name runs to the band's right
+        : _capsule(c, count, math.max(10.0, 11 * ts), Offset(area.right, cy), anchor: Anchor.centerRight, tail: tail);
     final name = switch (loot) { final Relic r => relicNames[r]!, final Item i => itemNames[i]!, final Mat m => m.label, final PocketKind p => pocketNames[p]!, _ => '' };
-    final nameX = icon.right + 6 * ts, nameFs = 20 * ts, end = countAt.left - 6 * ts;
+    final nameX = icon.right + 6 * ts, nameFs = 20 * ts, end = count.isEmpty ? area.right : countAt.left - 6 * ts;
     // The plus after the name, whole: the name gives way first.
     final up = plus > 0 ? ' +$plus' : '', upW = _textWidth(up, nameFs), shown = _fit(name, nameFs, end - nameX - upW);
     _text(c, shown, Offset(nameX, cy), size: nameFs, color: artefact ? _storeGold : ink);

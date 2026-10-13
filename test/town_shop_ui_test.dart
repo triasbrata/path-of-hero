@@ -126,7 +126,11 @@ void main() {
       // Sell: the Bag's items, small relics, materials and Vault Artifact, their counts.
       await tapOn(tester, b.shopTabAt(ShopTab.sell));
       expect(shopSellLoot(g).map((l) => l.kind), [Item.sword, Item.shield, droppedRelics.first, Mat.slimeGel, Mat.wolfClaw, Relic.titanBane]);
-      expect([for (final c in b.bagCells) c.$1], shopSellLoot(g).map((l) => l.kind).take(b.bagCells.length));
+      // Items in Bag's cells (High demand over them: shop_demand_ui_test.dart).
+      while (b.shopBagCells.isEmpty && b.bagPage < b.bagPages - 1) {
+        await tapOn(tester, b.bagPager('on')); // a phone's page: Items in Bag past High demand's (decisions-log 335)
+      }
+      expect([for (final c in b.shopBagCells) c.$1.kind], shopSellLoot(g).map((l) => l.kind).take(b.shopBagCells.length));
       expect((b.bagMarks(Item.shield)!.count, b.bagMarks(Item.shield)!.price), (12, null));
 
       // A material through the Sell Basket: a tap puts one in, All the rest, one Sell; its last gone, its cell goes.

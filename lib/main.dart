@@ -965,6 +965,7 @@ class Board extends PositionComponent
   /// The Sell tab's High demand cells as drawn this page (shop_page.dart, decisions-log 335), each product and where; its
   /// sections' headings are [shopAt] 'head:High demand' and 'head:Items in Bag'. For tests.
   List<(BagLoot, Rect)> get shopDemandCells => [..._shop.demand];
+  List<(BagLoot, Rect)> get shopBagCells => [for (final c in _shop.sell.cells) if (!_shop.demand.contains(c)) c]; // Items in Bag's
 
   /// The Smithy's pages this frame (smithy_page.dart, decisions-log 235): the relic picked (null: none yet), its board's
   /// cells in order and what [relic]'s shows ([BagMarks]: its count from 1, the ▲, faded, lit; null: no cell); where a part

@@ -2247,6 +2247,15 @@ again brings its price down, so the player sells a mix, and the price comes back
   35; an Evil Eye 750, then 940. So buying the parts to forge and sell pays less each time.
 - **The Sell page's words** (`marketWord`): "Hot in <Town>" for a kind it wants whose fresh margin is 2 or more,
   "Flooded: price falling" once a product is past half way to the floor; ui-hud.md "The Town's Shop".
+- **High demand** (decisions-log 335; `shopDemandLoot`, shop_page.dart): the Sell tab lists the products the Town wants
+  that are hot now, every grade's item at +0 of its four kinds, by the price here, the most first (Millbrook's twelve,
+  Wind Boots 595 to Boots 182; Frostgate's eight, its grade I at 1.69 not hot). A product picked says its **demand**
+  (`demandLeft`): how many more pieces the Town buys before it is flooded, each at a price still under half way to the
+  floor: 16 for a fresh product (at the curve 1.5, the pressure 16 of `most` 24 is past half way: (16/24)^1.5 = 0.54),
+  counting down a piece a sale, 0 once flooded, when it leaves the list; each new Town's recovery (10) brings it back
+  up. A product that never floods (its fresh margin at the floor) has `most`; none such is hot, so none is listed. Its
+  "Add to wishlist" puts it on the Smithy's Wishlist as a free line (decisions-log 302). The market's numbers are
+  unchanged: the list and the count only read them.
 - **town.json `market`**: `floor`, `top`, `want`, `most`, `curve`, `recover`, `matRise`, `trophyRise`, `towns` (rows of
   four margins; anything else keeps the default and is noted in `skipped`).
 - **Events** (telemetry.md): `storeSold` carries `margin` (the first piece's, 2 decimals) and `pressure` (before the
@@ -2254,7 +2263,8 @@ again brings its price down, so the player sells a mix, and the price comes back
 - **Saved** ("Saved" below): `market`, and the Town count in `town`.
 - **Tests:** test/market_test.dart (the identities, HPP, the prices by grade and Town, the pressure and the floor, the
   recovery, the materials, the words, the save and an old save's count, town.json's block), test/town_identity_test.dart
-  (each identity on screen).
+  (each identity on screen), test/shop_demand_test.dart (High demand per identity and its order, a flooded product gone,
+  the demand count against the flooded word at every pressure).
 
 ## Pocket items (decisions-log 332)
 

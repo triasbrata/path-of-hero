@@ -213,7 +213,10 @@ void main() {
       final kinds = [for (final l in shopSellLoot(g)) l.kind];
       expect([kinds.take(3), kinds.skip(3).take(3).toSet(), kinds.skip(6)],
           [[Item.sword, Item.shield, droppedRelics.first], {Mat.wolfClaw, Mat.slimeGel, Mat.skull}, [Relic.titanBane]], reason: tag);
-      expect([for (final c in b.bagCells) c.$1], kinds.take(b.bagCells.length));
+      while (b.shopBagCells.isEmpty && b.bagPage < b.bagPages - 1) {
+        await tapOn(tester, b.bagPager('on')); // a phone's page: Items in Bag past High demand's (decisions-log 335)
+      }
+      expect([for (final c in b.shopBagCells) c.$1.kind], kinds.take(b.shopBagCells.length)); // Items in Bag's
       expect((b.bagMarks(Item.shield)!.count, b.bagMarks(Item.shield)!.price), (12, null));
       await frames(tester, 10);
     });
@@ -252,10 +255,14 @@ void main() {
       await frames(tester, 3);
       expect(b.shopText('nothing'), shopNothingToBuy, reason: '$size: closed again');
       await tapOn(tester, b.shopTabAt(ShopTab.sell));
-      // The forge and the Towns on: no item drops, materials do (decisions-log 292).
-      expect((b.bagCells.length, b.bagEmpty.join(' ')), (0, '$shopNothingToSell Monsters drop materials.'), reason: '$size: whole, none cut');
-      final (card, text) = b.bagEmptyCard;
-      expect((card.top <= text.top, text.bottom <= card.bottom), (true, true), reason: '$size: $text inside $card');
+      // The forge and the Towns on: no item drops, materials do (decisions-log 292). Items in Bag's muted line under its
+      // heading, whole (decisions-log 335: until then the grid's card), on a phone's page past High demand's.
+      while (b.shopAt('head:${Words.itemsInBag}') == Rect.zero && b.bagPage < b.bagPages - 1) {
+        await tapOn(tester, b.bagPager('on'));
+      }
+      expect((b.shopBagCells.length, b.shopText('note:${Words.itemsInBag}')), (0, '$shopNothingToSell Monsters drop materials.'),
+          reason: '$size: whole, none cut');
+      expect(b.shopAt('head:${Words.itemsInBag}'), isNot(Rect.zero), reason: '$size');
       expect((b.shopText('empty'), b.shopAt('price'), b.shopText('sell'), b.shopAt('sellCoin')), (shopTapToAdd, Rect.zero, Words.sell, Rect.zero),
           reason: '$size: Sell greyed, no total on it (decisions-log 306)');
       await tapOn(tester, b.shopTabAt(ShopTab.buy));

@@ -271,7 +271,8 @@ void main() {
       }
       for (var p = 0; p < b.bagPages; p++) {
         if (p > 0) await tapOn(tester, b.bagPager('on'));
-        for (final (loot, r) in b.bagLootCells) {
+        for (final (loot, r) in b.shopBagCells) {
+          // Items in Bag's (High demand over them: shop_demand_ui_test.dart).
           expect(inside(r, leftPage), isTrue, reason: '$tag $loot');
           expect(b.bagMarks(loot.kind, loot.plus)!.price, isNull, reason: '$tag $loot');
           sold.add(loot);
@@ -283,6 +284,9 @@ void main() {
       expect(sold.take(5), [sword0, sword2, (kind: Item.sword, plus: 3), (kind: Item.shield, plus: 0), relic]);
       expect(sold.last, bane, reason: 'the Vault Artifact; the bound one and the oath are in use');
       expect(sold.map((l) => l.kind), isNot(anyOf(contains(Relic.dragonCrown), contains(Relic.oathOfOne), contains(Relic.fury))));
+      while (!b.shopBagCells.any((c) => c.$1 == (kind: Item.shield, plus: 0)) && b.bagPage > 0) {
+        await tapOn(tester, b.bagPager('back')); // back to its page (a phone's pages: High demand's first, decisions-log 335)
+      }
       expect(b.bagMarks(Item.shield)!.count, 12);
 
       // A tap puts a cell in the basket at 1 and picks it: the top shows it (its heading, its grade), its price row "5522 x
@@ -317,10 +321,22 @@ void main() {
       await tapOn(tester, b.shopAt('minus'));
       await cell(tester, b, Item.sword);
       expect([b.shopPickAt, b.shopBasket[sword0], b.bagDetailText('name')], [sword0, 2, itemNames[Item.sword]], reason: tag);
-      // A cell's count to sell at its bottom right; the Artifact's at its top right, its stars keeping the bottom right.
-      Rect at(BagLoot loot) => b.bagLootCells.firstWhere((c) => c.$1 == loot).$2;
-      expect([b.shopCountAt(claw).top > at(claw).center.dy, b.shopCountAt(claw).right <= at(claw).right], [true, true], reason: tag);
-      expect([b.shopCountAt(bane).bottom < at(bane).center.dy, b.shopCountAt(bane).right <= at(bane).right], [true, true], reason: tag);
+      // A cell's count to sell at its bottom right; the Artifact's at its top right, its stars keeping the bottom right. Each
+      // turned to first (a phone's pages: High demand's first, decisions-log 335).
+      Future<Rect> at(BagLoot loot) async {
+        while (!b.shopBagCells.any((c) => c.$1 == loot) && b.bagPage > 0) {
+          await tapOn(tester, b.bagPager('back'));
+        }
+        while (!b.shopBagCells.any((c) => c.$1 == loot) && b.bagPage < b.bagPages - 1) {
+          await tapOn(tester, b.bagPager('on'));
+        }
+        return b.shopBagCells.firstWhere((c) => c.$1 == loot).$2;
+      }
+
+      final clawAt = await at(claw);
+      expect([b.shopCountAt(claw).top > clawAt.center.dy, b.shopCountAt(claw).right <= clawAt.right], [true, true], reason: tag);
+      final baneAt = await at(bane);
+      expect([b.shopCountAt(bane).bottom < baneAt.center.dy, b.shopCountAt(bane).right <= baneAt.right], [true, true], reason: tag);
       var basket = {sword2: 2, sword0: 2, relic: 1, bane: 1, claw: 3};
       expect(b.shopBasket, basket, reason: '$tag: in the order added');
 

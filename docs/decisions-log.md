@@ -12050,3 +12050,55 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        test/town_checkpoint_hud_test.dart (the dialog after the hop at 1600×947, 1266×713 and 915×412: on the screen,
        44-px buttons, Enter, Esc, taps; the chip in the Town and on the field, its tooltip), test/wipe_test.dart, and
        shots at 1600×947 and 915×412 (test/probe_town_checkpoint_shots.dart).
+335. **The Shop's Sell tab shows what the Town is looking for: High demand over Items in Bag, and a High demand product
+     picked says its demand and can go on the Wishlist** (the owner, 2026-10-13: "ini perlu ada cara user tau item apa
+     yang lagi di cari di kota ini, mungkin di page detail sell jika belum ada item yang dijual user bisa liat item yang di
+     request", the player needs a way to know which items this Town is looking for; maybe on the Sell detail page, while
+     nothing is being sold yet, he can see the items requested). His first answers (on mockups): a row per kind with
+     "Ikon, nama, harga per grade" (icon, name, price per grade) and a tap "Masuk basket / buka resep" (into the basket,
+     or open the recipe). Then: "aku kepikiran mending di buat section sendiri aja di bawah tab sell kalau di tab page
+     detail ketika ada item di basket jadi tidak terlihat lagi nanti" (better its own section under the Sell tab: on the
+     detail page it would disappear once the basket holds items). Then, on the band and folding-header mockups: "nga
+     perlu ada pita, cukup di tulis aja di buat seperti ini saja / hight demand / <list product> -> ketika di click maka
+     halaman di sampingnya akan ada 2 section seperti existing, cuma di bagian detail atas ada informasi jumlah request
+     demannya berapa dan add to whitelist untuk bisa di forge di smitty / item on bag / <list product on bag> -> ketika di
+     click sama muncul seperti biasa" (no band; just write it like this: "High demand", then a list of products; a click
+     shows on the facing page its 2 sections as today, but the detail on top also says how many the demand requests,
+     with an add to the wishlist so it can be forged at the Smithy; "Items in Bag", then the Bag's products, a click as
+     usual). On the shots: "Sembunyikan x0" (hide the "x0"). Why: the wants were only in the Town chip's tooltip ("Pays
+     well for Boots, Potion, Gloves and Prayer Beads.") and as arrows on Bag cells already hot, so a player couldn't see
+     what to forge for this Town. By town-wants (lib/shop_page.dart, lib/market.dart; ui-hud.md "The Town's Shop",
+     loot-items-relics.md "Towns: the market").
+     - **The left page on Sell** is two headed sections on Buy's board in sections: High demand, then Items in Bag (the
+       Sell grid as before: counts, the basket's counts, the market's arrows). Where they don't all fit, the Bag's pager
+       turns pages, a section going on with its heading again: 1600×947 and 1266×713 one page, 1164×777 two, 915×412 four
+       with Millbrook's twelve (High demand's eight, then its four and the Bag); the owner is to look at the phone's paging
+       later. The board opens on its first page each time the Shop opens or another Town comes.
+     - **High demand** lists exact products, not kinds: every grade (I-III, at +0) of the Town's four wanted kinds that is
+       hot now (the market's own word: a fresh margin of 2 or more, not flooded), by what one sells for here, the most
+       first: Millbrook twelve (Wind Boots 595 to Boots 182), Frostgate eight (its grade I at 1.3 x 1.3 isn't hot). Each
+       cell is a Bag slot with its price here in the dark capsule, as Buy's cells show theirs, and the Wishlist's star
+       while wished; no market arrow (the heading says it). Enhanced stacks are never listed (no Smithy product, no
+       Wishlist line); one held keeps its arrow under Items in Bag. A product sold until flooded leaves the list.
+     - **The demand** ("Demand: 16 more, 595 each", green, after the kind line "Grade III item · Hot in Millbrook"): the
+       pieces this Town still buys before the product is flooded (the red arrow's rule: past half way to the floor), 16
+       for a fresh one, one less a sale, 0 when it leaves the list; a new Town's recovery brings it back. Chosen over "to
+       the floor" (24) so the count ends where the list and the hot word do.
+     - **Add to wishlist** (the owner's "whitelist"): a light tag at the demand line's end (under it where narrow) puts the
+       product on the Smithy's Wishlist as a free line for one (decisions-log 302: its star on the Smithy and here, its
+       recipe's materials starred); once any wish has it, the green "On wishlist". This replaced the first answer's
+       "open the recipe" for a product not held.
+     - **A tap**: on a High demand product the Bag holds, as on its Bag cell, it goes in the basket at 1 and the usual price
+       row and stepper show under the demand; one not held is only shown, "None in your Bag." in the price row's place,
+       no count in the heading ("Sembunyikan x0"; Buy's "x0" stays). The Sell Basket page is otherwise unchanged, its
+       "Tap items on the left to sell them." while nothing is picked.
+     - **Mockups that went:** the first sketch's band of rows per kind with I/II/III prices (desk), folded to a line of
+       icons on a phone, went with the owner's "nga perlu ada pita".
+     - **No save, no telemetry change:** the list and the demand only read the market; a wish is the Wishlist's own saved
+       free line.
+     - **Checked:** test/shop_demand_test.dart (the list per identity, its order, a flooded product gone, the demand
+       against the flooded word at every pressure), test/shop_demand_ui_test.dart (at 1600×947, 1266×713, 1164×777 and
+       915×412: the two headings and the cells' prices, a product picked held and not, Add to wishlist, the pages and the
+       first page on reopening, a flooded one gone, the empty Bag's line), the Shop's tests moved to Items in Bag's cells
+       (test/town_shop_ui_test.dart, test/shop_tabs_ui_test.dart, test/forge_shop_ui_test.dart), and shots of Millbrook,
+       Ironvale and Frostgate at the four sizes (test/probe_town_wants_shots.dart, `<agents>/shots/town-wants/`).

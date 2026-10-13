@@ -2071,22 +2071,40 @@ outside a Town.
       gold"; an Artifact owned, its tag "Buy" alone), and a tap says why.
 - **Sell** (the owner: "untuk di sold bisa langsung di gabung aja semua yang mau di jual, mirip seperti ui dari bags",
   then "harusnya semua barang yang ada di bags bisa di jual kecuali masi di pakai sama trops, bahkan item artefak atau
-  relic juga bisa di jual"): one grid as the Bag's (`_bagBoard` on `_ShopView.sell`, paged by its pager) of everything in
-  the Bag that no troop or type is using, in the Bag's order (`shopSellLoot`): the items, each enhanced stack after its
-  item (decisions-log 255), the small relics, the materials, and the Artifacts in the Vault. In use, and so never on it:
-  an Artifact bound to a type, and an oath (always in effect); an item given to a type and a relic worn are not in the
-  Bag. A cell shows its count from 2, no price; one in the sell basket shows its count to sell instead, on ui_bars.png's
-  green capsule (the light tags' green, in their dark ink; `BagMarks.basket`), a Vault Artifact's at the top right
-  since its stars keep the bottom right. Nothing to sell: the board's grey card
-  "Nothing to sell yet." "Monsters drop materials." (decisions-log 292: no item drops). A tap on a cell puts it in the basket at 1 (when it wasn't in) and picks
-  it (`_shopSellTap`): the Sell Basket's top shows it. A cell already in the basket is only picked again, its count kept
-  (decisions-log 278; until then a tap on the picked cell let it go). The grid turns to the pick's page when the pick
-  changes (a line tapped) and is the player's to turn after (`_ShopView.sellTurned`): with a pick always shown, following
-  it every frame would hold a paged grid (915×412) on its page.
-  The market's marks (decisions-log 326; loot-items-relics.md "Towns: the market"; `_shopSellArrows`): an item or small
-  relic the Town wants and pays 2x or more for ("hot") shows ui_icons.png's green up arrow (16, 144), one sold so much
-  its price is past half way to the floor ("flooded") the red down arrow (64, 160), at the cell's top right (an
-  enhanced stack's level keeps the top left), half the cell wide, over the slot's corner (`Board.shopArrows`).
+  relic juga bisa di jual"; decisions-log 335, 2026-10-13: "nga perlu ada pita, cukup di tulis aja di buat seperti ini
+  saja / hight demand / <list product> ... item on bag / <list product on bag>"): two sections on Buy's board in sections
+  (`_shopSellBoard` on `_sections`, `_ShopView.sell`), each its heading (bold, `_gridHead`) over the board's leftmost
+  slot, its cells as the Bag's slots in whole rows, the Bag's pager turning pages where they don't all fit (1164×777
+  two pages, 915×412 four with Millbrook's twelve; a section going on to the next page starts it with its heading again).
+  The board opens on its first page each time the Shop opens or another Town or game comes (`_ShopView.leave`).
+  - **High demand** (`shopDemandLoot`; while the Town has any): the products this Town wants that are hot now
+    (loot-items-relics.md "Towns: the market": every grade I-III item, at +0, of its four kinds whose fresh margin here is
+    2 or more and not flooded), by what one sells for here, the most first (the Town's order of its kinds, then the
+    grade's, between equal ones): Millbrook's twelve from Wind Boots 595 to Boots 182, Frostgate's eight (its grade I at
+    1.69 is not hot). Each cell shows its price here (`sellPrice`, `shortPrice`) in the count's dark capsule at the bottom
+    right, as Buy's cells show theirs (`BagMarks.price`), the Wishlist's gold star at the top left while a wish has it
+    (`BagMarks.wished`), no count and no market arrow (its heading says it). A product sold until flooded leaves it. An
+    enhanced stack is never on it (no product the Smithy makes nor the Wishlist holds): one the Bag holds keeps its arrow
+    under Items in Bag.
+  - **Items in Bag**: everything in the Bag that no troop or type is using, in the Bag's order (`shopSellLoot`): the
+    items, each enhanced stack after its item (decisions-log 255), the small relics, the materials, and the Artifacts in
+    the Vault. In use, and so never on it: an Artifact bound to a type, and an oath (always in effect); an item given to a
+    type and a relic worn are not in the Bag. A cell shows its count from 2, no price; one in the sell basket shows its
+    count to sell instead, on ui_bars.png's green capsule (the light tags' green, in their dark ink; `BagMarks.basket`), a
+    Vault Artifact's at the top right since its stars keep the bottom right. Nothing to sell: under its heading the muted
+    line "Nothing to sell yet. Monsters drop materials." (decisions-log 292: no item drops; until decisions-log 335 the
+    grid's grey card).
+  - **A tap** on a cell picks it (`_shopSellTap`; the Sell Basket's top shows it) and, when the Bag holds it, puts it in
+    the basket at 1 (when it wasn't in): a High demand product held is the same stack as its Items in Bag cell, both lit.
+    A cell already in the basket is only picked again, its count kept (decisions-log 278; until then a tap on the picked
+    cell let it go). A High demand product the Bag doesn't hold is only shown (decisions-log 335: its demand and Add to
+    wishlist). The board turns to the pick's page when the pick changes by a line tapped (to its Items in Bag cell) and is
+    the player's to turn after (`_ShopView.sellTurned`; a cell tapped is in sight and keeps the page): with a pick always
+    shown, following it every frame would hold a paged board on its page.
+  The market's marks (decisions-log 326; loot-items-relics.md "Towns: the market"; `_shopSellArrows`): on Items in Bag an
+  item or small relic the Town wants and pays 2x or more for ("hot") shows ui_icons.png's green up arrow (16, 144), one
+  sold so much its price is past half way to the floor ("flooded") the red down arrow (64, 160), at the cell's top right
+  (an enhanced stack's level keeps the top left), half the cell wide, over the slot's corner (`Board.shopArrows`).
 - **The Sell Basket** (the right page on Sell, a page of its own; the owner: "ini adalah page baru yang harus kamu buat.
   dimana user bisa melihat item apa saja yang sudah di masukkan ke dalam "basket sell" terus user bisa mengatur jumlah
   item yang dia jual pada selected item, dan user juga bisa liat total pendapatan dia dari hasil seluruh penjualan items";
@@ -2101,10 +2119,21 @@ outside a Town.
     item", grey; a small relic's tier, "Strong relic", in its tier's ink; after either the market's word, " · Hot in
     Millbrook" in green or " · Flooded: price falling" in red, `Words.hotIn`, `Words.flooded`, decisions-log 326; a Vault Artifact's rarity and where, "Rare · in
     Vault"; a material none, what drops it says what it is), a carved Artifact's "Carve +3 is lost" in red, then what it
-    does (`_detailDesc`; without its closing sentence where all of it doesn't fit, the last line cut to fit). The pick
-    is the cell or line last tapped (`_storePick`); while the basket has lines and none is picked (a tab switch, its line
-    taken out) the last line added is. An empty basket: "Tap items on the left to sell them." in grey in its place
-    (`shopTapToAdd`), and no price row.
+    does (`_detailDesc`; without its closing sentence where all of it doesn't fit, the last line cut to fit). A High
+    demand product (decisions-log 335; the owner: "di bagian detail atas ada informasi jumlah request demannya berapa dan
+    add to whitelist untuk bisa di forge di smitty") has after its kind line its demand in green, "Demand: 16 more, 595
+    each" (`demandLeft`: the pieces this Town still buys before it is flooded; its price here, `Words.demand`,
+    `Words.each`), and at that line's end (on the line under it where narrower) the Wishlist's light tag "Add to wishlist"
+    ("Add" where short; `_shopWishTag`): a tap puts it on the Smithy's Wishlist as a free line for one more than the Bag
+    holds (`wishFreeAdd`, decisions-log 302: its star on the Smithy's Items board and on its cell here, its recipe's
+    materials starred) and says "Wind Boots ×1: on the wishlist"; once any wish has it the green "On wishlist"
+    (`Words.onWishlist`), whose tap says "Wind Boots: on the wishlist. Craft it at the Smithy.". What it does takes the
+    line left (none where the tag took its own). The pick is the cell or line last tapped (`_storePick`): a basket's
+    line, or a High demand product held or not; while the basket has lines and none is picked (a tab switch, its line
+    taken out) the last line added is. An empty basket and no High demand pick: "Tap items on the left to sell them." in
+    grey in its place (`shopTapToAdd`), and no price row. A High demand product the Bag doesn't hold: "None in your Bag."
+    in grey in the price row's place (`Words.noneInBag`), no basket line, and no count in the heading (`_detailHeading`'s
+    `bare`; the owner, 2026-10-13: "Sembunyikan x0"; Buy's heading keeps its "x0").
   - **The price row** (`_shopPriceRow`) under the detail, indented to the detail's words (the owner's "<space>"): the
     coin and what one sells for (`shopSellPrice`: `sellPriceAt` at the stack's plus, else `sellPrice`; a Vault Artifact
     half its base price, its stars lost; a hot or flooded product's arrow before it), "x", the stepper as light tags, "-", the count (bold), "+", then "All" at its
@@ -2149,7 +2178,9 @@ outside a Town.
   (`armyNudge`) onto the Army tab, whose detail's Next tag buys Awaken 4-5 and Forge ("Bookmarks"); in a Town too,
   where the book has the Army tab since decisions-log 301 (until then it had none, and so no dot). The Toko's pages (store_page.dart, ascend_page.dart's Awaken section, recall_page.dart)
   went in decisions-log 296.
-- **Fit:** test/town_shop_ui_test.dart (the strip, Sell), test/forge_shop_ui_test.dart (Buy) and
+- **Fit:** test/shop_demand_ui_test.dart (decisions-log 335: High demand over Items in Bag, its cells' prices, a product
+  picked held and not, Add to wishlist, the pages, a flooded one gone, the empty Bag's line; at 1600×947 too),
+  test/town_shop_ui_test.dart (the strip, Sell), test/forge_shop_ui_test.dart (Buy) and
   test/shop_tabs_ui_test.dart (the Sell Basket) at 1266×713, 1164×777 and 915×412: the strip, Buy's sections and
   headings over their leftmost slots (only those with goods: Materials alone, its heading over its leftmost slot and
   every cell's tap picking its own kind; the empty shelf's one line), the cells on the left
@@ -2160,7 +2191,10 @@ outside a Town.
   Smithy's heading at 1266×713 and 915×412.
 - **For tests:** `Board.shopPick` / `shopPickAt`, `shopTab`, `shopTabAt(tab)`, `shopSections` (each heading and where its
   words are; only the sections drawn), `shopBasket`, `shopBasketLines` (each line, where, its "2 x 1500 = 3000"),
-  `shopAt(key)` / `shopText(key)` (Buy's 'nothing': its line with nothing on the shelf; the Sell Basket's: 'detail', its 'kind', 'lost' (words only), 'desc' or 'empty'; the
+  `shopDemandCells` (High demand's cells this page), `shopBagCells` (Items in Bag's),
+  `shopAt(key)` / `shopText(key)` (Buy's 'nothing': its line with nothing on the shelf; Sell's 'head:High demand',
+  'head:Items in Bag' and 'note:Items in Bag' (words only); the Sell Basket's: 'detail', its 'kind', 'lost' (words only),
+  a High demand product's 'demand', 'wish' and 'none', 'desc' or 'empty'; the
   price row 'price' ("1500 x 2 = 3000"), 'unit', 'minus', 'count', 'plus', 'all', 'subtotal'; 'lines'; 'sell' (its
   words "Sell 12k", the coin between) and 'sellCoin' (the coin on it; none while greyed); the pick's heading is `bagDetail` / `bagDetailText` 'icon', 'name', 'count'); while the Shop shows, the Bag's getters read the tab's grid (`bagCells`, `bagLootCells`,
   `bagMarks(kind).price` / `.basket`, `bagPage`, `bagEmpty`) and Buy's facing page (`bagActions`, `bagDetail` /
