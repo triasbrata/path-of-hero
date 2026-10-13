@@ -109,7 +109,7 @@ extension on Board {
   /// shows.
   void _coachNews(Game g) {
     final co = _coach, seen = _seen;
-    if (seen == null || co.showing || !(g.canStartWave || g.inTown) || g.paused) return; // a Town's own card there (K23)
+    if (seen == null || co.showing || !(g.canStartWave || g.inTown) || g.paused || g.dungeon != null) return; // a Town's own card there (K23); none in a trip
     if (identical(g, co.cardGame) && co.cardWave == g.wave) return;
     if (g.victoryAt == double.negativeInfinity || g.t - g.victoryAt < victoryTime) return;
     if (_msg.text != null || _herald.who != null || _herald.next.isNotEmpty || _foeSplashBusy) return; // foe_splash.dart

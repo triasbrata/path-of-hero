@@ -12246,3 +12246,41 @@ Purpose: what the owner asked for and why things are the way they are. Newest la
        gambit editor, the door in a Town (`<agents>/shots/dungeon-design/`).
      - **Dropped:** the first brief's top-down look with Pixel Crawler's tiles, the platformer, one trip a Town, the
        battle log and the target arcs (the live panel), Lead in the action list and Tab (the arrows).
+337. **The Dungeon's M1, built: one floor entered from a Town's door, walked and fought in real time, Attack only,
+     Wait only** (the owner, 2026-10-13, on the revised battle screen and flow of 336: "Setuju, lanjut ke M1", agreed,
+     on to M1; on the art: "jangan pakai Pixel Crawler pakai ~/Downloads/GandalfHardcore FREE Platformer Assets.zip
+     saja", the GandalfHardcore set only). Why: 336's first milestone, playable on its own: the owner walks a cave,
+     fights by reach and meets monsters that hunt or mind their own. What M1 builds is dungeon-design.md's section 10
+     item 1, now in units-and-combat.md "The Dungeon", ui-hud.md "Dungeon" and "Town", game-overview.md, architecture.md
+     and assets.md; the choices the design left open, M1's own:
+     - **The door:** at the street's far end past the Shop, 270 world px laid out as the approved mockup D (a mossy
+       mound of five by three cells of Floor Tiles2's moss-topped block, the portal at its foot, a boulder pile over
+       each lower corner, a standing torch either side of the portal), so the Town is 1284 world px wide (1010 before);
+       its sign "Dungeon"; a tap on any of its pieces or the book's Dungeon tab (between the Shop's and the Army's, the
+       portal's swirl as its icon) opens its page. The picks stay between trips while those troops live.
+     - **No book inside:** M1 has nothing for it to do there, so Esc and the pause button pause (the field's pause
+       screen) and the desk's last hint is "Esc: pause", not 336's "Esc: menu"; the coach's news, the Town's life and
+       the pocket's keys wait for the way out.
+     - **The scene's scale:** the whole number nearest the screen's height / 236 world units (4 at 1600×947, 3 at
+       1266×713, 2 at 915×412), the band's top 30% of the view down: the mockups' framing at each size, pixels whole.
+     - **The touch layout** (the joystick, the Action button at the thumb, the chain as one card across the bottom)
+       follows the platform (a phone's or a tablet's), not the size; the live action panel keeps 6 rows on a screen
+       560 px tall or more, else 4.
+     - **The chain in M1:** steps 1, 2 and 4 with Skill and Item shown greyed in step 2 and the Party tab greyed in
+       step 4 (M2's), so the screen is the approved one; step 2 with no foe on the screen says "No foe in sight"; a
+       member who falls while picked shuts the chain. The long press on a member waits for M2.
+     - **The minimap** under the target already shows floor 1's rooms, the save point, the portal, the party and the
+       foes (the design had it with M3's floors).
+     - **Numbers** rise from each unit's HP change (the damage a member takes red, a monster's white, a heal green);
+       "Parry", "Blocked" and "Immune" wait for the shared hit events.
+     - **The rules' open ends:** the gambits fight only hostile foes within 280 of the leader (a neutral monster is
+       the player's to start on); a healer's Attack is its smite and its Heal costs the field's MP a heal as many times
+       as the turn holds heals; a relic or Pusaka that a kill sets off does nothing inside until M4 audits them, and
+       nothing is earned inside (no gold, materials, score or kills) until M3's loot; a Town's floor seed is rolled at
+       its first trip and kept while the game lasts, not saved (the Town's dungeon is M3's). A monster rises on the
+       necromancer's summon burst; the save point's campfire is the Town's `town_campfire.png`; the cave's files go in
+       the vault's game-town match like the Town's.
+     - **Walking:** a member walks at its field walk speed (a knight 24 world units a second: a screen at 1600×947 in
+       about 16 s), as the design says; how it feels is the owner's to say.
+     - **For tests and probes:** `Game.endTripNow` and `Game.addDungeonFoe`; `test/probe_dungeon_shots.dart` takes the
+       shots at the three sizes (page, picked, cave, fight, the chain's steps, Leave, back).

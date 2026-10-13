@@ -1383,7 +1383,7 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
     stands on it (`_townStreet`), across the screen (`Board.townGround`):
     - the strip, `town_ground.png` (Floor Tiles2.png's cell (1, 0), the green block's top edge: its grass over its dark
       earth, 32×14; assets.md), its top edge on the lane, tiled side by side and panning with the street, so it runs the
-      Town's whole 1010 world px (`Board.townScene['street']`): its 32-px tile is the sheet's own repeat, so the copies
+      Town's whole 1284 world px (`Board.townScene['street']`): its 32-px tile is the sheet's own repeat, so the copies
       meet without a seam;
     - the earth under it: the tile's last row (one colour, 19,17,22, the block's fill) stretched to the screen's bottom
 
@@ -1396,8 +1396,9 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
     Until decisions-log 274 the grassy lip (`town_floor.png` whole, 64×14) tiled along y 254 behind the buildings, and
     town_bg_1's flat green filled the screen under the street (the owner's picture: 47 px of it at the desk).
   - Along it, left to right (the owner's note of 2026-10-04): the troops' rest, the Smithy, the Tavern (the middle
-    building) and the Shop. The three are buildings rebuilt cell by cell from `town_house.png` (`houseCells(n, storeys)`,
-    below); the tent is only the rest.
+    building) and the Shop, and past the Shop at the street's far end the Dungeon's door (decisions-log 336, 337). The
+    three are buildings rebuilt cell by cell from `town_house.png` (`houseCells(n, storeys)`, below); the tent is only
+    the rest.
   - The rest: the Large Tent (`town_tent.png`) and before its right side the pot over the campfire
     (`town_campfire.png`, the first of its 8 loops, 5 frames at 8 fps), its 32 world px of art ending at the tent's
     right (decisions-log 271; until then 6 past it, where the Smithy's wood corner now starts). No sign; a tap on the
@@ -1427,6 +1428,14 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
     room for the table and the stacked crates only), the cauldron on the right block.
   - The Shop: the smallest house (n −1, one storey) with its stalls before its window and right wall, the door clear:
     the apple basket, the fruit-and-bread table, barrels and the stacked crates.
+  - The Dungeon's door (decisions-log 336, 337; dungeon-design.md's mockup D), 270 world px, from the
+    GandalfHardcore cave art (`dungeon_tiles.png`, `dungeon_props.png`, `dungeon_portal.png`; assets.md): a mossy
+    rock mound rebuilt cell by cell from Floor Tiles2's moss-topped block (5 cells of 32 across, 3 high, from 38 in:
+    its top row the block's moss-topped corners and top, the two under it its sides and fill), the portal at its foot
+    in its middle (its 10 frames at 8 fps), a mossy boulder pile over each of its lower corners and a lit standing
+    torch (6 frames) in front of either side of the portal; back to front in that order, everything on the street's
+    line, panning with it (`_TownLayout.door`; `Board.townScene` names each piece: `mound<row><i>`, `portal`,
+    `boulderL`, `boulderR`, `torchL`, `torchR`). Its place's middle (the sign's, the portal's) is 118 in.
   - The yard (156 world px) between the Smithy and the Tavern, behind the houses: the identity's pieces side by side
     (`_townYards`, from `town_yards.png`, assets.md; decisions-log 326), left to right: Millbrook the flowering tree,
     two wheat sheaves standing, a sack and a sheaf; Willowmere a boat pulled up on the bank and three potted plants,
@@ -1436,9 +1445,10 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
     torch, a bust, the alchemy table (a skull, potions), an urn on its plinth and a tree. The torch's flame moves (6
     frames at 8 fps, as the furnace). Until decisions-log 326 every Town's yard was the olive pine (`town_pine.png`) at
     its left and the clothes line right of it, side by side, so the pine's first tier showed whole (decisions-log 253).
-  - The signs: "Smithy", "Tavern" and "Shop" (`Words.smithy`, `Words.tavern`, `Words.shop`) on ui_ribbons.png's flat
-    ribbon (`_ribbonTitle`, the Hero splash's: 64×20 at 2 screen px a sprite px at least, the words bold), centred over
-    their building, its bottom 4 sprite px over the roof's ridge, kept 4 px under the HUD's band (`_meterBottom`).
+  - The signs: "Smithy", "Tavern", "Shop" and "Dungeon" (`Words.smithy`, `Words.tavern`, `Words.shop`,
+    `Words.dungeon`) on ui_ribbons.png's flat ribbon (`_ribbonTitle`, the Hero splash's: 64×20 at 2 screen px a sprite
+    px at least, the words bold), centred over their building (the Dungeon's over its mound), its bottom 4 sprite px
+    over the roof's ridge (the mound's top), kept 4 px under the HUD's band (`_meterBottom`).
   - On the street the army's own troops go about their errands ("The troops' life", below); but the smith, no other people or
     animals.
 - **The scale and the street:** k = 2 screen px per world px, 3 from 1038 px tall (the scene's height / 346, at least
@@ -1446,18 +1456,20 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
   screen), 1 at the least: so 915×412 draws it at 1. The scene is the whole screen and the street lies 92% down (low:
   the owner's "ground levelnya di turunkan"). (An upright phone's scene ended at its docked book's top, the street over
   it, until decisions-log 289.)
-- **The layout** (`_TownLayout`; decisions-log 271): 1010 world px (`_TownLayout.full`) at every size, wider than the
-  screen, which shows part of it and pans (below). From 2 world px in from the left: the rest (96 wide); the Smithy's
-  place (374: its wood corner 134, its house 148, then the furnace's art 34 past the house, 2 clear and the ore's 53
-  with 3 after it); the yard (156: the pine's 50 and the line's 106); the Tavern (n 1: 212) and the Shop (148); 4
-  between each two; and 6 after the Shop (its cells' clear eave tip goes 6 past its 148). A screen wider than 1010
-  world px at its k would share out the rest between the gaps. The Tavern has two storeys when the screen has 240 world
-  px from its top to the street (the two-storey house's 200 and the HUD's band), else one. Until decisions-log 271 the
-  Town was laid out as wide as the screen (582 at the least, a phone's 640), sizing the Tavern's n, the yard and the
-  Smithy's work yard by the room, so in landscape the whole Town showed with the book shut. So:
+- **The layout** (`_TownLayout`; decisions-log 271, 337): 1284 world px (`_TownLayout.full`) at every size, wider than
+  the screen, which shows part of it and pans (below). From 2 world px in from the left: the rest (96 wide); the
+  Smithy's place (374: its wood corner 134, its house 148, then the furnace's art 34 past the house, 2 clear and the
+  ore's 53 with 3 after it); the yard (156: the pine's 50 and the line's 106); the Tavern (n 1: 212), the Shop (148)
+  and the Dungeon's door (270); 4 between each two (the Shop's cells' clear eave tip goes 6 past its 148, over the
+  gap and the door's first 2); and 6 after the door. A screen wider than 1284 world px at its k would share out the
+  rest between the gaps. Until decisions-log 337 the Town was 1010 wide, the Shop at its right end. The Tavern has two
+  storeys when the screen has 240 world px from its top to the street (the two-storey house's 200 and the HUD's band),
+  else one. Until decisions-log 271 the Town was laid out as wide as the screen (582 at the least, a phone's 640),
+  sizing the Tavern's n, the yard and the Smithy's work yard by the room, so in landscape the whole Town showed with
+  the book shut. So:
   | Screen | k | Tavern | Shows (world px) |
   |---|---|---|---|
-  | 1266×713 (the desk) | 2 | n 1, two storeys | 633 of 1010; 188 left of the open book |
+  | 1266×713 (the desk) | 2 | n 1, two storeys | 633 of 1284; 188 left of the open book |
   | 1164×777 (the owner's tablet) | 2 | n 1, two storeys | 582; 163 left of the open book |
   | 915×412 | 1 | n 1, two storeys | 915; 446 left of the open book |
 - **Anchors for the troops** (`_TownLayout.spots`; `Board.townSpot(name)` on the screen, each on `townLane`): 'guard'
@@ -1478,7 +1490,8 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
 - **The book in a Town:** the tabs are Smithy (the Town's hammer, `town_mark.png`), Tavern (the wave meter's beer mug,
   `town_mug.png`; the street's order; every Town has it since decisions-log 268), Shop (the coin stack; open in every Town as
   shipped, town.json's `shop.from` 1, decisions-log 253; a later `shop.from` greys it until the store opens, a tap saying
-  "Opens after wave <from>"), then the field's own three in its order: Army (the crossed swords; decisions-log 301, the
+  "Opens after wave <from>"), Dungeon (the portal's swirl, `dungeon_portal.png`'s first frame; decisions-log 337;
+  "Dungeon" below), then the field's own three in its order: Army (the crossed swords; decisions-log 301, the
   owner, 2026-10-09: "di town tab army harus di munculkan dan ketika user tenda maka akan ke tab army"), Bag and Settings
   (`_bookTabs`). Until decisions-log 301 a Town's book had no Army tab ("no buys or Release in a Town"). It opens on the
   Smithy when the Town is gone into, from the Army too (`_townSync`; a game that comes in in a Town, a save, the same),
@@ -1497,7 +1510,7 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
 - **Taps:** a sign or its building (the bounding box of its cells, or the art of what stands at it: the Smithy's
   wood corner, furnace and ore, the Shop's stalls; `_TownView.hits`) opens the book on its
   page: the Smithy's, the Shop's (before the store opens, never as shipped, the message says when it opens), the
-  Tavern's its own; the troops' rest (the tent's art and its campfire's, no sign) the Army's (decisions-log 301; until
+  Tavern's its own, the Dungeon's door's (any of its pieces) the Dungeon's; the troops' rest (the tent's art and its campfire's, no sign) the Army's (decisions-log 301; until
   then a tap there shut the book, as the bare scene does). The places and their pages are `_townPages`. A
   tap on the scene outside the book, under the HUD's band, shuts the book, its
   page's place in the middle of the screen (the pan, below); a sign, a building or the tent opens it again. The cursor
@@ -1509,11 +1522,12 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
     further it pans and taps nothing. A tap that opens a page pans to that page's place even when it is the open one.
     The HUD's and the book's buttons and tabs still act on the press, as everywhere.
 - **The pan** (0.4 s, easing out): with the book open the scene moves so the open page's place (the Smithy
-  for Smithy, the Shop for Shop, the tent for Army (decisions-log 301), the Tavern for Tavern, Bag and Settings) has its
+  for Smithy, the Shop for Shop, the door for Dungeon, the tent for Army (decisions-log 301), the Tavern for Tavern, Bag
+  and Settings) has its
   middle in the middle of the strip
   left of the book; with the book shut the place of the page it shut on (`_TownView.shutOn`: the shut book itself goes
   back to the Smithy's page) has its middle in the middle of the screen, the view kept between the Town's ends (so the
-  Shop's stands at the right end; decisions-log 271: until then the whole Town showed, the view's left edge at 0).
+  door's stands at the right end; decisions-log 271: until then the whole Town showed, the view's left edge at 0).
   A Town opens on the Smithy, so its first look is the Smithy's house and furnace left of the book (at 915×412 its
   whole place). A
   place's middle (`_TownLayout.look`) is its house's, the Smithy's that of its house's walls and its furnace together;
@@ -1530,12 +1544,14 @@ screen counts as covered (`_covered`), so no unit is pointed at, pinned, dragged
     `TdGame` registers a `HorizontalDragGestureRecognizer` for trackpads only (`supportedDevices`), so a mouse's or a
     finger's drag stays the Board's own (`_townSwipe`, `_townSwiped`, `_townLetGo`).
   - **Its room** (`_townRoom`, `Board.townRoom` for tests): from the Town's left end at the screen's left (the view's
-    left edge 0) to its right end (the Shop's eave tip, the layout's last 6 world px) at the right of what shows: with
+    left edge 0) to its right end (the Dungeon's door's right and the layout's last 6 world px; the Shop's eave tip
+    until decisions-log 337) at the right of what shows: with
     the book open the book's left, else the screen's right; widened to take in the open page's own pan,
-    should it stand past an end. Measured with the book open on the Smithy (world px, k; decisions-log 271): the desk
-    1266×713 0 to 822 (k 2; the book's left at 376 px), the tablet 1164×777 0 to 846.7 (k 2), 915×412 0 to 563.7
-    (k 1). With the book shut, 0 to 1010 less the
-    screen's width / k: 377 at the desk, 428 at the tablet, 95 at 915×412. (Until decisions-log 271, with the Town as
+    should it stand past an end. Measured with the book open on the Smithy (world px, k; decisions-log 271, 337): the
+    desk 1266×713 0 to 1096 (k 2; the book's left at 376 px), the tablet 1164×777 0 to 1120.7 (k 2), 915×412 0 to
+    837.7 (k 1). With the book shut, 0 to 1284 less the
+    screen's width / k: 651 at the desk, 702 at the tablet, 369 at 915×412 (274 more each than with the Town 1010
+    wide). (Until decisions-log 271, with the Town as
     wide as the screen: the book open 0 to 445, 418.7, −22.4 to 468.7 and 434; shut, nothing to pan.)
   - **What never pans:** a gesture that begins on the book, on the HUD's band (`_meterBottom`: a press there is a tap
     only), on a button or a tab, the troop counter or its list, the battle log's button or open panel, a message, the
@@ -2199,6 +2215,77 @@ outside a Town.
   words "Sell 12k", the coin between) and 'sellCoin' (the coin on it; none while greyed); the pick's heading is `bagDetail` / `bagDetailText` 'icon', 'name', 'count'); while the Shop shows, the Bag's getters read the tab's grid (`bagCells`, `bagLootCells`,
   `bagMarks(kind).price` / `.basket`, `bagPage`, `bagEmpty`) and Buy's facing page (`bagActions`, `bagDetail` /
   `bagDetailText` 'buy', 'hint:buy', 'smithy').
+
+## Dungeon (`lib/dungeon_scene.dart`, `lib/dungeon_hud.dart`, `lib/dungeon_page.dart`; decisions-log 336, 337)
+
+The Dungeon's screens as M1 builds them (dungeon-design.md, its sections 2-4 and 10: one floor, Attack only, Wait
+only); the rules are units-and-combat.md's "The Dungeon".
+
+- **The way in:** a Town's door ("Town" above) or its book's Dungeon tab opens the Dungeon's page (`_dungeonPages`).
+  The left page: "Dungeon", "Floor 1" and in grey "More floors come later", "Your party" with its count (n/3), the
+  party's three places as the book's paper cards (a picked troop's idle sprite, its name, the first's with the crown
+  as it leads, its type, HP and damage, `statsOf`: "Knight · HP 140 · Dmg 20"; a tap takes it out; an empty place grey,
+  the next one saying "Pick up to 3 troops"), the cards fitted to what the page leaves, and the page's one bevelled
+  button, Enter: green, white while no troop is picked (a press says why, `whyNotDungeon`). The right page: "Army",
+  the living troops as cards, a picked one on the lit card with its place's number in the capsule; a tap adds it (up
+  to 3) or takes it out; the list scrolls where it doesn't fit (page_scroll.dart). The picks stay between trips while
+  those troops live (`Board.dungeonPage`, `dungeonPicks` for tests). Enter starts the trip (`Game.enterDungeon`): the
+  book shuts and the cave comes in from black (0.35 s, `_dunFadeDim`).
+- **No book inside** (M1): Esc and the pause button pause (the field's pause screen); the coach's news, the Town's
+  life and the pocket's keys wait for the way out. The music is the battle's while a monster is hostile, else the
+  idle one.
+- **The scene** (`_dungeonScene`): the cave in world units at k screen px a unit, the whole number nearest the
+  screen's height / 236 (at least 1: 4 at 1600×947, 3 at 1266×713, 2 at 915×412, `dungeonViewH`), the band's top 30%
+  of the view down (`dungeonWallShare`), the trip's camera (`Dungeon.cam`) for its left; the game's `viewW` is the
+  screen's width / k. Back to front: the cave's dark fill; each room's back wall (its slabs and pillars standing on the
+  band's top, its lit torches between them, 6 frames at 8 fps) and the stalactites along the view's top; the band,
+  each room's flat earth down its depth and its moss-topped ledge under it, the moss lip along the wall's foot; then by
+  their feet the props (rocks, boulders, crystal ores, graves), the save point's campfire (`town_campfire.png`), the
+  portal (the stairs, 10 frames) and the units, drawn as on the field (`_unit`: the bars, a Hero's crown). Under the
+  leader's action's target (in the chain's step 4 the pointed foe) the necromancer's summon ring (tiny_fx_summon.png's
+  full frame), green under a member, red under a foe, the pointed one's name over it; over a hostile monster's bar
+  ui_icons.png's yellow "!", over the leader's its crown. The shots and bursts are the field's; a monster rises on the
+  summon burst. Numbers rise 12 units over 0.8 s from each unit's HP change: the damage a member takes in red, a
+  monster's in white, a heal "+n" in green (no "Parry" or "Blocked" yet).
+- **The HUD** (`_dungeonHud`, ui_all.png's dark panels at the HUD's scale u, 3 on the desk and 2 at 915×412; the words
+  6u): at the top left the pause button (44 px), the target panel (the leader's target, or the pointed one in the
+  chain: its name, rank in its colour, "Hostile", "Neutral" or "Party", its HP bar; "No foe in sight"), the minimap
+  ("Floor 1", the rooms as a row of ui_bars.png capsules, those the party came near lighter, the campfire, the portal,
+  the party's crown, the foes as red marks) and two chips: Wait (M1's only mode) and Gambits (green while on; a tap or
+  G switches them). At the top right the live action panel; at the bottom right the party panel. On the desk the
+  Action button at the bottom left (the orange slot with the crossed swords, its key "Enter" on its corner, "Action"
+  under it) and the key hints in dark capsules right of it: "WASD: move", "Arrows: leader", "Enter: action", "G:
+  gambits", "Esc: pause". On a touch screen (a phone's or a tablet's platform) the joystick at the bottom left (a tan
+  slot of 60 px radius at the least, the four arrows, the orange knob toward the finger), the Action button (60 px) at
+  the bottom right and the party panel between them. At the save point with no monster hostile the green "Leave"
+  over the campfire goes back to the Town (`Game.leaveDungeon`). Nothing stands over the band's walkable middle (its
+  middle half; Leave aside); every control's tap is at least 44×44 px (`Board.dungeonParts`, `dungeonTaps` for tests).
+- **The live action panel** ("Now"; `Game.liveRows`): a row per unit with an action, the party's first (the leader's on
+  the orange slot with its crown), then the hostile foes with an action, the soonest to fire first: the cog when a
+  gambit chose it, the name (a foe's in its rank's colour), the action, the play arrow, the target, and the turn's
+  gauge (ui_bars.png's gold strip) at the row's end with "Ready" over it when full; "target lost" for 1.2 s when the
+  target fell or went home; a queued action on a line under its row ("then Attack Bat"). Six rows on a screen at
+  least 560 px tall, else four, then "+N more".
+- **The party panel:** a row per member, its action right-aligned ("Follow" with none), the cog, the crown before the
+  leader's name, HP now/most and MP; the leader's row on the orange slot; a member knocked out greyed. On the desk a
+  click on a row makes it the leader.
+- **The Action chain** (Wait: time stands still while it is open, `_dunStill`; the ribbon "Paused: step N of 4" between
+  the top panels): Enter or Space (or the Action button) opens step 1 on the leader. On the desk step 1 is the party
+  panel itself, the pointed row lit with the gold pointing hand; step 2 a card left of it with the member's name and
+  Attack, Skill and Item (Skill and Item greyed until M2); step 4 a card left of that, "Attack: on whom?", the foes on
+  the screen nearest the member first (each its name in its rank's ink, its rank, "Hostile" or "Neutral"), the Foes
+  and Party tabs under them (Party greyed until M2). Up / Down move the pointer (wrapping), Enter picks, Esc or
+  Backspace go back a step; their hints ("Up / Down: move", "Enter: pick", "Esc: back") over the cards. On a touch
+  screen one card across the bottom asks the step's question ("Who?", "Orla Glen: what?", "Attack: on whom?") with a
+  Back button at its top right: step 1 the members as 44 px rows (the action, HP, MP, the turn's gauge), step 2 the
+  three actions as tiles, step 4 the foes in two columns; a tap picks. The foe picked gives the member the Attack on
+  it (`Game.command`, the player's, under the 75% rule) and shuts the chain; a member who falls meanwhile shuts it;
+  step 2 with no foe on the screen says "No foe in sight".
+- **Moving and the leader:** WASD held (read each frame) or the joystick move the leader; with the chain shut Up / Down
+  switch the leader at once (the previous or next standing member; Left / Right do nothing). A tap or click on a foe
+  is the leader's Attack on it, on a member makes it the leader (the nearest body, within 22 px or 9 world units, whichever is more).
+- **The way out:** a trip ends in a message ("Floor cleared" at the portal, "Your party fell. No troop is lost.",
+  "Back from the Dungeon" by Leave), the Town comes back from black and its book on the Dungeon's page.
 
 ## Pause (`lib/pause.dart`)
 

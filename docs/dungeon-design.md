@@ -1,9 +1,9 @@
 # The Dungeon (design)
 
 Purpose: the design of the Dungeon, a mode entered from a Town where a small party explores floors and fights in real
-time, before it is built: its rules, its numbers, its screens, how it sits in the code and the milestones that build
-it (decisions-log 336). Nothing here is in the game yet; each milestone moves what it builds into the documents that
-describe the game (game-overview.md, units-and-combat.md, ui-hud.md, …) and marks it built here.
+time: its rules, its numbers, its screens, how it sits in the code and the milestones that build it (decisions-log
+336). Each milestone moves what it builds into the documents that describe the game (game-overview.md,
+units-and-combat.md, ui-hud.md, …) and marks it built here: M1 is built (decisions-log 337), the rest is not yet.
 
 ## What the owner asked for
 
@@ -493,7 +493,9 @@ they are and plays well with a joystick; the owner chose A.
 
 Each one is playable on its own and goes through the full checks (decisions-log 273).
 
-1. **M1: one floor (L).** The door in the Town and its page (the party of 3, Enter); one generated floor of 4-6 rooms
+1. **M1: one floor (L), built** (decisions-log 337; units-and-combat.md "The Dungeon", ui-hud.md "Dungeon"; its own
+   choices in 337: the desk's last hint "Esc: pause", no book inside, the minimap already, the long press with M2).
+   The door in the Town and its page (the party of 3, Enter); one generated floor of 4-6 rooms
    in the Mossy Halls look; WASD and the joystick; the party following on paths; monsters appearing at random points
    as the party nears, aggressive and neutral, aggro radius, chase, leash; gauges; Attack by reach (melee and shots)
    with the field's damage per second; the default gambits running (no editor); knock-outs; the arrival save point

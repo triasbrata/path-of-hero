@@ -497,7 +497,7 @@ extension _TownLifeLook on Board {
   /// The Town's life's turn in the Board's update: while the Town shows, its troops follow the living army and, unless
   /// the game is paused, go about their errands ([TownLife.step], at most 0.1 s a frame).
   void _townLifeTick(Game g, double dt) {
-    if (!_town.shown || !g.inTown) return;
+    if (!_town.shown || !g.inTown || g.dungeon != null) return; // a trip sets the army aside: the street waits
     _townLife.sync(g.units);
     if (!g.paused) _townLife.step(math.min(dt, 0.1));
   }

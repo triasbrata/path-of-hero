@@ -1,6 +1,6 @@
 # Units and combat
 
-Purpose: troop and monster stats, attacks, waves and the boss.
+Purpose: troop and monster stats, attacks, waves and the boss, and the Dungeon's fights.
 
 ## Stats (`Stats` in lib/game.dart)
 
@@ -2343,3 +2343,65 @@ The boss's moments (once, at half its HP; Skull Crusher waits for a troop in its
 | werebear | Roar | 0.8 s | the troops within 3 tiles deal 0.75× for 5 s (`Status.weaken`) |
 | necromancer | Death Nova | 1.0 s | 1.5× to every troop within 2.5 tiles |
 | necro_healer | Last Rites | 1.0 s | every monster within 3 tiles (itself too) gets 20% of its max HP back |
+
+## The Dungeon (`lib/dungeon.dart`, `lib/dungeon_gen.dart`, `lib/dungeon_nav.dart`, `lib/gambits.dart`; decisions-log 336, 337)
+
+A trip into a Town's Dungeon as M1 builds it: one floor, the Attack (and a healer's Heal), Wait only
+(dungeon-design.md holds the whole design and what comes next; ui-hud.md "Dungeon" the screens).
+
+- **The trip:** from a Town, a party of one to three of the army's living troops (`whyNotDungeon`), the first picked
+  leading. It runs inside the run's own `Game` (`Game.dungeon`): the army's units, the Shadows, the Tavern's and the
+  pocket's boosts and the oath are set aside; the party are copies of the picked troops with their `statsOf` (items,
+  Awaken, Forge, Train, a Hero's attributes, their relics), so the army is never touched; the floor's monsters join
+  them in `Game.units`; `Game.tick` hands every tick to the Dungeon's (at Speed x1 or x2 as on the field). It rolls
+  its own dice (`dungeonDice`, seeded with the game's seed + 1000), so a trip never shifts the wave run's rolls; a
+  Town's floor comes from a seed rolled at its first trip and kept while the game lasts. A trip ends at the arrival
+  save point by Leave (the leader within 40 of it, no monster hostile), at the portal (the leader within 22: "Floor
+  cleared") or by a wipe (1.5 s after the last member falls: "Your party fell. No troop is lost."); each way the
+  Town comes back with the army as it was at the door: no heart, no troop, no gold lost. Nothing is earned inside in
+  M1 (no gold, materials, score or kills; a relic or Pusaka that a kill sets off does nothing inside until M4). A save
+  made during a trip is the game as it was at the door (no Dungeon key, nothing new in the save).
+- **The floor** (`makeFloor`, from the Town's seed and the floor's number): four to six rooms left to right. The
+  arrival hall first (360 long, the save point 56 in, no monsters), then halls (420-600), corridors (300-360, a band
+  48 deep), caverns (480-640, two or three boulders to walk round), ore veins (420-560, two to four crystal rocks
+  against the wall, the band 96 deep) and grave rooms (420-580, three to five graves), each mirrored or not; the band
+  104 deep from y 8 elsewhere; the portal 44 from the floor's right end. A room holds three or four monsters on
+  floors 1-4, drawn from the field's pool at the floor's depth wave 3 + 4 × (floor − 1) (wave 3 on floor 1), elite at
+  5% + 2% a floor. The walk grid (`WalkGrid`): 8-unit cells over each room's band, a solid prop's blocked; paths by
+  A* (8 directions, no corner cut), asked again at most every 0.25 s or when the goal moved 16; a unit slides along
+  what blocks it.
+- **Moving:** the leader by the stick (WASD, the joystick) at its walk speed, the walk cap applying; let go, it walks
+  into reach of its action's target by itself. The others follow to a spot behind it by role (melee 24 back, long
+  range and healers 44-52), 20 apart in depth, walking there once 32 from it and put beside the leader past 400; a
+  member never chases a foe more than 160 from the leader. Up / Down make the previous or next standing member the
+  leader; a leader knocked out hands the lead to the first standing one.
+- **The monsters' coming:** a room's monsters are called once, when the leader comes within 320 of its left end: one
+  or two at a time, the first 0.4 s later, then 1.5-3 s apart, each at a random free point of the room's band (not
+  within 96 of its entrance or a save point, nor 28 of another unit), rising 0.6 s on the summon ring before it acts.
+  Their numbers are the field's at the depth wave, with no tide, Shadow or weakening; no monster skill in M1.
+- **Temper:** the aggressive types turn on the nearest member that comes within their aggro radius: the bat 72, the
+  skeleton 96, the skeleton archer 128, the werewolf 128, the armored skeleton 80, the orc rider 128, the greatsword
+  skeleton 96, a boss 160. The rest are neutral (the slimes, the orcs on foot, the bears, …): hostile only once hit,
+  the orcs then calling their kind within 96. A hostile monster hunts the nearest standing member; past 320 from its
+  home, or 10 s without reaching anyone, it gives up and walks home mending 20% of its HP a second, neutral again
+  there.
+- **The gauge:** every unit's fills over its turn, twice its field attack time and at least 1 s (`turnOf`); when it is
+  full and the target in reach the action fires and the gauge empties (a tick's overshoot kept); a stun stops it,
+  moving never resets it. An Attack is two blows, the second 0.25 s after the first (at most a quarter of the turn),
+  each the field's blow × turn ÷ attack time ÷ 2, so every unit deals the field's damage a second with the field's
+  blows and shots, crits, relics and statuses. A healer's Attack is its smite; its Heal (an ally) heals the field's
+  heal × turn ÷ attack time and costs the field's MP a heal as many times.
+- **Actions** (`Act`): Attack on a foe, Heal on an ally (Follow is none). The 75% rule: a new action given under 75%
+  of the gauge replaces the current one (the gauge kept); at 75% or more it waits behind it in one slot, a later one
+  replacing the waiting one, never the current. The player's command first: done once, then the gambits (with the
+  gambits off an Attack repeats on its target); a gambit never replaces a player's command, current or waiting. A
+  target that fell or went home is lost: the action dropped ("target lost"), the waiting one next, else the gambits,
+  else the member follows.
+- **Gambits** (`defaultGambits`, `readGambits`; the editor comes in M2): every member but the leader reads its type's
+  list from the top when it has no action, and every 0.5 s while its gauge is under 75% (at 75% or more a rule only
+  takes the waiting slot); the same rule keeps its target while its condition holds for it; the condition is checked
+  again as it fires. Their foes are the hostile monsters within 280 of the leader. The fighters' lists attack the foe
+  on an ally, the leader's target, else the nearest (the archer the weakest first); the priest heals an ally under 50%
+  and attacks only the undead; each list's skill rules never fit until M2 builds the skills inside. G (or the chip)
+  turns them off and on.
+- **Knock-outs:** a member at 0 HP lies where it fell until the trip ends (Rest comes with M3).

@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 
 import 'auto_start.dart';
 import 'cut_ins.dart';
+import 'dungeon_art.dart';
 import 'game.dart';
 import 'guide_rules.dart';
 import 'guide_text.dart';
@@ -84,6 +85,9 @@ part 'pixel_shapes.dart';
 part 'wizard_fx.dart';
 part 'wipe_ask.dart';
 part 'pocket_look.dart';
+part 'dungeon_scene.dart';
+part 'dungeon_hud.dart';
+part 'dungeon_page.dart';
 
 /// The player's volumes (settings.json), set on the book's Settings page; a new game keeps them.
 final _settings = loadSettings();
@@ -546,7 +550,9 @@ class TdGame extends FlameGame with KeyboardEvents, ScrollDetector {
 
   @override
   KeyEventResult onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) =>
-      event is KeyDownEvent && (board._pauseKey(event.logicalKey) || board._pocketKey(event.logicalKey)) ? KeyEventResult.handled : KeyEventResult.ignored;
+      event is KeyDownEvent && (board._dungeonKey(event.logicalKey) || board._pauseKey(event.logicalKey) || board._pocketKey(event.logicalKey))
+          ? KeyEventResult.handled
+          : KeyEventResult.ignored;
 
   @override
   Future<void> onLoad() async {
@@ -588,6 +594,7 @@ class TdGame extends FlameGame with KeyboardEvents, ScrollDetector {
       'town_mug.png', // the wave meter's beer mug in a Town (town_look.dart)
       ...townImages, // the Town scene (town_scene.dart); its layers are the battle's band too (_scenery)
       townSmith, // the Town's smith in the Smithy (town_smith.dart)
+      ...dungeonImages, // the Dungeon's cave and the Town's door (dungeon_scene.dart, town_scene.dart)
     ]);
     // The images derived from the sheets (unshadowed, outlined, recoloured) live in process-wide caches
     // ([Flame.images], [_outlines], [_idleBounds]): built once, so a second game in one process (a widget test
@@ -650,9 +657,9 @@ class TdGame extends FlameGame with KeyboardEvents, ScrollDetector {
 /// The book's pages, one per tab on its top edge, in the tabs' order: Pasukan (the troops), Tas (the bag) and Settings;
 /// and Licenses (licence_page.dart) and How to Play (guide_page.dart), opened from Settings, whose tab stays the open
 /// one. In a Town the Smithy, the Tavern and the Shop ([store]: the Town's, shop_page.dart) in place of the Army
-/// (town_scene.dart's [_bookTabs]; tavern_page.dart). The field's Toko (a game without the Towns) went in decisions-log
-/// 296.
-enum _Page { troops, bag, store, settings, licence, guide, smithy, tavern }
+/// (town_scene.dart's [_bookTabs]; tavern_page.dart), and the Dungeon's door ([dungeon]: dungeon_page.dart, decisions-log
+/// 337). The field's Toko (a game without the Towns) went in decisions-log 296.
+enum _Page { troops, bag, store, settings, licence, guide, smithy, tavern, dungeon }
 
 class Board extends PositionComponent
     with HasGameReference<TdGame>, TapCallbacks, SecondaryTapCallbacks, DragCallbacks, PointerMoveCallbacks {
@@ -723,6 +730,8 @@ class Board extends PositionComponent
   final _lic = _LicenceView(); // the Lisensi page: the packages read, the one open, both columns' scroll (licence_page.dart)
   final _guide = _GuideView(); // the Cara Main page: the open topic, both columns' scroll (guide_page.dart)
   final _town = _TownView(); // the Town scene: shown or fading, its pan, where its pieces were drawn (town_scene.dart)
+  final _dun = _DungeonView(); // the Dungeon's scene, its HUD and its Action chain (dungeon_scene.dart, dungeon_hud.dart)
+  final _dunPage = _DungeonPageView(); // the Dungeon's page in the Town book: the party picked (dungeon_page.dart)
   final _townLife = TownLife(); // the troops in a Town, on its own visual dice (town_life.dart)
   EdgeInsets _safe = EdgeInsets.zero; // what a phone's screen keeps at its edges this frame ([_safeInsets]; zero on the desktop)
   Rect _bookArea = Rect.zero; // the open book on the screen this frame: troops under it show no nameplate
@@ -1490,6 +1499,22 @@ class Board extends PositionComponent
   /// Town drawn). For tests.
   List<Rect> get townClouds => [..._town.clouds];
 
+  /// The Dungeon (dungeon_scene.dart, dungeon_hud.dart, dungeon_page.dart): where each part of its scene and HUD was drawn
+  /// this frame by name ('scene', 'band' (its walkable rows across the screen), 'pause', 'target', 'minimap', 'wait',
+  /// 'gambits', 'live', 'row:<i>' (the live panel's rows), 'party', 'member:<i>', 'action', 'hint:<i>', 'joystick',
+  /// 'leave', 'ribbon', and the chain's 'card:action', 'card:target' (the desk's), 'card', 'back' (a touch screen's),
+  /// 'action:<i>', 'foe:<i>', 'tabs'); what takes a press this frame (each at least 44 px); the chain's step (0 shut,
+  /// 1, 2, 4) and its pointer; the scene's scale and each unit's body's middle on the screen; the Dungeon page's parts
+  /// ('enter', 'party:<i>', and 'troop:' and a troop's name) and the troops picked there. For tests.
+  Map<String, Rect> get dungeonParts => {..._dun.at};
+  List<Rect> get dungeonTaps => [for (final (r, _) in _dun.taps) r];
+  int get dungeonStep => _dun.step;
+  int get dungeonPoint => _dun.point;
+  double get dungeonK => _dun.k;
+  Offset dungeonBody(Unit u) => _dun.bodies[u] ?? Offset.zero;
+  Map<String, Rect> get dungeonPage => {..._dunPage.at};
+  List<Unit> get dungeonPicks => [..._dunPage.picks];
+
   /// The Town's ground this frame (decisions-log 279; town_scene.dart's `_townStreet`): on the screen, 'strip' (the
   /// street, town_ground.png tiled from the street's line) and 'earth' under it to the view's bottom (none: no Town
   /// drawn). For tests.
@@ -1641,6 +1666,7 @@ class Board extends PositionComponent
   /// once a won wave's "VICTORY!" popup is over and nothing else is up: no Hero splash, no boss chest due, no other
   /// message. Not before this game's first win: a save coming in has its own notes in that window.
   void _capNews(Game g) {
+    if (g.dungeon != null) return; // the army is set aside for a trip
     if (_msg.text != null || _herald.who != null || _herald.next.isNotEmpty || _chestHolds(g)) return;
     if (g.victoryAt == double.negativeInfinity || g.t - g.victoryAt < victoryTime) return;
     if (g.capWarning() case final warning?) showMessage(warning, time: _noteTime);
@@ -1660,9 +1686,12 @@ class Board extends PositionComponent
     _clock += dt;
     _whilePaused(dt); // pause.dart
     if (welcome != null) return Sounds.scene(Music.idle); // nothing moves behind the welcome screen
-    g.viewW = size.x / _scale;
-    // A foe skill's first-sighting splash freezes the field (foe_splash.dart): no tick while it shows.
-    if (!_foeSplashHolds(g, dt)) g.tick(math.min(dt, 0.1) * speed);
+    if (g.dungeon == null) g.viewW = size.x / _scale; // a trip's view is its own (dungeon_scene.dart)
+    _dungeonFrame(g); // a trip's view, and the leader's stick (dungeon_scene.dart)
+    // A foe skill's first-sighting splash freezes the field (foe_splash.dart), and the Dungeon's Action chain its trip
+    // (Wait, dungeon_hud.dart): no tick while either shows.
+    if (!_foeSplashHolds(g, dt) && !_dunStill) g.tick(math.min(dt, 0.1) * speed);
+    _dungeonAfter(g); // the numbers over the units, a trip's news (dungeon_scene.dart)
     _bodiesStep(g); // where each troop is drawn, and its stride (body_look.dart)
     _dropPin(); // plates.dart
     if (_pickedAt case (:final kind, :final plus)? when g.over || !_canHold(g, kind, plus)) _picked = null; // used up, or the game ended
@@ -1673,7 +1702,7 @@ class Board extends PositionComponent
     if (g.waveActive && !_waveWas) _bookOpened = false;
     _waveWas = g.waveActive;
     _bookT = (_bookT + (_bookWanted ? 1 : -1) * dt * 3).clamp(0.0, 1.0);
-    if (_bookT == 0) _open(_home); // a closed book opens on the troops (in a Town on the Smithy, town_scene.dart)
+    if (_bookT == 0 && g.dungeon == null) _open(_home); // a closed book opens on the troops (in a Town on the Smithy, town_scene.dart); after a trip on its page
     if (!identical(g, _autoFor)) {
       _autoFor = g; // another game came in (a new one, a save): no countdown or cut-in carries over
       autoStart.cancel();
@@ -1769,7 +1798,7 @@ class Board extends PositionComponent
       final (img, fps) = _burstStrip(b.$2);
       return (g.t - b.$3) * fps >= _frames(img);
     });
-    Sounds.scene(g.waveActive ? Music.battle : Music.idle);
+    Sounds.scene(g.waveActive || (g.dungeon?.anyHostile ?? false) ? Music.battle : Music.idle);
   }
 
   /// Screen point → battlefield coordinates (x in world units, y from the top of the field).
@@ -1804,6 +1833,7 @@ class Board extends PositionComponent
     if (_msg.down(p)) return; // it closed the message window
     if (_chestDown(p)) return; // the boss chest's popup took it (chest_popup.dart)
     if (_wipeAskDown(p)) return; // or the wipe's dialog: Try again or Give up (wipe_ask.dart)
+    if (_dungeonDown(p)) return; // a trip: the Dungeon's HUD, its joystick, a foe or a member (dungeon_scene.dart)
     if (!_welcomeTap && _omenDown(p)) return; // it showed or hid the Shadows' tooltip (omen_look.dart)
     if (!_welcomeTap && _logDown(p)) return; // it opened or closed the battle log (battle_log.dart)
     if (!_welcomeTap && _mapDown(p)) return; // it opened or folded the minimap, or hit it (mini_map.dart)
@@ -1829,6 +1859,7 @@ class Board extends PositionComponent
   void onTapUp(TapUpEvent event) {
     if (_press case final press?) _press = (at: press.at, down: press.down, up: _clock); // it comes back up
     if (_tip.up()) return; // a long press that showed a tooltip is no tap
+    if (state.dungeon != null) return _dungeonLetGo(); // a trip's press acted as it went down; the joystick lets go
     _townTapUp(); // a press on a Town's scene came up unmoved: its tap (town_scene.dart)
     if (_chest.tapped || _wipeAsk.tapped) return; // the press was the chest popup's (chest_popup.dart) or the wipe dialog's
     if (_coach.tapped) return; // or a guide card's (coach.dart): nothing under it reacts
@@ -1887,6 +1918,7 @@ class Board extends PositionComponent
     _handAt = p;
     // Flame leaves a drag's kind unknown (a mouse's too): then the press that began it ([onTapDown]) told.
     if (event.deviceKind != ui.PointerDeviceKind.unknown) _touch = event.deviceKind != ui.PointerDeviceKind.mouse;
+    if (state.dungeon != null) return; // a trip: only the joystick drags, from its press (dungeon_scene.dart)
     // It began on the chest popup (chest_popup.dart), a guide card (coach.dart) or a foe skill's splash (foe_splash.dart).
     if (_chest.tapped || _coach.tapped || _foeSplash.tapped || _wipeAsk.tapped) return;
     if (welcome == null && _log.open && _log.panel.contains(p)) {
@@ -1962,6 +1994,7 @@ class Board extends PositionComponent
     }
     if (dragging != null || _itemDrag != null || _relicDrag != null) dragAt = Vector2(p.dx, p.dy);
     _townDrag(p, event.localDelta.toOffset()); // town_scene.dart
+    _dungeonDrag(p); // the joystick (dungeon_scene.dart)
     _handAt = p;
   }
 
@@ -1981,6 +2014,7 @@ class Board extends PositionComponent
   @override
   void onDragEnd(DragEndEvent event) {
     super.onDragEnd(event);
+    _dungeonLetGo(); // the joystick (dungeon_scene.dart)
     if (_townLetGo(event.velocity.toOffset())) return; // a Town's pan glides on; one that never moved is a tap (town_scene.dart)
     final at = dragAt, unit = _relocating, item = _itemDrag, relic = _relicDrag;
     _log.dragY = _assign.dragY = _detail.dragY = _bar.dragX = null;
@@ -2111,6 +2145,10 @@ class Board extends PositionComponent
     if (welcome case final w?) return _welcome(c, w);
     final g = state, s = _scale, o = _origin;
     c.drawRect(Offset.zero & Size(size.x, size.y), Paint()..color = const Color(0xFF1B2A1B));
+    if (g.dungeon != null) {
+      _dungeonScene(c, g); // a trip: the cave where the Town was (dungeon_scene.dart)
+      return _dungeonOver(c, g); // and its own HUD (dungeon_hud.dart)
+    }
     if (_townShown) {
       _townScene(c, g); // the Town where the field was, none of the field's looks over it (town_scene.dart)
       return _overField(c, g);
@@ -2151,47 +2189,8 @@ class Board extends PositionComponent
       if (u != _relocating) _unit(c, g, u);
     }
 
-    for (final sh in g.shots) {
-      final who = sh.from.type, at = _shotFrom(sh.from, sh.pos, sh.aim), level = g.awakenLevel(who); // from its drawn body (body_look.dart)
-      if (sh.look != ShotLook.plain) {
-        _specialShot(c, g, sh.look, who, at, math.atan2(sh.aim.y - sh.pos.y, sh.aim.x - sh.pos.x)); // a Hero skill's
-      } else if (_arrows.contains(who)) {
-        c.save();
-        c.translate(at.dx, at.dy);
-        c.rotate(math.atan2(sh.aim.y - sh.pos.y, sh.aim.x - sh.pos.x));
-        c.drawImageRect(_img('tiny_arrow_$who.png'), const Rect.fromLTWH(0, 0, 32, 32),
-            Rect.fromCenter(center: Offset.zero, width: 32, height: 32), _awakeFx(level));
-        c.restore();
-      } else if (who == 'wizard') {
-        _magicShot(c, g, sh, at, level); // the pack's fireball, or Arcane Blast's ice star (wizard_fx.dart)
-      }
-    }
-    _lineShots(c, g); // hero_skill_fx.dart
-    _beams(c, g);
-    _zoneSkies(c, g); // what falls on a zone (Bone Rain's arrows, Arrow Rain's)
-
-    for (final (at, who, t0) in _bursts) {
-      final (img, fps) = _burstStrip(who);
-      final (named, level) = _awakeOf(who);
-      final fx = _plainFx(who);
-      final paint = _summonPaints[named] ?? (named == 'upgrade' ? _awakeMark(level) : _awakeFx(level)); // the awakening's own in its colour
-      final f = ((g.t - t0) * fps).floor();
-      if (WizardMagic.ofBurst(fx) case final magic?) {
-        // A wizard's shot landing: its sheet's hit frames on the body, at the pack's size (wizard_fx.dart).
-        _magicFrame(c, magic, magic.hitFrame(g.t - t0), at - const Offset(0, 4), paint);
-        continue;
-      }
-      if (_feetFx.contains(fx)) {
-        _frame(c, img, f, at + const Offset(0, 5), paint: paint);
-        continue;
-      }
-      final fs = _img(img).height.toDouble();
-      c.save();
-      c.translate(at.dx, at.dy - 4);
-      c.scale((fx == 'upgrade' ? 44 : _burstSize) * (level > 0 ? 1.2 : 1) * (named.endsWith(_bigFx) ? _bigScale : 1) / fs); // an awakened troop's bursts are bigger
-      _frame(c, img, f, Offset.zero, anchor: Offset(fs / 2, fs / 2), paint: paint);
-      c.restore();
-    }
+    _shotsDraw(c, g); // the shots in flight, the line shots, the beams and what falls on a zone
+    _burstsDraw(c, g); // the bursts: hits, heals, summons, upgrades
     _skillsAbove(c, g); // skills.dart: the troop skills' looks that stand up (a shield, a blade, a column, a dome)
     _windMarks(c, g); // skills.dart: a winding monster's targets, marked
 
@@ -2216,10 +2215,61 @@ class Board extends PositionComponent
     _overField(c, g);
   }
 
+  /// The shots in flight ([Game.shots]) from their drawn bodies, the Hero skills' line shots, the beams and what falls on
+  /// a zone, in world units (the field's [_render], the Dungeon's scene).
+  void _shotsDraw(Canvas c, Game g) {
+    for (final sh in g.shots) {
+      final who = sh.from.type, at = _shotFrom(sh.from, sh.pos, sh.aim), level = g.awakenLevel(who); // from its drawn body (body_look.dart)
+      if (sh.look != ShotLook.plain) {
+        _specialShot(c, g, sh.look, who, at, math.atan2(sh.aim.y - sh.pos.y, sh.aim.x - sh.pos.x)); // a Hero skill's
+      } else if (_arrows.contains(who)) {
+        c.save();
+        c.translate(at.dx, at.dy);
+        c.rotate(math.atan2(sh.aim.y - sh.pos.y, sh.aim.x - sh.pos.x));
+        c.drawImageRect(_img('tiny_arrow_$who.png'), const Rect.fromLTWH(0, 0, 32, 32),
+            Rect.fromCenter(center: Offset.zero, width: 32, height: 32), _awakeFx(level));
+        c.restore();
+      } else if (who == 'wizard') {
+        _magicShot(c, g, sh, at, level); // the pack's fireball, or Arcane Blast's ice star (wizard_fx.dart)
+      }
+    }
+    _lineShots(c, g); // hero_skill_fx.dart
+    _beams(c, g);
+    _zoneSkies(c, g); // what falls on a zone (Bone Rain's arrows, Arrow Rain's)
+  }
+
+  /// The bursts ([_bursts]): hits, heals, summons and upgrades, in world units (the field's [_render], the Dungeon's
+  /// scene).
+  void _burstsDraw(Canvas c, Game g) {
+    for (final (at, who, t0) in _bursts) {
+      final (img, fps) = _burstStrip(who);
+      final (named, level) = _awakeOf(who);
+      final fx = _plainFx(who);
+      final paint = _summonPaints[named] ?? (named == 'upgrade' ? _awakeMark(level) : _awakeFx(level)); // the awakening's own in its colour
+      final f = ((g.t - t0) * fps).floor();
+      if (WizardMagic.ofBurst(fx) case final magic?) {
+        // A wizard's shot landing: its sheet's hit frames on the body, at the pack's size (wizard_fx.dart).
+        _magicFrame(c, magic, magic.hitFrame(g.t - t0), at - const Offset(0, 4), paint);
+        continue;
+      }
+      if (_feetFx.contains(fx)) {
+        _frame(c, img, f, at + const Offset(0, 5), paint: paint);
+        continue;
+      }
+      final fs = _img(img).height.toDouble();
+      c.save();
+      c.translate(at.dx, at.dy - 4);
+      c.scale((fx == 'upgrade' ? 44 : _burstSize) * (level > 0 ? 1.2 : 1) * (named.endsWith(_bigFx) ? _bigScale : 1) / fs); // an awakened troop's bursts are bigger
+      _frame(c, img, f, Offset.zero, anchor: Offset(fs / 2, fs / 2), paint: paint);
+      c.restore();
+    }
+  }
+
   /// What is drawn over the field, or over a Town's scene (town_scene.dart): the fade between them, the pause's dim, the
   /// HUD, the popups and the cursor.
   void _overField(Canvas c, Game g) {
     _townFadeDim(c); // town_scene.dart: going into a Town or out of one
+    _dunFadeDim(c); // dungeon_scene.dart: back from the Dungeon
     _pauseOverlay(c); // pause.dart: the field dimmed and "Pause", under the HUD
     _meterAt = _map.button = _tideAt = Rect.zero;
     _tideLabel = _townMeterText = '';
@@ -2263,10 +2313,11 @@ class Board extends PositionComponent
     }
     final p = dragAt?.toOffset() ?? _mouse;
     if (p == null) return;
-    final over = [..._hits.map((h) => h.$1), ..._cards.map((h) => h.$1), ..._slots.map((h) => h.$1), ..._relicSlots.map((h) => h.$1), ..._matSlots.map((h) => h.$1), ..._pocketCells.map((h) => h.$1),
+    final trip = welcome == null && state.dungeon != null; // a trip's own HUD and units (dungeon_scene.dart)
+    final over = trip ? [for (final (r, _) in _dun.taps) r, ?_dun.at['joystick']] : [..._hits.map((h) => h.$1), ..._cards.map((h) => h.$1), ..._slots.map((h) => h.$1), ..._relicSlots.map((h) => h.$1), ..._matSlots.map((h) => h.$1), ..._pocketCells.map((h) => h.$1),
       ..._assign.rows.map((h) => h.$1), ..._assign.taps.map((h) => h.$1), ..._plateTaps.map((h) => h.$1), ..._bar.cards.map((h) => h.$1), if (_pocketLive) ..._pocket.cells, if (_cards.isNotEmpty) _release.confirm,
       if (welcome == null) ...[_troops.button, _map.button, ..._townTaps]];
-    final hand = dragAt != null || over.any((r) => r.contains(p)) || (welcome == null && _unitAt(p) != null), // a unit: a tap pins its plate
+    final hand = dragAt != null || over.any((r) => r.contains(p)) || (welcome == null && (trip ? _dunUnitAt(p) : _unitAt(p)) != null), // a unit: a tap pins its plate (in a trip: attacks or leads)
         frame = cursorFrame(_press, _clock);
     final (src, hot) = hand
         ? (const Rect.fromLTWH(48, 224, 16, 16), Offset(6, frame > 0 && dragAt == null ? 1 : 2))
@@ -2771,7 +2822,7 @@ class Board extends PositionComponent
   /// Whether the book should be open: between waves once the cheering is over, or when opened mid-battle.
   bool get _bookWanted {
     final g = state;
-    if (g.over) return false;
+    if (g.over || g.dungeon != null) return false; // no book inside the Dungeon in M1 (dungeon_hud.dart)
     if (g.inTown) return _town.book; // a tap on the Town shuts it, a sign opens it (town_scene.dart)
     return g.waveActive ? _bookOpened : g.t - g.victoryAt >= victoryTime;
   }
@@ -2897,6 +2948,8 @@ class Board extends PositionComponent
         return _smithyPages(c, g, left, right, ts, ps); // a Town's (smithy_page.dart)
       case _Page.tavern:
         return _tavernPages(c, g, left, right, ts, ps); // a Town's with the Tavern on (tavern_page.dart)
+      case _Page.dungeon:
+        return _dungeonPages(c, g, left, right, ts, ps); // a Town's door to the Dungeon (dungeon_page.dart)
       case _Page.settings:
         return _settingsPage(c, left, right, ts, btnH);
       case _Page.licence:
@@ -2945,7 +2998,10 @@ class Board extends PositionComponent
       final top = open ? edge + (2 - src.height) * ps : hit.top - (_look(tap) == ButtonLook.hover ? 2 * ps : 0);
       c.drawImageRect(marks, src, Rect.fromLTWH(x, top, src.width * ps, src.height * ps), _px);
       final mark = Rect.fromLTWH(x + 2 * ps, top + (open ? 2 : 1) * ps, 16 * ps, 16 * ps);
-      if (page == _Page.tavern) {
+      if (page == _Page.dungeon) {
+        // A Town's Dungeon: the portal's first frame, the square of its art (rows 14-63) filling the mark (dungeon_page.dart).
+        c.drawImageRect(_img(dungeonPortal), const Rect.fromLTWH(7, 14, 50, 50), mark, _px);
+      } else if (page == _Page.tavern) {
         c.drawImageRect(_img('town_mug.png'), _townMarkSrc, mark, _px); // a Town's Tavern: the wave meter's mug
         if (_tavernUnseen(g)) _tabDot(c, mark, ps, 'tavernDot'); // its offers not seen yet (tavern_page.dart)
       } else {

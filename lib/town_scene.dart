@@ -56,6 +56,13 @@ const _townTentW = 96.0, _townWoodW = 134.0, _townSmithyW = _townWoodW + 148 + 9
 /// turunkan".
 const _townStreetDown = 0.92;
 
+/// The Dungeon's door at the street's far end (decisions-log 336, 337; dungeon-design.md's mockup D), world px from its
+/// place's left: a mossy rock mound of Floor Tiles2's moss-topped block, [_townDoorCols] cells of 32 wide and 3 tall
+/// from [_townDoorMound], the portal at its foot in the middle, a boulder pile over each of its lower corners and a lit
+/// standing torch in front of either side of the portal ([_TownLayout.pieces]), as the mockup lays them; [_townDoorW]
+/// in all, its middle (the sign's) at [_townDoorMid].
+const _townDoorW = 270.0, _townDoorMound = 38.0, _townDoorCols = 5, _townDoorMid = _townDoorMound + 16.0 * _townDoorCols;
+
 /// The clouds' row 0 over the layers' row 0, in px (decisions-log 274): as on the field until decisions-log 287, where
 /// battle_clouds.png's row 0 lay 13.2 world units under the band's top and the layers' [_bandTop] (0.8 world units: 4 px
 /// at the layers' [_layerK]).
@@ -70,8 +77,15 @@ const _townFps = 8.0, _townPan = 0.4, _townFade = 0.35, _townDim = 0.35;
 const _townSlop = 8.0;
 
 /// The places a tap opens the book at, with their pages ([Board._townTap]): the three buildings by their signs or what
-/// stands at them, and the troops' rest (the tent and its campfire; decisions-log 301) on the Army.
-const _townPages = [('smithy', _Page.smithy), ('shop', _Page.store), ('tavern', _Page.tavern), ('tent', _Page.troops)];
+/// stands at them, the troops' rest (the tent and its campfire; decisions-log 301) on the Army, and the Dungeon's door
+/// (its cave mouth, decisions-log 337) on its page.
+const _townPages = [
+  ('smithy', _Page.smithy),
+  ('shop', _Page.store),
+  ('tavern', _Page.tavern),
+  ('tent', _Page.troops),
+  ('dungeon', _Page.dungeon),
+];
 
 /// A season's backdrop (decisions-log 326): its parallax [layers] (1 the near pines .. 5 the sky), its [castle] and its
 /// street's tile ([ground]): the Normal BG set in summer, the Autumn and the Winter sets after.
@@ -236,7 +250,7 @@ List<(String, int, int)> houseProps(int n, int storeys) {
 /// and its first frame [src] (an animation's next frames are beside it, [frames] of them), its left [x] in world px
 /// (its frame's bottom row on the street's line, [_townGround]), and its frame's empty columns at the left and the
 /// right ([blank]: its place's box and taps take its art alone, so the furnace standing over the next house's foot
-/// takes no tap of that house's).
+/// takes no tap of that house's); [up]: how far its bottom stands over the street (the door's mound's upper cells).
 typedef _TownPiece = ({
   String name,
   String? place,
@@ -245,17 +259,19 @@ typedef _TownPiece = ({
   int frames,
   double x,
   (int, int) blank,
+  double up,
 });
 
 /// Where the Town's places stand, laid out [viewW] world px wide (the view's width, [full] at the least: decisions-log
 /// 271) with [above] world px from the view's top to the street: from the left end the tent, the Smithy (its wood
-/// corner, its house, its furnace and the ore), the yard (the pine and the clothes line), the Tavern and the Shop, the
-/// room past [full] shared out between them. The Smithy and the Shop are the smallest one-storey house; the Tavern n 1,
-/// two storeys from 240 above the street (its 200 and the HUD's band), else one.
+/// corner, its house, its furnace and the ore), the yard (the pine and the clothes line), the Tavern, the Shop and the
+/// Dungeon's door (decisions-log 337), the room past [full] shared out between them. The Smithy and the Shop are the
+/// smallest one-storey house; the Tavern n 1, two storeys from 240 above the street (its 200 and the HUD's band), else
+/// one.
 class _TownLayout {
   _TownLayout(double view, double above, [this.identity = 'millbrook']) : viewW = math.max(view, full) {
     storeys = above >= houseSize(0, 2).$2 + 40 ? 2 : 1;
-    final gap = _townGap + (viewW - full) / 4;
+    final gap = _townGap + (viewW - full) / 5;
     var x = _townEdgeL;
     for (final (place, w) in [
       ('tent', _townTentW),
@@ -263,6 +279,7 @@ class _TownLayout {
       ('yard', _townYardW),
       ('tavern', houseSeen(n)),
       ('shop', houseSeen(_townSmallN)),
+      ('dungeon', _townDoorW),
     ]) {
       left[place] = x;
       width[place] = w;
@@ -270,10 +287,11 @@ class _TownLayout {
     }
   }
 
-  /// The least width the Town is laid out at, in world px (1010): its ends, the tent, the Smithy's place, the yard, the
-  /// n 1 Tavern, the Shop and the least gaps. Wider than a screen at k 2: the player pans (decisions-log 264, 271).
+  /// The least width the Town is laid out at, in world px (1284): its ends, the tent, the Smithy's place, the yard, the
+  /// n 1 Tavern, the Shop, the Dungeon's door and the least gaps (1010 before the door, decisions-log 337). Wider than a
+  /// screen at k 2: the player pans (decisions-log 264, 271).
   static final full = _townEdgeL + _townTentW + _townSmithyW + _townYardW + houseSeen(_townTavernN) +
-      houseSeen(_townSmallN) + _townEdgeR + 4 * _townGap;
+      houseSeen(_townSmallN) + _townDoorW + _townEdgeR + 5 * _townGap;
 
   /// The scale's rule: no more screen px a world px than lets this many world px across (582: the least
   /// Town before it was laid out wider than the screen, decisions-log 253, 271), so the desk and the tablet draw at 2
@@ -305,8 +323,8 @@ class _TownLayout {
   /// Every piece but the buildings' cells, back to front (the buildings go after the first [behindHouses]).
   List<_TownPiece> get pieces {
     _TownPiece piece(String name, String? place, String file, TownCell src, double x,
-            {int frames = 1, (int, int) blank = (0, 0)}) =>
-        (name: name, place: place, file: file, src: src, frames: frames, x: x, blank: blank);
+            {int frames = 1, (int, int) blank = (0, 0), double up = 0}) =>
+        (name: name, place: place, file: file, src: src, frames: frames, x: x, blank: blank, up: up);
     _TownPiece prop(String name, String? place, double x) => piece(name, place, townProps, townPropCells[name]!, x);
     _TownPiece whole(String name, String place, String file, int w, int h, double x) =>
         piece(name, place, file, (x: 0, y: 0, w: w, h: h), x);
@@ -342,6 +360,40 @@ class _TownLayout {
       whole('tent', 'tent', townTent, 96, 121, tent),
       piece('campfire', 'tent', townCampfire, (x: 0, y: 0, w: fire, h: fire), tent + _townTentW - fire,
           frames: townCampfireFrames),
+      ...door,
+    ];
+  }
+
+  /// The Dungeon's door ([_townDoorW]): the mound's cells (its top row the block's moss-topped corners and top, the two
+  /// under it its sides and fill), the portal at its foot, the boulder piles over its lower corners and the two standing
+  /// torches, back to front.
+  List<_TownPiece> get door {
+    final x0 = left['dungeon']!, block = dungeonTileCells['block']!, f = dungeonPortalFrame;
+    _TownPiece prop(String name, String kind, double x) {
+      final s = dungeonPropCells[kind]!;
+      return (name: name, place: 'dungeon', file: dungeonProps, src: (x: s.x, y: s.y, w: s.w, h: s.h), frames: dungeonPropFrames[kind] ?? 1,
+          x: x, blank: (0, 0), up: 0.0);
+    }
+
+    return [
+      for (var row = 0; row < 3; row++)
+        for (var i = 0; i < _townDoorCols; i++)
+          (
+            name: 'mound$row$i',
+            place: 'dungeon',
+            file: dungeonTiles,
+            src: (x: block.x + 32 * (i == 0 ? 0 : i == _townDoorCols - 1 ? 2 : 1), y: block.y + 32 * (row == 0 ? 0 : 1), w: 32, h: 32),
+            frames: 1,
+            x: x0 + _townDoorMound + 32.0 * i,
+            blank: (0, 0),
+            up: 32.0 * (2 - row),
+          ),
+      (name: 'portal', place: 'dungeon', file: dungeonPortal, src: (x: 0, y: 0, w: f, h: f), frames: dungeonPortalFrames,
+          x: x0 + _townDoorMid - f / 2, blank: (0, 0), up: 0.0),
+      prop('boulderL', 'boulder', x0),
+      prop('boulderR', 'boulder', x0 + _townDoorW - 88),
+      prop('torchL', 'standTorch', x0 + _townDoorMid - 35),
+      prop('torchR', 'standTorch', x0 + _townDoorMid + 45),
     ];
   }
 
@@ -357,6 +409,7 @@ class _TownLayout {
         'smithy' => smithyHouse + houseSeen(_townSmallN) / 2,
         'shop' => left[place]! + houseSeen(_townSmallN) / 2,
         'tavern' => left[place]! + houseSeen(n) / 2,
+        'dungeon' => left[place]! + _townDoorMid,
         _ => left[place]! + width[place]! / 2,
       };
 
@@ -432,7 +485,8 @@ extension _TownScene on Board {
 
   /// The book's tabs, left to right, as (icon, page): the field's Army, Bag and Settings (the owner's order; the Shop is
   /// a Town's, decisions-log 224, and the field's Toko went in decisions-log 296); in a Town Smithy (a null icon: the Town's
-  /// hammer), the Tavern (its mug: decisions-log 267, as the street's order), Shop, then the field's own three in its
+  /// hammer), the Tavern (its mug: decisions-log 267, as the street's order), Shop, the Dungeon (the portal: decisions-log
+  /// 337, its door at the street's far end), then the field's own three in its
   /// order: Army (decisions-log 301; the owner, 2026-10-09: "di town tab army harus di munculkan"; the tent opens it,
   /// [_townTap]), Bag and Settings.
   List<(Offset?, _Page)> _bookTabs(Game g) => g.inTown
@@ -440,6 +494,7 @@ extension _TownScene on Board {
           (null, _Page.smithy),
           (null, _Page.tavern),
           (_icCoins, _Page.store),
+          (null, _Page.dungeon),
           (Board._icSwords, _Page.troops),
           (Board._icBag, _Page.bag),
           (Board._icGear, _Page.settings),
@@ -474,7 +529,7 @@ extension _TownScene on Board {
     final was = v.shown;
     v.shown = _clock - v.fadeAt < _townFade ? !v.target : v.target;
     if (came && _page == _Page.troops) _open(_Page.smithy);
-    if (!g.inTown && (_page == _Page.smithy || _page == _Page.tavern || _page == _Page.store)) _open(_Page.troops);
+    if (!g.inTown && (_page == _Page.smithy || _page == _Page.tavern || _page == _Page.store || _page == _Page.dungeon)) _open(_Page.troops);
     if (!v.shown) {
       if (was && v.fadeAt.isFinite) _boostBursts(g); // the field back from a Town: its boosts' troops burst (tavern_look.dart)
       return v.clear();
@@ -529,9 +584,14 @@ extension _TownScene on Board {
   }
 
   /// The place a pan to [page] shows: the Smithy for Smithy, the Shop for Shop, the tent (the troops' rest) for Army
-  /// (decisions-log 301), the Tavern for the rest.
-  String _townPlace(_Page page) =>
-      switch (page) { _Page.smithy => 'smithy', _Page.store => 'shop', _Page.troops => 'tent', _ => 'tavern' };
+  /// (decisions-log 301), the door for the Dungeon (decisions-log 337), the Tavern for the rest.
+  String _townPlace(_Page page) => switch (page) {
+        _Page.smithy => 'smithy',
+        _Page.store => 'shop',
+        _Page.troops => 'tent',
+        _Page.dungeon => 'dungeon',
+        _ => 'tavern',
+      };
 
   /// The scene's frame on this screen: its [strip] (the whole screen), [k] screen px per world px (2, or 3 from about
   /// 1040 px tall; no more than lets [_TownLayout.fit] across, 1 at the least), the layers' [top] on the screen (the
@@ -580,7 +640,7 @@ extension _TownScene on Board {
     final frame = (_fieldClock * _townFps).floor(), pieces = L.pieces;
     void put(_TownPiece p) {
       final s = p.src, n = frame % p.frames;
-      final to = Rect.fromLTWH(ox + (p.x * k).roundToDouble(), top + (_townGround - s.h) * k, s.w * k, s.h * k);
+      final to = Rect.fromLTWH(ox + (p.x * k).roundToDouble(), top + (_townGround - s.h - p.up) * k, s.w * k, s.h * k);
       c.drawImageRect(_img(p.file), Rect.fromLTWH((s.x + n * s.w).toDouble(), s.y.toDouble(), s.w.toDouble(), s.h.toDouble()), to, _px);
       v.at[p.name] = to;
       if (p.place case final place?) {
@@ -601,8 +661,8 @@ extension _TownScene on Board {
     _townFolk(c, L, ox, k, up: false); // the troops on the street and their bubbles (town_life.dart)
     // The signs over their buildings' roofs, kept under the HUD's rows; at 2 screen px a sprite px at least, to be read.
     final sk = math.max(2.0, k);
-    for (final (place, word) in [('smithy', Words.smithy), ('tavern', Words.tavern), ('shop', Words.shop)]) {
-      final roof = v.buildings[place]!.first.$2.top, y = math.max(roof - 24 * sk, _meterBottom + 4);
+    for (final (place, word) in [('smithy', Words.smithy), ('tavern', Words.tavern), ('shop', Words.shop), ('dungeon', Words.dungeon)]) {
+      final roof = (v.buildings[place]?.first.$2 ?? v.at[place]!).top, y = math.max(roof - 24 * sk, _meterBottom + 4);
       v.signs[place] = _ribbonTitle(c, word, Offset(ox + (L.mid(place) * k).roundToDouble(), y + 10 * sk), sk, 64 * sk);
     }
     _townArrival(c, g, sk); // the Town's name as it comes up (town_look.dart)

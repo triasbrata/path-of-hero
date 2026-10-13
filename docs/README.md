@@ -10,7 +10,7 @@ README.md, then [dev-workflow.md](dev-workflow.md).
 | [architecture.md](architecture.md) | How the code is split (logic vs. drawing) and where each system lives |
 | [dev-workflow.md](dev-workflow.md) | How to build and run the game, its identity on each platform, and the traps that break it |
 | [process.md](process.md) | How a change gets in: the branches, the checks before main, the decisions log, the art's vault and its hooks, and what never goes into this public repository |
-| [units-and-combat.md](units-and-combat.md) | Troop and monster stats, attacks, waves, the boss |
+| [units-and-combat.md](units-and-combat.md) | Troop and monster stats, attacks, waves, the boss, the Dungeon's fights |
 | [loot-items-relics.md](loot-items-relics.md) | Drops, per-type item upgrades and their awakening caps, per-troop relics, the store |
 | [formation-and-navigation.md](formation-and-navigation.md) | How troops line up, walk in, make way and settle |
 | [camera-and-field.md](camera-and-field.md) | The camera, the back line, the deploy zone and the field's size |
@@ -19,7 +19,7 @@ README.md, then [dev-workflow.md](dev-workflow.md).
 | [ui-hud.md](ui-hud.md) | The book HUD, the landscape layout and its letterbox, buttons, bars, cursor — and which sprite rects they use |
 | [assets.md](assets.md) | Which asset packs are used, how their files were made, naming, the licence rule, the asset vault (the licensed art encrypted, its hooks) and the placeholder art |
 | [testing.md](testing.md) | How tests are written and run, and how to check visuals |
-| [dungeon-design.md](dungeon-design.md) | The Dungeon's design before it is built: its rules, numbers, screens, code plan and milestones |
+| [dungeon-design.md](dungeon-design.md) | The Dungeon's design, built milestone by milestone (M1 built): its rules, numbers, screens, code plan and milestones |
 | [decisions-log.md](decisions-log.md) | What the owner asked for and why things are the way they are |
 
 ## Rules for keeping it useful

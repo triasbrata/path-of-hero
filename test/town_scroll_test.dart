@@ -16,7 +16,7 @@ import 'package:tower_defense/game.dart';
 import 'package:tower_defense/main.dart';
 
 import 'town_hud_test.dart' show boot, frames, townGame;
-import 'town_scene_test.dart' show bare, bounds, intoTown, settle, sizes;
+import 'town_scene_test.dart' show bare, intoTown, settle, sizes;
 
 /// The right of what shows of the Town: with the book open its left, else the screen's.
 double showsRight(Board b, Size size) => b.bookArea.isEmpty ? size.width : b.bookArea.left;
@@ -24,8 +24,8 @@ double showsRight(Board b, Size size) => b.bookArea.isEmpty ? size.width : b.boo
 /// A point to drag from: on the street, under the HUD's band, in the middle of what shows.
 Offset street(Board b, Size size) => Offset(showsRight(b, size) / 2, b.townLane - 10);
 
-/// The Town's right end on the screen: the Shop's cells' right (its eave tip's clear end, the layout's last 6 world px).
-double townRight(Board b) => bounds(b.townBuilding('shop')).right;
+/// The Town's right end on the screen: the Dungeon's door's right and the layout's last 6 world px (decisions-log 337).
+double townRight(Board b) => b.townScene['dungeon']!.right + 6 * b.townK;
 
 /// A drag of [dx] screen px from [from]: 30 px first (past Flutter's slop and the Town's), then the rest, then up; no
 /// fling (the test pointer's events carry no time).
@@ -41,13 +41,14 @@ Future<void> drag(WidgetTester tester, Offset from, double dx, {PointerDeviceKin
 }
 
 /// The page a building's tap opens (the Tavern its own with it on, as shipped; the Bag with it off).
-const pageOf = {'smithy': 'smithy', 'tavern': 'tavern', 'shop': 'store'};
+const pageOf = {'smithy': 'smithy', 'tavern': 'tavern', 'shop': 'store', 'dungeon': 'dungeon'};
 
-/// A building (not [not]) whose ground floor's left wall shows whole on the scene, and that wall's middle.
+/// A place (not [not]) shown whole on the scene, and its middle: the Dungeon's door's portal (the Town's right end,
+/// decisions-log 337), else a building's ground floor's left wall.
 (String, Offset)? shownBuilding(Board b, Size size, {String? not}) {
-  for (final place in const ['shop', 'tavern', 'smithy']) {
+  for (final place in const ['dungeon', 'shop', 'tavern', 'smithy']) {
     if (place == not) continue;
-    final wall = b.townBuilding(place).firstWhere((c) => c.$1 == 'wallL8a').$2;
+    final wall = place == 'dungeon' ? b.townScene['portal']! : b.townBuilding(place).firstWhere((c) => c.$1 == 'wallL8a').$2;
     if (wall.left >= 4 && wall.right <= showsRight(b, size) - 4) return (place, wall.center);
   }
   return null;
@@ -117,7 +118,7 @@ void main() {
       final sign = b.townSign(place).center.dx;
       expect(sign, closeTo(b.bookArea.left / 2, 2), reason: "the $place's place in view");
 
-      // The bare scene shuts the book: the Town still pans, between its ends at the screen's (the Town 1010 world px
+      // The bare scene shuts the book: the Town still pans, between its ends at the screen's (the Town 1284 world px
       // wide, decisions-log 271).
       await tester.tapAt(bare(b, size));
       await frames(tester, 40);
@@ -189,8 +190,8 @@ void main() {
     await drag(tester, onBox, -300);
     expect((b.townCam, b.message), (opened, null), reason: 'a drag from the message');
 
-    // The book's buttons act as they are pressed, as before; the Town's taps as the press comes up (the Shop, panned
-    // to the Town's right end).
+    // The book's buttons act as they are pressed, as before; the Town's taps as the press comes up (the Dungeon's door,
+    // panned to the Town's right end: its portal).
     Rect tabOf(String page) => b.bookTabs.firstWhere((t) => t.$1 == page).$2;
     final tab = await tester.startGesture(tabOf('bag').center);
     await frames(tester, 2);
@@ -199,8 +200,9 @@ void main() {
     await frames(tester, 40);
     await drag(tester, street(b, size), -3000);
     expect(b.townCam, hi);
-    final (place, at) = shownBuilding(b, size, not: 'tavern')!;
-    expect(place, 'shop');
+    const place = 'dungeon';
+    final at = b.townScene['portal']!.center;
+    expect(at.dx, lessThan(showsRight(b, size)), reason: 'the portal in view');
     final press = await tester.startGesture(at);
     await frames(tester, 4);
     expect(b.bookPage, 'bag', reason: "the $place's tap waits for the release");

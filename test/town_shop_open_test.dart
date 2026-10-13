@@ -63,7 +63,7 @@ void main() {
       final t = await intoTown(tester, b, wave: 0);
       await settle(tester, b);
       expect((t.wave, t.inTown, t.storeOpen), (1, true, true));
-      expect(tabs(), ['smithy', 'tavern', 'store', 'troops', 'bag', 'settings']); // the Tavern's after the Smithy (decisions-log 268), the Army's after the Shop (301)
+      expect(tabs(), ['smithy', 'tavern', 'store', 'dungeon', 'troops', 'bag', 'settings']); // the Tavern's after the Smithy (decisions-log 268), the Dungeon's after the Shop (337), then the Army's (301)
       await tester.tapAt(b.bookTabs.firstWhere((x) => x.$1 == 'store').$2.center);
       await frames(tester, 40);
       expect((b.bookPage, b.storeShown), ('store', true), reason: 'the Shop open in the first Town');

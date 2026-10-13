@@ -167,7 +167,7 @@ void main() {
       final g = b.state = tavernGame();
       await frames(tester, 40);
       expect(b.bookPage, 'smithy', reason: 'a Town still opens the book on the Smithy');
-      expect([for (final (name, _) in b.bookTabs) name], ['smithy', 'tavern', 'store', 'troops', 'bag', 'settings']);
+      expect([for (final (name, _) in b.bookTabs) name], ['smithy', 'tavern', 'store', 'dungeon', 'troops', 'bag', 'settings']);
       final tab = b.bookTabs.firstWhere((t) => t.$1 == 'tavern').$2;
       expect(b.storeAt('tavernDot'), isNot(Rect.zero), reason: 'the offers not seen yet: the dot on its tab');
       expect(inside(b.storeAt('tavernDot'), tab.inflate(4)), isTrue, reason: '$tag: the dot on the Tavern tab');

@@ -92,7 +92,7 @@ void main() {
       await frames(tester, 40);
       // A game that comes in in a Town opens on the Smithy, with the Army's tab after the Shop's.
       expect((b.bookPage, b.townShown), ('smithy', true));
-      expect([for (final (name, _) in b.bookTabs) name], ['smithy', 'tavern', 'store', 'troops', 'bag', 'settings']);
+      expect([for (final (name, _) in b.bookTabs) name], ['smithy', 'tavern', 'store', 'dungeon', 'troops', 'bag', 'settings']);
       await tabsFit(tester, b, size, 'smithy', '$tag Town, Smithy');
 
       // The Army's tab: the field's page (the grid, the picked type's detail), the view panned to the tent (the
@@ -168,8 +168,13 @@ void main() {
       expect(b.bookPage, 'smithy');
       await tester.tapAt(bare(b, size));
       await frames(tester, 40);
-      await wheel(tester, bare(b, size), 3000);
-      await tester.tapAt(b.townBuilding('tavern').firstWhere((c) => c.$1 == 'wallL8a').$2.center);
+      // The Tavern's building panned into view (the Dungeon's door past the Shop is the Town's right end now,
+      // decisions-log 337).
+      Rect tavernWall() => b.townBuilding('tavern').firstWhere((c) => c.$1 == 'wallL8a').$2;
+      for (var i = 0; i < 30 && (tavernWall().left < 4 || tavernWall().right > size.width - 4); i++) {
+        await wheel(tester, bare(b, size), tavernWall().left < 4 ? -60 : 60);
+      }
+      await tester.tapAt(tavernWall().center);
       await frames(tester, 40);
       expect(b.bookPage, 'tavern');
       await tester.tapAt(bare(b, size));

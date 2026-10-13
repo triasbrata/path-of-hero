@@ -34,7 +34,12 @@ but the troops move freely.
    "Towns: the Tavern"). Each Town has its identity by its number in the run, two a season: Millbrook and Willowmere
    in summer value beginner goods, Ironvale and Ambergate in autumn, Frostgate and Highspire in winter the high-class
    ones, each with its own backdrop, yard and the kinds it pays well for; a drag, the wheel or a trackpad's swipe pans it sideways to look around; "Leave town" goes on
-   to the next wave (with Auto Wave on, 5 s after coming in).
+   to the next wave (with Auto Wave on, 5 s after coming in). At the street's far end a door leads into the
+   **Dungeon** (decisions-log 336, 337; dungeon-design.md): a party of up to three troops picked from the army walks a
+   side-view cave floor and fights its monsters in real time, each unit acting when its gauge fills and its target is
+   in reach; the player moves the leader and gives the attacks, the others follow their gambits; some monsters hunt
+   the party, others fight only once hit. The party comes back by the save point, by the portal at the floor's end or
+   by a wipe, never costing a troop or a heart (for now one floor, and nothing to earn there).
 5. **Lose.** A game starts with 3 hearts. When the whole army falls mid-wave the wave is lost, not the game
    (decisions-log 322): it costs a heart, the wave's monsters cheer a moment and are swept off, and a card asks "Try
    again" or "Give up" (decisions-log 333). Trying again goes back to the last Town the player went into, as he left it,

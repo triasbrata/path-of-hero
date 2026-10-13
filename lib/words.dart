@@ -159,7 +159,9 @@ abstract final class Words {
   static const enter = 'Enter', pickParty = 'Pick up to 3 troops', yourParty = 'Your party', noFoes = 'No foe in sight';
   static const hintMove = 'WASD: move', hintLeader = 'Arrows: leader', hintAction = 'Enter: action', hintGambits = 'G: gambits',
       hintMenu = 'Esc: menu', hintUpDown = 'Up / Down: move', hintTab = 'Left / Right: tab', hintPick = 'Enter: pick',
-      hintBack = 'Esc: back';
+      hintBack = 'Esc: back', hintPause = 'Esc: pause';
+  static const skill = 'Skill', item = 'Item', partyFellNote = 'No troop is lost.', inParty = 'In the party',
+      floorOne = 'Floor 1', dungeonFloors = 'More floors come later';
   static const dungeonInside = 'Already in the Dungeon', dungeonTownOnly = 'Only in a Town',
       dungeonPickParty = 'Pick 1 to 3 troops';
 }

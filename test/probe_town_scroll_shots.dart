@@ -3,8 +3,8 @@
 // `["test", "test/probe_town_scroll_shots.dart"]` with the worktree or a mirror as `dir` (`--dart-define=SIZES=1266x713`
 // for some sizes only). It never touches the real save (flutter_test_config.dart's temp dir); every dice is seeded.
 //
-// At 1266x713, 1164x777, 915x412 and 412x860 (<size>), a board game with the Towns on, in its Town (laid out 1010 world
-// px wide, decisions-log 271), the book open on the Smithy (where a Town opens), panned by a finger's drag:
+// At 1266x713, 1164x777, 915x412 and 412x860 (<size>), a board game with the Towns on, in its Town (laid out 1284 world
+// px wide, decisions-log 271, 337), the book open on the Smithy (where a Town opens), panned by a finger's drag:
 // - open-<size>: the Town as it opens, the Smithy's place in view;
 // - pan-left-<size>, pan-mid-<size>, pan-right-<size>: at the pan's left end, its middle and its right end.
 // In landscape, the book shut:

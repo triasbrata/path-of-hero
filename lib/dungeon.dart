@@ -520,7 +520,7 @@ extension DungeonTrip on Game {
         ..aggressive = radius > 0
         ..aggro = radius * (floor >= 15 ? 1.25 : 1);
       units.add(u);
-      impacts.add((at, u.stats.dark ? 'summon' : 'appear'));
+      impacts.add((at, 'summon')); // the necromancer's ring on the ground as it rises
     }
   }
 

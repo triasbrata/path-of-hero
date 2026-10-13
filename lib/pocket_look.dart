@@ -122,7 +122,7 @@ extension _PocketLook on Board {
     final i = const [LogicalKeyboardKey.digit1, LogicalKeyboardKey.digit2, LogicalKeyboardKey.digit3, LogicalKeyboardKey.digit4].indexOf(key);
     final pad = const [LogicalKeyboardKey.numpad1, LogicalKeyboardKey.numpad2, LogicalKeyboardKey.numpad3, LogicalKeyboardKey.numpad4].indexOf(key);
     final slot = i >= 0 ? i : pad;
-    if (slot < 0 || _pocket.at.isEmpty || _coach.showing || _foeSplashBusy || _herald.who != null || _chest.open || _chest.reveal != null) {
+    if (slot < 0 || state.dungeon != null || _pocket.at.isEmpty || _coach.showing || _foeSplashBusy || _herald.who != null || _chest.open || _chest.reveal != null) {
       return false; // a card, a splash or the chest's popup over it
     }
     _pocketUse(slot);

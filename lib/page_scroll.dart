@@ -70,7 +70,7 @@ extension on Board {
   }
 
   /// Every page part that scrolls this way, for the wheel and drags.
-  List<_PageScroll> get _pageScrolls => [_smithy.facing, _tavernPage.list, _tavernPage.facing];
+  List<_PageScroll> get _pageScrolls => [_smithy.facing, _tavernPage.list, _tavernPage.facing, _dunPage.list];
 
   /// The wheel ([dy]) over a part that scrolls: down on, up back.
   void _pageScrollWheel(Offset p, double dy) {

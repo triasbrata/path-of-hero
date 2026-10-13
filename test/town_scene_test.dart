@@ -1,7 +1,7 @@
 // The Town scene (decisions-log 224; lib/town_scene.dart; ui-hud.md "Town"): the house rebuilt cell by cell exactly as
 // the design's house.py (its fixture), and booted TdGames with the Towns on at the desk (1266x713), the phone (915x412)
 // and the owner's tablet (1164x777): the Town gone into after the win's cheer with a fade, the scene and its
-// places where the layout puts them (the troops' rest, the Smithy, the Tavern, the Shop; the scale and the Tavern's
+// places where the layout puts them (the troops' rest, the Smithy, the Tavern, the Shop, the Dungeon's door; the scale and the Tavern's
 // storeys and width by the room), its three buildings cell by cell standing right on the street's strip (decisions-log
 // 279), the signs, the anchors for the troops on the street's lane, the book's Town tabs, a
 // tap on a sign or a building opening its page, the bare scene shutting the book, the pans, Leave and its fade back, no Auto countdown in a Town (decisions-log 328), no guide in a Town, a save
@@ -70,11 +70,11 @@ Offset bare(Board b, Size size) {
 }
 
 /// The test sizes, the screen px a world px each one draws the Town at, the Tavern it builds (n, storeys), and the
-/// Town's room to pan with the book shut (its 1010 world px less the screen's, decisions-log 271).
+/// Town's room to pan with the book shut (its 1284 world px less the screen's, decisions-log 271, 337).
 const sizes = [
-  (Size(1266, 713), 2.0, (1, 2), 1010 - 633.0),
-  (Size(915, 412), 1.0, (1, 2), 1010 - 915.0), // at 2 the scale's rule doesn't fit its 457 world px across 582
-  (Size(1164, 777), 2.0, (1, 2), 1010 - 582.0), // the least screen at 2: 582 world px
+  (Size(1266, 713), 2.0, (1, 2), 1284 - 633.0),
+  (Size(915, 412), 1.0, (1, 2), 1284 - 915.0), // at 2 the scale's rule doesn't fit its 457 world px across 582
+  (Size(1164, 777), 2.0, (1, 2), 1284 - 582.0), // the least screen at 2: 582 world px
 ];
 
 /// The Smithy's pieces outside its house, each with its art's columns in its drawn box (world px): the furnace's 10-53
@@ -142,7 +142,7 @@ void main() {
 
       // The book: open on the Smithy, with the Town's tabs (the Tavern's after it, decisions-log 268).
       expect(b.bookPage, 'smithy');
-      expect([for (final (name, _) in b.bookTabs) name], ['smithy', 'tavern', 'store', 'troops', 'bag', 'settings']);
+      expect([for (final (name, _) in b.bookTabs) name], ['smithy', 'tavern', 'store', 'dungeon', 'troops', 'bag', 'settings']);
       expect(b.bookArea, isNot(Rect.zero));
 
       // The scene: its room, at k; the three buildings by the room, cell by cell.
@@ -167,7 +167,7 @@ void main() {
         expect(bounds(drawn).bottom, scene['street']!.top, reason: '$place: on the strip');
         expect(bounds(drawn).bottom, b.townLane, reason: "$place: on the street's line");
       }
-      // Every piece at every size (the Town laid out 1010 world px wide, decisions-log 271).
+      // Every piece at every size (the Town laid out 1284 world px wide, decisions-log 271, 337).
       for (final piece in ['tent', 'campfire', 'crates2', 'fruitTable', 'barrels', 'basket', ...millbrookYard,
         ...smithyArt.keys]) {
         expect(scene[piece], isNotNull, reason: piece);
@@ -243,13 +243,14 @@ void main() {
       expect(hi, closeTo(shut, 0.01), reason: 'the room to pan with the book shut');
       expect(cam, inInclusiveRange(lo, hi));
       if (cam > lo && cam < hi) expect(smithyMid(b), closeTo(size.width / 2, 2), reason: 'the Smithy in the middle');
-      final now = b.townScene, places = [for (final p in ['tent', 'smithy', 'tavern', 'shop']) now[p]!];
+      final now = b.townScene, places = [for (final p in ['tent', 'smithy', 'tavern', 'shop', 'dungeon']) now[p]!];
       for (var i = 1; i < places.length; i++) {
         expect(places[i - 1].right, lessThanOrEqualTo(places[i].left + 16 * k),
-            reason: 'the rest, the Smithy, the Tavern and the Shop side by side: $places');
+            reason: "the rest, the Smithy, the Tavern, the Shop and the Dungeon's door side by side: $places");
       }
       expect(now['tent']!.left, closeTo((2 - cam) * k, 1), reason: "the rest at the Town's left end");
-      expect(now['shop']!.right, closeTo((1010 - cam) * k, 1), reason: "the Shop at the Town's right end");
+      expect(now['dungeon']!.right, closeTo((1284 - 6 - cam) * k, 1),
+          reason: "the Dungeon's door at the Town's right end (the layout's last 6 world px its edge)");
       for (final sign in ['smithy', 'tavern', 'shop']) {
         final r = b.townSign(sign);
         expect(r.top, greaterThanOrEqualTo(b.waveMeter.bottom), reason: '$sign sign $r');
@@ -280,11 +281,12 @@ void main() {
       await frames(tester, 40);
       expect((b.bookPage, b.storeShown), ('store', true));
       expect(b.townSign('shop').center.dx, closeTo(b.bookArea.left / 2, 2));
-      // Shut, the Shop's place stays in view (the Town's right end); the Tavern opens its page (decisions-log 268; the
-      // Bag with the Tavern off), panned into the strip left of the book.
+      // Shut, the Shop's place stays in view (the Dungeon's door is the Town's right end now, decisions-log 337); the
+      // Tavern opens its page (decisions-log 268; the Bag with the Tavern off), panned into the strip left of the book.
       await tester.tapAt(bare(b, size));
       await frames(tester, 40);
-      expect((b.bookArea, b.townCam), (Rect.zero, hi));
+      expect(b.bookArea, Rect.zero);
+      expect(b.townSign('shop').center.dx, inInclusiveRange(0, size.width), reason: "the Shop's place in view");
       final tavern = b.townBuilding('tavern').firstWhere((c) => c.$1 == 'wallL8a').$2;
       await tester.tapAt(tavern.center);
       await frames(tester, 40);
